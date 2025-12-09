@@ -83,6 +83,7 @@ from howard.functions.commons import (
     code_type_map_to_sql,
     code_type_map_to_vcf,
     sort_contigs,
+    choose_update_strategy_safe,
 )
 
 from howard.objects.database import Database
@@ -568,6 +569,8 @@ class Variants:
                         conn.execute(f"PRAGMA {setting}={setting_value};")
                 # duckDB settings arrow large buffer size
                 conn.execute("SET arrow_large_buffer_size=true")
+                # settings = conn.execute("SELECT * FROM duckdb_settings()").df()
+                # log.debug(f"DuckDB settings after connexion:\n{settings.to_string()}")
             elif connexion_format in ["sqlite"]:
                 conn = sqlite3.connect(connexion_db)
 
@@ -579,7 +582,7 @@ class Variants:
         log.debug(f"connexion_db: {connexion_db}")
         log.debug(f"connexion config: {connexion_config}")
         log.debug(f"connexion duckdb settings: {self.get_duckdb_settings()}")
-        log.debug(f"connexion duckdb settings: arrow_large_buffer_size=true")
+        log.debug("connexion duckdb settings: arrow_large_buffer_size=true")
 
     def set_output(self, output: str = None) -> None:
         """
@@ -710,6 +713,60 @@ class Variants:
 
             self.header_list = None
             self.header_vcf = None
+
+    def optimize_table(self, table: str = None) -> None:
+        """
+        Optimize a database table by running the OPTIMIZE command.
+        :param table: The name of the table to be optimized. If not provided, the default table
+        variants will be used.
+        :type table: str
+        """
+
+        # Desabled due to no efficience
+        return None
+
+        # Get connexion
+        conn = self.get_connexion()
+
+        # Get table
+        if not table:
+            table = self.get_table_variants()
+
+        # Vaccum
+        query_vaccum = f"""VACUUM {table};"""
+        # query_vaccum = None
+
+        # Recreate table
+        temp_table_name = f"{table}_optimize_temp_" + get_random(1000000)
+        query_recreate = f"""CREATE TABLE {temp_table_name} AS SELECT * FROM {table};"""
+        # query_recreate = None
+
+        # Move table
+        query_drop = f"""DROP TABLE {table};"""
+        query_rename = f"""ALTER TABLE {temp_table_name} RENAME TO {table};"""
+        # query_drop = None
+        # query_rename = None
+
+        try:
+            log.debug(f"OPTIMIZE table {table}")
+            if query_vaccum is not None:
+                conn.execute(query_vaccum)
+            if query_recreate is not None:
+                conn.execute(query_recreate)
+            if query_drop is not None:
+                conn.execute(query_drop)
+            if query_rename is not None:
+                conn.execute(query_rename)
+        except Exception as e:
+            log.warning(f"OPTIMIZE failed for table {table}:")
+            log.warning(f"Query vaccum: {query_vaccum}")
+            log.warning(f"Query recreate: {query_recreate}")
+            log.warning(f"Query drop: {query_drop}")
+            log.warning(f"Query rename: {query_rename}")
+            log.warning(e)
+            pass
+
+        return None
 
     def get_query_to_df(self, query: str = "", limit: int = None) -> pd.DataFrame:
         """
@@ -3458,7 +3515,57 @@ class Variants:
             threads = int(input_thread)
         return threads
 
-    def get_memory(self, default: str = None) -> str:
+    def get_memory_system(self, type: str = "available", unit: str = "G") -> str:
+        """
+        This function retrieves the system memory in the system and returns it as a string.
+
+        :param type: The `type` parameter in the `get_memory_system` function specifies the type of
+        memory information to retrieve. It can take one of the following values: "total" to retrieve the
+        total memory, "used" to retrieve the used memory, "percent" to retrieve the percentage of used memory,
+        or "available" to retrieve the available memory. The default value is "available"
+        :type type: str (optional)
+        :param unit: The `unit` parameter in the `get_memory_system` function specifies the unit of
+        measurement for the memory value. It can take one of the following values: "K" for kilobytes,
+        "M" for megabytes, "G" for gigabytes, or "T" for terabytes. The default value is "G"
+        :type unit: str (optional)
+
+        :return: The function `get_memory_system` returns a string representation of the available
+        memory in the system.
+        """
+
+        import psutil  # type: ignore
+
+        # Check system memory
+        mem = psutil.virtual_memory()
+
+        # # Log
+        # log.debug(f"Mémoire totale : {mem.total}")
+        # log.debug(f"Mémoire disponible : {mem.available}")
+        # log.debug(f"Mémoire utilisée : {mem.used}")
+        # log.debug(f"Pourcentage utilisé : {mem.percent}")
+
+        # Get memory type
+        if type == "total":
+            memory = str(mem.total)
+        elif type == "used":
+            memory = str(mem.used)
+        elif type == "percent":
+            memory = str(mem.percent)
+        elif type == "available":
+            memory = str(mem.available)
+        else:
+            memory = str(mem.total)
+
+        # Convert unit
+        unit_powers = {"K": 1, "M": 2, "G": 3, "T": 4}
+        if unit in unit_powers:
+            power = unit_powers[unit]
+            memory = str(int(memory) // (1024**power))
+
+        # Return memory
+        return f"{memory}{unit}"
+
+    def get_memory(self, default: str = None, available: bool = False) -> str:
         """
         This function retrieves the memory value from parameters or configuration with a default value
         if not found.
@@ -3468,6 +3575,11 @@ class Variants:
         `param` dictionary or the `config` dictionary. If `memory` is not found in either dictionary,
         the function
         :type default: str
+        :param available: A boolean parameter that determines whether to limit the memory to the
+        available system memory or not. If set to True, the function will return the minimum value
+        between the input memory and the available system memory. If set to False, the function will
+        return the input memory or the default value, defaults to False
+        :type available: bool (optional)
         :return: The `get_memory` function returns a string value representing the memory parameter. If
         the `input_memory` is provided in the parameters, it will return that value. Otherwise, it will
         return the default value provided as an argument to the function.
@@ -3481,6 +3593,14 @@ class Variants:
 
         # Input threads
         input_memory = param.get("memory", config.get("memory", None))
+
+        # Avalable memory
+        if available:
+            available_memory = self.get_memory_system(type="available", unit="G")
+            if available_memory is not None and input_memory is not None:
+                input_memory = min(input_memory, available_memory)
+            else:
+                input_memory = available_memory
 
         # Check threads
         if input_memory:
@@ -9539,9 +9659,9 @@ class Variants:
             operations_tmp = {}
             for calculation_operation in calculations_list:
                 if calculation_operation.upper() not in operations_tmp:
-                    log.debug(
-                        f"{calculation_operation}.upper() not in {operations_tmp}"
-                    )
+                    # log.debug(
+                    #     f"{calculation_operation}.upper() not in {operations_tmp}"
+                    # )
                     operations_tmp[calculation_operation.upper()] = {}
                     add_value_into_dict(
                         dict_tree=operations_tmp,
@@ -9569,8 +9689,13 @@ class Variants:
 
         # Count number of variants
         nb_variants = self.get_query_to_df(
-            f"SELECT count(*) AS count FROM {self.get_table_variants()}"
+            f"SELECT count(1) AS count FROM (SELECT 1 FROM {self.get_table_variants()} LIMIT 1)"
         )["count"].tolist()[0]
+
+        # Init
+        # To store operation params for each dest table for update merge
+        operation_params = {}
+        perform_update_all_calculations = False  # Disabled due to operation dependances
 
         # For each operations
         for operation_name in operations:
@@ -9582,7 +9707,7 @@ class Variants:
                 if operation_name in operations_config:
 
                     # Log
-                    log.info(f"Calculation '{operation_name}'")
+                    log.info(f"Calculation '{operation_name}'...")
 
                     # Get operation config
                     operation = operations_config[operation_name]
@@ -9599,9 +9724,42 @@ class Variants:
 
                         # SQL process
                         elif operation_type == "sql":
-                            self.calculation_process_sql(
-                                operation=operation, operation_name=operation_name
+
+                            # Retrive parrams for operation
+                            operation_dest_table, operation_param = (
+                                self.calculation_process_sql(
+                                    operation=operation, operation_name=operation_name
+                                )
                             )
+
+                            if perform_update_all_calculations:
+
+                                # Create list of params for each dest table
+                                if operation_dest_table not in operation_params:
+                                    operation_params[operation_dest_table] = []
+                                # Append param
+                                operation_params[operation_dest_table].append(
+                                    operation_param.copy()
+                                )
+
+                            else:
+
+                                # Perform update for all calculations
+                                log.debug(
+                                    f"Process calculations for '{operation_name}'..."
+                                )
+                                self.update_table(
+                                    dest_table=operation_dest_table,
+                                    sources=[operation_param],
+                                    physical_order=True,
+                                    # chunk_size=10000000,
+                                    force_strategy=None,
+                                )
+
+                                # Clean temp operation view
+                                self.remove_tables_or_views(
+                                    tables=[operation_param.get("table")]
+                                )
 
                         # Fail process
                         else:
@@ -9625,17 +9783,21 @@ class Variants:
                         f"Operations config: Calculation '{operation_name}' NOT available"
                     )
 
-        # # Explode INFOS fields into table fields
-        # if self.get_explode_infos():
-        #     self.explode_infos(
-        #         prefix=self.get_explode_infos_prefix(),
-        #         fields=self.get_explode_infos_fields(),
-        #         force=True,
-        #     )
+        # Perform update for all calculations
+        if perform_update_all_calculations:
+            log.info("Process calculations...")
+            for operation_table_dest in operation_params:
+                self.update_table(
+                    dest_table=operation_table_dest,
+                    sources=operation_params[operation_table_dest],
+                    physical_order=True,
+                    # chunk_size=10000000,
+                    force_strategy=None,
+                )
 
     def calculation_process_sql(
         self, operation: dict, operation_name: str = "unknown"
-    ) -> None:
+    ) -> tuple:
         """
         The `calculation_process_sql` function takes in a mathematical operation as a string and
         performs the operation, updating the specified table with the result.
@@ -9655,8 +9817,6 @@ class Variants:
         output_column_name = operation.get("output_column_name", operation_name)
         output_column_number = operation.get("output_column_number", ".")
         output_column_type = operation.get("output_column_type", "String")
-        # prefix = operation.get("explode_infos_prefix", "")
-        # output_column_type_sql = code_type_map_to_sql.get(output_column_type, "VARCHAR")
         output_column_description = operation.get(
             "output_column_description", f"{operation_name} operation"
         )
@@ -9665,7 +9825,6 @@ class Variants:
             operation_query = " ".join(operation_query)
         operation_info_fields = operation.get("info_fields", [])
         operation_info_fields_check = operation.get("info_fields_check", False)
-        # operation_info = operation.get("operation_info", True)
         operation_table = operation.get(
             "table", self.get_table_variants(clause="alter")
         )
@@ -9674,7 +9833,6 @@ class Variants:
         operation_table_key = operation.get(
             "table_key", ["#CHROM", "POS", "REF", "ALT"]
         )
-        # log.debug(f"operation={operation}")
 
         if operation_query:
 
@@ -9704,7 +9862,7 @@ class Variants:
                 )
 
                 # Create view
-                table_view_name = "table_view_calculation_process"
+                table_view_name = "calculation_view_" + str(random.randrange(1000000))
                 table_view_name = self.create_annotations_view(
                     table=operation_table_source,
                     view=table_view_name,
@@ -9731,19 +9889,28 @@ class Variants:
 
                 try:
                     query_create_view = f"""
-                        CREATE VIEW {calculation_view_name} AS
-                        SELECT {", ".join([f'"{k}"' for k in operation_table_key])},
-                            concat(
-                                    '{output_column_name}=',
-                                    TRY_CAST(({operation_query}) AS VARCHAR)
-                                ) AS INFO,
-                                -- row_number() OVER (ORDER BY 1) AS _rowid
-                        FROM {table_view_name}
-                        
+                        CREATE TABLE {calculation_view_name} AS
+                        SELECT * FROM (
+                            SELECT {", ".join([f'"{k}"' for k in operation_table_key])},
+                                CASE
+                                    WHEN TRY_CAST(({operation_query}) AS VARCHAR) IS NOT NULL
+                                    THEN
+                                        concat(
+                                                '{output_column_name}=',
+                                                TRY_CAST(({operation_query}) AS VARCHAR)
+                                            )
+                                    ELSE NULL 
+                                    END AS INFO
+                            FROM {table_view_name}
+                            )
+                        WHERE INFO IS NOT NULL
                     """
                     # log.debug(f"query_create_view={query_create_view}")
                     log.debug("Create calculation view...")
                     self.get_connexion().execute(query_create_view)
+
+                    # Clean temp annotation view
+                    self.remove_tables_or_views(tables=[table_view_name])
 
                 except Exception as e:
                     log.error(f"Error creating calculation view: {e}")
@@ -9752,14 +9919,17 @@ class Variants:
                     raise ValueError(msg_err)
 
                 # update table
-                self.update_table(
-                    source_table=calculation_view_name,
-                    dest_table=operation_table_dest,
-                    join_keys=operation_table_key,
-                    update_columns={"INFO": "INFO"},
-                    mode="append",
-                    separator=";",
-                )
+                return operation_table_dest, {
+                    "table": calculation_view_name,
+                    "join_keys": operation_table_key,
+                    "columns": {
+                        "INFO": {
+                            "columns": ["INFO"],
+                            "mode": "append",
+                            "separator": ";",
+                        }
+                    },
+                }
 
             else:
                 msg_err = f"Operations config: Calculation '{operation_name}' DOES NOT contain all mandatory fields {operation_info_fields}"
@@ -9773,104 +9943,532 @@ class Variants:
             log.error(msg_err)
             raise ValueError(msg_err)
 
-    def update_table(
+    def update_table_strategy(
         self,
-        source_table: str,
         dest_table: str,
-        join_keys: list,
-        update_columns: dict,
+        sources: list,
         mode: str = "append",
         separator: str = ";",
         physical_order: bool = True,
+        cleanup: bool = False,
+        strategy: str = "ctas",
+        chunk_size: int = None,
     ) -> None:
         """
-        The `update_ctas_table` function creates a new table by joining a source table and
-        destination table on specified keys, updating specified columns in the process.
+        Update dest_table using multiple sources via CTAS.
 
-        :param source_table: The `source_table` parameter is the name of the table that contains the
-        new data that will be used to update the `dest_table`
-        :type source_table: str
-        :param dest_table: The `dest_table` parameter is the name of the table that you want to update
-        with data from the `source_table`
+        :param dest_table: The `dest_table` parameter is a string that represents the name of the
+        destination table that you want to update.
         :type dest_table: str
-        :param join_keys: The `join_keys` parameter is a list of column names that will be used to join
-        the `source_table` and `dest_table`. These columns should exist in both tables and will be used to
-        match rows between the two tables
-        :type join_keys: list
-        :param update_columns: The `update_columns` parameter is a dictionary that maps the columns in the
-        `dest_table` to the corresponding columns in the `source_table` that will be used to update them. The keys
-        of the dictionary are the column names in the `dest_table`, and the values are the column names in the `source_table`
-        :type update_columns: dict
-        :param mode: The `mode` parameter determines how the update will be performed. It can take one of the following
-        values:
-            - "replace": This mode will replace the values in the `dest_table` with the values from the `source_table` for the specified `update_columns`.
-            - "append": This mode will append the values from the `source_table` to the existing values in the `dest_table` for the specified `update_columns`.
-        :type mode: str (optional)
-        :param physical_order: The `physical_order` parameter is a boolean value that determines whether
-        the order of the rows in the destination table should be preserved during the update process. If
-        set to `True`, the function will create a view of the destination table with a row_number for
-        ordering, ensuring that the original order of the rows is maintained. If set to `False`, the
-        function will not create this view, and the order of the rows in the destination table may not be
-        preserved after the update. The default value is `True`.
-        :type physical_order: bool (optional)
+        :param sources: The `sources` parameter is a list of dictionaries, where each dictionary
+        represents a source table and the columns to be updated in the destination table. Each
+        dictionary should have the following keys:
+            - "table": The name of the source table.
+            - "join_keys": A list of column names that will be used to join the source table with the
+              destination table.
+            - "columns": A dictionary where the keys are the destination column names and the values
+              are dictionaries with the following keys:
+                - "columns": A list of column names from the source table that will be used to
+                  update the destination column.
+                - "mode": The mode of updating the column, either "append" or "replace".
+                - "separator": The separator to use when appending values (only applicable for "append"
+                  mode).
+        sources example:
+            sources = [
+                {   # Default source to append INFO column with a table source as a view
+                    "table": "calculation_view_name",
+                    "join_keys": ["#CHROM", "POS", "REF", "ALT"],
+                    "columns": {
+                        "INFO": {"columns": ["INFO"], "mode": "append", "separator": ";"}
+                    },
+                },
+                {   # Calculation view source to update INFO, and create AF and ALT columns
+                    "table": "calculation_view_name",
+                    "join_keys": ["#CHROM", "POS", "REF", "ALT"],
+                    "columns": {
+                        "INFO": {"columns": ["INFO"], "mode": "append", "separator": ";"},
+                        "AF": {"columns": ["REF"], "mode": "replace"},
+                        "ALT": {"columns": ["REF"], "mode": "replace"},
+                    },
+                },
+                {   # Clinvar source to add in a new column CLINVAR with concatenation of 2 columns CLNSIG and CLNID
+                    "table": "clinvar_table",
+                    "join_keys": ["#CHROM", "POS", "REF", "ALT"],
+                    "columns": {
+                        "CLINVAR": {"columns": ["CLNSIG", "CLNID"], "mode": "append", "separator": "|"},
+                    },
+                },
+            ]
+        :type sources: list
+        :param mode: The `mode` parameter determines how the columns in the destination table will
+        be updated. It can take two values: "append" or "replace". The default value is "append".
+            - If `mode` is set to "append", the values from the source tables will be concatenated to the existing
+              values in the destination table, separated by the specified `separator`.
+            - If `mode` is set to "replace", the values from the source tables will replace the existing values in the
+              destination table.
+        :type mode: str
+        :param separator: The `separator` parameter is a string that specifies the character or
+        sequence of characters used to separate values when appending them together. The default value is
+        a semicolon (";"). This parameter is only applicable when the `mode` parameter is set to "append".
+        :type separator: str
+        :param physical_order: The `physical_order` parameter is a boolean value that determines
+        whether the resulting table should have a physical order based on the row number. If set to
+        `True`, a `_rowid` column will be added to the resulting table, which will contain the row number for each row. If
+        set to `False`, the `_rowid` column will not be included. The default value is `True`.
+        :type physical_order: bool
+        :param cleanup: The `cleanup` parameter is a boolean value that determines whether to drop
+        the temporary table created during the update process. If set to `True`, the temporary table
+        will be dropped after the update is complete. If set to `False`, the temporary table will be
+        retained. The default value is `False`.
+        :type cleanup: bool
+        :param strategy: The `strategy` parameter determines the method used to update the
+        destination table. It can take two values: "ctas" or "merge". The default value is "ctas".
+            - If `strategy` is set to "ctas", the update will be performed using a "Create Table As Select" (CTAS) approach. This
+              involves creating a new temporary table with the updated data and then replacing the original table with the
+              temporary table.
+            - If `strategy` is set to "update", the update will be performed using an "UPDATE" statement. This involves directly modifying the existing
+              rows in the destination table based on the data from the source tables.
+        :type strategy: str
+        :param chunk_size: The `chunk_size` parameter is an optional integer that specifies the
+        size of the chunks to be processed during the update operation. If not provided, it will
+        default to a value from the configuration file or a predefined constant `DEFAULT_CHUNK_SIZE`.
+        :type chunk_size: int or None
 
-        :return: The function `update_ctas_table` does not return anything. It performs an update on the
-        destination table (`dest_table`) by creating a new table with updated columns based on the
-        source table (`source_table`) and then replacing the old destination table with the new one.
+        :return: The function `update_table` does not return anything. It performs an update
+        operation on a destination table using multiple source tables and their specified columns.
+
         """
 
-        # Build column update expressions
+        conn = self.get_connexion()
+
+        # Chunk size
+        if chunk_size is None:
+            chunk_size = self.get_config().get("chunk_size", DEFAULT_CHUNK_SIZE)
+
+        # chunking desactivated because of some specific tables (e.g., operations on multiple lines) ???
+        # chunking = False
+        # Due to creation of entire table before update, chunking should be ok
+        chunking = True
+
+        # Default configuration
+        # source columns
+        default_source_columns = {"INFO": {"columns": ["INFO"]}}
+        # key columns
+        default_join_keys = ["#CHROM", "POS", "REF", "ALT"]
+
+        # --- Existing dest columns ---
         dest_cols = self.get_columns(dest_table)
-        columns_expr = []
 
-        for col in dest_cols:
-            if col in update_columns:
-                src_col = update_columns[col]
-                if mode == "replace":
-                    columns_expr.append(f's.{src_col} AS "{col}"')
-                elif mode == "append":
-                    columns_expr.append(
-                        f"""
-                            concat(
-                                COALESCE(NULLIF(NULLIF(d."{col}", ''), '.'), ''),
-                                CASE 
-                                    WHEN NULLIF(NULLIF(d."{col}", ''), '.') IS NOT NULL
-                                    AND NULLIF(NULLIF(s."{src_col}", ''), '.') IS NOT NULL
-                                    THEN '{separator}'
-                                    ELSE ''
-                                END,
-                                COALESCE(NULLIF(NULLIF(s."{src_col}", ''), '.'), '')
-                            ) AS "{col}"
-                        """
-                    )
+        # --- Compute required output columns ---
+        required_dest_cols = list(dest_cols)
+        for src in sources:
+            for dest_col in src.get("columns", default_source_columns):
+                if dest_col not in required_dest_cols:
+                    required_dest_cols.append(dest_col)
+
+        column_exprs = []
+        join_clauses = []
+        where_clauses = {}
+        where_column_exprs = []
+        where_column_set = []
+        list_of_sources_table = {}
+
+        # Build JOINs
+        for src in sources:
+
+            join_keys = src.get("join_keys", default_join_keys)
+            src_table = src.get("table", None)
+            if src_table:
+
+                # List of souce table
+                list_of_sources_table[src_table] = True
+
+                # Join clause
+                join_clause = f"""
+                    LEFT JOIN {src.get("table")}
+                    USING ({', '.join([f'"{k}"' for k in join_keys])})
+                """
+                join_clauses.append(join_clause)
+
+                # where clause
+                where_clause = (
+                    f""" {' AND '.join([f'd."{k}" = n."{k}"' for k in join_keys])} """
+                )
+
+                if where_clause not in where_clauses:
+                    where_clauses[where_clause] = {
+                        "join_clause": [],
+                        "join_keys": [],
+                    }
+                where_clauses[where_clause]["join_clause"].append(join_clause)
+                where_clauses[where_clause]["join_keys"] += join_keys
+
+        # Rowid for deterministic physical ordering and chunking
+        rowid_expr = ", row_number() OVER () AS _rowid"
+
+        # Helper to normalize empty values
+        def normalize(val):
+            return f"NULLIF(NULLIF({val}, ''), '.')"
+
+        # Build column expressions
+        for col in required_dest_cols:
+
+            # --- Sources contributing to this column ---
+            update_sources = [
+                src
+                for src in sources
+                if col in src.get("columns", default_source_columns)
+            ]
+
+            # --- No update source ---
+            if not update_sources:
+                if col in dest_cols:
+                    column_exprs.append(f'd."{col}"')
+                else:
+                    column_exprs.append(f'NULL AS "{col}"')
+                continue
+
+            # --- Update column ---
+            source_values = [
+                (
+                    normalize(f'{src.get("table")}."{col_name}"')
+                    if src.get("table", None)
+                    else None
+                )
+                for src in update_sources
+                for col_name in src.get("columns", default_source_columns)[col][
+                    "columns"
+                ]
+            ]
+
+            # --- Remove None values (when no table defined) ---
+            source_values = [v for v in source_values if v is not None]
+
+            # --- Determine mode for this column ---
+            columns_mode = {
+                col: src.get("columns", {}).get(col, {}).get("mode", mode)
+                for src in update_sources
+            }
+
+            # --- Determine separator for this column ---
+            columns_separator = {
+                col: src.get("columns", {}).get(col, {}).get("separator", separator)
+                for src in update_sources
+            }
+
+            # ---------------------------
+            # MODE REPLACE
+            # ---------------------------
+
+            if columns_mode[col] == "replace":
+
+                if col in dest_cols:
+                    replace_candidates = source_values + [f'd."{col}"']
+                else:
+                    replace_candidates = source_values
+
+                column_exprs.append(
+                    f"COALESCE({', '.join(replace_candidates)}) AS \"{col}\""
+                )
+
+                continue
+
+            # ---------------------------
+            # MODE APPEND (concat + clean)
+            # ---------------------------
+
+            pieces = []
+
+            # existing column first (if exists)
+            if col in dest_cols:
+                pieces.append(normalize(f'd."{col}"'))
+
+            # then all source values
+            pieces.extend(source_values)
+
+            # raw concat
+            raw_concat = f"""
+                concat_ws('{columns_separator[col]}',
+                    {", ".join(pieces)}
+                )
+            """
+
+            # cleanup of semicolons
+            if cleanup:
+                clean = f"""
+                    TRIM(
+                        REGEXP_REPLACE(
+                            {raw_concat},
+                            '{columns_separator[col]}{{2,}}',
+                            '{columns_separator[col]}'
+                        ),
+                        '{columns_separator[col]}'
+                    ) AS "{col}"
+                """
             else:
-                columns_expr.append(f'd."{col}"')
+                clean = f"""
+                            {raw_concat} AS "{col}"
+                """
 
-        # Build CTAS preserving physical order using row_number()
-        new_dest_table = f"tmp_new_{dest_table}_{random.randrange(1000000)}"
+            column_exprs.append(clean)
 
-        sql = f"""
-            CREATE TABLE {new_dest_table} AS
-            WITH d AS (
-                SELECT * {", row_number() OVER () AS _rowid" if physical_order else ""}
-                FROM {dest_table}
-            )
-            SELECT
-                {', '.join(columns_expr)}
-            FROM d
-            LEFT JOIN {source_table} AS s USING ({', '.join([f'"{k}"' for k in join_keys])})
-            {"ORDER BY d._rowid" if physical_order else ""}
+            where_column_exprs.append(clean)
+            where_column_set.append(col)
+
+        # ---------------------------
+        # UPDATE
+        # ---------------------------
+
+        if strategy == "update":
+
+            # For each where clause, create temp table and update dest_table
+            for where_clause in where_clauses.keys():
+
+                # Build join clause
+                where_clause_join_clauses = where_clauses.get(where_clause, {}).get(
+                    "join_clause", ""
+                )
+
+                # Build join keys
+                where_clause_join_keys = [
+                    f'd."{k}"'
+                    for k in set(
+                        where_clauses.get(where_clause, {}).get("join_keys", "")
+                    )
+                ]
+
+                # Create temp table with required columns
+                new_dest_table = f"tmp_new_{dest_table}_{random.randrange(1000000)}"
+                sql = f"""
+                    CREATE TABLE {new_dest_table} AS
+                    WITH d AS (
+                        SELECT * 
+                            {rowid_expr} -- for update chunking and physical_order
+                        FROM {dest_table}
+                    )
+                    SELECT
+                        {", ".join(where_clause_join_keys)},
+                        {", ".join(where_column_exprs)}
+                        , _rowid -- keep rowid for update with chunking
+                    FROM d
+                    {" ".join(where_clause_join_clauses)}
+                    {"ORDER BY d._rowid" if physical_order else ""} -- only if physical order
+                """
+
+                # Execute Update Creation View
+                log.debug("Execute Update Creation View for update_table...")
+                conn.execute(sql)
+
+                # Update dest_table with new_dest_table
+                log.debug("Update dest_table with new_dest_table...")
+
+                if chunking:
+
+                    # Update table {dest_table} with new table
+                    # split update by chunk (chunk_size) on _rowid column to avoid transaction too large
+                    max_rowid = conn.execute(
+                        f"SELECT MAX(_rowid) AS max_rowid FROM {new_dest_table}"
+                    ).df()["max_rowid"][0]
+
+                    # Process chunks
+                    for chunk_start in range(1, max_rowid + 1, chunk_size):
+                        chunk_end = min(chunk_start + chunk_size - 1, max_rowid)
+                        log.debug(
+                            f"  Updating rows with _rowid between {chunk_start} and {chunk_end}..."
+                        )
+                        update_query = f"""
+                            UPDATE {dest_table} AS d
+                            SET
+                                {", ".join([f'"{col}" = n."{col}"' for col in where_column_set])}
+                                FROM {new_dest_table} AS n
+                                WHERE {" ".join(set(where_clauses.keys()))}
+                                AND n._rowid BETWEEN {chunk_start} AND {chunk_end}
+                        """
+                        # log.debug(f"update_query:\n{update_query}")
+                        conn.execute(update_query)
+
+                else:
+
+                    # Update table {dest_table} with new table
+                    update_query = f"""
+                        UPDATE {dest_table} AS d
+                        SET
+                            {", ".join([f'"{col}" = n."{col}"' for col in where_column_set])}
+                            FROM {new_dest_table} AS n
+                            WHERE {" ".join(set(where_clauses.keys()))}
+                        """
+                    log.debug(f"update_query:\n{update_query}")
+                    conn.execute(update_query)
+
+                # Cleanup
+                log.debug("Cleanup temporary view...")
+                self.remove_tables_or_views(tables=[new_dest_table])
+
+        # ---------------------------
+        # CTAS
+        # ---------------------------
+
+        elif strategy == "ctas":
+
+            # Create new dest table with required columns
+            new_dest_table = f"tmp_new_{dest_table}_{random.randrange(1000000)}"
+            sql = f"""
+                CREATE TABLE {new_dest_table} AS
+                WITH d AS (
+                    SELECT * {rowid_expr}
+                    FROM {dest_table}
+                )
+                SELECT
+                    {", ".join(column_exprs)}
+                FROM d
+                {" ".join(join_clauses)}
+                {"ORDER BY d._rowid" if physical_order else ""}
+            """
+
+            # Execute CTAS
+            log.debug("Execute CTAS for update_table...")
+            conn.execute(sql)
+
+            # Replace dest_table with new_dest_table
+            conn.execute(f"DROP TABLE {dest_table}")
+            conn.execute(f"ALTER TABLE {new_dest_table} RENAME TO {dest_table}")
+
+        else:
+            log.error(f"Strategy '{strategy}' NOT available")
+            raise ValueError(f"Strategy '{strategy}' NOT available")
+
+        # Remove source tables if cleanup
+        log.debug("Cleanup source tables/views...")
+        self.remove_tables_or_views(tables=list(list_of_sources_table.keys()))
+
+        # Optimize table
+        self.optimize_table(dest_table)
+
+    def update_table(
+        self,
+        dest_table: str,
+        sources: list,
+        mode: str = "append",
+        separator: str = ";",
+        physical_order: bool = True,
+        cleanup: bool = False,
+        force_strategy: str = None,
+        chunk_size: int = None,
+    ) -> None:
+        """
+        Update dest_table using multiple sources via CTAS or hybrid UPDATE.
+        Heuristic chooses between UPDATE and CTAS based on number of columns to update.
+
+        :param dest_table: destination table to update
+        :type dest_table: str
+        :param sources: list of source dicts
+            sources example:
+            sources = [
+                {   # Default source to append INFO column with a table source as a view
+                    "table": "calculation_view_name",
+                    "join_keys": ["#CHROM", "POS", "REF", "ALT"],
+                    "columns": {
+                        "INFO": {"columns": ["INFO"], "mode": "append", "separator": ";"}
+                    },
+                },
+                {   # Calculation view source to update INFO, and create AF and ALT columns
+                    "table": "calculation_view_name",
+                    "join_keys": ["#CHROM", "POS", "REF", "ALT"],
+                    "columns": {
+                        "INFO": {"columns": ["INFO"], "mode": "append", "separator": ";"},
+                        "AF": {"columns": ["REF"], "mode": "replace"},
+                        "ALT": {"columns": ["REF"], "mode": "replace"},
+                    },
+                },
+                {   # Clinvar source to add in a new column CLINVAR with concatenation of 2 columns CLNSIG and CLNID
+                    "table": "clinvar_table",
+                    "join_keys": ["#CHROM", "POS", "REF", "ALT"],
+                    "columns": {
+                        "CLINVAR": {"columns": ["CLNSIG", "CLNID"], "mode": "append", "separator": "|"},
+                    },
+                },
+            ]
+        :type sources: list
+        :param mode: "append" or "replace"
+        :type mode: str
+        :param mode: mode of update ("append" or "replace")
+        :type mode: str
+        :param separator: separator for concatenation
+        :type separator: str
+        :param physical_order: keep physical order of dest_table
+        :type physical_order: bool
+        :param cleanup: clean concatenated values (remove duplicates, start/end separators)
+        :type cleanup: bool
+        :param force_use_ctas: force use of CTAS (True), UPDATE (False) or heuristic (None)
+        :type force_use_ctas: bool or None
+        :param ctas_threshold: threshold to use CTAS based on number of columns to update / total columns ratio
+        :type ctas_threshold: float
+        :param chunk_size: threshold to use CTAS based on dest table size (number of rows)
+        :type chunk_size: int
+
+        :return: None
+        :rtype: None
         """
 
-        # Execute CTAS
-        log.debug(f"Update CTAS table from {source_table} to {dest_table}...")
-        self.get_connexion().execute(sql)
+        conn = self.get_connexion()
 
-        # Swap tables
-        self.get_connexion().execute(f"DROP TABLE {dest_table};")
-        self.get_connexion().execute(
-            f"ALTER TABLE {new_dest_table} RENAME TO {dest_table};"
+        # Chunk size
+        if chunk_size is None:
+            chunk_size = self.get_config().get("chunk_size", DEFAULT_CHUNK_SIZE)
+
+        # Default configuration
+        default_source_columns = {"INFO": {"columns": ["INFO"]}}
+        default_join_keys = ["#CHROM", "POS", "REF", "ALT"]
+
+        # --- Existing dest columns and update columns ---
+        update_cols = set()
+        for src in sources:
+            update_cols.update(src.get("columns", default_source_columns).keys())
+
+        # --- Available memory and threads ---
+        memory = int(self.get_memory("1G", available=True).replace("G", ""))
+        threads = self.get_threads("1")
+
+        # Heuristics to choose between CTAS or UPDATE
+        log.debug(f"force_strategy={force_strategy}")
+        if force_strategy is None:
+
+            # --- Choose safe strategy -----------
+            strategy, reasoning = choose_update_strategy_safe(
+                dest_total_rows=None,
+                dest_total_cols=None,
+                avg_row_size_bytes=None,
+                update_cols_count=len(update_cols),
+                update_row_ratio=None,  # unknown yet
+                ram_available_gb=memory,
+                chunk_size=chunk_size,
+                conn=conn,
+                dest_table=dest_table,
+                sources=sources,
+                default_join_keys=default_join_keys,
+                samples=100000,
+                threads=threads,
+            )
+
+            log.debug(f"Chosen strategy: {strategy}")
+            for reason in reasoning:
+                log.debug(reason)
+
+        else:
+            strategy = force_strategy
+
+        # Perform update with chosen strategy
+        self.update_table_strategy(
+            dest_table=dest_table,
+            sources=sources,
+            mode=mode,
+            separator=separator,
+            physical_order=physical_order,
+            cleanup=cleanup,
+            strategy=strategy.lower(),
         )
+
+        return None
 
     def calculation_process_function(
         self, operation: dict, operation_name: str = "unknown"
@@ -14854,20 +15452,24 @@ class Variants:
                         DROP TABLE IF EXISTS {temporary_table}
                     """
                     self.execute_query(query=query_drop_tmp_table)
-                    log.debug(f"'{temporary_table}' is a table")
+                    log.debug(f"DROP TABLE '{temporary_table}' done.")
                     removed_items.append(temporary_table)
                 except Exception as e:
-                    log.debug(f"'{temporary_table}' Not a table. Try as a view.")
+                    log.debug(
+                        f"DROP TABLE '{temporary_table}': Failed (not a table)! Try as a view."
+                    )
 
                     try:
                         query_drop_tmp_view = f"""
                             DROP VIEW IF EXISTS {temporary_table}
                         """
                         self.execute_query(query=query_drop_tmp_view)
-                        log.debug(f"'{temporary_table}' is a view")
+                        log.debug(f"DROP VIEW '{temporary_table}' done.")
                         removed_items.append(temporary_table)
                     except Exception as e:
-                        log.debug(f"'{temporary_table}' Not a view")
-                        log.error(f"'{temporary_table}' is neither a table nor a view")
+                        log.debug(f"DROP VIEW '{temporary_table}': Failed (not a view)")
+                        log.error(
+                            f"DROP '{temporary_table}': Failed! Neither a table nor a view"
+                        )
 
         return removed_items

@@ -4983,3 +4983,384 @@ def search_in_folders(file_name: str, search_folders: list) -> str:
             return found_files[0]
 
     return None
+
+
+def fast_collect_table_stats(
+    con,
+    table_name,
+    estimate_row_size_mode: str = "type",
+    samples_size: int = 100000,
+) -> dict:
+    """
+    Collect fast table statistics from DuckDB.
+
+    :param con: DuckDB connection
+    :type con: duckDB connection
+    :param table_name: Name of the table to collect stats from
+    :type table_name: str
+    :param estimate_row_size_mode: Mode to estimate row size ("type" or "samples")
+    :type estimate_row_size_mode: str
+    :param samples_size: Number of samples to use if mode is "samples"
+    :type samples_size: int
+
+    :return: Dictionary with table statistics
+    :rtype: dict
+    """
+
+    # --- number of rows (DuckDB maintains an internal counter -- very fast)
+    total_rows = con.execute(f"SELECT count(*) FROM {table_name}").fetchone()[0]
+
+    # --- column info
+    cols = con.execute(f"PRAGMA table_info('{table_name}')").fetchall()
+    total_cols = len(cols)
+
+    # --- estimation of row size by DuckDB type ---
+    if estimate_row_size_mode == "type":
+
+        # Estimated sizes per type (in bytes)
+        TYPE_SIZES = {
+            "BOOLEAN": 1,
+            "TINYINT": 1,
+            "SMALLINT": 2,
+            "INTEGER": 4,
+            "BIGINT": 8,
+            "REAL": 4,
+            "DOUBLE": 8,
+            "TIMESTAMP": 8,
+            "DATE": 4,
+            "VARCHAR": 32,  # empirical average estimation
+            "BLOB": 64,  # estimation
+        }
+
+        # Estimate row size
+        est_row_size = 0
+        for (_, name, dtype, *_) in cols:
+            dtype_u = dtype.upper()
+            est_row_size += TYPE_SIZES.get(dtype_u, 32)  # fallback = 32 bytes
+
+    # --- estimation of row size by sampling ---
+    elif estimate_row_size_mode == "samples":
+
+        # sampling
+        sample_query = f"""
+            SELECT *
+            FROM {table_name}
+            LIMIT {samples_size}
+        """
+        sample_df = con.execute(sample_query).fetchdf()
+
+        # Estimate row size from sample
+        est_row_size = sample_df.memory_usage(deep=True, index=False).sum() / len(
+            sample_df
+        )
+
+    else:
+        raise ValueError(
+            f"Unknown estimate_row_size_mode: {estimate_row_size_mode}. Use 'type' or 'samples'."
+        )
+
+    return {
+        "total_rows": total_rows,
+        "total_cols": total_cols,
+        "avg_row_size": est_row_size,
+        "table_size_bytes": est_row_size * total_rows,
+    }
+
+
+def choose_update_strategy_safe(
+    dest_total_rows: int = None,
+    dest_total_cols: int = None,
+    avg_row_size_bytes: int = None,
+    update_cols_count: int = None,
+    update_row_ratio: float = None,
+    ram_available_gb: float = None,
+    chunk_size: int = None,  # not used for now
+    conn=None,
+    dest_table: str = None,
+    sources: list = None,
+    default_join_keys: list = None,
+    samples: int = 10000,
+    memory_safety_factor: float = 0.80,
+    update_penalty: float = 4.0,
+    ctas_penalty: float = 1.5,
+    ctas_threshold: float = 0.20,
+    threads: int = 1,
+):
+    """
+    Heuristique *robuste OOM-first*.
+    Retourne ("update" | "ctas", explanation).
+    """
+
+    # Init explanation
+    explanation = []
+
+    # CPU factor
+    log.debug(f"Adjusting penalties based on {threads} threads.")
+    cpu_factor = max(1, int(threads) / 1)
+    update_penalty *= cpu_factor
+    ctas_penalty *= cpu_factor
+    explanation.append(f"CPU factor based on {threads} threads: {cpu_factor:.2f}")
+    explanation.append(f"update_penalty: {update_penalty}")
+    explanation.append(f"ctas_penalty: {ctas_penalty}")
+
+    # Collect missing table stats
+    if dest_total_rows is None or dest_total_cols is None or avg_row_size_bytes is None:
+        fast_stats = fast_collect_table_stats(
+            con=conn,
+            table_name=dest_table,
+            estimate_row_size_mode="samples",
+            samples_size=samples,
+        )
+        dest_total_cols = fast_stats["total_cols"]
+        dest_total_rows = fast_stats["total_rows"]
+        avg_row_size_bytes = fast_stats["avg_row_size"]
+
+    # --- Fast strategy decision ---
+    fast_strategy, explanation_fast = choose_update_strategy_fast(
+        dest_total_rows=dest_total_rows,
+        dest_total_cols=dest_total_cols,
+        update_cols_count=update_cols_count,
+        avg_row_size_bytes=avg_row_size_bytes,
+        ram_available_gb=ram_available_gb,
+        update_penalty=update_penalty,
+        ctas_penalty=ctas_penalty,
+        safety_factor=memory_safety_factor,
+    )
+
+    # Append explanation
+    explanation += explanation_fast
+
+    # --- Final strategy decision ---
+    if fast_strategy is not None:
+        # fast decision possible
+        explanation.append(f"Fast strategy decided: {fast_strategy.upper()}.")
+        explanation.append("Estimating update row ratio is NOT required.")
+        return fast_strategy, explanation
+    else:
+        # need to estimate update row ratio
+        explanation.append("Fast strategy undecided.")
+        explanation.append("Estimating update row ratio is REQUIRED.")
+
+        # --- Estimation update row ratio ---
+        update_row_ratio = estimate_update_ratio_fast(
+            conn, dest_table, sources, default_join_keys, samples=samples
+        )
+        explanation.append(f"Estimated update ratio: {update_row_ratio:.4f}")
+
+        # --- Calculs rows to update ---
+        rows_to_update = int(dest_total_rows * update_row_ratio)
+
+        # RAM available safe
+        ram_limit_bytes = ram_available_gb * (1024**3) * memory_safety_factor
+
+        # --- Estimation memory cost UPDATE ---
+        update_mem_bytes = rows_to_update * avg_row_size_bytes * update_penalty
+        log.debug(
+            f"{update_mem_bytes} = {rows_to_update} * {avg_row_size_bytes} * {update_penalty} > {ram_limit_bytes}"
+        )
+
+        # --- Estimation memory cost CTAS ---
+        ctas_mem_bytes = dest_total_rows * avg_row_size_bytes * ctas_penalty
+
+        explanation += [
+            f"Cost Update memory: {update_mem_bytes/1e9:.2f} GB",
+            f"Cost CTAS memory: {ctas_mem_bytes/1e9:.2f} GB",
+            f"Available safe RAM: {ram_limit_bytes/1e9:.2f} GB",
+            f"Rows to update: {rows_to_update}",
+        ]
+
+        # --- OOM safe on update strategy (priority) ---
+        if update_mem_bytes > ram_limit_bytes:
+            explanation.append(
+                f"[SAFE] UPDATE memory ({update_mem_bytes/1e9:.2f} GB) "
+                f"> safe RAM ({ram_limit_bytes/1e9:.2f} GB) -- FORCE CTAS."
+            )
+            return "ctas", explanation
+
+        # --- OOM safe on ctas strategy ---
+        if ctas_mem_bytes > ram_limit_bytes:
+            explanation.append(
+                f"[SAFE] CTAS memory ({ctas_mem_bytes/1e9:.2f} GB) "
+                f"> safe RAM ({ram_limit_bytes/1e9:.2f} GB) -- FORCE UPDATE."
+            )
+            return "update", explanation
+
+        # --- Heuristic "logic" ---
+        update_col_ratio = update_cols_count / max(dest_total_cols, 1)
+        if update_col_ratio > ctas_threshold:
+            explanation.append(
+                f"Updating {update_col_ratio:.2f} of columns (> {ctas_threshold}) -- CTAS."
+            )
+            return "ctas", explanation
+
+        # Disabled for now
+        # if rows_to_update > chunk_size:
+        #     explanation.append(
+        #         f"Rows to update {rows_to_update} > chunk_size {chunk_size} -- CTAS."
+        #     )
+        #     return "ctas", explanation
+
+        explanation.append("Low impact update -- UPDATE chosen.")
+        return "update", explanation
+
+
+def choose_update_strategy_fast(
+    dest_total_rows,
+    dest_total_cols,
+    update_cols_count,
+    avg_row_size_bytes,
+    ram_available_gb,
+    update_penalty=4.0,
+    ctas_penalty=1.5,
+    safety_factor=0.75,
+) -> tuple:
+    """
+    Fast heuristic to choose update strategy.
+    Returns ("update" | "ctas" | None, explanation).
+
+    :param dest_total_rows: Total number of rows in the destination table
+    :type dest_total_rows: int
+    :param dest_total_cols: Total number of columns in the destination table
+    :type dest_total_cols: int
+    :param update_cols_count: Number of columns to be updated
+    :type update_cols_count: int
+    :param avg_row_size_bytes: Average size of a row in bytes
+    :type avg_row_size_bytes: int
+    :param ram_available_gb: Available RAM in gigabytes
+    :type ram_available_gb: float
+    :param update_penalty: Penalty factor for update strategy, defaults to 4.0
+    :type update_penalty: float
+    :param ctas_penalty: Penalty factor for CTAS strategy, defaults to 1.5
+    :type ctas_penalty: float
+    :param safety_factor: Safety factor for RAM usage, defaults to 0.75
+    :type safety_factor: float
+
+    :return: A tuple containing the chosen strategy ("update", "ctas", or None) and an explanation list.
+    :rtype: tuple
+    """
+
+    # Init explanation
+    explanation = []
+
+    # Calculate RAM limit in bytes
+    ram_limit_bytes = ram_available_gb * (1024**3) * safety_factor
+
+    # Calculate table size in bytes
+    table_bytes = dest_total_rows * avg_row_size_bytes
+
+    # explanation
+    explanation.append(f"Table size bytes: {table_bytes}")
+    explanation.append(f"RAM limit bytes: {ram_limit_bytes}")
+
+    # threshold low: UPDATE always safe
+    n_low = ram_limit_bytes / (avg_row_size_bytes * update_penalty)
+
+    # threshold high: CTAS mandatory
+    n_high = ram_limit_bytes / (avg_row_size_bytes * ctas_penalty)
+
+    # Explanation
+    explanation.append(f"Low memory threshold: {n_low}")
+    explanation.append(f"High memory threshold: {n_high}")
+
+    # If little table -- UPDATE safe
+    if dest_total_rows < n_low:
+        # little table -- UPDATE safe -- ratio unnecessary
+        explanation.append(
+            f"Table rows {dest_total_rows} < low memory threshold {n_low} -- UPDATE safe."
+        )
+        return "update", explanation
+
+    # If big table -- CTAS mandatory
+    if dest_total_rows > n_high:
+        # table too big -- CTAS mandatory -- ratio unnecessary
+        explanation.append(
+            f"Table rows {dest_total_rows} > high memory threshold {n_high} -- CTAS mandatory."
+        )
+        return "ctas", explanation
+
+    # Medium table -- heuristic on columns
+    col_ratio = update_cols_count / dest_total_cols
+    if col_ratio > 0.2:
+        explanation.append(f"Updating {col_ratio:.2f} of columns (> 0.2) -- CTAS.")
+        return "ctas", explanation
+
+    # Medium table -- heuristic on table size vs RAM
+    if table_bytes > ram_available_gb * (1024**3) * safety_factor:
+        explanation.append(
+            f"Table size bytes {table_bytes} > {safety_factor*100:.0f}% of available RAM -- CTAS."
+        )
+        return "ctas", explanation
+
+    # otherwise: ambiguous zone -- ratio necessary
+    return None, explanation
+
+
+def estimate_update_ratio_fast(con, dest_table, sources, join_keys, samples=1000000):
+    join_cols = ", ".join([f'"{k}"' for k in join_keys])
+    log.debug(f"Estimating update ratio for {dest_table} with join keys: {join_cols}")
+
+    # Create temporary table
+    sample_dest_temporary_name = "dest_sample_" + str(random.randrange(1000000))
+    con.execute(
+        f"""
+        CREATE TEMP TABLE {sample_dest_temporary_name} AS
+        SELECT {join_cols}
+        FROM {dest_table}
+        LIMIT {samples}
+    """
+    )
+
+    # Sample dest table size
+    sample_size = con.execute(
+        f"""
+        SELECT count(1) as count
+        FROM {sample_dest_temporary_name} 
+        LIMIT {samples}
+    """
+    ).fetchdf()["count"][0]
+    log.debug(f"Sampled dest table size: {sample_size}")
+
+    if sample_size == 0:
+        return 0.0
+
+    # List to store ratios of each source
+    ratios = []
+    for src in sources:
+        src_table = src["table"]
+
+        # Sample source table (same sample size)
+        src_view_name = "src_sample_" + str(random.randrange(1000000))
+        log.debug(
+            f"Created temporary view {src_view_name} for source table {src_table}"
+        )
+        con.execute(
+            f"""
+            CREATE TEMP VIEW {src_view_name} AS
+            SELECT {join_cols} 
+            FROM {src_table} 
+        """
+        )
+
+        # Count intersection
+        log.debug(f"Calculate intersection between dest_sample and {src_view_name}")
+        intersect_count = con.execute(
+            f"""
+            SELECT COUNT(1)
+            FROM {sample_dest_temporary_name} d
+            JOIN {src_view_name} s USING ({join_cols})
+        """
+        ).fetchone()[0]
+
+        # Calculate update ratio
+        ratio = intersect_count / sample_size
+        log.debug(f"Update ratio = {intersect_count} / {sample_size} = {ratio}")
+        ratios.append(ratio)
+
+        # Cleanup source sample
+        con.execute(f"DROP VIEW {src_view_name}")
+
+    # Cleanup dest sample
+    con.execute(f"DROP TABLE {sample_dest_temporary_name}")
+
+    # Return max ratio
+    return max(ratios) if ratios else 0.0
