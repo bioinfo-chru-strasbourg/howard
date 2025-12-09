@@ -550,7 +550,7 @@ def test_calculation_vartype_full():
         result = variants.get_query_to_df(
             """ SELECT * FROM variants WHERE INFO LIKE '%VARTYPE=SNV%' """
         )
-        assert len(result) == 6  # duplication !!!
+        assert len(result) == 4  # 6 if duplication !!!
 
         result = variants.get_query_to_df(
             """ SELECT * FROM variants WHERE INFO LIKE '%VARTYPE=INDEL%' """
