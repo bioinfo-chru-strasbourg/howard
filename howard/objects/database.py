@@ -2884,6 +2884,8 @@ class Database:
                                 # Write header content if any (for bgzip only, because no append mode)
                                 if compression_mode_bgzip and header_content:
                                     f.write(header_content)
+                                    # Remove header for write it only once
+                                    header_content = None
 
                                 # Write kwargs
                                 write_kwargs = {
