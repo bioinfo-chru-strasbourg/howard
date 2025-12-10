@@ -3,6 +3,7 @@ import gc
 import glob
 import gzip
 import io
+import math
 import os
 from pathlib import Path
 import random
@@ -3538,12 +3539,6 @@ class Variants:
         # Check system memory
         mem = psutil.virtual_memory()
 
-        # # Log
-        # log.debug(f"Mémoire totale : {mem.total}")
-        # log.debug(f"Mémoire disponible : {mem.available}")
-        # log.debug(f"Mémoire utilisée : {mem.used}")
-        # log.debug(f"Pourcentage utilisé : {mem.percent}")
-
         # Get memory type
         if type == "total":
             memory = str(mem.total)
@@ -3673,6 +3668,9 @@ class Variants:
         # variants table
         table_variants = self.get_table_variants()
 
+        # Connexion
+        conn = self.get_connexion()
+
         log.info(f"Update variants table from file '{os.path.basename(vcf_file)}'...")
 
         with TemporaryDirectory(dir=self.get_tmp_dir()) as tmp_dir:
@@ -3685,17 +3683,16 @@ class Variants:
                 input=vcf_file, load=True, config={"access": "RO"}
             )
 
-            log.debug(f"Variants input format {vcf_file_parquet.get_input_format()}")
+            log.debug(f"Variants input format '{vcf_file_parquet.get_input_format()}'")
 
             if vcf_file_parquet.get_input_format() == "parquet":
 
                 # list of parquet files
-                list_of_parquet = [vcf_file]
+                vcf_file_parquet_path = vcf_file
 
             else:
 
                 # Export parquet parameters
-                parquet_partitions = "None"
                 chunk_size = self.get_config().get("chunk_size", None)
                 threads = self.get_threads()
 
@@ -3703,20 +3700,14 @@ class Variants:
                 log.debug("Export VCF to partitioned parquet...")
                 vcf_file_parquet.export_output(
                     output_file=vcf_file_parquet_path,
-                    parquet_partitions=parquet_partitions,
                     chunk_size=chunk_size,
                     threads=threads,
                     export_header=True,
                 )
-                log.debug(f"Partitioned parquet generated: {vcf_file_parquet_path}")
+                log.debug(f"Parquet generated: {vcf_file_parquet_path}")
 
                 if remove_vcf_file:
                     remove_if_exists([vcf_file])
-
-                # list of parquet files
-                list_of_parquet = glob.glob(f"{vcf_file_parquet_path}/*.parquet")
-
-            log.debug(f"List of parquet: {list_of_parquet}")
 
             # Update if fields exist
             if update_existing_fields:
@@ -3742,67 +3733,205 @@ class Variants:
                 else:
                     log.debug("No common columns to update/remove")
 
-            log.debug(
-                f"Update variants table from {len(list_of_parquet)} parquet files..."
-            )
-
             # Upper case function for ALT and REF
             if upper_case:
                 upper_func = "upper"
             else:
                 upper_func = ""
 
-            for parquet_file in list_of_parquet:
-                log.debug(
-                    f"Update variants table from parquet file: {os.path.basename(parquet_file)}..."
+            # Create table/view from parquet files
+            table_source_name = "table_parquet_" + get_random(10)
+            sql_query_update = f"""
+                CREATE VIEW {table_source_name}
+                AS (
+                    SELECT "#CHROM", POS, {upper_func}(REF) as REF, {upper_func}(ALT) as ALT, INFO
+                    FROM read_parquet('{vcf_file_parquet_path}')
+                    WHERE INFO NOT IN ('','.')
                 )
-                sql_query_update = f"""
-                UPDATE {table_variants} as table_variants
-                    SET INFO = concat(
-                            CASE
-                                WHEN INFO NOT IN ('', '.')
-                                THEN INFO
-                                ELSE ''
-                            END,
-                            (
-                                SELECT 
-                                    concat(
-                                        CASE
-                                            WHEN table_variants.INFO NOT IN ('','.') AND table_parquet.INFO NOT IN ('','.')
-                                            THEN ';'
-                                            ELSE ''
-                                        END
-                                        ,
-                                        CASE
-                                            WHEN table_parquet.INFO NOT IN ('','.')
-                                            THEN table_parquet.INFO
-                                            ELSE ''
-                                        END
-                                    )
-                                FROM read_parquet('{parquet_file}') as table_parquet
-                                        WHERE CAST(table_parquet.\"#CHROM\" AS VARCHAR) = CAST(table_variants.\"#CHROM\" AS VARCHAR)
-                                        AND table_parquet.\"POS\" = table_variants.\"POS\"
-                                        AND {upper_func}(table_parquet.\"ALT\") = {upper_func}(table_variants.\"ALT\")
-                                        AND {upper_func}(table_parquet.\"REF\") = {upper_func}(table_variants.\"REF\")
-                                        AND table_parquet.INFO NOT IN ('','.')
-                            )
-                        )
-                    ;
-                    """
-                # log.debug(f"sql_query_update: {sql_query_update}")
-                self.conn.execute(sql_query_update)
-
-            # Clean INFO fields that are empty
-            sql_query_clean = f"""
-                UPDATE {table_variants}
-                SET INFO = CASE
-                    WHEN INFO IN ('','.')
-                    THEN '.'
-                    ELSE INFO
-                END
+                ;
             """
-            # log.debug(f"sql_query_clean: {sql_query_clean}")
-            self.conn.execute(sql_query_clean)
+            # log.debug(f"sql_query_update: {sql_query_update}")
+            conn.execute(sql_query_update)
+
+            # Update INFO fields with update_table function
+            source = {
+                "table": table_source_name,
+                "join_keys": ["#CHROM", "POS", "REF", "ALT"],
+                "columns": {
+                    "INFO": {
+                        "columns": ["INFO"],
+                        "mode": "append",
+                        "separator": ";",
+                    }
+                },
+            }
+            self.update_table(
+                dest_table=table_variants,
+                sources=[source],
+                physical_order=True,
+                force_strategy=None,
+                upper_case=upper_case,
+            )
+
+            return None
+
+    # def update_from_vcf_duckdb_old(
+    #     self,
+    #     vcf_file: str,
+    #     update_existing_fields: bool = False,
+    #     remove_vcf_file: bool = True,
+    #     upper_case: bool = True,
+    # ) -> None:
+    #     """
+    #     It takes a VCF file and updates the INFO column of the variants table in the database with the
+    #     INFO column of the VCF file
+
+    #     :param vcf_file: The path to the VCF file you want to update the database with
+    #     :type vcf_file: str
+    #     :param update_existing_fields: If True, existing fields in the INFO column will be updated
+    #     with the values from the VCF file. If False, only new fields will be added, defaults to False
+    #     :type update_existing_fields: bool (optional)
+    #     :param remove_vcf_file: If True, the VCF file will be removed after the update is complete,
+    #     defaults to True
+    #     :type remove_vcf_file: bool (optional)
+    #     :param upper_case: If True, the ALT and REF fields will be compared in uppercase, defaults to True
+    #     :type upper_case: bool (optional)
+    #     :return: None
+    #     """
+
+    #     # variants table
+    #     table_variants = self.get_table_variants()
+
+    #     log.info(f"Update variants table from file '{os.path.basename(vcf_file)}'...")
+
+    #     with TemporaryDirectory(dir=self.get_tmp_dir()) as tmp_dir:
+
+    #         log.debug(f"Create parquet files from VCF '{vcf_file}'...")
+
+    #         # Create parquet from VCF
+    #         vcf_file_parquet_path = os.path.join(tmp_dir, "vcf_file.parquet")
+    #         vcf_file_parquet = Variants(
+    #             input=vcf_file, load=True, config={"access": "RO"}
+    #         )
+
+    #         log.debug(f"Variants input format {vcf_file_parquet.get_input_format()}")
+
+    #         if vcf_file_parquet.get_input_format() == "parquet":
+
+    #             # list of parquet files
+    #             list_of_parquet = [vcf_file]
+
+    #         else:
+
+    #             # Export parquet parameters
+    #             parquet_partitions = "None"
+    #             chunk_size = self.get_config().get("chunk_size", None)
+    #             threads = self.get_threads()
+
+    #             # Export parquet files
+    #             log.debug("Export VCF to partitioned parquet...")
+    #             vcf_file_parquet.export_output(
+    #                 output_file=vcf_file_parquet_path,
+    #                 parquet_partitions=parquet_partitions,
+    #                 chunk_size=chunk_size,
+    #                 threads=threads,
+    #                 export_header=True,
+    #             )
+    #             log.debug(f"Partitioned parquet generated: {vcf_file_parquet_path}")
+
+    #             if remove_vcf_file:
+    #                 remove_if_exists([vcf_file])
+
+    #             # list of parquet files
+    #             list_of_parquet = glob.glob(f"{vcf_file_parquet_path}/*.parquet")
+
+    #         log.debug(f"List of parquet: {list_of_parquet}")
+
+    #         # Update if fields exist
+    #         if update_existing_fields:
+    #             # list of header columns
+    #             header_columns = self.get_header().infos.keys()
+    #             header_columns_vcf_file_parquet = (
+    #                 vcf_file_parquet.get_header().infos.keys()
+    #             )
+
+    #             # columns that exist in both
+    #             common_columns = list(
+    #                 set(header_columns).intersection(
+    #                     set(header_columns_vcf_file_parquet)
+    #                 )
+    #             )
+
+    #             # Remove common columns
+    #             if len(common_columns) > 0:
+    #                 log.debug(f"Common columns to update/remove: {common_columns}")
+    #                 self.rename_info_fields(
+    #                     fields_to_rename=dict.fromkeys(common_columns, None)
+    #                 )
+    #             else:
+    #                 log.debug("No common columns to update/remove")
+
+    #         log.debug(
+    #             f"Update variants table from {len(list_of_parquet)} parquet files..."
+    #         )
+
+    #         # Upper case function for ALT and REF
+    #         if upper_case:
+    #             upper_func = "upper"
+    #         else:
+    #             upper_func = ""
+
+    #         for parquet_file in list_of_parquet:
+    #             log.debug(
+    #                 f"Update variants table from parquet file: {os.path.basename(parquet_file)}..."
+    #             )
+    #             sql_query_update = f"""
+    #             UPDATE {table_variants} as table_variants
+    #                 SET INFO = concat(
+    #                         CASE
+    #                             WHEN INFO NOT IN ('', '.')
+    #                             THEN INFO
+    #                             ELSE ''
+    #                         END,
+    #                         (
+    #                             SELECT
+    #                                 concat(
+    #                                     CASE
+    #                                         WHEN table_variants.INFO NOT IN ('','.') AND table_parquet.INFO NOT IN ('','.')
+    #                                         THEN ';'
+    #                                         ELSE ''
+    #                                     END
+    #                                     ,
+    #                                     CASE
+    #                                         WHEN table_parquet.INFO NOT IN ('','.')
+    #                                         THEN table_parquet.INFO
+    #                                         ELSE ''
+    #                                     END
+    #                                 )
+    #                             FROM read_parquet('{parquet_file}') as table_parquet
+    #                                     WHERE CAST(table_parquet.\"#CHROM\" AS VARCHAR) = CAST(table_variants.\"#CHROM\" AS VARCHAR)
+    #                                     AND table_parquet.\"POS\" = table_variants.\"POS\"
+    #                                     AND {upper_func}(table_parquet.\"ALT\") = {upper_func}(table_variants.\"ALT\")
+    #                                     AND {upper_func}(table_parquet.\"REF\") = {upper_func}(table_variants.\"REF\")
+    #                                     AND table_parquet.INFO NOT IN ('','.')
+    #                         )
+    #                     )
+    #                 ;
+    #                 """
+    #             # log.debug(f"sql_query_update: {sql_query_update}")
+    #             self.conn.execute(sql_query_update)
+
+    #         # Clean INFO fields that are empty
+    #         sql_query_clean = f"""
+    #             UPDATE {table_variants}
+    #             SET INFO = CASE
+    #                 WHEN INFO IN ('','.')
+    #                 THEN '.'
+    #                 ELSE INFO
+    #             END
+    #         """
+    #         # log.debug(f"sql_query_clean: {sql_query_clean}")
+    #         self.conn.execute(sql_query_clean)
 
     def update_from_vcf_sqlite(self, vcf_file: str) -> None:
         """
@@ -9943,6 +10072,30 @@ class Variants:
             log.error(msg_err)
             raise ValueError(msg_err)
 
+    def get_columns_type(self, table: str) -> dict:
+        """
+        Get columns type of a table.
+        :param table: The `table` parameter is a string that represents the name of the table
+        for which you want to retrieve the column types.
+        :type table: str
+        :return: The function `get_columns_type` returns a dictionary where the keys are the
+        column names of the specified table and the values are the corresponding data types of
+        those columns.
+        """
+
+        # Get columns info
+        query = f"""
+            PRAGMA table_info('{table}')
+        """
+        df_columns = self.get_query_to_df(query)
+        
+        # Construct columns type dict
+        columns_type = {}
+        for _, row in df_columns.iterrows():
+            columns_type[row["name"]] = row["type"]
+
+        return columns_type
+
     def update_table_strategy(
         self,
         dest_table: str,
@@ -9953,6 +10106,7 @@ class Variants:
         cleanup: bool = False,
         strategy: str = "ctas",
         chunk_size: int = None,
+        upper_case: bool = False,
     ) -> None:
         """
         Update dest_table using multiple sources via CTAS.
@@ -10033,6 +10187,11 @@ class Variants:
         size of the chunks to be processed during the update operation. If not provided, it will
         default to a value from the configuration file or a predefined constant `DEFAULT_CHUNK_SIZE`.
         :type chunk_size: int or None
+        :param upper_case: The `upper_case` parameter is a boolean value that determines whether to
+        convert the values of the join keys to uppercase before performing the join operation. If set
+        to `True`, the join keys will be converted to uppercase using the `upper` function. If set to
+        `False`, the join keys will be used as they are. The default value is `False`.
+        :type upper_case: bool
 
         :return: The function `update_table` does not return anything. It performs an update
         operation on a destination table using multiple source tables and their specified columns.
@@ -10049,6 +10208,12 @@ class Variants:
         # chunking = False
         # Due to creation of entire table before update, chunking should be ok
         chunking = True
+
+        # Upper case function for ALT and REF
+        if upper_case:
+            upper_func = "upper"
+        else:
+            upper_func = ""
 
         # Default configuration
         # source columns
@@ -10077,7 +10242,18 @@ class Variants:
         for src in sources:
 
             join_keys = src.get("join_keys", default_join_keys)
+
+            # Find type of each columns in join keys in des_table table
+            join_keys_type = {}
+            dest_table_columns_type = self.get_columns_type(dest_table)
+            for join_key in join_keys:
+                join_keys_type[join_key] = dest_table_columns_type.get(
+                    join_key, "VARCHAR"
+                )
+            
+            # Table source
             src_table = src.get("table", None)
+
             if src_table:
 
                 # List of souce table
@@ -10086,20 +10262,34 @@ class Variants:
                 # Join clause
                 join_clause = f"""
                     LEFT JOIN {src.get("table")}
-                    USING ({', '.join([f'"{k}"' for k in join_keys])})
+                    ON ({' AND '.join([
+                        f'd."{k}" = {src_table}."{k}"' if join_keys_type.get(k, "").upper() not in ["VARCHAR", "TEXT"]
+                        else f'{upper_func}(d."{k}") = {upper_func}({src_table}."{k}")'
+                        for k in join_keys
+                        ])})
                 """
+
+                # -- CTAS strategy --
+
                 join_clauses.append(join_clause)
+
+                # -- Update strategy --
 
                 # where clause
                 where_clause = (
                     f""" {' AND '.join([f'd."{k}" = n."{k}"' for k in join_keys])} """
                 )
 
+                # Store join clauses and keys for each where clause
+
+                # if where clause not exist, create it
                 if where_clause not in where_clauses:
                     where_clauses[where_clause] = {
                         "join_clause": [],
                         "join_keys": [],
                     }
+
+                # Append join clause and keys
                 where_clauses[where_clause]["join_clause"].append(join_clause)
                 where_clauses[where_clause]["join_keys"] += join_keys
 
@@ -10269,23 +10459,28 @@ class Variants:
                     max_rowid = conn.execute(
                         f"SELECT MAX(_rowid) AS max_rowid FROM {new_dest_table}"
                     ).df()["max_rowid"][0]
+                    # Handle NaN case or None
+                    if max_rowid is None or math.isnan(max_rowid):
+                        max_rowid = 0
 
                     # Process chunks
-                    for chunk_start in range(1, max_rowid + 1, chunk_size):
-                        chunk_end = min(chunk_start + chunk_size - 1, max_rowid)
-                        log.debug(
-                            f"  Updating rows with _rowid between {chunk_start} and {chunk_end}..."
-                        )
-                        update_query = f"""
-                            UPDATE {dest_table} AS d
-                            SET
-                                {", ".join([f'"{col}" = n."{col}"' for col in where_column_set])}
-                                FROM {new_dest_table} AS n
-                                WHERE {" ".join(set(where_clauses.keys()))}
-                                AND n._rowid BETWEEN {chunk_start} AND {chunk_end}
-                        """
-                        # log.debug(f"update_query:\n{update_query}")
-                        conn.execute(update_query)
+                    if max_rowid >= 0:
+                        for chunk_start in range(1, int(max_rowid) + 1, chunk_size):
+                            chunk_end = min(
+                                chunk_start + chunk_size - 1, int(max_rowid)
+                            )
+                            log.debug(
+                                f"  Updating rows with _rowid between {chunk_start} and {chunk_end}..."
+                            )
+                            update_query = f"""
+                                UPDATE {dest_table} AS d
+                                SET
+                                    {", ".join([f'"{col}" = n."{col}"' for col in where_column_set])}
+                                    FROM {new_dest_table} AS n
+                                    WHERE {" ".join(set(where_clauses.keys()))}
+                                    AND n._rowid BETWEEN {chunk_start} AND {chunk_end}
+                            """
+                            conn.execute(update_query)
 
                 else:
 
@@ -10297,7 +10492,6 @@ class Variants:
                             FROM {new_dest_table} AS n
                             WHERE {" ".join(set(where_clauses.keys()))}
                         """
-                    log.debug(f"update_query:\n{update_query}")
                     conn.execute(update_query)
 
                 # Cleanup
@@ -10354,6 +10548,7 @@ class Variants:
         cleanup: bool = False,
         force_strategy: str = None,
         chunk_size: int = None,
+        upper_case: bool = False,
     ) -> None:
         """
         Update dest_table using multiple sources via CTAS or hybrid UPDATE.
@@ -10466,6 +10661,8 @@ class Variants:
             physical_order=physical_order,
             cleanup=cleanup,
             strategy=strategy.lower(),
+            chunk_size=chunk_size,
+            upper_case=upper_case,
         )
 
         return None
