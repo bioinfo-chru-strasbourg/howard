@@ -5099,6 +5099,7 @@ def choose_update_strategy_safe(
     cpu_factor = max(1, int(threads) / 1)
     update_penalty *= cpu_factor
     ctas_penalty *= cpu_factor
+    explanation.append(f"RAM available: {ram_available_gb}G")
     explanation.append(f"CPU factor based on {threads} threads: {cpu_factor:.2f}")
     explanation.append(f"update_penalty: {update_penalty}")
     explanation.append(f"ctas_penalty: {ctas_penalty}")

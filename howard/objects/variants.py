@@ -7219,12 +7219,12 @@ class Variants:
                 f"Existing annotations in VCF: {vcf_annotation} [{vcf_annotation_line}]"
             )
 
-        # Added columns
-        added_columns = []
-
         # drop indexes
         log.debug("Drop indexes...")
         self.drop_indexes()
+
+        # Init SQL query chromosomes dict
+        sql_query_chromosomes_dict = None
 
         if annotations:
 
@@ -7242,6 +7242,9 @@ class Variants:
                     if database_infos not in annotations:
                         annotations[database_infos] = {"INFO": None}
 
+            # Update sources for all annotations
+            update_sources = []
+
             for annotation in annotations:
 
                 if annotation in ["ALL"]:
@@ -7255,7 +7258,7 @@ class Variants:
                 if not annotation_fields:
                     annotation_fields = {"INFO": None}
 
-                log.debug(f"Annotation '{annotation_name}'")
+                log.info(f"Annotation '{annotation_name}'")
                 log.debug(
                     f"Annotation '{annotation_name}' - fields: {annotation_fields}"
                 )
@@ -7572,7 +7575,9 @@ class Variants:
                     if sql_query_annotation_update_info_sets:
 
                         # Annotate
-                        log.info(f"Annotation '{annotation_name}' - Annotation...")
+                        log.info(
+                            f"Annotation '{annotation_name}' - Create annotation table..."
+                        )
 
                         # Join query annotation update info sets for SQL
                         sql_query_annotation_update_info_sets_sql = ",".join(
@@ -7580,33 +7585,86 @@ class Variants:
                         )
 
                         # Check chromosomes list (and variants infos)
-                        sql_query_chromosomes = f"""
-                            SELECT table_variants."#CHROM" as CHROM, count(*) AS count_variants, min(POS) AS min_variants, MAX(POS) AS max_variants
-                            FROM {table_variants} as table_variants
-                            GROUP BY table_variants."#CHROM"
-                            ORDER BY table_variants."#CHROM"
-                            """
-                        sql_query_chromosomes_df = self.conn.execute(
-                            sql_query_chromosomes
-                        ).df()
-                        sql_query_chromosomes_dict = {
-                            entry["CHROM"]: {
-                                "count": entry["count_variants"],
-                                "min": entry["min_variants"],
-                                "max": entry["max_variants"],
+                        if sql_query_chromosomes_dict is None:
+                            sql_query_chromosomes_dict
+                            sql_query_chromosomes = f"""
+                                SELECT table_variants."#CHROM" as CHROM, count(*) AS count_variants, min(POS) AS min_variants, MAX(POS) AS max_variants
+                                FROM {table_variants} as table_variants
+                                GROUP BY table_variants."#CHROM"
+                                ORDER BY table_variants."#CHROM"
+                                """
+                            sql_query_chromosomes_df = self.conn.execute(
+                                sql_query_chromosomes
+                            ).df()
+                            sql_query_chromosomes_dict = {
+                                entry["CHROM"]: {
+                                    "count": entry["count_variants"],
+                                    "min": entry["min_variants"],
+                                    "max": entry["max_variants"],
+                                }
+                                for index, entry in sql_query_chromosomes_df.iterrows()
                             }
-                            for index, entry in sql_query_chromosomes_df.iterrows()
-                        }
+
+                        # Count total variants to annotate
+                        total_variants_to_annotate = sum(
+                            [
+                                sql_query_chromosomes_dict[chromosome]["count"]
+                                for chromosome in sql_query_chromosomes_dict
+                            ]
+                        )
+                        log.debug(
+                            f"Annotation '{annotation_name}' - Total variants to annotate: {total_variants_to_annotate}"
+                        )
 
                         # Init
                         nb_of_query = 0
                         nb_of_variant_annotated = 0
                         query_dict = query_dict_remove
 
+                        # Create temporary table for batch update
+                        sql_query_annotation_chrom_interval_pos_union = (
+                            "annotation_chrom_interval_pos_union_" + get_random(10)
+                        )
+
+                        # Create empty table for batch update
+                        sql_create_empty_table = f"""
+                            CREATE TABLE {sql_query_annotation_chrom_interval_pos_union} AS
+                                SELECT
+                                    "#CHROM",
+                                    "POS",
+                                    "REF",
+                                    "ALT",
+                                    "INFO"
+                                FROM {table_variants} AS table_variants
+                                WHERE 1=0
+                            ;
+                        """
+                        # log.debug(f"sql_create_empty_table={sql_create_empty_table}")
+                        self.conn.execute(sql_create_empty_table)
+
+                        # Add update source
+                        source = {
+                            "table": sql_query_annotation_chrom_interval_pos_union,
+                            "join_keys": [
+                                "#CHROM",
+                                "POS",
+                                "REF",
+                                "ALT",
+                            ],
+                            "columns": {
+                                "INFO": {
+                                    "columns": ["INFO"],
+                                    "mode": "append",
+                                    "separator": ";",
+                                }
+                            },
+                        }
+                        update_sources.append(source)
+
                         # For each chromosome, first bacth by chromosome
                         for chrom in sql_query_chromosomes_dict:
 
-                            # Number of variant by chromosome
+                            # --- Number of variant by chromosome
                             nb_of_variant_by_chrom = sql_query_chromosomes_dict.get(
                                 chrom, {}
                             ).get("count", 0)
@@ -7615,11 +7673,13 @@ class Variants:
                                 f"Annotation '{annotation_name}' - Chromosome '{chrom}' [{nb_of_variant_by_chrom} variants]..."
                             )
 
+                            # --- Prepare SQL clauses for annotation (regions or variants)
+
                             # Annotation with regions database
                             if parquet_type in ["regions"]:
                                 sql_query_annotation_from_clause = f"""
-                                    FROM (
-                                        SELECT 
+                                    (
+                                        SELECT
                                             '{chrom}' AS \"#CHROM\",
                                             table_variants_from.\"POS\" AS \"POS\",
                                             {",".join(sql_query_annotation_to_agregate)}
@@ -7631,27 +7691,38 @@ class Variants:
                                         )
                                         WHERE table_variants_from.\"#CHROM\" in ('{chrom}')
                                         GROUP BY table_variants_from.\"POS\"
-                                        )
-                                        as table_parquet
+                                    )
+                                    as table_parquet
                                 """
 
-                                sql_query_annotation_where_clause = """
-                                    table_parquet.\"#CHROM\" = table_variants.\"#CHROM\"
-                                    AND table_parquet.\"POS\" = table_variants.\"POS\"
+                                sql_query_annotation_join_using = f"""
+                                    ("#CHROM", "POS")
+                                """
+
+                                sql_query_annotation_where_clause = f"""
+                                    table_variants."#CHROM" = '{chrom}'
+                                    AND table_variants."#CHROM" = table_parquet."#CHROM"
+                                    AND table_variants.POS = table_parquet.POS
                                 """
 
                             # Annotation with variants database
                             else:
                                 sql_query_annotation_from_clause = f"""
-                                    FROM {parquet_file_link} as table_parquet
+                                    ({parquet_file_link}) as table_parquet
                                 """
                                 sql_query_annotation_where_clause = f"""
                                     table_variants."#CHROM" = '{chrom}'
-                                    AND table_parquet.\"#CHROM\" = table_variants.\"#CHROM\" 
-                                    AND table_parquet.\"POS\" = table_variants.\"POS\"
-                                    AND table_parquet.\"ALT\" = table_variants.\"ALT\"
-                                    AND table_parquet.\"REF\" = table_variants.\"REF\"
+                                    AND table_variants."#CHROM" = table_parquet."#CHROM"
+                                    AND table_variants.POS = table_parquet.POS
+                                    AND table_variants.REF = table_parquet.REF
+                                    AND table_variants.ALT = table_parquet.ALT
                                 """
+
+                                sql_query_annotation_join_using = f"""
+                                    ("#CHROM", "POS", "REF", "ALT")
+                                """
+
+                            # --- Batch by position intervals
 
                             # Get min/max POS and number of variants by chrom
                             nb_of_variant_by_chrom = sql_query_chromosomes_dict.get(
@@ -7664,17 +7735,6 @@ class Variants:
                                 chrom, {}
                             ).get("max", 0)
 
-                            # DEBUG
-                            # log.debug(
-                            #     f"nb_of_variant_by_chrom={nb_of_variant_by_chrom}"
-                            # )
-                            # log.debug(
-                            #     f"min_of_variant_by_chrom={min_of_variant_by_chrom}"
-                            # )
-                            # log.debug(
-                            #     f"max_of_variant_by_chrom={max_of_variant_by_chrom}"
-                            # )
-
                             # Create batch queries by position intervals
                             batch_index = 0
                             nb_windows = (nb_of_variant_by_chrom // chunk_size) + 1
@@ -7686,11 +7746,7 @@ class Variants:
                                 + 1
                             )
 
-                            # DEBUG
-                            # log.debug(f"nb_windows={nb_windows}")
-                            # log.debug(
-                            #     f"chunk_size_batch_update={chunk_size_batch_update}"
-                            # )
+                            # --- Create batch queries
 
                             # Create queries by position intervals
                             for start in range(
@@ -7698,48 +7754,58 @@ class Variants:
                                 max_of_variant_by_chrom,
                                 chunk_size_batch_update,
                             ):
+
+                                # chunking positions
                                 end = start + chunk_size_batch_update
                                 batch_index += 1
 
                                 # where clause in any cases, because it speedup the query
                                 where_clause_batch_split = f" AND table_variants.POS >= {start} AND table_variants.POS < {end} "
 
-                                # Create update query
+                                # Insert into annotation_chrom_interval_pos_union
                                 sql_query_annotation_chrom_interval_pos = f"""
-                                    UPDATE {table_variants} as table_variants
-                                        SET INFO = 
+                                    INSERT INTO {sql_query_annotation_chrom_interval_pos_union}
+                                        SELECT
+                                            table_variants."#CHROM",
+                                            table_variants."POS",
+                                            table_variants."REF",
+                                            table_variants."ALT",
                                             concat(
-                                                CASE WHEN table_variants.INFO NOT IN ('','.')
-                                                    THEN table_variants.INFO
-                                                    ELSE ''
-                                                END
-                                                ,
-                                                CASE WHEN table_variants.INFO NOT IN ('','.')
-                                                            AND (
-                                                            concat({sql_query_annotation_update_info_sets_sql})
-                                                            )
-                                                            NOT IN ('','.') 
-                                                        THEN ';'
-                                                        ELSE ''
-                                                END
-                                                ,
-                                                {sql_query_annotation_update_info_sets_sql}
-                                                )
-                                        {sql_query_annotation_from_clause}
+                                                    {sql_query_annotation_update_info_sets_sql}
+                                                    ) AS INFO
+                                        FROM {table_variants} AS table_variants
+                                        LEFT JOIN {sql_query_annotation_from_clause}
+                                        USING {sql_query_annotation_join_using}
                                         WHERE {sql_query_annotation_where_clause}
                                             {where_clause_batch_split}
-                                        ;
-                                    """
+                                            ;
+                                """
 
-                                # DEBUG
+                                # Log
                                 # log.debug(
                                 #     f"sql_query_annotation_chrom_interval_pos={sql_query_annotation_chrom_interval_pos}"
                                 # )
 
+                                log.debug(
+                                    f"Annotation '{annotation_name}' - Chromosome '{chrom}' [{nb_of_variant_by_chrom} variants] - batch [{batch_index}/{nb_windows}][{batch_index/nb_windows:.2%}%] - positions [{start}-{end}]..."
+                                )
+
+                                self.get_connexion().execute(
+                                    sql_query_annotation_chrom_interval_pos
+                                )
+
+                                # DEVEL
+                                # query_devel = f"""
+                                #     SELECT count(*) FROM {annotation_query_update_name} LIMIT 10
+                                # """
+
                                 # Add update query to dict
-                                query_dict[
-                                    f"{chrom} [{nb_of_variant_by_chrom} variants] - batch [{batch_index}/{nb_windows}][{batch_index/nb_windows:.2%}%]"
-                                ] = sql_query_annotation_chrom_interval_pos
+                                # query_dict[
+                                #     f"{chrom} [{nb_of_variant_by_chrom} variants] - batch [{batch_index}/{nb_windows}][{batch_index/nb_windows:.2%}%]"
+                                # ] = sql_query_annotation_chrom_interval_pos
+
+                        # Execute queries one by one to have logging
+                        # For queries in query_dict, mainly to remove annotations to update
 
                         nb_of_query = len(query_dict)
                         num_query = 0
@@ -7751,18 +7817,18 @@ class Variants:
                             query = query_dict[query_name]
                             num_query += 1
                             log.info(
-                                f"Annotation '{annotation_name}' - Annotation - Query [{num_query}/{nb_of_query}][{num_query/nb_of_query:.2%}] {query_name}..."
+                                f"Annotation '{annotation_name}' - Annotation - Query {query_name}..."
                             )
                             result = self.conn.execute(query)
                             nb_of_variant_annotated_by_query = result.df()["Count"][0]
                             nb_of_variant_annotated += nb_of_variant_annotated_by_query
-                            log.info(
-                                f"Annotation '{annotation_name}' - Annotation - Query [{num_query}/{nb_of_query}][{num_query/nb_of_query:.2%}] {query_name} - {nb_of_variant_annotated_by_query} variants annotated"
-                            )
+                            # log.info(
+                            #     f"Annotation '{annotation_name}' - Annotation - Query [{num_query}/{nb_of_query}][{num_query/nb_of_query:.2%}] {query_name} - {nb_of_variant_annotated_by_query} variants annotated"
+                            # )
 
-                        log.info(
-                            f"Annotation '{annotation_name}' - Annotation of {nb_of_variant_annotated} variants out of {nb_variants} (with {nb_of_query} queries)"
-                        )
+                        # log.info(
+                        #     f"Annotation '{annotation_name}' - Annotation of {nb_of_variant_annotated} variants out of {nb_variants} (with {nb_of_query} queries)"
+                        # )
 
                     else:
 
@@ -7770,9 +7836,22 @@ class Variants:
                             f"Annotation '{annotation_name}' - No Annotations available"
                         )
 
-        # Remove added columns
-        for added_column in added_columns:
-            self.drop_column(column=added_column)
+            # Update sources
+            # log.debug(f"update_sources={update_sources}")
+
+            # Perform update
+            if len(update_sources) > 0:
+                log.info(f"Annotations - Perform with {len(update_sources)} sources...")
+                self.update_table(
+                    dest_table=table_variants,
+                    sources=update_sources,
+                    samples=10000,
+                    force_strategy=None,
+                    chromosomes=None,
+                    only_strategy=False,
+                )
+            else:
+                log.info("No annotation sources")
 
     def annotation_splice(self, threads: int = None) -> None:
         """
@@ -9883,6 +9962,7 @@ class Variants:
                                     physical_order=True,
                                     # chunk_size=10000000,
                                     force_strategy=None,
+                                    chromosomes=None,
                                 )
 
                                 # Clean temp operation view
@@ -10088,7 +10168,7 @@ class Variants:
             PRAGMA table_info('{table}')
         """
         df_columns = self.get_query_to_df(query)
-        
+
         # Construct columns type dict
         columns_type = {}
         for _, row in df_columns.iterrows():
@@ -10105,8 +10185,10 @@ class Variants:
         physical_order: bool = True,
         cleanup: bool = False,
         strategy: str = "ctas",
+        chunking: bool = True,
         chunk_size: int = None,
         upper_case: bool = False,
+        chromosomes: list = None,
     ) -> None:
         """
         Update dest_table using multiple sources via CTAS.
@@ -10183,6 +10265,12 @@ class Variants:
             - If `strategy` is set to "update", the update will be performed using an "UPDATE" statement. This involves directly modifying the existing
               rows in the destination table based on the data from the source tables.
         :type strategy: str
+        :param chunking: The `chunking` parameter is a boolean value that determines whether to
+        process the update operation in chunks or not. If set to `True`, the update will be
+        performed in smaller chunks of data, which can help improve performance and reduce memory
+        usage. If set to `False`, the update will be performed on the entire dataset at once. The
+        default value is `True`.
+        :type chunking: bool
         :param chunk_size: The `chunk_size` parameter is an optional integer that specifies the
         size of the chunks to be processed during the update operation. If not provided, it will
         default to a value from the configuration file or a predefined constant `DEFAULT_CHUNK_SIZE`.
@@ -10192,11 +10280,19 @@ class Variants:
         to `True`, the join keys will be converted to uppercase using the `upper` function. If set to
         `False`, the join keys will be used as they are. The default value is `False`.
         :type upper_case: bool
+        :param chromosomes: The `chromosomes` parameter is a list of chromosome names (strings)
+        that can be used to filter the data during the update process. If provided, only the rows
+        corresponding to the specified chromosomes will be considered for the update. If not
+        provided, all chromosomes will be included in the update process.
+        :type chromosomes: list or None
 
         :return: The function `update_table` does not return anything. It performs an update
         operation on a destination table using multiple source tables and their specified columns.
 
         """
+
+        # LOG
+        log.debug(f"Update table '{dest_table}' using strategy '{strategy}'...")
 
         conn = self.get_connexion()
 
@@ -10207,7 +10303,7 @@ class Variants:
         # chunking desactivated because of some specific tables (e.g., operations on multiple lines) ???
         # chunking = False
         # Due to creation of entire table before update, chunking should be ok
-        chunking = True
+        # chunking = True
 
         # Upper case function for ALT and REF
         if upper_case:
@@ -10250,7 +10346,7 @@ class Variants:
                 join_keys_type[join_key] = dest_table_columns_type.get(
                     join_key, "VARCHAR"
                 )
-            
+
             # Table source
             src_table = src.get("table", None)
 
@@ -10262,11 +10358,11 @@ class Variants:
                 # Join clause
                 join_clause = f"""
                     LEFT JOIN {src.get("table")}
-                    ON ({' AND '.join([
+                    ON {' AND '.join([
                         f'd."{k}" = {src_table}."{k}"' if join_keys_type.get(k, "").upper() not in ["VARCHAR", "TEXT"]
                         else f'{upper_func}(d."{k}") = {upper_func}({src_table}."{k}")'
                         for k in join_keys
-                        ])})
+                        ])}
                 """
 
                 # -- CTAS strategy --
@@ -10428,59 +10524,106 @@ class Variants:
                 ]
 
                 # Create temp table with required columns
-                new_dest_table = f"tmp_new_{dest_table}_{random.randrange(1000000)}"
+                new_dest_table = f"tmp_new_{dest_table}_{get_random(10)}"
+
                 sql = f"""
-                    CREATE TABLE {new_dest_table} AS
-                    WITH d AS (
-                        SELECT * 
-                            {rowid_expr} -- for update chunking and physical_order
-                        FROM {dest_table}
-                    )
-                    SELECT
-                        {", ".join(where_clause_join_keys)},
-                        {", ".join(where_column_exprs)}
-                        , _rowid -- keep rowid for update with chunking
-                    FROM d
-                    {" ".join(where_clause_join_clauses)}
-                    {"ORDER BY d._rowid" if physical_order else ""} -- only if physical order
+                    CREATE VIEW {new_dest_table} AS
+                        (
+                            SELECT
+                                {", ".join(where_clause_join_keys)},
+                                {", ".join(where_column_exprs)},
+                                row_number() OVER () AS _rowid
+                            FROM variants d
+                            {" ".join(where_clause_join_clauses)}
+                        );
                 """
 
+                # log.debug(f"SQL: {sql}")
+
                 # Execute Update Creation View
-                log.debug("Execute Update Creation View for update_table...")
+                log.debug("Execute Update Creation View...")
                 conn.execute(sql)
 
                 # Update dest_table with new_dest_table
-                log.debug("Update dest_table with new_dest_table...")
+                log.debug(f"Updating table {dest_table}...")
 
                 if chunking:
 
                     # Update table {dest_table} with new table
                     # split update by chunk (chunk_size) on _rowid column to avoid transaction too large
                     max_rowid = conn.execute(
-                        f"SELECT MAX(_rowid) AS max_rowid FROM {new_dest_table}"
+                        f"SELECT count(1) AS max_rowid FROM {dest_table}"
                     ).df()["max_rowid"][0]
                     # Handle NaN case or None
                     if max_rowid is None or math.isnan(max_rowid):
                         max_rowid = 0
 
+                    # Range of rowid
+                    range_rowid = range(1, int(max_rowid) + 1, chunk_size)
+
                     # Process chunks
+                    chunk_i = 0
                     if max_rowid >= 0:
-                        for chunk_start in range(1, int(max_rowid) + 1, chunk_size):
+
+                        for chunk_start in range_rowid:
+
+                            # Chunk info
+                            chunk_i += 1
                             chunk_end = min(
                                 chunk_start + chunk_size - 1, int(max_rowid)
                             )
                             log.debug(
-                                f"  Updating rows with _rowid between {chunk_start} and {chunk_end}..."
+                                f"Updating table {dest_table} - rows between {chunk_start} and {chunk_end} [{chunk_i}/{len(range_rowid)}][{chunk_i/len(range_rowid)*100:.2f}%]..."
                             )
-                            update_query = f"""
-                                UPDATE {dest_table} AS d
-                                SET
-                                    {", ".join([f'"{col}" = n."{col}"' for col in where_column_set])}
-                                    FROM {new_dest_table} AS n
+
+                            # Update query without chromosome chunking
+                            if chromosomes is None:
+                                update_query = f"""
+                                    UPDATE {dest_table} AS d
+                                    SET
+                                        {", ".join([f'"{col}" = n."{col}"' for col in where_column_set])}
+                                        FROM {new_dest_table} AS n
                                     WHERE {" ".join(set(where_clauses.keys()))}
+                                    -- AND n."#CHROM" = 'chr1'
                                     AND n._rowid BETWEEN {chunk_start} AND {chunk_end}
-                            """
-                            conn.execute(update_query)
+                                """
+                                # log.debug(f"update_query:\n{update_query}")
+                                conn.execute(update_query)
+
+                            # Update query with chromosome chunking
+                            else:
+
+                                # if chromosomes not provided, as an empty list, get list of chromosomes from dest_table
+                                if len(chromosomes) == 0:
+
+                                    # List of chromosomes in dest_table with query
+                                    query_chromosomes = f"""
+                                        SELECT DISTINCT "#CHROM" AS chrom FROM {dest_table}
+                                        ORDER BY TRY_CAST(regexp_extract("#CHROM", '(d+)') AS INTEGER) NULLS LAST, "#CHROM"
+                                    """
+                                    df_chromosomes = conn.execute(
+                                        query_chromosomes
+                                    ).df()
+                                    chromosomes = df_chromosomes["chrom"].tolist()
+
+                                # Process each chromosome
+                                for chrom in chromosomes:
+
+                                    log.debug(
+                                        f"Updating table {dest_table} - rows between {chunk_start} and {chunk_end} [{chunk_i}/{len(range_rowid)}][{chunk_i/len(range_rowid)*100:.2f}%] - chromosome {chrom}..."
+                                    )
+
+                                    update_query = f"""
+                                        UPDATE {dest_table} AS d
+                                        SET
+                                            {", ".join([f'"{col}" = n."{col}"' for col in where_column_set])}
+                                            FROM {new_dest_table} AS n
+                                        WHERE {" ".join(set(where_clauses.keys()))}
+                                        AND n."#CHROM" = '{chrom}'
+                                        AND n._rowid BETWEEN {chunk_start} AND {chunk_end}
+                                    """
+                                    # log.debug(f"update_query:\n{update_query}")
+                                    conn.execute(update_query)
 
                 else:
 
@@ -10492,6 +10635,7 @@ class Variants:
                             FROM {new_dest_table} AS n
                             WHERE {" ".join(set(where_clauses.keys()))}
                         """
+                    # log.debug(f"update_query:\n{update_query}")
                     conn.execute(update_query)
 
                 # Cleanup
@@ -10504,26 +10648,160 @@ class Variants:
 
         elif strategy == "ctas":
 
-            # Create new dest table with required columns
-            new_dest_table = f"tmp_new_{dest_table}_{random.randrange(1000000)}"
-            sql = f"""
-                CREATE TABLE {new_dest_table} AS
-                WITH d AS (
-                    SELECT * {rowid_expr}
-                    FROM {dest_table}
-                )
-                SELECT
-                    {", ".join(column_exprs)}
-                FROM d
-                {" ".join(join_clauses)}
-                {"ORDER BY d._rowid" if physical_order else ""}
-            """
+            # Log
+            log.debug("Execute CTAS...")
 
-            # Execute CTAS
-            log.debug("Execute CTAS for update_table...")
-            conn.execute(sql)
+            if chunking:
+
+                # Create new dest table with required columns OK
+                new_dest_table = f"tmp_new_{dest_table}_{get_random(10)}"
+
+                schema_sql = f"""
+                    CREATE TABLE {new_dest_table} AS
+                    SELECT * FROM {dest_table} WHERE 1=0
+                """
+                # log.debug(f"Schema SQL for update_table:\n{schema_sql}")
+                conn.execute(schema_sql)
+
+                # Update table {dest_table} with new table
+                # split update by chunk (chunk_size) on _rowid column to avoid transaction too large
+                max_rowid = conn.execute(
+                    f"SELECT count(1) AS max_rowid FROM {dest_table}"
+                ).df()["max_rowid"][0]
+                # Handle NaN case or None
+                if max_rowid is None or math.isnan(max_rowid):
+                    max_rowid = 0
+
+                # SQL template for update with CTAS strategy
+                sql = """
+                    INSERT INTO {new_dest_table}
+                    WITH d AS (
+                        SELECT * {rowid_expr}
+                        FROM {dest_table}
+                        {dest_where_chrom}
+                        QUALIFY _rowid BETWEEN {start} AND {end}
+                    ),
+                    joined AS (
+                        SELECT
+                            {join_colunls_exprs}, _rowid
+                        FROM d
+                        {join_clauses}
+                        {join_where_chrom}
+                    ),
+                    dedup AS (
+                        SELECT *
+                        FROM joined
+                        QUALIFY row_number() OVER (
+                            PARTITION BY _rowid
+                            ORDER BY "INFO" DESC NULLS LAST
+                        ) = 1
+                    )
+                    SELECT
+                        {dest_cols}
+                    FROM dedup
+                    
+                    {order_by}
+                """
+
+                # Range of rowid
+                range_rowid = range(1, int(max_rowid) + 1, chunk_size)
+
+                # Process chunks
+                chunk_i = 0
+                for chunk_start in range_rowid:
+
+                    # Chunk info
+                    chunk_i += 1
+                    chunk_end = chunk_start + chunk_size - 1
+                    log.debug(
+                        f"Execute CTAS on table {dest_table} - rows between {chunk_start} and {chunk_end} [{chunk_i}/{len(range_rowid)}][{chunk_i/len(range_rowid)*100:.2f}%]..."
+                    )
+
+                    # Update query without chromosome chunking
+                    if chromosomes is None:
+                        sql_query = sql.format(
+                            new_dest_table=new_dest_table,
+                            rowid_expr=rowid_expr,
+                            dest_table=dest_table,
+                            start=chunk_start,
+                            end=chunk_end,
+                            join_colunls_exprs=", ".join(column_exprs),
+                            join_clauses=" ".join(join_clauses),
+                            dest_cols=", ".join(f'"{col}"' for col in dest_cols),
+                            order_by="ORDER BY _rowid" if physical_order else "",
+                            dest_where_chrom="",
+                            join_where_chrom="",
+                        )
+                        # log.debug(f"CTAS SQL for update_table:\n{sql_query}")
+                        conn.execute(sql_query)
+
+                    else:
+
+                        # if chromosomes not provided, as an empty list, get list of chromosomes from dest_table
+                        if len(chromosomes) == 0:
+
+                            # List of chromosomes in dest_table with query
+                            query_chromosomes = f"""
+                                SELECT DISTINCT "#CHROM" AS chrom FROM {dest_table}
+                                ORDER BY TRY_CAST(regexp_extract("#CHROM", '(d+)') AS INTEGER) NULLS LAST, "#CHROM"
+                            """
+                            df_chromosomes = conn.execute(query_chromosomes).df()
+                            chromosomes = df_chromosomes["chrom"].tolist()
+
+                        # Process each chromosome
+                        for chrom in chromosomes:
+                            sql_query = sql.format(
+                                new_dest_table=new_dest_table,
+                                rowid_expr=rowid_expr,
+                                dest_table=dest_table,
+                                start=start,
+                                end=end,
+                                join_colunls_exprs=", ".join(column_exprs),
+                                join_clauses=" ".join(join_clauses),
+                                dest_cols=", ".join(f'"{col}"' for col in dest_cols),
+                                order_by="ORDER BY _rowid" if physical_order else "",
+                                dest_where_chrom=f"""WHERE "#CHROM" LIKE '{chrom}'""",
+                                join_where_chrom=f"""WHERE d."#CHROM" LIKE '{chrom}'""",
+                            )
+                            log.debug(f"CTAS SQL for update_table:\n{sql_query}")
+
+                            # Execute CTAS
+                            log.debug(
+                                f"Execute CTAS on table {dest_table} - rows between {chunk_start} and {chunk_end} [{chunk_i}/{len(range_rowid)}][{chunk_i/len(range_rowid)*100:.2f}%] - chromosome {chrom}..."
+                            )
+                            conn.execute(sql_query)
+
+                # # Replace dest_table with new_dest_table
+                # log.debug(
+                #     f"Execute CTAS on table {dest_table} - Replace CTAS tables..."
+                # )
+                # conn.execute(f"DROP TABLE {dest_table}")
+                # conn.execute(f"ALTER TABLE {new_dest_table} RENAME TO {dest_table}")
+
+            else:
+
+                # Create new dest table with required columns OK
+                new_dest_table = f"tmp_new_{dest_table}_{get_random(10)}"
+                sql = f"""
+                    CREATE TABLE {new_dest_table} AS
+                    WITH d AS (
+                        SELECT * {rowid_expr}
+                        FROM {dest_table}
+                    )
+                    SELECT
+                        {", ".join(column_exprs)}
+                    FROM d
+                    {" ".join(join_clauses)}
+                    {"ORDER BY d._rowid" if physical_order else ""}
+                """
+                # log.debug(f"CTAS SQL for update_table:\n{sql}")
+
+                # Execute CTAS
+                log.debug(f"Execute CTAS on table {dest_table}...")
+                conn.execute(sql)
 
             # Replace dest_table with new_dest_table
+            log.debug(f"Execute CTAS on table {dest_table} - Replace CTAS tables...")
             conn.execute(f"DROP TABLE {dest_table}")
             conn.execute(f"ALTER TABLE {new_dest_table} RENAME TO {dest_table}")
 
@@ -10549,6 +10827,9 @@ class Variants:
         force_strategy: str = None,
         chunk_size: int = None,
         upper_case: bool = False,
+        samples: int = 100000,
+        chromosomes: list = None,
+        only_strategy: bool = False,
     ) -> None:
         """
         Update dest_table using multiple sources via CTAS or hybrid UPDATE.
@@ -10600,6 +10881,14 @@ class Variants:
         :type ctas_threshold: float
         :param chunk_size: threshold to use CTAS based on dest table size (number of rows)
         :type chunk_size: int
+        :param upper_case: upper case join keys
+        :type upper_case: bool
+        :param samples: number of samples to use for statistics
+        :type samples: int
+        :param chromosomes: list of chromosomes to chunk update
+        :type chromosomes: list or None
+        :param only_strategy: only return chosen strategy without performing update
+        :type only_strategy: bool
 
         :return: None
         :rtype: None
@@ -10641,16 +10930,23 @@ class Variants:
                 dest_table=dest_table,
                 sources=sources,
                 default_join_keys=default_join_keys,
-                samples=100000,
+                samples=samples,
                 threads=threads,
             )
 
-            log.debug(f"Chosen strategy: {strategy}")
-            for reason in reasoning:
-                log.debug(reason)
-
         else:
             strategy = force_strategy
+            reasoning = [f"Strategy forced to '{strategy}'"]
+
+        # Log chosen strategy
+        log.debug(f"Chosen strategy: {strategy}")
+        for reason in reasoning:
+            log.debug(reason)
+
+        # Return strategy if only_strategy
+        if only_strategy:
+            log.info(f"Chosen strategy: {strategy}")
+            return strategy
 
         # Perform update with chosen strategy
         self.update_table_strategy(
@@ -10663,6 +10959,7 @@ class Variants:
             strategy=strategy.lower(),
             chunk_size=chunk_size,
             upper_case=upper_case,
+            chromosomes=chromosomes,
         )
 
         return None
