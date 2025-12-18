@@ -495,6 +495,9 @@
             <li>
                     <a class="function" href="#estimate_update_ratio_fast">estimate_update_ratio_fast</a>
             </li>
+            <li>
+                    <a class="function" href="#duckdb_has_spilled">duckdb_has_spilled</a>
+            </li>
     </ul>
 
 
@@ -5883,6 +5886,23 @@
 </span><span id="L-5365"><a href="#L-5365"><span class="linenos">5365</span></a>
 </span><span id="L-5366"><a href="#L-5366"><span class="linenos">5366</span></a>    <span class="c1"># Return max ratio</span>
 </span><span id="L-5367"><a href="#L-5367"><span class="linenos">5367</span></a>    <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">ratios</span><span class="p">)</span> <span class="k">if</span> <span class="n">ratios</span> <span class="k">else</span> <span class="mf">0.0</span>
+</span><span id="L-5368"><a href="#L-5368"><span class="linenos">5368</span></a>
+</span><span id="L-5369"><a href="#L-5369"><span class="linenos">5369</span></a>
+</span><span id="L-5370"><a href="#L-5370"><span class="linenos">5370</span></a><span class="k">def</span><span class="w"> </span><span class="nf">duckdb_has_spilled</span><span class="p">(</span><span class="n">temp_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+</span><span id="L-5371"><a href="#L-5371"><span class="linenos">5371</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="L-5372"><a href="#L-5372"><span class="linenos">5372</span></a><span class="sd">    Check if DuckDB has spilled to disk in the given temporary directory.</span>
+</span><span id="L-5373"><a href="#L-5373"><span class="linenos">5373</span></a><span class="sd">    :param temp_dir: The temporary directory used by DuckDB for spill files.</span>
+</span><span id="L-5374"><a href="#L-5374"><span class="linenos">5374</span></a><span class="sd">    :type temp_dir: Path</span>
+</span><span id="L-5375"><a href="#L-5375"><span class="linenos">5375</span></a><span class="sd">    :return: True if DuckDB has spilled to disk, False otherwise.</span>
+</span><span id="L-5376"><a href="#L-5376"><span class="linenos">5376</span></a><span class="sd">    :rtype: bool</span>
+</span><span id="L-5377"><a href="#L-5377"><span class="linenos">5377</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="L-5378"><a href="#L-5378"><span class="linenos">5378</span></a>
+</span><span id="L-5379"><a href="#L-5379"><span class="linenos">5379</span></a>    <span class="c1"># Check if temp_dir exists and has any files</span>
+</span><span id="L-5380"><a href="#L-5380"><span class="linenos">5380</span></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">temp_dir</span><span class="p">):</span>
+</span><span id="L-5381"><a href="#L-5381"><span class="linenos">5381</span></a>        <span class="k">return</span> <span class="kc">False</span>
+</span><span id="L-5382"><a href="#L-5382"><span class="linenos">5382</span></a>
+</span><span id="L-5383"><a href="#L-5383"><span class="linenos">5383</span></a>    <span class="c1"># Check if there are any files in the temp_dir</span>
+</span><span id="L-5384"><a href="#L-5384"><span class="linenos">5384</span></a>    <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">temp_dir</span><span class="p">))</span>
 </span></pre></div>
 
 
@@ -14906,6 +14926,52 @@ Returns ("update" | "ctas" | None, explanation).</p>
 
 
     
+
+                </section>
+                <section id="duckdb_has_spilled">
+                            <input id="duckdb_has_spilled-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+<div class="attr function">
+            
+        <span class="def">def</span>
+        <span class="name">duckdb_has_spilled</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">temp_dir</span><span class="p">:</span> <span class="nb">str</span></span><span class="return-annotation">) -> <span class="nb">bool</span>:</span></span>
+
+                <label class="view-source-button" for="duckdb_has_spilled-view-source"><span>View Source</span></label>
+
+    </div>
+    <a class="headerlink" href="#duckdb_has_spilled"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="duckdb_has_spilled-5371"><a href="#duckdb_has_spilled-5371"><span class="linenos">5371</span></a><span class="k">def</span><span class="w"> </span><span class="nf">duckdb_has_spilled</span><span class="p">(</span><span class="n">temp_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+</span><span id="duckdb_has_spilled-5372"><a href="#duckdb_has_spilled-5372"><span class="linenos">5372</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="duckdb_has_spilled-5373"><a href="#duckdb_has_spilled-5373"><span class="linenos">5373</span></a><span class="sd">    Check if DuckDB has spilled to disk in the given temporary directory.</span>
+</span><span id="duckdb_has_spilled-5374"><a href="#duckdb_has_spilled-5374"><span class="linenos">5374</span></a><span class="sd">    :param temp_dir: The temporary directory used by DuckDB for spill files.</span>
+</span><span id="duckdb_has_spilled-5375"><a href="#duckdb_has_spilled-5375"><span class="linenos">5375</span></a><span class="sd">    :type temp_dir: Path</span>
+</span><span id="duckdb_has_spilled-5376"><a href="#duckdb_has_spilled-5376"><span class="linenos">5376</span></a><span class="sd">    :return: True if DuckDB has spilled to disk, False otherwise.</span>
+</span><span id="duckdb_has_spilled-5377"><a href="#duckdb_has_spilled-5377"><span class="linenos">5377</span></a><span class="sd">    :rtype: bool</span>
+</span><span id="duckdb_has_spilled-5378"><a href="#duckdb_has_spilled-5378"><span class="linenos">5378</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="duckdb_has_spilled-5379"><a href="#duckdb_has_spilled-5379"><span class="linenos">5379</span></a>
+</span><span id="duckdb_has_spilled-5380"><a href="#duckdb_has_spilled-5380"><span class="linenos">5380</span></a>    <span class="c1"># Check if temp_dir exists and has any files</span>
+</span><span id="duckdb_has_spilled-5381"><a href="#duckdb_has_spilled-5381"><span class="linenos">5381</span></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">temp_dir</span><span class="p">):</span>
+</span><span id="duckdb_has_spilled-5382"><a href="#duckdb_has_spilled-5382"><span class="linenos">5382</span></a>        <span class="k">return</span> <span class="kc">False</span>
+</span><span id="duckdb_has_spilled-5383"><a href="#duckdb_has_spilled-5383"><span class="linenos">5383</span></a>
+</span><span id="duckdb_has_spilled-5384"><a href="#duckdb_has_spilled-5384"><span class="linenos">5384</span></a>    <span class="c1"># Check if there are any files in the temp_dir</span>
+</span><span id="duckdb_has_spilled-5385"><a href="#duckdb_has_spilled-5385"><span class="linenos">5385</span></a>    <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">temp_dir</span><span class="p">))</span>
+</span></pre></div>
+
+
+            <div class="docstring"><p>Check if DuckDB has spilled to disk in the given temporary directory.</p>
+
+<h6 id="parameters">Parameters</h6>
+
+<ul>
+<li><strong>temp_dir</strong>:  The temporary directory used by DuckDB for spill files.</li>
+</ul>
+
+<h6 id="returns">Returns</h6>
+
+<blockquote>
+  <p>True if DuckDB has spilled to disk, False otherwise.</p>
+</blockquote>
+</div>
+
 
                 </section>
     </main>

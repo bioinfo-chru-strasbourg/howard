@@ -42,6 +42,7 @@ PARAM = {
 }
 CONFIG = {
     "threads": 2,
+    "memory": "8G",
     "folders": {
         "databases": {
             "genomes": f"{tests_databases_folder}/genomes/{tests_databases_release}",
@@ -80,18 +81,26 @@ def test_annotation_splice():
     The function `test_annotation_splice` performs annotation and re-annotation of VCF files using the
     Splice tool with specified parameters and checks the results against expected output.
     """
+
+    # Config
     if not os.path.exists("/.dockerenv"):
         config = CONFIG
     else:
         config = CONFIG_DOCKER
+
+    # Param
     param = PARAM
+
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Param
         param["annotation"]["splice"]["options"]["output_folder"] = tmp_dir
+
         # Init files
         input_vcf = tests_data_folder + "/example.vcf"
         output_vcf = f"{tmp_dir}/output.splice.vcf"
         expected_vcf = tests_data_folder + "/example.splice.vcf"
-        # Construct param dict
+
         # Create object
         variants = Variants(
             conn=None,
@@ -101,9 +110,12 @@ def test_annotation_splice():
             load=True,
             config=config,
         )
+
         # Annotation
         variants.annotation_splice()
+
         # Export output
         variants.export_output()
+
         # Ensure results
         assert identical([output_vcf, expected_vcf])

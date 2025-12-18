@@ -53,10 +53,10 @@ from howard.functions.commons import (
     convert_markdown_to_html,
     convert_markdown_to_pdf,
     detect_column_type,
+    duckdb_has_spilled,
     escape_markdown_table_chars,
     extract_memory_in_go,
     find,
-    find_all,
     find_file_prefix,
     find_genome,
     findbypipeline,
@@ -465,8 +465,14 @@ class Variants:
             connexion_config["memory_limit"] = self.get_memory()
 
         # Temporary directory
-        if config.get("tmp", None):
-            connexion_config["temp_directory"] = config.get("tmp")
+        if config.get("temp_directory", None):
+            connexion_config["temp_directory"] = config.get("temp_directory")
+        else:
+            config["temp_directory"] = os.path.join(
+                self.get_tmp_dir(), f"duckdb_temp_" + get_random(10)
+            )
+            self.set_config(config)
+            connexion_config["temp_directory"] = config["temp_directory"]
 
         # Access
         if config.get("access", None):
@@ -714,60 +720,6 @@ class Variants:
 
             self.header_list = None
             self.header_vcf = None
-
-    def optimize_table(self, table: str = None) -> None:
-        """
-        Optimize a database table by running the OPTIMIZE command.
-        :param table: The name of the table to be optimized. If not provided, the default table
-        variants will be used.
-        :type table: str
-        """
-
-        # Desabled due to no efficience
-        return None
-
-        # Get connexion
-        conn = self.get_connexion()
-
-        # Get table
-        if not table:
-            table = self.get_table_variants()
-
-        # Vaccum
-        query_vaccum = f"""VACUUM {table};"""
-        # query_vaccum = None
-
-        # Recreate table
-        temp_table_name = f"{table}_optimize_temp_" + get_random(1000000)
-        query_recreate = f"""CREATE TABLE {temp_table_name} AS SELECT * FROM {table};"""
-        # query_recreate = None
-
-        # Move table
-        query_drop = f"""DROP TABLE {table};"""
-        query_rename = f"""ALTER TABLE {temp_table_name} RENAME TO {table};"""
-        # query_drop = None
-        # query_rename = None
-
-        try:
-            log.debug(f"OPTIMIZE table {table}")
-            if query_vaccum is not None:
-                conn.execute(query_vaccum)
-            if query_recreate is not None:
-                conn.execute(query_recreate)
-            if query_drop is not None:
-                conn.execute(query_drop)
-            if query_rename is not None:
-                conn.execute(query_rename)
-        except Exception as e:
-            log.warning(f"OPTIMIZE failed for table {table}:")
-            log.warning(f"Query vaccum: {query_vaccum}")
-            log.warning(f"Query recreate: {query_recreate}")
-            log.warning(f"Query drop: {query_drop}")
-            log.warning(f"Query rename: {query_rename}")
-            log.warning(e)
-            pass
-
-        return None
 
     def get_query_to_df(self, query: str = "", limit: int = None) -> pd.DataFrame:
         """
@@ -5295,6 +5247,9 @@ class Variants:
         # Data
         table_variants = self.get_table_variants()
 
+        # Remove files
+        remove_files = []
+
         # Check if not empty
         log.debug("Check if not empty")
         sql_query_chromosomes = (
@@ -5314,6 +5269,9 @@ class Variants:
             delete=False,
         )
         tmp_vcf_name = tmp_vcf.name
+
+        # Remove files
+        remove_files.append(tmp_vcf_name)
 
         # VCF header
         vcf_reader = self.get_header()
@@ -5546,6 +5504,10 @@ class Variants:
                             tmp_bed_name = tmp_bed.name
                             tmp_files.append(tmp_bed_name)
 
+                            # Remove files
+                            remove_files.append(tmp_bed_name)
+                            remove_files.append(tmp_bed_name + ".tbi")
+
                             # Detecte regions
                             log.debug(
                                 f"Annotation '{annotation}' - Chromosome '{chrom}' - Start detecting regions..."
@@ -5583,11 +5545,16 @@ class Variants:
                             )
                             tmp_annotation_vcf_name = tmp_annotation_vcf.name
                             tmp_files.append(tmp_annotation_vcf_name)
-                            tmp_ann_vcf_list.append(f"{tmp_annotation_vcf_name}")
+                            tmp_ann_vcf_list.append(tmp_annotation_vcf_name)
                             tmp_annotation_vcf_name_err = (
                                 tmp_annotation_vcf_name + ".err"
                             )
                             err_files.append(tmp_annotation_vcf_name_err)
+
+                            # Remove files
+                            remove_files.append(tmp_annotation_vcf_name)
+                            remove_files.append(tmp_annotation_vcf_name + ".tbi")
+                            remove_files.append(tmp_annotation_vcf_name_err)
 
                             # Annotate Command
                             log.debug(
@@ -5610,6 +5577,10 @@ class Variants:
                     add_samples=False,
                     index=True,
                 )
+
+                # Remove files
+                remove_files.append(tmp_vcf_name)
+                remove_files.append(tmp_vcf_name + ".tbi")
 
                 # Threads
                 # calculate threads for annotated commands
@@ -5658,6 +5629,10 @@ class Variants:
                     tmp_annotate_vcf_name = tmp_annotate_vcf.name
                     tmp_annotate_vcf_name_err = tmp_annotate_vcf_name + ".err"
                     err_files.append(tmp_annotate_vcf_name_err)
+
+                    # Remove files
+                    remove_files.append(tmp_annotate_vcf_name + ".tbi")
+                    remove_files.append(tmp_annotate_vcf_name_err)
 
                     # Tmp file remove command
                     tmp_files_remove_command = ""
@@ -5710,6 +5685,9 @@ class Variants:
                     # Update variants
                     log.info("Annotation - Updating...")
                     self.update_from_vcf(tmp_annotate_vcf_name, remove_vcf_file=False)
+
+        # Remove files
+        remove_if_exists(remove_files)
 
     def annotation_exomiser(self, threads: int = None) -> None:
         """
@@ -7125,6 +7103,8 @@ class Variants:
         It takes a VCF file, and annotates it with a parquet file
 
         :param threads: number of threads to use for the annotation
+        :type threads: int, optional
+
         :return: the value of the variable "result".
         """
 
@@ -7226,6 +7206,9 @@ class Variants:
         # Init SQL query chromosomes dict
         sql_query_chromosomes_dict = None
 
+        # Files or folders to remove
+        files_or_folders_to_remove = []
+
         if annotations:
 
             if "ALL" in annotations:
@@ -7324,11 +7307,6 @@ class Variants:
 
                     # Load header as VCF object
                     parquet_hdr_vcf_header_infos = database.get_header().infos
-                    # Log
-                    # log.debug(
-                    #     "Annotation database header: "
-                    #     + str(parquet_hdr_vcf_header_infos)
-                    # )
 
                     # Get extra infos
                     parquet_columns = database.get_extra_columns()
@@ -7410,7 +7388,6 @@ class Variants:
                         # To annotate
                         # force_update_annotation = True
                         # force_append_annotation = True
-                        # if annotation_field in parquet_hdr_vcf_header_infos and (force_update_annotation or (annotation_fields_new_name not in self.get_header().infos)):
                         if annotation_field in parquet_hdr_vcf_header_infos and (
                             force_update_annotation
                             or force_append_annotation
@@ -7617,49 +7594,117 @@ class Variants:
                         )
 
                         # Init
-                        nb_of_query = 0
-                        nb_of_variant_annotated = 0
                         query_dict = query_dict_remove
+
+                        # Spilling
+                        duckdb_temp_directory = self.get_connexion_config().get(
+                            "temp_directory", ".tmp"
+                        )
+                        duckdb_spilled = duckdb_has_spilled(duckdb_temp_directory)
+                        log.debug(
+                            f"Annotation '{annotation_name}' - DuckDB spilled: {duckdb_spilled}"
+                        )
+
+                        # Choose strategy
+                        if duckdb_spilled:
+                            annotation_table_strategy = "PARQUET"
+                        else:
+                            annotation_table_strategy = "TABLE"
+
+                        # DEVEL
+                        # TABLE, PARQUET, VIEW_BATCH, TABLE_BATCH, VIEW_SEQ, TABLE_SEQ
+                        # annotation_table_strategy = "VIEW_SEQ"
+
+                        # Log
+                        log.debug(
+                            f"Annotation '{annotation_name}' - Annotation table strategy: {annotation_table_strategy}"
+                        )
 
                         # Create temporary table for batch update
                         sql_query_annotation_chrom_interval_pos_union = (
                             "annotation_chrom_interval_pos_union_" + get_random(10)
                         )
 
-                        # Create empty table for batch update
-                        sql_create_empty_table = f"""
-                            CREATE TABLE {sql_query_annotation_chrom_interval_pos_union} AS
-                                SELECT
+                        if annotation_table_strategy in ["TABLE"]:
+
+                            # Create empty table for batch update
+                            sql_create_empty_table = f"""
+                                CREATE TABLE {sql_query_annotation_chrom_interval_pos_union} AS
+                                    SELECT
+                                        "#CHROM",
+                                        "POS",
+                                        "REF",
+                                        "ALT",
+                                        "INFO"
+                                    FROM {table_variants} AS table_variants
+                                    WHERE 1=0
+                                ;
+                            """
+                            # log.debug(f"sql_create_empty_table={sql_create_empty_table}")
+                            self.conn.execute(sql_create_empty_table)
+
+                            # Add update source
+                            source = {
+                                "table": sql_query_annotation_chrom_interval_pos_union,
+                                "join_keys": [
                                     "#CHROM",
                                     "POS",
                                     "REF",
                                     "ALT",
-                                    "INFO"
-                                FROM {table_variants} AS table_variants
-                                WHERE 1=0
-                            ;
-                        """
-                        # log.debug(f"sql_create_empty_table={sql_create_empty_table}")
-                        self.conn.execute(sql_create_empty_table)
+                                ],
+                                "columns": {
+                                    "INFO": {
+                                        "columns": ["INFO"],
+                                        "mode": "append",
+                                        "separator": ";",
+                                    }
+                                },
+                            }
+                            update_sources.append(source)
 
-                        # Add update source
-                        source = {
-                            "table": sql_query_annotation_chrom_interval_pos_union,
-                            "join_keys": [
-                                "#CHROM",
-                                "POS",
-                                "REF",
-                                "ALT",
-                            ],
-                            "columns": {
-                                "INFO": {
-                                    "columns": ["INFO"],
-                                    "mode": "append",
-                                    "separator": ";",
-                                }
-                            },
-                        }
-                        update_sources.append(source)
+                        elif annotation_table_strategy in ["PARQUET"]:
+
+                            log.debug(
+                                "DuckDB has spilled to disk during previous operations. "
+                                "CTAS operation will use Parquet intermediate files to avoid out of memory errors. "
+                                "This may slow down the operation. "
+                                "Consider increasing DuckDB memory limit or adding more RAM to the system."
+                            )
+
+                            # Create empty parquet folder for batch update
+                            # Folder will be removed after annotation
+                            annotation_parquet_folder = os.path.join(
+                                self.get_tmp_dir(),
+                                # duckdb_temp_directory,
+                                f"ctas_parquet_{get_random(10)}.partition.parquet",
+                            )
+                            os.makedirs(annotation_parquet_folder, exist_ok=True)
+                            files_or_folders_to_remove.append(annotation_parquet_folder)
+
+                            # Create temporary view for parquet batch update
+                            # Query will be executed after the first batch is created (otherwise view fails)
+                            sql_query_annotation_parquet_folder_view = f"""
+                                CREATE VIEW {sql_query_annotation_chrom_interval_pos_union} AS SELECT * FROM read_parquet('{annotation_parquet_folder}/*/*.parquet', hive_partitioning = true)
+                            """
+
+                            # Add update source
+                            source = {
+                                "table": sql_query_annotation_chrom_interval_pos_union,
+                                "join_keys": [
+                                    "#CHROM",
+                                    "POS",
+                                    "REF",
+                                    "ALT",
+                                ],
+                                "columns": {
+                                    "INFO": {
+                                        "columns": ["INFO"],
+                                        "mode": "append",
+                                        "separator": ";",
+                                    }
+                                },
+                            }
+                            update_sources.append(source)
 
                         # For each chromosome, first bacth by chromosome
                         for chrom in sql_query_chromosomes_dict:
@@ -7668,10 +7713,6 @@ class Variants:
                             nb_of_variant_by_chrom = sql_query_chromosomes_dict.get(
                                 chrom, {}
                             ).get("count", 0)
-
-                            log.debug(
-                                f"Annotation '{annotation_name}' - Chromosome '{chrom}' [{nb_of_variant_by_chrom} variants]..."
-                            )
 
                             # --- Prepare SQL clauses for annotation (regions or variants)
 
@@ -7695,7 +7736,7 @@ class Variants:
                                     as table_parquet
                                 """
 
-                                sql_query_annotation_join_using = f"""
+                                sql_query_annotation_join_using = """
                                     ("#CHROM", "POS")
                                 """
 
@@ -7718,7 +7759,7 @@ class Variants:
                                     AND table_variants.ALT = table_parquet.ALT
                                 """
 
-                                sql_query_annotation_join_using = f"""
+                                sql_query_annotation_join_using = """
                                     ("#CHROM", "POS", "REF", "ALT")
                                 """
 
@@ -7762,82 +7803,191 @@ class Variants:
                                 # where clause in any cases, because it speedup the query
                                 where_clause_batch_split = f" AND table_variants.POS >= {start} AND table_variants.POS < {end} "
 
-                                # Insert into annotation_chrom_interval_pos_union
-                                sql_query_annotation_chrom_interval_pos = f"""
-                                    INSERT INTO {sql_query_annotation_chrom_interval_pos_union}
-                                        SELECT
-                                            table_variants."#CHROM",
-                                            table_variants."POS",
-                                            table_variants."REF",
-                                            table_variants."ALT",
-                                            concat(
-                                                    {sql_query_annotation_update_info_sets_sql}
-                                                    ) AS INFO
-                                        FROM {table_variants} AS table_variants
-                                        LEFT JOIN {sql_query_annotation_from_clause}
-                                        USING {sql_query_annotation_join_using}
-                                        WHERE {sql_query_annotation_where_clause}
-                                            {where_clause_batch_split}
-                                            ;
-                                """
+                                # Init
+                                sql_query_annotation_chrom_interval_pos = None
 
                                 # Log
-                                # log.debug(
-                                #     f"sql_query_annotation_chrom_interval_pos={sql_query_annotation_chrom_interval_pos}"
-                                # )
-
                                 log.debug(
                                     f"Annotation '{annotation_name}' - Chromosome '{chrom}' [{nb_of_variant_by_chrom} variants] - batch [{batch_index}/{nb_windows}][{batch_index/nb_windows:.2%}%] - positions [{start}-{end}]..."
                                 )
 
-                                self.get_connexion().execute(
-                                    sql_query_annotation_chrom_interval_pos
-                                )
+                                # Table strategy
+                                # Standard TABLE
+                                if annotation_table_strategy in ["TABLE"]:
 
-                                # DEVEL
-                                # query_devel = f"""
-                                #     SELECT count(*) FROM {annotation_query_update_name} LIMIT 10
-                                # """
+                                    # Insert into annotation_chrom_interval_pos_union
+                                    sql_query_annotation_chrom_interval_pos = f"""
+                                        INSERT INTO {sql_query_annotation_chrom_interval_pos_union}
+                                            SELECT
+                                                table_variants."#CHROM",
+                                                table_variants."POS",
+                                                table_variants."REF",
+                                                table_variants."ALT",
+                                                concat(
+                                                        {sql_query_annotation_update_info_sets_sql}
+                                                        ) AS INFO
+                                            FROM {table_variants} AS table_variants
+                                            LEFT JOIN {sql_query_annotation_from_clause}
+                                            USING {sql_query_annotation_join_using}
+                                            WHERE {sql_query_annotation_where_clause}
+                                                {where_clause_batch_split}
+                                                ;
+                                    """
 
-                                # Add update query to dict
-                                # query_dict[
-                                #     f"{chrom} [{nb_of_variant_by_chrom} variants] - batch [{batch_index}/{nb_windows}][{batch_index/nb_windows:.2%}%]"
-                                # ] = sql_query_annotation_chrom_interval_pos
+                                # Parquet strategy
+                                # TABLE with Parquet intermediate files
+                                elif annotation_table_strategy in ["PARQUET"]:
+
+                                    # Chromosome folder for parquet partitioning
+                                    annotation_parquet_folder_chromosome = os.path.join(
+                                        annotation_parquet_folder, f"#CHROM={chrom}"
+                                    )
+
+                                    # Create chromosome folder
+                                    os.makedirs(
+                                        annotation_parquet_folder_chromosome,
+                                        exist_ok=True,
+                                    )
+
+                                    # Copy to parquet file
+                                    sql_query_annotation_chrom_interval_pos = f"""
+                                        COPY (
+                                            SELECT
+                                                table_variants."#CHROM",
+                                                table_variants."POS",
+                                                table_variants."REF",
+                                                table_variants."ALT",
+                                                concat(
+                                                        {sql_query_annotation_update_info_sets_sql}
+                                                        ) AS INFO
+                                            FROM {table_variants} AS table_variants
+                                            LEFT JOIN {sql_query_annotation_from_clause}
+                                            USING {sql_query_annotation_join_using}
+                                            WHERE {sql_query_annotation_where_clause}
+                                                {where_clause_batch_split}
+                                        ) TO '{annotation_parquet_folder_chromosome}/part_{batch_index}.parquet' (FORMAT 'parquet')
+                                    """
+
+                                # Alternative annotation strategies
+                                # Not availble for now, use for devel and benchmarking
+                                # Disabled for now because not efficient compared to batch parquet or table
+                                elif annotation_table_strategy in [
+                                    "VIEW_BATCH",
+                                    "TABLE_BATCH",
+                                    "VIEW_SEQ",
+                                    "TABLE_SEQ",
+                                ]:
+
+                                    # Create type
+                                    if annotation_table_strategy in [
+                                        "VIEW_BATCH",
+                                        "VIEW_SEQ",
+                                    ]:
+                                        create_type = "VIEW"
+                                    else:
+                                        create_type = "TABLE"
+
+                                    # Create batch name
+                                    sql_query_annotation_chrom_interval_pos_union_name = f"annotation_chrom_interval_pos_{chrom}_{batch_index}_{get_random(10)}"
+
+                                    # Create
+                                    sql_query_annotation_chrom_interval_pos = f"""
+                                        CREATE OR REPLACE {create_type} {sql_query_annotation_chrom_interval_pos_union_name} AS
+                                            SELECT
+                                                table_variants."#CHROM",
+                                                table_variants."POS",
+                                                table_variants."REF",
+                                                table_variants."ALT",
+                                                concat(
+                                                        {sql_query_annotation_update_info_sets_sql}
+                                                        ) AS INFO
+                                            FROM {table_variants} AS table_variants
+                                            LEFT JOIN {sql_query_annotation_from_clause}
+                                            USING {sql_query_annotation_join_using}
+                                            WHERE {sql_query_annotation_where_clause}
+                                                {where_clause_batch_split}
+                                    """
+
+                                    # Add update source
+                                    source = {
+                                        "table": sql_query_annotation_chrom_interval_pos_union_name,
+                                        "join_keys": [
+                                            "#CHROM",
+                                            "POS",
+                                            "REF",
+                                            "ALT",
+                                        ],
+                                        "columns": {
+                                            "INFO": {
+                                                "columns": ["INFO"],
+                                                "mode": "append",
+                                                "separator": ";",
+                                            }
+                                        },
+                                    }
+
+                                    if annotation_table_strategy in [
+                                        "VIEW_SEQ",
+                                        "TABLE_SEQ",
+                                    ]:
+                                        log.debug(
+                                            f"Annotations - Perform with {source} ..."
+                                        )
+                                        self.update_table(
+                                            dest_table=table_variants,
+                                            sources=[source],
+                                            samples=10000,
+                                            force_strategy="update",
+                                            chromosomes=None,
+                                            only_strategy=False,
+                                        )
+                                    else:
+                                        update_sources.append(source)
+
+                                # Execute query for the batch, if exists
+                                if sql_query_annotation_chrom_interval_pos:
+                                    self.get_connexion().execute(
+                                        sql_query_annotation_chrom_interval_pos
+                                    )
+
+                                # Create view for parquet only once
+                                if (
+                                    annotation_table_strategy in ["PARQUET"]
+                                    and sql_query_annotation_parquet_folder_view
+                                    is not None
+                                ):
+                                    # Execute view creation
+                                    self.get_connexion().execute(
+                                        sql_query_annotation_parquet_folder_view
+                                    )
+                                    # Reset to None to avoid re-creation
+                                    sql_query_annotation_parquet_folder_view = None
+
+                                    # Check content of view
 
                         # Execute queries one by one to have logging
                         # For queries in query_dict, mainly to remove annotations to update
 
-                        nb_of_query = len(query_dict)
-                        num_query = 0
-
                         # SET max_expression_depth TO x
                         self.conn.execute("SET max_expression_depth TO 10000")
 
+                        # Execute queries one by one
+                        # Queries mainly for update options, to prepare table by removing existing annotations
+                        num_query = 0
                         for query_name in query_dict:
                             query = query_dict[query_name]
                             num_query += 1
                             log.info(
                                 f"Annotation '{annotation_name}' - Annotation - Query {query_name}..."
                             )
-                            result = self.conn.execute(query)
-                            nb_of_variant_annotated_by_query = result.df()["Count"][0]
-                            nb_of_variant_annotated += nb_of_variant_annotated_by_query
-                            # log.info(
-                            #     f"Annotation '{annotation_name}' - Annotation - Query [{num_query}/{nb_of_query}][{num_query/nb_of_query:.2%}] {query_name} - {nb_of_variant_annotated_by_query} variants annotated"
-                            # )
-
-                        # log.info(
-                        #     f"Annotation '{annotation_name}' - Annotation of {nb_of_variant_annotated} variants out of {nb_variants} (with {nb_of_query} queries)"
-                        # )
+                            self.get_connexion().execute(query)
 
                     else:
 
+                        # log
                         log.info(
                             f"Annotation '{annotation_name}' - No Annotations available"
                         )
-
-            # Update sources
-            # log.debug(f"update_sources={update_sources}")
 
             # Perform update
             if len(update_sources) > 0:
@@ -7852,6 +8002,9 @@ class Variants:
                 )
             else:
                 log.info("No annotation sources")
+
+        # Remove temporary files or folders
+        remove_if_exists(files_or_folders_to_remove)
 
     def annotation_splice(self, threads: int = None) -> None:
         """
@@ -10651,6 +10804,29 @@ class Variants:
             # Log
             log.debug("Execute CTAS...")
 
+            # Spilling
+            # If DuckDB has spilled to disk during previous operations, use Parquet intermediate files for CTAS
+            duckdb_temp_directory = self.get_connexion_config().get(
+                "temp_directory", ".tmp"
+            )
+            duckdb_spilled = duckdb_has_spilled(duckdb_temp_directory)
+            log.debug(f"DuckDB spilled: {duckdb_spilled}")
+
+            if duckdb_spilled:
+                log.debug(
+                    "DuckDB has spilled to disk during previous operations. "
+                    "CTAS operation will use Parquet intermediate files to avoid out of memory errors. "
+                    "This may slow down the operation. "
+                    "Consider increasing DuckDB memory limit or adding more RAM to the system."
+                )
+                ctas_parquet_folder = os.path.join(
+                    self.get_tmp_dir(),  # Use Howard temp directory
+                    # duckdb_temp_directory, # Use duckDB temp directory to ensure same disk
+                    f"ctas_parquet_{get_random(10)}.partition.parquet",
+                )
+                os.makedirs(ctas_parquet_folder, exist_ok=True)
+                log.debug(f"CTAS Parquet folder: {ctas_parquet_folder}")
+
             if chunking:
 
                 # Create new dest table with required columns OK
@@ -10703,6 +10879,37 @@ class Variants:
                     {order_by}
                 """
 
+                # Spilled CTAS SQL template
+                sql_parquet = """
+                    COPY (
+                    WITH d AS (
+                        SELECT * {rowid_expr}
+                        FROM {dest_table}
+                        {dest_where_chrom}
+                        QUALIFY _rowid BETWEEN {start} AND {end}
+                    ),
+                    joined AS (
+                        SELECT
+                            {join_colunls_exprs}, _rowid
+                        FROM d
+                        {join_clauses}
+                        {join_where_chrom}
+                    ),
+                    dedup AS (
+                        SELECT *
+                        FROM joined
+                        QUALIFY row_number() OVER (
+                            PARTITION BY _rowid
+                            ORDER BY "INFO" DESC NULLS LAST
+                        ) = 1
+                    )
+                    SELECT
+                        {dest_cols}
+                    FROM dedup
+                    {order_by}
+                    ) TO '{ctas_parquet_folder}/part_{chunk_i}.parquet' (FORMAT 'parquet')
+                """
+
                 # Range of rowid
                 range_rowid = range(1, int(max_rowid) + 1, chunk_size)
 
@@ -10714,24 +10921,47 @@ class Variants:
                     chunk_i += 1
                     chunk_end = chunk_start + chunk_size - 1
                     log.debug(
-                        f"Execute CTAS on table {dest_table} - rows between {chunk_start} and {chunk_end} [{chunk_i}/{len(range_rowid)}][{chunk_i/len(range_rowid)*100:.2f}%]..."
+                        f"Execute CTAS on table {dest_table} - [{chunk_i}/{len(range_rowid)}][{chunk_i/len(range_rowid)*100:.2f}%] - rows between {chunk_start} and {chunk_end}..."
                     )
 
                     # Update query without chromosome chunking
                     if chromosomes is None:
-                        sql_query = sql.format(
-                            new_dest_table=new_dest_table,
-                            rowid_expr=rowid_expr,
-                            dest_table=dest_table,
-                            start=chunk_start,
-                            end=chunk_end,
-                            join_colunls_exprs=", ".join(column_exprs),
-                            join_clauses=" ".join(join_clauses),
-                            dest_cols=", ".join(f'"{col}"' for col in dest_cols),
-                            order_by="ORDER BY _rowid" if physical_order else "",
-                            dest_where_chrom="",
-                            join_where_chrom="",
-                        )
+
+                        if duckdb_spilled:
+
+                            # Prepare CTAS SQL to Parquet file
+                            sql_query = sql_parquet.format(
+                                rowid_expr=rowid_expr,
+                                dest_table=dest_table,
+                                start=chunk_start,
+                                end=chunk_end,
+                                join_colunls_exprs=", ".join(column_exprs),
+                                join_clauses=" ".join(join_clauses),
+                                dest_cols=", ".join(f'"{col}"' for col in dest_cols),
+                                order_by="ORDER BY _rowid" if physical_order else "",
+                                dest_where_chrom="",
+                                join_where_chrom="",
+                                ctas_parquet_folder=ctas_parquet_folder,
+                                chunk_i=chunk_i,
+                            )
+
+                        else:
+
+                            # Prepare CTAS SQL to table
+                            sql_query = sql.format(
+                                new_dest_table=new_dest_table,
+                                rowid_expr=rowid_expr,
+                                dest_table=dest_table,
+                                start=chunk_start,
+                                end=chunk_end,
+                                join_colunls_exprs=", ".join(column_exprs),
+                                join_clauses=" ".join(join_clauses),
+                                dest_cols=", ".join(f'"{col}"' for col in dest_cols),
+                                order_by="ORDER BY _rowid" if physical_order else "",
+                                dest_where_chrom="",
+                                join_where_chrom="",
+                            )
+
                         # log.debug(f"CTAS SQL for update_table:\n{sql_query}")
                         conn.execute(sql_query)
 
@@ -10750,60 +10980,127 @@ class Variants:
 
                         # Process each chromosome
                         for chrom in chromosomes:
-                            sql_query = sql.format(
-                                new_dest_table=new_dest_table,
-                                rowid_expr=rowid_expr,
-                                dest_table=dest_table,
-                                start=start,
-                                end=end,
-                                join_colunls_exprs=", ".join(column_exprs),
-                                join_clauses=" ".join(join_clauses),
-                                dest_cols=", ".join(f'"{col}"' for col in dest_cols),
-                                order_by="ORDER BY _rowid" if physical_order else "",
-                                dest_where_chrom=f"""WHERE "#CHROM" LIKE '{chrom}'""",
-                                join_where_chrom=f"""WHERE d."#CHROM" LIKE '{chrom}'""",
-                            )
-                            log.debug(f"CTAS SQL for update_table:\n{sql_query}")
+
+                            if duckdb_spilled:
+
+                                sql_query = sql_parquet.format(
+                                    rowid_expr=rowid_expr,
+                                    dest_table=dest_table,
+                                    start=chunk_start,
+                                    end=chunk_end,
+                                    join_colunls_exprs=", ".join(column_exprs),
+                                    join_clauses=" ".join(join_clauses),
+                                    dest_cols=", ".join(
+                                        f'"{col}"' for col in dest_cols
+                                    ),
+                                    order_by=(
+                                        "ORDER BY _rowid" if physical_order else ""
+                                    ),
+                                    dest_where_chrom=f"""WHERE "#CHROM" LIKE '{chrom}'""",
+                                    join_where_chrom=f"""WHERE d."#CHROM" LIKE '{chrom}'""",
+                                    ctas_parquet_folder=ctas_parquet_folder,
+                                    chunk_i=chunk_i,
+                                )
+
+                            else:
+
+                                sql_query = sql.format(
+                                    new_dest_table=new_dest_table,
+                                    rowid_expr=rowid_expr,
+                                    dest_table=dest_table,
+                                    start=chunk_start,
+                                    end=chunk_end,
+                                    join_colunls_exprs=", ".join(column_exprs),
+                                    join_clauses=" ".join(join_clauses),
+                                    dest_cols=", ".join(
+                                        f'"{col}"' for col in dest_cols
+                                    ),
+                                    order_by=(
+                                        "ORDER BY _rowid" if physical_order else ""
+                                    ),
+                                    dest_where_chrom=f"""WHERE "#CHROM" LIKE '{chrom}'""",
+                                    join_where_chrom=f"""WHERE d."#CHROM" LIKE '{chrom}'""",
+                                )
+
+                            # Log
+                            # log.debug(f"CTAS SQL for update_table:\n{sql_query}")
 
                             # Execute CTAS
                             log.debug(
-                                f"Execute CTAS on table {dest_table} - rows between {chunk_start} and {chunk_end} [{chunk_i}/{len(range_rowid)}][{chunk_i/len(range_rowid)*100:.2f}%] - chromosome {chrom}..."
+                                f"Execute CTAS on table {dest_table} - [{chunk_i}/{len(range_rowid)}][{chunk_i/len(range_rowid)*100:.2f}%] - rows between {chunk_start} and {chunk_end} - chromosome {chrom}..."
                             )
                             conn.execute(sql_query)
 
-                # # Replace dest_table with new_dest_table
-                # log.debug(
-                #     f"Execute CTAS on table {dest_table} - Replace CTAS tables..."
-                # )
-                # conn.execute(f"DROP TABLE {dest_table}")
-                # conn.execute(f"ALTER TABLE {new_dest_table} RENAME TO {dest_table}")
-
             else:
 
-                # Create new dest table with required columns OK
-                new_dest_table = f"tmp_new_{dest_table}_{get_random(10)}"
-                sql = f"""
-                    CREATE TABLE {new_dest_table} AS
-                    WITH d AS (
-                        SELECT * {rowid_expr}
-                        FROM {dest_table}
-                    )
-                    SELECT
-                        {", ".join(column_exprs)}
-                    FROM d
-                    {" ".join(join_clauses)}
-                    {"ORDER BY d._rowid" if physical_order else ""}
-                """
+                if duckdb_spilled:
+
+                    # CTAS to Parquet file
+                    sql = f"""
+                    COPY (
+                        WITH d AS (
+                            SELECT * {rowid_expr}
+                            FROM {dest_table}
+                        )
+                        SELECT
+                            {", ".join(column_exprs)}
+                        FROM d
+                        {" ".join(join_clauses)}
+                        {"ORDER BY d._rowid" if physical_order else ""}
+                    ) TO '{ctas_parquet_folder}/part_1.parquet' (FORMAT 'parquet')
+                    """
+
+                else:
+
+                    # Create new dest table with required columns OK
+                    new_dest_table = f"tmp_new_{dest_table}_{get_random(10)}"
+                    sql = f"""
+                        CREATE TABLE {new_dest_table} AS
+                        WITH d AS (
+                            SELECT * {rowid_expr}
+                            FROM {dest_table}
+                        )
+                        SELECT
+                            {", ".join(column_exprs)}
+                        FROM d
+                        {" ".join(join_clauses)}
+                        {"ORDER BY d._rowid" if physical_order else ""}
+                    """
+
                 # log.debug(f"CTAS SQL for update_table:\n{sql}")
 
                 # Execute CTAS
                 log.debug(f"Execute CTAS on table {dest_table}...")
                 conn.execute(sql)
 
-            # Replace dest_table with new_dest_table
-            log.debug(f"Execute CTAS on table {dest_table} - Replace CTAS tables...")
-            conn.execute(f"DROP TABLE {dest_table}")
-            conn.execute(f"ALTER TABLE {new_dest_table} RENAME TO {dest_table}")
+            if duckdb_spilled:
+
+                # Create view with all parquet files as new_dest_table
+                log.debug(
+                    f"Execute CTAS on table {dest_table} - Create view from Parquet files and replace table..."
+                )
+
+                # Find all parquet files
+                glob_pattern = os.path.join(ctas_parquet_folder, "**", "part_*.parquet")
+                parquet_files = sorted(
+                    glob.glob(glob_pattern, recursive=True),
+                    key=lambda p: (os.path.getmtime(p)),
+                )
+
+                # Remove tables and create table from parquet files
+                conn.execute(f"DROP TABLE IF EXISTS {new_dest_table}")
+                conn.execute(f"DROP TABLE IF EXISTS {dest_table}")
+                sql_parquet_create_view = f"CREATE TABLE {dest_table} AS SELECT * FROM read_parquet({parquet_files})"
+                # log.debug(f"SQL Parquet Create View:\n{sql_parquet_create_view}")
+                conn.execute(sql_parquet_create_view)
+                remove_if_exists([ctas_parquet_folder])
+
+            else:
+
+                # Replace dest_table with new_dest_table
+                log.debug(f"Execute CTAS on table {dest_table} - Replace table...")
+                conn.execute(f"DROP TABLE {dest_table}")
+                conn.execute(f"ALTER TABLE {new_dest_table} RENAME TO {dest_table}")
 
         else:
             log.error(f"Strategy '{strategy}' NOT available")
@@ -10812,9 +11109,6 @@ class Variants:
         # Remove source tables if cleanup
         log.debug("Cleanup source tables/views...")
         self.remove_tables_or_views(tables=list(list_of_sources_table.keys()))
-
-        # Optimize table
-        self.optimize_table(dest_table)
 
     def update_table(
         self,

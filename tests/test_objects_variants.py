@@ -1421,6 +1421,8 @@ def test_get_connexion_db_memory():
 
     assert connexion_db == ":memory:"
 
+    variants.close_connexion()
+
 
 def test_get_connexion_db_tmpfile():
     """
@@ -1438,6 +1440,8 @@ def test_get_connexion_db_tmpfile():
     connexion_db = variants.get_connexion_db()
 
     assert os.path.exists(connexion_db)
+
+    variants.close_connexion()
 
     remove_if_exists(connexion_db)
 
@@ -1463,6 +1467,10 @@ def test_get_connexion_db_file():
         connexion_db = variants.get_connexion_db()
 
         assert connexion_db == f"{tmp_dir}/connexion.duckdb"
+
+        variants.close_connexion()
+
+        remove_if_exists(connexion_db)
 
 
 def test_get_table_variants():
@@ -1592,6 +1600,10 @@ def test_load_connexion_type_tmpfile():
     expected_number_of_variants = 7
 
     assert nb_variant_in_database == expected_number_of_variants
+
+    variants.close_connexion()
+
+    # remove_if_exists(connexion_db)
 
 
 def test_load_connexion_type_file():

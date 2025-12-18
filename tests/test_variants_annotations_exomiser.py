@@ -32,14 +32,17 @@ def test_annotation_exomiser():
         output_vcf = f"{tmp_dir}/output.vcf.gz"
 
         # Number of threads
-        tests_config["threads"] = 8
+        tests_config["threads"] = 2
+
+        # Memory
+        tests_config["memory"] = "4G"
 
         ### Example file with some HPO
         # Download Exomiser databases if needed (take a while)
 
         # Init Param
         input_vcf = tests_data_folder + "/example.vcf.gz"
-        tests_config["threads"] = 8
+        tests_config["threads"] = 2
         param = {
             "assembly": "hg19",
             "annotation": {
@@ -72,9 +75,7 @@ def test_annotation_exomiser():
 
         # query annotated variant - check number of variants
         result = variants.get_query_to_df(""" SELECT * FROM variants """)
-        log.debug(result["INFO"])
         assert len(result) == 7
-        # assert False
 
         # query annotated variant - check number of annotated variants
         result = variants.get_query_to_df(
@@ -110,7 +111,6 @@ def test_annotation_exomiser():
 
         # query annotated variant - check number of variants
         result = variants.get_query_to_df(""" SELECT * FROM variants """)
-        log.debug(result["INFO"])
         assert len(result) == 7
 
         # query annotated variant - check number of annotated variants
@@ -209,7 +209,6 @@ def test_annotation_exomiser():
 
         # query annotated variant - check number of variants
         result = variants.get_query_to_df(""" SELECT * FROM variants """)
-        log.debug(result["INFO"])
         assert len(result) == 7
 
         # query annotated variant - check number of annotated variants

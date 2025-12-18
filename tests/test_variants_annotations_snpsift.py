@@ -17,7 +17,12 @@ import vcf  # type: ignore
 from howard.objects.variants import Variants
 from howard.functions.commons import remove_if_exists
 
-from test_needed import tests_folder, tests_data_folder, tests_annotations_folder
+from test_needed import (
+    tests_folder,
+    tests_data_folder,
+    tests_annotations_folder,
+    tests_config,
+)
 
 
 def test_annotation_snpsift():
@@ -32,6 +37,15 @@ def test_annotation_snpsift():
         annotation_parquet = os.path.join(tests_annotations_folder, "nci60.vcf.gz")
         output_vcf = f"{tmp_dir}/output.vcf.gz"
 
+        # Copy config
+        tests_config_snpsift = tests_config.copy()
+
+        # Number of threads
+        tests_config_snpsift["threads"] = 2
+
+        # Memory
+        tests_config_snpsift["memory"] = "4G"
+
         # Construct param dict
         param = {
             "annotation": {
@@ -41,7 +55,12 @@ def test_annotation_snpsift():
 
         # Create object
         variants = Variants(
-            conn=None, input=input_vcf, output=output_vcf, param=param, load=True
+            conn=None,
+            input=input_vcf,
+            output=output_vcf,
+            config=tests_config_snpsift,
+            param=param,
+            load=True,
         )
 
         # Remove if output file exists
@@ -76,6 +95,15 @@ def test_annotation_snpsift_rename_field():
         annotation_parquet = os.path.join(tests_annotations_folder, "nci60.vcf.gz")
         output_vcf = f"{tmp_dir}/output.vcf.gz"
 
+        # Copy config
+        tests_config_snpsift = tests_config.copy()
+
+        # Number of threads
+        tests_config_snpsift["threads"] = 2
+
+        # Memory
+        tests_config_snpsift["memory"] = "4G"
+
         # Construct param dict
         param = {
             "annotation": {
@@ -85,7 +113,12 @@ def test_annotation_snpsift_rename_field():
 
         # Create object
         variants = Variants(
-            conn=None, input=input_vcf, output=output_vcf, param=param, load=True
+            conn=None,
+            input=input_vcf,
+            output=output_vcf,
+            config=tests_config_snpsift,
+            param=param,
+            load=True,
         )
 
         # Remove if output file exists

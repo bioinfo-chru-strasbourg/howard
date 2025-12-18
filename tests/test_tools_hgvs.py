@@ -12,124 +12,129 @@ coverage report --include=howard/* -m
 
 import argparse
 import os
+from tempfile import TemporaryDirectory
 
 from howard.functions.commons import remove_if_exists
 from howard.objects.variants import Variants
 from howard.tools.hgvs import hgvs
 from howard.tools.tools import arguments_dict
 
-from test_needed import tests_data_folder, tests_config
+from test_needed import tests_data_folder, tests_config, tests_folder
 
 
 def test_hgvs_tsv():
 
-    # Init files
-    input_vcf = tests_data_folder + "/example.vcf.gz"
-    output_vcf = "/tmp/output_file.tsv"
-    config = {}
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
-    genomes_folder = tests_config["folders"]["databases"]["genomes"]
-    refseq_folder = tests_config["folders"]["databases"]["refseq"]
+        # Init files
+        input_vcf = tests_data_folder + "/example.vcf.gz"
+        output_vcf = os.path.join(tmp_dir, "output_file.tsv")
+        config = {}
 
-    # prepare arguments for the query function
-    args = argparse.Namespace(
-        input=input_vcf,
-        output=output_vcf,
-        hgvs_options="full_format",
-        config=config,
-        genomes_folder=genomes_folder,
-        refseq_folder=refseq_folder,
-        arguments_dict=arguments_dict,
-    )
+        genomes_folder = tests_config["folders"]["databases"]["genomes"]
+        refseq_folder = tests_config["folders"]["databases"]["refseq"]
 
-    # Remove if output file exists
-    remove_if_exists([output_vcf])
+        # prepare arguments for the query function
+        args = argparse.Namespace(
+            input=input_vcf,
+            output=output_vcf,
+            hgvs_options="full_format",
+            config=config,
+            genomes_folder=genomes_folder,
+            refseq_folder=refseq_folder,
+            arguments_dict=arguments_dict,
+        )
 
-    # Query
-    hgvs(args)
+        # Remove if output file exists
+        remove_if_exists([output_vcf])
 
-    # Check output file exists
-    assert os.path.exists(output_vcf)
+        # Query
+        hgvs(args)
 
-    # read the contents of the actual output file
-    with open(output_vcf, "r") as f:
-        result_output_nb_lines = 0
-        result_output_nb_variants = 0
-        for line in f:
-            result_output_nb_lines += 1
-            if not line.startswith("#"):
-                result_output_nb_variants += 1
+        # Check output file exists
+        assert os.path.exists(output_vcf)
 
-    # Expected result
-    expected_result_nb_lines = 8
-    expected_result_nb_variants = 7
+        # read the contents of the actual output file
+        with open(output_vcf, "r") as f:
+            result_output_nb_lines = 0
+            result_output_nb_variants = 0
+            for line in f:
+                result_output_nb_lines += 1
+                if not line.startswith("#"):
+                    result_output_nb_variants += 1
 
-    # Compare
-    assert result_output_nb_lines == expected_result_nb_lines
-    assert result_output_nb_variants == expected_result_nb_variants
+        # Expected result
+        expected_result_nb_lines = 8
+        expected_result_nb_variants = 7
 
-    # Create object
-    variants = Variants(conn=None, input=output_vcf, config=config, load=True)
+        # Compare
+        assert result_output_nb_lines == expected_result_nb_lines
+        assert result_output_nb_variants == expected_result_nb_variants
 
-    # Check annotation
-    result = variants.get_query_to_df(
-        "SELECT INFO FROM variants WHERE INFO LIKE '%hgvs=%'"
-    )
-    assert len(result) == 7
+        # Create object
+        variants = Variants(conn=None, input=output_vcf, config=config, load=True)
+
+        # Check annotation
+        result = variants.get_query_to_df(
+            "SELECT INFO FROM variants WHERE INFO LIKE '%hgvs=%'"
+        )
+        assert len(result) == 7
 
 
 def test_hgvs_vcf():
 
-    # Init files
-    input_vcf = tests_data_folder + "/example.vcf.gz"
-    output_vcf = "/tmp/output_file.vcf"
-    config = {}
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
-    genomes_folder = tests_config["folders"]["databases"]["genomes"]
-    refseq_folder = tests_config["folders"]["databases"]["refseq"]
+        # Init files
+        input_vcf = tests_data_folder + "/example.vcf.gz"
+        output_vcf = os.path.join(tmp_dir, "output_file.vcf")
+        config = {}
 
-    # prepare arguments for the query function
-    args = argparse.Namespace(
-        input=input_vcf,
-        output=output_vcf,
-        hgvs_options="full_format",
-        config=config,
-        genomes_folder=genomes_folder,
-        refseq_folder=refseq_folder,
-        arguments_dict=arguments_dict,
-    )
+        genomes_folder = tests_config["folders"]["databases"]["genomes"]
+        refseq_folder = tests_config["folders"]["databases"]["refseq"]
 
-    # Remove if output file exists
-    remove_if_exists([output_vcf])
+        # prepare arguments for the query function
+        args = argparse.Namespace(
+            input=input_vcf,
+            output=output_vcf,
+            hgvs_options="full_format",
+            config=config,
+            genomes_folder=genomes_folder,
+            refseq_folder=refseq_folder,
+            arguments_dict=arguments_dict,
+        )
 
-    # Query
-    hgvs(args)
+        # Remove if output file exists
+        remove_if_exists([output_vcf])
 
-    # Check output file exists
-    assert os.path.exists(output_vcf)
+        # Query
+        hgvs(args)
 
-    # read the contents of the actual output file
-    with open(output_vcf, "r") as f:
-        result_output_nb_lines = 0
-        result_output_nb_variants = 0
-        for line in f:
-            result_output_nb_lines += 1
-            if not line.startswith("#"):
-                result_output_nb_variants += 1
+        # Check output file exists
+        assert os.path.exists(output_vcf)
 
-    # Expected result
-    expected_result_nb_lines = 62
-    expected_result_nb_variants = 7
+        # read the contents of the actual output file
+        with open(output_vcf, "r") as f:
+            result_output_nb_lines = 0
+            result_output_nb_variants = 0
+            for line in f:
+                result_output_nb_lines += 1
+                if not line.startswith("#"):
+                    result_output_nb_variants += 1
 
-    # Compare
-    assert result_output_nb_lines == expected_result_nb_lines
-    assert result_output_nb_variants == expected_result_nb_variants
+        # Expected result
+        expected_result_nb_lines = 62
+        expected_result_nb_variants = 7
 
-    # Create object
-    variants = Variants(conn=None, input=output_vcf, config=config, load=True)
+        # Compare
+        assert result_output_nb_lines == expected_result_nb_lines
+        assert result_output_nb_variants == expected_result_nb_variants
 
-    # Check annotation
-    result = variants.get_query_to_df(
-        "SELECT INFO FROM variants WHERE INFO LIKE '%hgvs=%'"
-    )
-    assert len(result) == 7
+        # Create object
+        variants = Variants(conn=None, input=output_vcf, config=config, load=True)
+
+        # Check annotation
+        result = variants.get_query_to_df(
+            "SELECT INFO FROM variants WHERE INFO LIKE '%hgvs=%'"
+        )
+        assert len(result) == 7

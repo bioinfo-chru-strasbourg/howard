@@ -5365,3 +5365,20 @@ def estimate_update_ratio_fast(con, dest_table, sources, join_keys, samples=1000
 
     # Return max ratio
     return max(ratios) if ratios else 0.0
+
+
+def duckdb_has_spilled(temp_dir: str) -> bool:
+    """
+    Check if DuckDB has spilled to disk in the given temporary directory.
+    :param temp_dir: The temporary directory used by DuckDB for spill files.
+    :type temp_dir: Path
+    :return: True if DuckDB has spilled to disk, False otherwise.
+    :rtype: bool
+    """
+
+    # Check if temp_dir exists and has any files
+    if not os.path.exists(temp_dir):
+        return False
+
+    # Check if there are any files in the temp_dir
+    return any(os.listdir(temp_dir))
