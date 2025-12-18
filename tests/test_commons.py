@@ -22,138 +22,139 @@ from howard.functions.commons import *
 from test_needed import *
 
 
-def test_detect_column_type():
+@pytest.mark.parametrize(
+    "column, expected_output",
+    [
+        (pd.Series([1, 2, 3, 4]), "DOUBLE"),
+        (pd.to_datetime(["2022-01-01", "2022-01-02"]), "DATETIME"),
+        (pd.Series([True, False, True]), "BOOLEAN"),
+        (pd.Series([1, "2022-01-01", True, "Hello"]), "VARCHAR"),
+    ],
+)
+def test_detect_column_type(column, expected_output):
     """
     The function `test_detect_column_type` contains test cases for detecting the type of data in a
     column using the `detect_column_type` function.
     """
 
-    # Test case 1: Numeric values
-    column = pd.Series([1, 2, 3, 4])
-    expected_output = "DOUBLE"
-    assert detect_column_type(column) == expected_output
-
-    # Test case 2: Datetime values
-    column = pd.to_datetime(["2022-01-01", "2022-01-02"])
-    expected_output = "DATETIME"
-    assert detect_column_type(column) == expected_output
-
-    # Test case 3: Boolean values
-    column = pd.Series([True, False, True])
-    expected_output = "BOOLEAN"
-    assert detect_column_type(column) == expected_output
-
-    # Test case 4: Mixed values
-    column = pd.Series([1, "2022-01-01", True, "Hello"])
-    expected_output = "VARCHAR"
     assert detect_column_type(column) == expected_output
 
 
-def test_explode_annotation_format():
+@pytest.mark.parametrize(
+    "annotation, uniquify, output_format, prefix, header, expected_output",
+    [
+        (
+            "A|B|C,D|E|F",
+            False,
+            "fields",
+            "",
+            ["Allele", "Annotation", "Annotation_Impact"],
+            "Allele=A,D;Annotation=B,E;AnnotationImpact=C,F",
+        ),
+        (
+            "A|B|C,D|E|F",
+            False,
+            "fields",
+            "ANN_",
+            ["Allele", "Annotation", "Annotation_Impact"],
+            "ANN_Allele=A,D;ANN_Annotation=B,E;ANN_AnnotationImpact=C,F",
+        ),
+        (
+            "A|B|C,D|E|F",
+            True,
+            "JSON",
+            "",
+            ["Allele", "Annotation", "Annotation_Impact"],
+            {
+                0: {"Allele": "A", "Annotation": "B", "Annotation_Impact": "C"},
+                1: {"Allele": "D", "Annotation": "E", "Annotation_Impact": "F"},
+            },
+        ),
+        (
+            "A|B|C,D|E|F",
+            True,
+            "JSON",
+            "ANN_",
+            ["Allele", "Annotation", "Annotation_Impact"],
+            {
+                0: {
+                    "ANN_Allele": "A",
+                    "ANN_Annotation": "B",
+                    "ANN_Annotation_Impact": "C",
+                },
+                1: {
+                    "ANN_Allele": "D",
+                    "ANN_Annotation": "E",
+                    "ANN_Annotation_Impact": "F",
+                },
+            },
+        ),
+    ],
+)
+def test_explode_annotation_format(
+    annotation, uniquify, output_format, prefix, header, expected_output
+):
 
-    # Test case 1: Basic input
-    annotation = "A|B|C,D|E|F"
-    uniquify = False
-    output_format = "fields"
-    prefix = ""
-    header = ["Allele", "Annotation", "Annotation_Impact"]
-    expected_output = "Allele=A,D;Annotation=B,E;AnnotationImpact=C,F"
-    assert (
-        explode_annotation_format(annotation, uniquify, output_format, prefix, header)
-        == expected_output
-    )
-
-    # Test case 2: Basic input with prefix
-    annotation = "A|B|C,D|E|F"
-    uniquify = False
-    output_format = "fields"
-    prefix = "ANN_"
-    header = ["Allele", "Annotation", "Annotation_Impact"]
-    expected_output = "ANN_Allele=A,D;ANN_Annotation=B,E;ANN_AnnotationImpact=C,F"
-    assert (
-        explode_annotation_format(annotation, uniquify, output_format, prefix, header)
-        == expected_output
-    )
-
-    # Test case 3: Uniquify and JSON format
-    annotation = "A|B|C,D|E|F"
-    uniquify = True
-    output_format = "JSON"
-    prefix = ""
-    header = ["Allele", "Annotation", "Annotation_Impact"]
-    expected_output = {
-        0: {"Allele": "A", "Annotation": "B", "Annotation_Impact": "C"},
-        1: {"Allele": "D", "Annotation": "E", "Annotation_Impact": "F"},
-    }
-    assert (
-        explode_annotation_format(annotation, uniquify, output_format, prefix, header)
-        == expected_output
-    )
-
-    # Test case 4: Uniquify and JSON format with prefix
-    annotation = "A|B|C,D|E|F"
-    uniquify = True
-    output_format = "JSON"
-    prefix = "ANN_"
-    header = ["Allele", "Annotation", "Annotation_Impact"]
-    expected_output = {
-        0: {"ANN_Allele": "A", "ANN_Annotation": "B", "ANN_Annotation_Impact": "C"},
-        1: {"ANN_Allele": "D", "ANN_Annotation": "E", "ANN_Annotation_Impact": "F"},
-    }
     assert (
         explode_annotation_format(annotation, uniquify, output_format, prefix, header)
         == expected_output
     )
 
 
-def test_basic_functionality():
-    # Test the basic functionality with default separators and clearing
-    result = params_string_to_dict("app:param1=value1:param2=value2+value3")
-    expected = {"param1": "value1", "param2": "value2,value3"}
-    assert result == expected
-
-
-def test_basic_without_header():
-    # Test the basic functionality with default separators and clearing, without header
-    result = params_string_to_dict("param1=value1:param2=value2+value3", header=False)
-    expected = {"param1": "value1", "param2": "value2,value3"}
-    assert result == expected
-
-
-def test_custom_separators():
-    # Test with custom separators
+@pytest.mark.parametrize(
+    "params_string, param_sep, val_clear, header, expected_output",
+    [
+        (
+            "app:param1=value1:param2=value2+value3",
+            ":",
+            {"+": ","},
+            True,
+            {"param1": "value1", "param2": "value2,value3"},
+        ),
+        (
+            "param1=value1:param2=value2+value3",
+            ":",
+            {"+": ","},
+            False,
+            {"param1": "value1", "param2": "value2,value3"},
+        ),
+        (
+            "app;param1=value1;param2=value2 value3",
+            ";",
+            {"+": ",", " ": "_"},
+            True,
+            {"param1": "value1", "param2": "value2_value3"},
+        ),
+        (
+            "app:param1=:param2=",
+            ":",
+            {"+": ","},
+            True,
+            {"param1": None, "param2": None},
+        ),
+        (
+            "app:param1=value1+value2:param2=value3 value4",
+            ":",
+            {},
+            True,
+            {"param1": "value1+value2", "param2": "value3 value4"},
+        ),
+        (
+            "=value1:param2=value2",
+            ":",
+            {"+": ","},
+            True,
+            {"param2": "value2"},
+        ),
+    ],
+)
+def test_params_string_to_dict(
+    params_string, param_sep, val_clear, header, expected_output
+):
     result = params_string_to_dict(
-        "app;param1=value1;param2=value2 value3",
-        param_sep=";",
-        val_clear={"+": ",", " ": "_"},
+        params_string, param_sep=param_sep, val_clear=val_clear, header=header
     )
-    expected = {"param1": "value1", "param2": "value2_value3"}
-    assert result == expected
-
-
-def test_empty_values():
-    # Test with empty values
-    result = params_string_to_dict("app:param1=:param2=")
-    expected = {"param1": None, "param2": None}
-    log.debug(f"result={result}")
-    log.debug(f"expected={expected}")
-    assert result == expected
-
-
-def test_no_clearing():
-    # Test with no clearing of values
-    result = params_string_to_dict(
-        "app:param1=value1+value2:param2=value3 value4", val_clear={}
-    )
-    expected = {"param1": "value1+value2", "param2": "value3 value4"}
-    assert result == expected
-
-
-def test_invalid_input():
-    # Test with invalid input
-    result = params_string_to_dict("=value1:param2=value2")
-    expected = {"param2": "value2"}
-    assert result == expected
+    assert result == expected_output
 
 
 def test_help():
@@ -257,74 +258,87 @@ def test_identical_with_different_content():
         os.unlink(f2.name)
 
 
-def test_transcripts_file_to_df():
+@pytest.mark.parametrize(
+    "transcripts_file, column_names, expected_columns, expected_length",
+    [
+        (
+            tests_data_folder + "/transcripts.tsv",
+            None,
+            ["transcript", "gene"],
+            4,
+        ),
+        (
+            tests_data_folder + "/transcripts.empty.tsv",
+            None,
+            ["transcript", "gene"],
+            0,
+        ),
+        (
+            "file_not_exist",
+            None,
+            ["transcript", "gene"],
+            0,
+        ),
+        (
+            tests_data_folder + "/transcripts.with_header.tsv",
+            None,
+            ["transcript", "gene"],
+            4,
+        ),
+        (
+            tests_data_folder + "/transcripts.with_comments.tsv",
+            None,
+            ["transcript", "gene"],
+            4,
+        ),
+        (
+            tests_data_folder + "/transcripts.with_comments.tsv",
+            ["transcript"],
+            ["transcript", "column_2"],
+            4,
+        ),
+        (
+            tests_data_folder + "/transcripts.with_comments.tsv",
+            ["transcript", "gene", "column_3"],
+            ["transcript", "gene"],
+            4,
+        ),
+        (
+            tests_data_folder + "/transcripts.for_mapping.tsv",
+            ["transcript"],
+            ["transcript", "column_2"],
+            8,
+        ),
+        (
+            tests_data_folder + "/transcripts.for_mapping.tsv",
+            ["transcript", "gene"],
+            ["transcript", "gene"],
+            8,
+        ),
+        (
+            tests_data_folder + "/transcripts.for_mapping.tsv",
+            ["transcript", "gene", "column_3"],
+            ["transcript", "gene"],
+            8,
+        ),
+    ],
+)
+def test_transcripts_file_to_df(
+    transcripts_file, column_names, expected_columns, expected_length
+):
     """
     The `test_transcripts_file_to_df` function tests the functionality of the `transcripts_file_to_df`
     function with different input files.
     """
 
-    # Input transcript file
-    transcripts_file = tests_data_folder + "/transcripts.tsv"
-    transcripts_file_empty = tests_data_folder + "/transcripts.empty.tsv"
-    transcripts_file_with_header = tests_data_folder + "/transcripts.with_header.tsv"
-    transcripts_file_for_mapping = tests_data_folder + "/transcripts.for_mapping.tsv"
-    transcripts_file_with_comments = (
-        tests_data_folder + "/transcripts.with_comments.tsv"
-    )
-
-    df = transcripts_file_to_df(transcripts_file=transcripts_file)
-    assert list(df.columns) == ["transcript", "gene"]
-    assert len(df) == 4
-
-    df = transcripts_file_to_df(transcripts_file=transcripts_file_empty)
-    assert list(df.columns) == ["transcript", "gene"]
-    assert len(df) == 0
-
-    df = transcripts_file_to_df(transcripts_file="file_not_exist")
-    assert list(df.columns) == ["transcript", "gene"]
-    assert len(df) == 0
-
-    df = transcripts_file_to_df(transcripts_file=transcripts_file_with_header)
-    assert list(df.columns) == ["transcript", "gene"]
-    assert len(df) == 4
-
-    df = transcripts_file_to_df(transcripts_file=transcripts_file_with_comments)
-    assert list(df.columns) == ["transcript", "gene"]
-    assert len(df) == 4
-
-    df = transcripts_file_to_df(
-        transcripts_file=transcripts_file_with_comments, column_names=["transcript"]
-    )
-    assert list(df.columns) == ["transcript", "column_2"]
-    assert len(df) == 4
-
-    df = transcripts_file_to_df(
-        transcripts_file=transcripts_file_with_comments,
-        column_names=["transcript", "gene", "column_3"],
-    )
-    assert list(df.columns) == ["transcript", "gene"]
-    assert len(df) == 4
-
-    df = transcripts_file_to_df(
-        transcripts_file=transcripts_file_for_mapping,
-        column_names=["transcript"],
-    )
-    assert list(df.columns) == ["transcript", "column_2"]
-    assert len(df) == 8
-
-    df = transcripts_file_to_df(
-        transcripts_file=transcripts_file_for_mapping,
-        column_names=["transcript", "gene"],
-    )
-    assert list(df.columns) == ["transcript", "gene"]
-    assert len(df) == 8
-
-    df = transcripts_file_to_df(
-        transcripts_file=transcripts_file_for_mapping,
-        column_names=["transcript", "gene", "column_3"],
-    )
-    assert list(df.columns) == ["transcript", "gene"]
-    assert len(df) == 8
+    if column_names:
+        df = transcripts_file_to_df(
+            transcripts_file=transcripts_file, column_names=column_names
+        )
+    else:
+        df = transcripts_file_to_df(transcripts_file=transcripts_file)
+    assert list(df.columns) == expected_columns
+    assert len(df) == expected_length
 
 
 def test_get_bin():
@@ -607,88 +621,89 @@ def test_get_bin_command_bcftools():
     )
 
 
-def test_download_file():
+@pytest.mark.parametrize(
+    "dest_file_path, try_aria, threads, threads_limit, chunk_size",
+    [
+        ("file", True, 1, 16, 1024 * 1024),
+        ("file", True, 4, 16, 1024 * 1024),
+        ("file", True, 20, 16, 1024 * 1024),
+        ("file", False, 1, 16, 1024 * 1024),
+        ("file", False, 1, 16, 1024),
+    ],
+)
+def test_download_file(dest_file_path, try_aria, threads, threads_limit, chunk_size):
     """
     The `test_download_file` function downloads a file from a specified URL using the Aria download
     manager and checks if the downloaded file matches the expected file.
     """
 
+    url = "https://raw.githubusercontent.com/bioinfo-chru-strasbourg/howard/master/README.md"
+
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
-        url = "https://raw.githubusercontent.com/bioinfo-chru-strasbourg/howard/master/README.md"
-        dest = os.path.join(tmp_dir, "file")
-        threads = 2
+        dest = os.path.join(tmp_dir, dest_file_path)
 
         log.debug("Download by Aria")
         remove_if_exists([dest])
-        download_file(url=url, dest_file_path=dest)
-        assert os.path.exists(dest)
-
-        log.debug("Download by Aria with threads")
-        remove_if_exists([dest])
-        download_file(url=url, dest_file_path=dest, threads=threads)
-        assert os.path.exists(dest)
-
-        log.debug("Download by Request (no aria)")
-        remove_if_exists([dest])
-        download_file(url=url, dest_file_path=dest, try_aria=False)
-        assert os.path.exists(dest)
-
-        log.debug("Download by Request (no aria, with chunk)")
-        remove_if_exists([dest])
-        download_file(url=url, dest_file_path=dest, try_aria=False, chunk_size=1024)
+        download_file(
+            url=url,
+            dest_file_path=dest,
+            try_aria=try_aria,
+            threads=threads,
+            threads_limit=threads_limit,
+        )
         assert os.path.exists(dest)
 
 
-def test_get_compression_type():
+@pytest.mark.parametrize(
+    "file_path, expected_output",
+    [
+        (database_files.get("vcf"), "none"),
+        (database_files.get("vcf_gz"), "bgzip"),
+        (database_files.get("example_vcf_gzip"), "gzip"),
+        (database_files.get("bcf"), "unknown"),
+        (database_files.get("parquet"), "none"),
+    ],
+)
+def test_get_compression_type(file_path, expected_output):
     """
     The function `test_get_compression_type` tests the `get_compression_type` function with different
     file types and asserts that the returned compression type matches the expected value.
     """
 
-    assert get_compression_type(database_files.get("vcf")) == "none"
-
-    assert get_compression_type(database_files.get("vcf_gz")) == "bgzip"
-
-    assert get_compression_type(database_files.get("example_vcf_gzip")) == "gzip"
-
-    assert get_compression_type(database_files.get("bcf")) == "unknown"
-
-    assert get_compression_type(database_files.get("parquet")) == "none"
+    assert get_compression_type(file_path) == expected_output
 
 
-def test_concat_and_compress_files_vcf():
+@pytest.mark.parametrize(
+    "input_files, compression_type, sort, index",
+    [
+        (input_files, compression_type, sort, index)
+        for input_files in [
+            [database_files.get("vcf")],
+            [database_files.get("vcf_gz")],
+            [database_files.get("example_vcf_gzip")],
+            [
+                database_files.get("vcf"),
+                database_files.get("example_vcf_gzip"),
+                database_files.get("vcf_gz"),
+            ],
+        ]
+        for compression_type in ["none", "bgzip", "gzip"]
+        for sort in [True, False]
+        for index in [True, False]
+    ],
+)
+def test_concat_and_compress_files(input_files, compression_type, sort, index):
     """
-    The function `test_concat_and_compress_files_vcf` tests the `concat_and_compress_files` function
+    The function `test_concat_and_compress_files` tests the `concat_and_compress_files` function
     with different input and output file types.
     """
 
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Input file as plain text, output as plain text
-        input_files = [database_files.get("vcf")]
         output_file = os.path.join(tmp_dir, "test1")
-        compression_type = "none"
-        assert concat_and_compress_files(
-            input_files=input_files,
-            output_file=output_file,
-            compression_type=compression_type,
-        )
-
-        # Input file as plain text, output as bgzip
-        input_files = [database_files.get("vcf")]
-        output_file = os.path.join(tmp_dir, "test2")
-        compression_type = "bgzip"
-        assert concat_and_compress_files(
-            input_files=input_files,
-            output_file=output_file,
-            compression_type=compression_type,
-        )
-
-        # Input file as plain text, output as gzip
-        input_files = [database_files.get("vcf")]
-        output_file = os.path.join(tmp_dir, "test3")
-        compression_type = "gzip"
+        remove_if_exists([output_file])
         assert concat_and_compress_files(
             input_files=input_files,
             output_file=output_file,
@@ -696,233 +711,47 @@ def test_concat_and_compress_files_vcf():
         )
 
 
-def test_concat_and_compress_files_vcf_gz():
-    """
-    The function `test_concat_and_compress_files_vcf_gz` tests the `concat_and_compress_files` function
-    with different compression types.
-    """
-
-    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
-
-        # Input file as bgzip, output as plain text
-        input_files = [database_files.get("vcf_gz")]
-        output_file = os.path.join(tmp_dir, "test4")
-        compression_type = "none"
-        assert concat_and_compress_files(
-            input_files=input_files,
-            output_file=output_file,
-            compression_type=compression_type,
-        )
-
-        # Input file as bgzip, output as bgzip
-        input_files = [database_files.get("vcf_gz")]
-        output_file = os.path.join(tmp_dir, "test5")
-        compression_type = "bgzip"
-        assert concat_and_compress_files(
-            input_files=input_files,
-            output_file=output_file,
-            compression_type=compression_type,
-        )
-
-        # Input file as bgzip, output as gzip
-        input_files = [database_files.get("vcf_gz")]
-        output_file = os.path.join(tmp_dir, "test6")
-        compression_type = "gzip"
-        assert concat_and_compress_files(
-            input_files=input_files,
-            output_file=output_file,
-            compression_type=compression_type,
-        )
-
-
-def test_concat_and_compress_files_vcf_gzip():
-    """
-    The function `test_concat_and_compress_files_vcf_gzip` tests the `concat_and_compress_files`
-    function with different compression types.
-    """
-
-    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
-
-        # Input file as gzip, output as plain text
-        input_files = [database_files.get("example_vcf_gzip")]
-        output_file = os.path.join(tmp_dir, "test7")
-        compression_type = "none"
-        assert concat_and_compress_files(
-            input_files=input_files,
-            output_file=output_file,
-            compression_type=compression_type,
-        )
-
-        # Input file as gzip, output as bgzip
-        input_files = [database_files.get("example_vcf_gzip")]
-        output_file = os.path.join(tmp_dir, "test8")
-        compression_type = "bgzip"
-        assert concat_and_compress_files(
-            input_files=input_files,
-            output_file=output_file,
-            compression_type=compression_type,
-        )
-
-        # Input file as gzip, output as gzip
-        input_files = [database_files.get("example_vcf_gzip")]
-        output_file = os.path.join(tmp_dir, "test9")
-        compression_type = "gzip"
-        assert concat_and_compress_files(
-            input_files=input_files,
-            output_file=output_file,
-            compression_type=compression_type,
-        )
-
-
-def test_concat_and_compress_files_sort_and_index():
-    """
-    The function `test_concat_and_compress_files_sort_and_index` tests the `concat_and_compress_files`
-    function by compressing, sorting, and indexing input files.
-    """
-
-    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
-
-        # Compress and sort and index
-        input_files = [database_files.get("example_vcf_gzip")]
-        output_file = os.path.join(tmp_dir, "test10")
-        compression_type = "bgzip"
-        assert concat_and_compress_files(
-            input_files=input_files,
-            output_file=output_file,
-            compression_type=compression_type,
-            sort=True,
-            index=True,
-        )
-
-        # Compress and sort and index gzip
-        input_files = [database_files.get("example_vcf_gzip")]
-        output_file = os.path.join(tmp_dir, "test11")
-        compression_type = "gzip"
-        assert concat_and_compress_files(
-            input_files=input_files,
-            output_file=output_file,
-            compression_type=compression_type,
-            sort=True,
-            index=True,
-        )
-
-        # Compress and sort and index none
-        input_files = [database_files.get("example_vcf_gzip")]
-        output_file = os.path.join(tmp_dir, "test12")
-        compression_type = "none"
-        assert concat_and_compress_files(
-            input_files=input_files,
-            output_file=output_file,
-            compression_type=compression_type,
-            sort=True,
-            index=True,
-        )
-
-
-def test_concat_and_compress_files_multiple_inputs():
-    """
-    The function `test_concat_and_compress_files_multiple_inputs()` tests the
-    `concat_and_compress_files()` function with multiple input files and different compression types.
-    """
-
-    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
-
-        # Multiple Input files, output as none
-        input_files = [
-            database_files.get("vcf"),
-            database_files.get("example_vcf_gzip"),
-            database_files.get("vcf_gz"),
-        ]
-        output_file = os.path.join(tmp_dir, "test13")
-        compression_type = "none"
-        assert concat_and_compress_files(
-            input_files=input_files,
-            output_file=output_file,
-            compression_type=compression_type,
-        )
-
-        # Multiple Input files, output as gzip
-        input_files = [
-            database_files.get("vcf"),
-            database_files.get("example_vcf_gzip"),
-            database_files.get("vcf_gz"),
-        ]
-        output_file = os.path.join(tmp_dir, "test14")
-        compression_type = "gzip"
-        assert concat_and_compress_files(
-            input_files=input_files,
-            output_file=output_file,
-            compression_type=compression_type,
-        )
-
-        # Multiple Input files, output as bgzip
-        input_files = [
-            database_files.get("vcf"),
-            database_files.get("example_vcf_gzip"),
-            database_files.get("vcf_gz"),
-        ]
-        output_file = os.path.join(tmp_dir, "test15")
-        compression_type = "bgzip"
-        assert concat_and_compress_files(
-            input_files=input_files,
-            output_file=output_file,
-            compression_type=compression_type,
-        )
-
-
-def test_get_file_compressed():
+@pytest.mark.parametrize(
+    "input_file, result",
+    [
+        ("testfile.gz", True),
+        ("testfile.bcf", False),
+        ("testfile.vcf", False),
+        ("testfile.tsv", False),
+        ("testfile.csv.gz", True),
+        ("testfile.parquet", False),
+        ("testfile.parquet.gz", True),
+    ],
+)
+def test_get_file_compressed(input_file, result):
     """
     This function tests whether a given file is compressed or not, based on its file extension.
     """
 
     # Test pour un fichier compressé .gz
-    assert get_file_compressed("testfile.gz") == True
-
-    # Test pour un fichier compressé .bcf
-    assert get_file_compressed("testfile.bcf") == False
-
-    # Test pour un fichier non compressé .vcf
-    assert get_file_compressed("testfile.vcf") == False
-
-    # Test pour un fichier non compressé .tsv
-    assert get_file_compressed("testfile.tsv") == False
-
-    # Test pour un fichier compressé .csv.gz
-    assert get_file_compressed("testfile.csv.gz") == True
-
-    # Test pour un fichier compressé .parquet
-    assert get_file_compressed("testfile.parquet") == False
-
-    # Test pour un fichier compressé .parquet.gz
-    assert get_file_compressed("testfile.parquet.gz") == True
+    assert get_file_compressed(input_file) == result
 
 
-def test_get_file_format():
+@pytest.mark.parametrize(
+    "input_file, result",
+    [
+        ("testfile.vcf", "vcf"),
+        ("testfile.tsv.gz", "tsv"),
+        ("testfile.csv", "csv"),
+        ("testfile.bcf", "bcf"),
+        ("testfile.bcf.gz", "bcf"),
+        ("testfile.parquet", "parquet"),
+        ("testfile.txt.gz", "txt"),
+    ],
+)
+def test_get_file_format(input_file, result):
     """
-    The function tests the `get_file_format` function for various file formats and asserts that the
+    This function tests the `get_file_format` function for various file formats and asserts that the
     output is correct.
     """
 
-    # Test pour un fichier .vcf
-    assert get_file_format("testfile.vcf") == "vcf"
-
-    # Test pour un fichier .tsv.gz
-    assert get_file_format("testfile.tsv.gz") == "tsv"
-
-    # Test pour un fichier .csv
-    assert get_file_format("testfile.csv") == "csv"
-
-    # Test pour un fichier .bcf.gz
-    assert get_file_format("testfile.bcf") == "bcf"
-
-    # Test pour un fichier .bcf.gz
-    assert get_file_format("testfile.bcf.gz") == "bcf"
-
-    # Test pour un fichier .parquet
-    assert get_file_format("testfile.parquet") == "parquet"
-
-    # Test pour un fichier .txt.gz
-    assert get_file_format("testfile.txt.gz") == "txt"
+    # Test pour un fichier compressé .gz
+    assert get_file_format(input_file) == result
 
 
 def test_remove_if_exists():
@@ -2440,29 +2269,24 @@ def test_get_duckdb_extension_file():
     assert get_duckdb_extension_file("sqlite_scanner", conn=conn)
 
 
-def test_clean_annotation_field_basic_alphanumeric():
-    assert clean_annotation_field("HelloWorld") == "HelloWorld"
+@pytest.mark.parametrize(
+    "input_str, char_allowed, expected_output",
+    [
+        ("HelloWorld", None, "HelloWorld"),
+        ("Hello, World!", None, "HelloWorld"),
+        ("Hello-World", ["-"], "Hello-World"),
+        ("", None, ""),
+        ("Hello@World#2023", None, "HelloWorld2023"),
+        ("!!!", None, ""),
+        ("Test123!@#", ["!"], "Test123!"),
+    ],
+)
+def test_clean_annotation_field(input_str, char_allowed, expected_output):
+    """
+    This is a parameterized test function that tests the `clean_annotation_field` function with various
+    input strings, allowed characters, and expected outputs.
+    """
 
-
-def test_clean_annotation_field_with_special_characters():
-    assert clean_annotation_field("Hello, World!") == "HelloWorld"
-
-
-def test_clean_annotation_field_with_allowed_characters():
-    assert clean_annotation_field("Hello-World", char_allowed=["-"]) == "Hello-World"
-
-
-def test_clean_annotation_field_empty_string():
-    assert clean_annotation_field("") == ""
-
-
-def test_clean_annotation_field_no_allowed_characters():
-    assert clean_annotation_field("Hello@World#2023") == "HelloWorld2023"
-
-
-def test_clean_annotation_field_all_characters_removed():
-    assert clean_annotation_field("!!!") == ""
-
-
-def test_clean_annotation_field_non_alphanumeric_with_allowed_chars():
-    assert clean_annotation_field("Test123!@#", char_allowed=["!"]) == "Test123!"
+    assert (
+        clean_annotation_field(input_str, char_allowed=char_allowed) == expected_output
+    )

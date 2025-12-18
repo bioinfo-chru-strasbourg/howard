@@ -431,7 +431,7 @@ def test_process_with_chunking_param():
         calculations = "VARTYPE"
         prioritizations = "default"
         input_query = None
-        output_transcripts_tsv = "/tmp/output.transcripts.tsv"
+        output_transcripts_tsv = os.path.join(tmp_dir, "output.transcripts.tsv")
 
         # prepare arguments for the query function
         args = argparse.Namespace(

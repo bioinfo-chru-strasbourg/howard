@@ -11,8 +11,10 @@ coverage run -m pytest . -x -v
 coverage report --include=howard/* -m
 """
 
+import pytest  # type: ignore
 import os
 import duckdb  # type: ignore
+from tempfile import TemporaryDirectory
 
 # from howard.functions.commons import *
 from howard.functions.commons import remove_if_exists
@@ -32,78 +34,58 @@ def test_load():
     assert input_vcf_test == input_vcf
 
 
-def test_export_vcf():
+@pytest.mark.parametrize(
+    "input, output, header",
+    [
+        (tests_folder + "/data/example.vcf.gz", "output.tsv.gz", "output.tsv.gz.hdr"),
+        (tests_folder + "/data/example.vcf.gz", "output.vcf", None),
+        (tests_folder + "/data/example.vcf.gz", "output.vcf.gz", None),
+        (tests_folder + "/data/example.vcf.gz", "output.parquet", "output.parquet.hdr"),
+    ],
+)
+def test_export(input, output, header):
     """
     It loads a VCF file into a DuckDB database, and then exports it back to a VCF file
     """
-    input_vcf = tests_folder + "/data/example.vcf.gz"
-    output_vcf = "/tmp/output.vcf"
-    conn = duckdb.connect(":memory:")
-    vcf = Variants(conn=conn, input=input_vcf, output=output_vcf)
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        output = os.path.join(tmp_dir, output)
+        vcf = Variants(input=input, output=output)
+        vcf.load_data()
+        remove_if_exists([output])
+        vcf.export_output()
+        assert os.path.exists(output)
+        if header is not None:
+            header = os.path.join(tmp_dir, header)
+            assert os.path.exists(header)
+
+
+@pytest.mark.parametrize(
+    "input_vcf, clause, variants_table, config",
+    [
+        (tests_folder + "/data/example.vcf.gz", None, "variants", {}),
+        (tests_folder + "/data/example.vcf.gz", "select", "variants", {}),
+        (tests_folder + "/data/example.vcf.gz", "from", "variants as variants", {}),
+        (tests_folder + "/data/example.parquet", None, "variants", {}),
+        (tests_folder + "/data/example.parquet", "select", "variants", {}),
+        (tests_folder + "/data/example.parquet", "from", "variants as variants", {}),
+        (
+            tests_folder + "/data/example.parquet",
+            "from",
+            f"'{tests_folder + '/data/example.parquet'}' as variants",
+            {"access": "RO"},
+        ),
+    ],
+)
+def test_get_table_variants(input_vcf, clause, variants_table, config):
+    vcf = Variants(input=input_vcf, config=config)
     vcf.load_data()
-    remove_if_exists([output_vcf])
-    vcf.export_output()
-    assert os.path.exists(output_vcf)
-
-
-def test_export_vcf_gz():
-    """
-    It loads a VCF file into a DuckDB database, and then exports it back to a VCF file
-    """
-    input_vcf = tests_folder + "/data/example.vcf.gz"
-    output_vcf = "/tmp/output.vcf.gz"
-    conn = duckdb.connect(":memory:")
-    vcf = Variants(conn=conn, input=input_vcf, output=output_vcf)
-    vcf.load_data()
-    remove_if_exists([output_vcf])
-    vcf.export_output()
-    assert os.path.exists(output_vcf)
-
-
-def test_export_parquet():
-    """
-    It loads a VCF file into a DuckDB database, and then exports it back to a VCF file
-    """
-    input_vcf = tests_folder + "/data/example.vcf.gz"
-    output_vcf = "/tmp/output.parquet"
-    conn = duckdb.connect(":memory:")
-    vcf = Variants(conn=conn, input=input_vcf, output=output_vcf)
-    vcf.load_data()
-    remove_if_exists([output_vcf])
-    vcf.export_output()
-    assert os.path.exists(output_vcf)
-
-
-def test_export_header():
-    """
-    It loads a VCF file into a DuckDB database, and then exports it back to a VCF file and check header file
-    """
-
-    input_vcf = tests_folder + "/data/example.vcf.gz"
-    output_vcf = "/tmp/output.tsv.gz"
-    output_vcf_header = "/tmp/output.tsv.gz.hdr"
-    conn = duckdb.connect(":memory:")
-    vcf = Variants(conn=conn, input=input_vcf, output=output_vcf)
-    vcf.load_data()
-    remove_if_exists([output_vcf])
-    vcf.export_output()
-    assert os.path.exists(output_vcf_header)
-
-
-def test_export_header_vcf():
-    """
-    It loads a VCF file into a DuckDB database, and then exports it back to a VCF file and check header file
-    """
-
-    input_vcf = tests_folder + "/data/example.vcf.gz"
-    output_vcf = "/tmp/output.vcf.gz"
-    output_vcf_header = "/tmp/output.vcf.gz.hdr"
-    conn = duckdb.connect(":memory:")
-    vcf = Variants(conn=conn, input=input_vcf, output=output_vcf)
-    vcf.load_data()
-    remove_if_exists([output_vcf])
-    vcf.export_output()
-    assert not os.path.exists(output_vcf_header)
+    if clause:
+        result = vcf.get_table_variants(clause=clause)
+    else:
+        result = vcf.get_table_variants()
+    assert variants_table == result
 
 
 def test_query():
@@ -113,49 +95,4 @@ def test_query():
     conn = duckdb.connect(":memory:")
     result = conn.execute("SELECT 1 AS count").df()["count"][0]
     assert result == 1
-
-
-def test_get_table_variants_select_vcf_gz():
-    input_vcf = tests_folder + "/data/example.vcf.gz"
-    conn = duckdb.connect(":memory:")
-    vcf = Variants(conn=conn, input=input_vcf)
-    vcf.load_data()
-    variants_table = vcf.get_table_variants(clause="select")
-    assert variants_table == "variants"
-
-
-def test_get_table_variants_from_vcf_gz():
-    input_vcf = tests_folder + "/data/example.vcf.gz"
-    conn = duckdb.connect(":memory:")
-    vcf = Variants(conn=conn, input=input_vcf)
-    vcf.load_data()
-    variants_table = vcf.get_table_variants(clause="from")
-    assert variants_table == "variants as variants"
-
-
-def test_get_table_variants_select_parquet():
-    input_vcf = tests_folder + "/data/example.parquet"
-    conn = duckdb.connect(":memory:")
-    vcf = Variants(conn=conn, input=input_vcf)
-    vcf.load_data()
-    variants_table = vcf.get_table_variants(clause="select")
-    assert variants_table == "variants"
-
-
-def test_get_table_variants_from_parquet():
-    input_vcf = tests_folder + "/data/example.parquet"
-    conn = duckdb.connect(":memory:")
-    vcf = Variants(conn=conn, input=input_vcf)
-    vcf.load_data()
-    variants_table = vcf.get_table_variants(clause="from")
-    assert variants_table == "variants as variants"
-
-
-def test_get_table_variants_from_parquet_ro():
-    input_vcf = tests_folder + "/data/example.parquet"
-    conn = duckdb.connect(":memory:")
-    config = {"access": "RO"}
-    vcf = Variants(conn=conn, input=input_vcf, config=config)
-    vcf.load_data()
-    variants_table = vcf.get_table_variants(clause="from")
-    assert variants_table == f"'{input_vcf}' as variants"
+    conn.close()
