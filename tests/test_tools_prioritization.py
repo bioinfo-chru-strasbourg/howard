@@ -10,121 +10,127 @@ coverage run -m pytest tests/test_tools_prioritization.py -x -v --log-cli-level=
 coverage report --include=howard/* -m
 """
 
+import os
 import argparse
+from tempfile import TemporaryDirectory
 
 from howard.functions.commons import remove_if_exists
 from howard.objects.variants import Variants
 from howard.tools.prioritization import prioritization
 from howard.tools.tools import arguments_dict
 
-from test_needed import tests_data_folder
+from test_needed import tests_data_folder, tests_folder
 
 
 def test_prioritization_tsv():
 
-    # Init files
-    input_vcf = tests_data_folder + "/example.vcf.gz"
-    output_vcf = "/tmp/output_file.tsv"
-    config = {}
-    prioritizations = "default,GERMLINE"
-    prioritization_config = tests_data_folder + "/prioritization_profiles.json"
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
-    # prepare arguments for the query function
-    args = argparse.Namespace(
-        input=input_vcf,
-        output=output_vcf,
-        config=config,
-        prioritizations=prioritizations,
-        prioritization_config=prioritization_config,
-        pzfields="PZScore,PZFlag",
-        default_profile="default",
-        prioritization_score_mode="HOWARD",
-        arguments_dict=arguments_dict,
-    )
+        # Init files
+        input_vcf = tests_data_folder + "/example.vcf.gz"
+        output_vcf = os.path.join(tmp_dir, "output_file.tsv")
+        config = {}
+        prioritizations = "default,GERMLINE"
+        prioritization_config = tests_data_folder + "/prioritization_profiles.json"
 
-    # Remove if output file exists
-    remove_if_exists([output_vcf])
+        # prepare arguments for the query function
+        args = argparse.Namespace(
+            input=input_vcf,
+            output=output_vcf,
+            config=config,
+            prioritizations=prioritizations,
+            prioritization_config=prioritization_config,
+            pzfields="PZScore,PZFlag",
+            default_profile="default",
+            prioritization_score_mode="HOWARD",
+            arguments_dict=arguments_dict,
+        )
 
-    # Query
-    prioritization(args)
+        # Remove if output file exists
+        remove_if_exists([output_vcf])
 
-    # read the contents of the actual output file
-    with open(output_vcf, "r") as f:
-        result_output_nb_lines = 0
-        result_output_nb_variants = 0
-        for line in f:
-            result_output_nb_lines += 1
-            if not line.startswith("#"):
-                result_output_nb_variants += 1
+        # Query
+        prioritization(args)
 
-    # Expected result
-    expected_result_nb_lines = 8
-    expected_result_nb_variants = 7
+        # read the contents of the actual output file
+        with open(output_vcf, "r") as f:
+            result_output_nb_lines = 0
+            result_output_nb_variants = 0
+            for line in f:
+                result_output_nb_lines += 1
+                if not line.startswith("#"):
+                    result_output_nb_variants += 1
 
-    # Compare
-    assert result_output_nb_lines == expected_result_nb_lines
-    assert result_output_nb_variants == expected_result_nb_variants
+        # Expected result
+        expected_result_nb_lines = 8
+        expected_result_nb_variants = 7
 
-    # Create object
-    variants = Variants(conn=None, input=output_vcf, config=config, load=True)
+        # Compare
+        assert result_output_nb_lines == expected_result_nb_lines
+        assert result_output_nb_variants == expected_result_nb_variants
 
-    # Check annotation
-    result = variants.get_query_to_df(
-        "SELECT INFO FROM variants WHERE INFO LIKE '%PZScore=%'"
-    )
-    assert len(result) == 7
+        # Create object
+        variants = Variants(conn=None, input=output_vcf, config=config, load=True)
+
+        # Check annotation
+        result = variants.get_query_to_df(
+            "SELECT INFO FROM variants WHERE INFO LIKE '%PZScore=%'"
+        )
+        assert len(result) == 7
 
 
 def test_prioritization_vcf():
 
-    # Init files
-    input_vcf = tests_data_folder + "/example.vcf.gz"
-    output_vcf = "/tmp/output_file.vcf"
-    config = {}
-    prioritizations = "default,GERMLINE"
-    prioritization_config = tests_data_folder + "/prioritization_profiles.json"
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
-    # prepare arguments for the query function
-    args = argparse.Namespace(
-        input=input_vcf,
-        output=output_vcf,
-        config=config,
-        prioritizations=prioritizations,
-        prioritization_config=prioritization_config,
-        pzfields="PZScore,PZFlag",
-        default_profile="default",
-        prioritization_score_mode="HOWARD",
-        arguments_dict=arguments_dict,
-    )
+        # Init files
+        input_vcf = tests_data_folder + "/example.vcf.gz"
+        output_vcf = os.path.join(tmp_dir, "output_file.vcf")
+        config = {}
+        prioritizations = "default,GERMLINE"
+        prioritization_config = tests_data_folder + "/prioritization_profiles.json"
 
-    # Remove if output file exists
-    remove_if_exists([output_vcf])
+        # prepare arguments for the query function
+        args = argparse.Namespace(
+            input=input_vcf,
+            output=output_vcf,
+            config=config,
+            prioritizations=prioritizations,
+            prioritization_config=prioritization_config,
+            pzfields="PZScore,PZFlag",
+            default_profile="default",
+            prioritization_score_mode="HOWARD",
+            arguments_dict=arguments_dict,
+        )
 
-    # Query
-    prioritization(args)
+        # Remove if output file exists
+        remove_if_exists([output_vcf])
 
-    # read the contents of the actual output file
-    with open(output_vcf, "r") as f:
-        result_output_nb_lines = 0
-        result_output_nb_variants = 0
-        for line in f:
-            result_output_nb_lines += 1
-            if not line.startswith("#"):
-                result_output_nb_variants += 1
+        # Query
+        prioritization(args)
 
-    # Expected result
-    expected_result_nb_lines = 67
-    expected_result_nb_variants = 7
+        # read the contents of the actual output file
+        with open(output_vcf, "r") as f:
+            result_output_nb_lines = 0
+            result_output_nb_variants = 0
+            for line in f:
+                result_output_nb_lines += 1
+                if not line.startswith("#"):
+                    result_output_nb_variants += 1
 
-    # Compare
-    assert result_output_nb_lines == expected_result_nb_lines
-    assert result_output_nb_variants == expected_result_nb_variants
+        # Expected result
+        expected_result_nb_lines = 67
+        expected_result_nb_variants = 7
 
-    # Create object
-    variants = Variants(conn=None, input=output_vcf, config=config, load=True)
+        # Compare
+        assert result_output_nb_lines == expected_result_nb_lines
+        assert result_output_nb_variants == expected_result_nb_variants
 
-    # Check annotation
-    result = variants.get_query_to_df(
-        "SELECT INFO FROM variants WHERE INFO LIKE '%PZScore=%'"
-    )
-    assert len(result) == 7
+        # Create object
+        variants = Variants(conn=None, input=output_vcf, config=config, load=True)
+
+        # Check annotation
+        result = variants.get_query_to_df(
+            "SELECT INFO FROM variants WHERE INFO LIKE '%PZScore=%'"
+        )
+        assert len(result) == 7

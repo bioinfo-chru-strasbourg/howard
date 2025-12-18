@@ -31,6 +31,15 @@ def test_annotation_snpeff_lower():
         input_vcf = tests_data_folder + "/example.lower.vcf"
         output_vcf = f"{tmp_dir}/output.vcf.gz"
 
+        # Copy config
+        tests_config_snpeff = tests_config.copy()
+
+        # Number of threads
+        tests_config_snpeff["threads"] = 2
+
+        # Memory
+        tests_config_snpeff["memory"] = "4G"
+
         # Construct param dict
         param = {
             "annotation": {
@@ -45,7 +54,7 @@ def test_annotation_snpeff_lower():
             conn=None,
             input=input_vcf,
             output=output_vcf,
-            config=tests_config,
+            config=tests_config_snpeff,
             param=param,
             load=True,
         )
@@ -81,6 +90,15 @@ def test_annotation_snpeff():
         input_vcf = tests_data_folder + "/example.vcf.gz"
         output_vcf = f"{tmp_dir}/output.vcf.gz"
 
+        # Copy config
+        tests_config_snpeff = tests_config.copy()
+
+        # Number of threads
+        tests_config_snpeff["threads"] = 2
+
+        # Memory
+        tests_config_snpeff["memory"] = "4G"
+
         # Construct param dict
         param = {
             "annotation": {
@@ -95,7 +113,7 @@ def test_annotation_snpeff():
             conn=None,
             input=input_vcf,
             output=output_vcf,
-            config=tests_config,
+            config=tests_config_snpeff,
             param=param,
             load=True,
         )
@@ -134,6 +152,15 @@ def test_annotation_snpeff_full_unsorted():
         input_vcf = tests_data_folder + "/example.full.unsorted.vcf.gz"
         output_vcf = f"{tmp_dir}/output.vcf.gz"
 
+        # Copy config
+        tests_config_snpeff = tests_config.copy()
+
+        # Number of threads
+        tests_config_snpeff["threads"] = 2
+
+        # Memory
+        tests_config_snpeff["memory"] = "4G"
+
         # Construct param dict
         param = {
             "annotation": {
@@ -149,7 +176,7 @@ def test_annotation_snpeff_full_unsorted():
             conn=None,
             input=input_vcf,
             output=output_vcf,
-            config=tests_config,
+            config=tests_config_snpeff,
             param=param,
             load=True,
         )
@@ -202,6 +229,15 @@ def test_annotation_snpeff_no_samples():
         input_vcf = tests_data_folder + "/example.no_samples.vcf.gz"
         output_vcf = f"{tmp_dir}/output.vcf.gz"
 
+        # Copy config
+        tests_config_snpeff = tests_config.copy()
+
+        # Number of threads
+        tests_config_snpeff["threads"] = 2
+
+        # Memory
+        tests_config_snpeff["memory"] = "4G"
+
         # Construct param dict
         param = {
             "annotation": {
@@ -216,7 +252,7 @@ def test_annotation_snpeff_no_samples():
             conn=None,
             input=input_vcf,
             output=output_vcf,
-            config=tests_config,
+            config=tests_config_snpeff,
             param=param,
             load=True,
         )
@@ -257,6 +293,15 @@ def test_annotation_quick_snpeff():
         annotation_snpeff = "snpeff"
         output_vcf = f"{tmp_dir}/output.vcf.gz"
 
+        # Copy config
+        tests_config_snpeff = tests_config.copy()
+
+        # Number of threads
+        tests_config_snpeff["threads"] = 2
+
+        # Memory
+        tests_config_snpeff["memory"] = "4G"
+
         # Construct param dict
         param = {"annotations": {f"{annotation_snpeff}": None}}
 
@@ -265,7 +310,7 @@ def test_annotation_quick_snpeff():
             conn=None,
             input=input_vcf,
             output=output_vcf,
-            config=tests_config,
+            config=tests_config_snpeff,
             param=param,
             load=True,
         )
@@ -302,6 +347,12 @@ def test_annotation_snpeff_sqlite():
         # Construct config dict
         config = tests_config.copy()
         config["connexion_format"] = "sqlite"
+
+        # Number of threads
+        config["threads"] = 2
+
+        # Memory
+        config["memory"] = "4G"
 
         # Construct param dict
         param = {
