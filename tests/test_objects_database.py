@@ -86,33 +86,40 @@ def test_export_order_by(order_by, first_pos, first_qual, first_alt):
     "database_input_index, database_output_format",
     [
         (database_input_index, database_output_format)
-        for database_input_index in [
-            "parquet",
-            "partition_parquet",
-            "vcf",
-            "vcf_gz",
-            "partition_vcf_gz",
-            "tsv",
-            "csv",
-            "tbl",
-            "tsv_alternative_columns",
-            "tsv_variants",
-            "json",
-            "example_vcf",
-            "bed",
-        ]
+        for database_input_index in database_files.keys()
+        if (
+            "duckdb" not in database_input_index
+            and "sqlite" not in database_input_index
+            and "tsv_lower_columns" not in database_input_index
+            and "fail" not in database_input_index
+            and "gzip" not in database_input_index
+        )  # Exclude "bad" inpput files
         for database_output_format in [
+            "vcf",
+            "vcf.gz",
+            "tsv",
+            "tsv.gz",
+            "csv",
+            "csv.gz",
+            "tbl",
+            "tbl.gz",
+            "json",
+            "json.gz",
+            "bed",
+            "bed.gz",
             "duckdb",
             "parquet",
             "partition_parquet",
             "partition_vcf",
-            "vcf",
-            "vcf.gz",
-            "tsv",
-            "csv",
-            "tbl",
-            "json",
-            "bed",
+            "partition_vcf.gz",
+            "partition_tsv",
+            "partition_tsv.gz",
+            "partition_csv",
+            "partition_csv.gz",
+            "partition_tbl",
+            "partition_tbl.gz",
+            "partition_json",
+            "partition_json.gz",
         ]
     ],
 )
@@ -123,42 +130,69 @@ def test_export(database_input_index, database_output_format):
 
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
-        # No database input
-        database = Database()
-        output_database = f"{tmp_dir}/output_database.no_input.parquet"
-        assert not database.export(output_database)
+        # specific partition_parquet
+        if database_output_format.startswith("partition_"):
+            database_output_format = database_output_format.replace("partition_", "")
+            parquet_partitions = ["#CHROM"]
+        else:
+            parquet_partitions = None
 
         # database input/format
-        parquet_partitions = None
-        # specific partition_parquet
-        if database_output_format in ["partition_parquet"]:
-            database_output_format = "parquet"
-            parquet_partitions = ["#CHROM"]
-        # specific partition_parquet
-        if database_output_format in ["partition_vcf"]:
-            database_output_format = "vcf.gz"
-            parquet_partitions = ["#CHROM"]
         input_database = database_files.get(database_input_index)
+
+        # Create database object
         database = Database(database_files.get(database_input_index))
+
+        # Define output and header
         output_database = f"{tmp_dir}/output_database.{database_output_format}"
         output_header = output_database + ".hdr"
+
+        # Remove if exists
         remove_if_exists([output_database, output_header])
 
         try:
+
+            # Count number of rows in input database
+            query_count = "SELECT * FROM variants"
+            count = len(database.query(query=query_count).df())
+
+            # Export database
             assert database.export(
                 output_database=output_database,
                 output_header=output_header,
                 parquet_partitions=parquet_partitions,
             )
+
+            # Attach database
             if database.get_sql_database_attach(database=output_database):
                 database.query(
                     query=f"""{database.get_sql_database_attach(database=output_database)}""",
                 )
-            assert database.query(
-                query=f"""{database.get_sql_database_link(database=output_database)}""",
+
+            # Check number of rows in output database
+            assert (
+                len(
+                    database.query(
+                        query=f"""{database.get_sql_database_link(database=output_database)}""",
+                    ).df()
+                )
+                == count
             )
         except:
             assert False
+
+
+def test_export_no_input():
+    """
+    The function tests the export functionality of a database for various input and output formats.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # No database input
+        database = Database()
+        output_database = f"{tmp_dir}/output_database.no_input.parquet"
+        assert not database.export(output_database)
 
 
 def test_database_as_conn():
@@ -1618,7 +1652,101 @@ def test_get_columns():
     assert database.get_columns(database=None) == []
 
 
-def test_get_extra_colums():
+@pytest.mark.parametrize(
+    "database_file, expected_columns",
+    [
+        (
+            database_files.get("duckdb"),
+            [
+                "ID",
+                "QUAL",
+                "FILTER",
+                "INFO",
+                "INFO/nci60",
+            ],
+        ),
+        (
+            database_files.get("sqlite"),
+            [
+                "ID",
+                "QUAL",
+                "FILTER",
+                "INFO",
+                "INFO/nci60",
+            ],
+        ),
+        (
+            database_files.get("parquet"),
+            [
+                "ID",
+                "QUAL",
+                "FILTER",
+                "INFO",
+                "INFO/nci60",
+            ],
+        ),
+        (
+            database_files.get("vcf"),
+            [
+                "ID",
+                "QUAL",
+                "FILTER",
+                "INFO",
+            ],
+        ),
+        (
+            database_files.get("tsv"),
+            [
+                "ID",
+                "QUAL",
+                "FILTER",
+                "INFO",
+            ],
+        ),
+        (
+            database_files.get("csv"),
+            [
+                "ID",
+                "QUAL",
+                "FILTER",
+                "INFO",
+            ],
+        ),
+        (
+            database_files.get("tbl"),
+            [
+                "ID",
+                "QUAL",
+                "FILTER",
+                "INFO",
+            ],
+        ),
+        (
+            database_files.get("bed"),
+            [
+                "annot1",
+                "annot2",
+            ],
+        ),
+        (
+            None,
+            [],
+        ),
+    ],
+)
+def test_get_extra_colums(database_file, expected_columns):
+    """
+    This function get colums ofa  database
+    """
+
+    # Create empty object
+    database = Database()
+
+    # Check duckdb
+    assert database.get_extra_columns(database_file) == expected_columns
+
+
+def test_get_extra_colums_duckdb():
     """
     This function get colums ofa  database
     """
@@ -1634,74 +1762,6 @@ def test_get_extra_colums():
         "INFO",
         "INFO/nci60",
     ]
-
-    # Create empty object
-    database = Database()
-
-    # Check duckdb
-    assert database.get_extra_columns(database_files.get("duckdb")) == [
-        "ID",
-        "QUAL",
-        "FILTER",
-        "INFO",
-        "INFO/nci60",
-    ]
-
-    # Check sqlite
-    assert database.get_extra_columns(database_files.get("sqlite")) == [
-        "ID",
-        "QUAL",
-        "FILTER",
-        "INFO",
-        "INFO/nci60",
-    ]
-
-    # Check parquet
-    assert database.get_extra_columns(database_files.get("parquet")) == [
-        "ID",
-        "QUAL",
-        "FILTER",
-        "INFO",
-        "INFO/nci60",
-    ]
-
-    # Check vcf
-    assert database.get_extra_columns(database_files.get("vcf")) == [
-        "ID",
-        "QUAL",
-        "FILTER",
-        "INFO",
-    ]
-
-    # Check tsv
-    assert database.get_extra_columns(database_files.get("tsv")) == [
-        "ID",
-        "QUAL",
-        "FILTER",
-        "INFO",
-    ]
-
-    # Check csv
-    assert database.get_extra_columns(database_files.get("csv")) == [
-        "ID",
-        "QUAL",
-        "FILTER",
-        "INFO",
-    ]
-
-    # Check tbl
-    assert database.get_extra_columns(database_files.get("tbl")) == [
-        "ID",
-        "QUAL",
-        "FILTER",
-        "INFO",
-    ]
-
-    # Check bed
-    assert database.get_extra_columns(database_files.get("bed")) == ["annot1", "annot2"]
-
-    # Check None
-    assert database.get_extra_columns(None) == []
 
 
 def test_find_column():
@@ -1961,157 +2021,127 @@ def test_query():
     assert len(database.query(query=f"""SELECT * FROM {database.get_sql_from()}"""))
 
 
-def test_get_needed_columns():
-    """ """
-
-    # Init
-    variants_needed_columns_empty = {
-        "#CHROM": None,
-        "POS": None,
-        "REF": None,
-        "ALT": None,
-    }
-    variants_needed_columns_only_CHROM = {
-        "#CHROM": "CHROM",
-        "POS": None,
-        "REF": None,
-        "ALT": None,
-    }
-    variants_needed_columns_only_ALL = {
-        "#CHROM": "#CHROM",
-        "POS": "POS",
-        "REF": "REF",
-        "ALT": "ALT",
-    }
-    vcf_needed_columns_empty = {
-        "#CHROM": None,
-        "POS": None,
-        "ID": None,
-        "REF": None,
-        "ALT": None,
-        "QUAL": None,
-        "FILTER": None,
-        "INFO": None,
-    }
-    vcf_needed_columns_only_CHROM = {
-        "#CHROM": "CHROM",
-        "POS": None,
-        "ID": None,
-        "REF": None,
-        "ALT": None,
-        "QUAL": None,
-        "FILTER": None,
-        "INFO": None,
-    }
-    vcf_needed_columns_only_ALL = {
-        "#CHROM": "#CHROM",
-        "POS": "POS",
-        "ID": None,
-        "REF": "REF",
-        "ALT": "ALT",
-        "QUAL": None,
-        "FILTER": None,
-        "INFO": "INFO",
-    }
-    regions_needed_columns_empty = {"#CHROM": None, "START": None, "END": None}
-    regions_needed_columns_only_CHROM = {"#CHROM": "CHROM", "START": None, "END": None}
-    regions_needed_columns_only_ALL = {
-        "#CHROM": "#CHROM",
-        "START": "START",
-        "END": "END",
-    }
-
-    # Create object
+@pytest.mark.parametrize(
+    "database_columns, database_type, expected_output",
+    [
+        # empty
+        ([], None, {}),
+        # Variants No columns
+        ([], "variants", {"#CHROM": None, "POS": None, "REF": None, "ALT": None}),
+        # Variants Only CHROM
+        (
+            ["CHROM"],
+            "variants",
+            {"#CHROM": "CHROM", "POS": None, "REF": None, "ALT": None},
+        ),
+        # Variants ALL
+        (
+            ["#CHROM", "POS", "REF", "ALT"],
+            "variants",
+            {"#CHROM": "#CHROM", "POS": "POS", "REF": "REF", "ALT": "ALT"},
+        ),
+        # Variants INFO MORE
+        (
+            ["#CHROM", "POS", "REF", "ALT", "INFO", "MORE"],
+            "variants",
+            {"#CHROM": "#CHROM", "POS": "POS", "REF": "REF", "ALT": "ALT"},
+        ),
+        # VCF No columns
+        (
+            [],
+            "vcf",
+            {
+                "#CHROM": None,
+                "POS": None,
+                "ID": None,
+                "REF": None,
+                "ALT": None,
+                "QUAL": None,
+                "FILTER": None,
+                "INFO": None,
+            },
+        ),
+        # VCF Only CHROM
+        (
+            ["#CHROM"],
+            "vcf",
+            {
+                "#CHROM": "#CHROM",
+                "POS": None,
+                "ID": None,
+                "REF": None,
+                "ALT": None,
+                "QUAL": None,
+                "FILTER": None,
+                "INFO": None,
+            },
+        ),
+        # VCF ALL
+        (
+            ["#CHROM", "POS", "REF", "ALT", "INFO"],
+            "vcf",
+            {
+                "#CHROM": "#CHROM",
+                "POS": "POS",
+                "ID": None,
+                "REF": "REF",
+                "ALT": "ALT",
+                "QUAL": None,
+                "FILTER": None,
+                "INFO": "INFO",
+            },
+        ),
+        # VCF MORE
+        (
+            ["#CHROM", "POS", "REF", "ALT", "INFO", "MORE"],
+            "vcf",
+            {
+                "#CHROM": "#CHROM",
+                "POS": "POS",
+                "ID": None,
+                "REF": "REF",
+                "ALT": "ALT",
+                "QUAL": None,
+                "FILTER": None,
+                "INFO": "INFO",
+            },
+        ),
+        # Regions No columns
+        (
+            [],
+            "regions",
+            {"#CHROM": None, "START": None, "END": None},
+        ),
+        # Regions Only Chrom
+        (
+            ["CHROM"],
+            "regions",
+            {"#CHROM": "CHROM", "START": None, "END": None},
+        ),
+        # Regions ALL
+        (
+            ["#CHROM", "START", "END"],
+            "regions",
+            {"#CHROM": "#CHROM", "START": "START", "END": "END"},
+        ),
+        # Regions MORE
+        (
+            ["#CHROM", "START", "END", "MORE"],
+            "regions",
+            {"#CHROM": "#CHROM", "START": "START", "END": "END"},
+        ),
+    ],
+)
+def test_get_needed_columns(database_columns, database_type, expected_output):
+    """
+    This function tests the get_needed_columns method of the Database class with various inputs.
+    """
+    # Create database
     database = Database()
 
-    # empty
-    assert database.get_needed_columns(database_columns=[], database_type=None) == {}
-
-    # Variants No columns
-    assert (
-        database.get_needed_columns(database_columns=[], database_type="variants")
-        == variants_needed_columns_empty
-    )
-
-    # Variants Only CHROM
     assert (
         database.get_needed_columns(
-            database_columns=["CHROM"], database_type="variants"
+            database_columns=database_columns, database_type=database_type
         )
-        == variants_needed_columns_only_CHROM
-    )
-
-    # Variants ALL
-    assert (
-        database.get_needed_columns(
-            database_columns=["#CHROM", "POS", "REF", "ALT"], database_type="variants"
-        )
-        == variants_needed_columns_only_ALL
-    )
-
-    # Variants INFO MORE
-    assert (
-        database.get_needed_columns(
-            database_columns=["#CHROM", "POS", "REF", "ALT", "INFO", "MORE"],
-            database_type="variants",
-        )
-        == variants_needed_columns_only_ALL
-    )
-
-    # VCF No columns
-    assert (
-        database.get_needed_columns(database_columns=[], database_type="vcf")
-        == vcf_needed_columns_empty
-    )
-
-    # VCF Only CHROM
-    assert (
-        database.get_needed_columns(database_columns=["CHROM"], database_type="vcf")
-        == vcf_needed_columns_only_CHROM
-    )
-
-    # VCF ALL
-    assert (
-        database.get_needed_columns(
-            database_columns=["#CHROM", "POS", "REF", "ALT", "INFO"],
-            database_type="vcf",
-        )
-        == vcf_needed_columns_only_ALL
-    )
-
-    # VCF MORE
-    assert (
-        database.get_needed_columns(
-            database_columns=["#CHROM", "POS", "REF", "ALT", "INFO", "MORE"],
-            database_type="vcf",
-        )
-        == vcf_needed_columns_only_ALL
-    )
-
-    # Regions No columns
-    assert (
-        database.get_needed_columns(database_columns=[], database_type="regions")
-        == regions_needed_columns_empty
-    )
-
-    # Regions Only CHROM
-    assert (
-        database.get_needed_columns(database_columns=["CHROM"], database_type="regions")
-        == regions_needed_columns_only_CHROM
-    )
-
-    # Regions ALL
-    assert (
-        database.get_needed_columns(
-            database_columns=["#CHROM", "START", "END"], database_type="regions"
-        )
-        == regions_needed_columns_only_ALL
-    )
-
-    # Regions MORE
-    assert (
-        database.get_needed_columns(
-            database_columns=["#CHROM", "START", "END", "MORE"], database_type="regions"
-        )
-        == regions_needed_columns_only_ALL
+        == expected_output
     )

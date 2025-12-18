@@ -42,18 +42,18 @@ SEP_TYPE = {
 DATABASE_TYPE_NEEDED_COLUMNS = {
     "variants": {
         "#CHROM": ["#CHROM", "CHROM", "CHR", "CHROMOSOME"],
-        "POS": ["POS"],
+        "POS": ["POS", "START", "POSITION"],
         "REF": ["REF"],
         "ALT": ["ALT"],
     },
     "regions": {
         "#CHROM": ["#CHROM", "CHROM", "CHR", "CHROMOSOME"],
         "START": ["START", "POSITIONSTART", "POS"],
-        "END": ["END", "POSITIONEND", "POS"],
+        "END": ["END", "STOP", "POSITIONEND", "POS"],
     },
     "vcf": {
         "#CHROM": ["#CHROM", "CHROM", "CHR", "CHROMOSOME"],
-        "POS": ["POS", "POSITION"],
+        "POS": ["POS", "POSITION", "START"],
         "ID": ["ID", "IDENTIFIER"],
         "REF": ["REF", "REFERENCE"],
         "ALT": ["ALT", "ALTERNATIVE"],
@@ -1234,7 +1234,9 @@ class Database:
         return None
 
     def get_needed_columns(
-        self, database_columns: list = [], database_type: str = None
+        self,
+        database_columns: list = [],
+        database_type: str = None,
     ) -> dict:
         """
         This function takes a list of database columns and a type, and returns a dictionary of needed
@@ -1242,9 +1244,10 @@ class Database:
 
         :param database_columns: A list of column names in a database table
         :type database_columns: list
-        :param type: The type of database being used. It is used to determine which columns are needed
+        :param database_type: The type of database being used. It is used to determine which columns are needed
         for the specific database type
-        :type type: str
+        :type database_type: str
+
         :return: a dictionary containing the columns that are needed for a specific database type, along
         with their corresponding column names in the actual database. The function takes in a list of
         database columns and a database type as input, and uses the `DATABASE_TYPE_NEEDED_COLUMNS`
@@ -1301,9 +1304,7 @@ class Database:
             if os.path.isdir(database):
                 list_of_parquet = sorted(
                     glob.glob(os.path.join(database, "**/*parquet"), recursive=True),
-                    key=lambda p: (
-                        os.path.getmtime(p)
-                    ),  # key=lambda p: (os.path.getmtime(p), os.path.basename(p))
+                    key=lambda p: (os.path.getmtime(p)),
                 )
 
                 if list_of_parquet:
@@ -1312,12 +1313,9 @@ class Database:
                     )
                     sql_from = f"read_parquet('{database}/{list_of_parquet_level_path}*parquet', hive_partitioning=1)"
                 else:
-                    log.error(
-                        f"Input file '{database}' not a compatible partitionned parquet folder"
-                    )
-                    raise ValueError(
-                        f"Input file '{database}' not a compatible partitionned parquet folder"
-                    )
+                    msg_err = f"Input file '{database}' not a compatible partitionned parquet folder"
+                    log.error(msg_err)
+                    raise ValueError(msg_err)
 
             # No partition
             else:
@@ -1341,6 +1339,7 @@ class Database:
                 database_compression = "none"
             hive_partitioning = 0
             database_ref = database
+            database_schema = None
 
             # Check for partition
             if os.path.isdir(database):
@@ -1348,7 +1347,6 @@ class Database:
                     glob.glob(os.path.join(database, "**/*csv"), recursive=True),
                     key=lambda p: (os.path.getmtime(p)),
                 )
-                # key=lambda p: (os.path.getmtime(p), os.path.basename(p))
                 if list_of_parquet:
                     database_compression = "gzip"
                     hive_partitioning = 1
@@ -1357,91 +1355,107 @@ class Database:
                     )
                     database_ref = f"{database}/{list_of_parquet_level_path}*csv"
                 else:
-                    log.error(
-                        f"Input file '{database}' not a compatible partitionned parquet folder"
-                    )
-                    raise ValueError(
-                        f"Input file '{database}' not a compatible partitionned parquet folder"
-                    )
 
-            # OLD Code
-            # # Query number of columns detected by duckdb
-            # log.debug(f"Detecting number of columns in file: {database_ref}")
-            # query_nb_columns_detected_by_duckdb = f"""
-            #         SELECT *
-            #         FROM read_csv('{database_ref}', auto_detect=True, hive_partitioning={hive_partitioning}, compression='{database_compression}', skip={header_length}, delim='{delimiter}', sample_size={sample_size}, max_line_size={MAX_LINE_SIZE}, ignore_errors=True)
-            #         LIMIT 0
-            #     """
-            # # Detect the number of columns in the CSV file without using SQL
-            # try:
-            #     nb_columns_detected_by_duckdb = len(
-            #         self.conn.query(query_nb_columns_detected_by_duckdb).columns
-            #     )
-            # except ValueError:
-            #     nb_columns_detected_by_duckdb = 0
+                    # Empty folder or no files
+
+                    # Log
+                    msg_err = f"Input file '{database}' not a compatible partitionned CSV folder"
+                    log.warning(msg_err)
+
+                    # Set database ref to None
+                    database_ref = None
+
+                    # Try to crerate schema with table columns
+                    if table_columns:
+                        select_cols = ", ".join(
+                            f'NULL AS "{name}"' for name in table_columns
+                        )
+                        database_schema = f"(SELECT {select_cols} WHERE FALSE)"
+                    else:
+                        database_schema = (
+                            "(SELECT NULL::VARCHAR AS raw_line WHERE FALSE)"
+                        )
 
             # Query number of columns detected by duckdb
             # log.debug(f"Detecting number of columns in file: {database_ref}")
-            query_nb_columns_detected_by_duckdb = f"""
-                    SELECT *
-                    FROM read_csv('{database_ref}', auto_detect=True, hive_partitioning={hive_partitioning}, compression='{database_compression}', skip={header_length}, delim='{delimiter}', sample_size=1, max_line_size={MAX_LINE_SIZE}, ignore_errors=true)
-                    LIMIT 0
-                """
-            # Detect the number of columns in the CSV file without using SQL
-            # Try to get columns from duckdb
-            # Some exception can append during query execution, such as invalid input, very huge lines, ...
-            try:
-                # self.conn.execute("SET duckdb_encoding='latin1'")
-                nb_columns_detected_by_duckdb = len(
-                    self.conn.query(query_nb_columns_detected_by_duckdb).columns
-                )
-            except duckdb.InvalidInputException as exc:  # capture exact error
-                log.error(
-                    f"Invalid input while detecting columns for {database_ref}: {exc}"
-                )
-                nb_columns_detected_by_duckdb = 0
-            except Exception as exc:  # generic fallback
-                log.error(
-                    f"Unexpected error while detecting columns for {database_ref}: {exc}"
-                )
-                nb_columns_detected_by_duckdb = 0
-            except ValueError:
-                log.error(
-                    f"Failed to detect number of columns using duckdb for file: {database_ref}"
-                )
-                nb_columns_detected_by_duckdb = 0
-
-            # Check table columns
-            if not table_columns or (
-                nb_columns_detected_by_duckdb != len(table_columns)
-            ):
-                # Check columns from header
-                table_columns = self.get_table_columns_from_format(database=database)
-
-            # If table columns
-            if table_columns:
-
-                # Detect and force column type
-                table_columns_types_list = []
-                for table_column in table_columns:
-                    if table_column in DEFAULT_VCF_HEADER_DUCKDB_TYPES:
-                        table_columns_types_list.append(
-                            f"'{table_column}': {DEFAULT_VCF_HEADER_DUCKDB_TYPES.get(table_column)}"
-                        )
-
-                # Create duckdb read_csv types option
-                if table_columns_types_list:
-                    table_columns_types_list_join_option = (
-                        ", types={" + ", ".join(table_columns_types_list) + "}"
+            if database_ref:
+                query_nb_columns_detected_by_duckdb = f"""
+                        SELECT *
+                        FROM read_csv('{database_ref}', auto_detect=True, hive_partitioning={hive_partitioning}, compression='{database_compression}', skip={header_length}, delim='{delimiter}', sample_size=1, max_line_size={MAX_LINE_SIZE}, ignore_errors=true)
+                        LIMIT 0
+                    """
+                # Detect the number of columns in the CSV file without using SQL
+                # Try to get columns from duckdb
+                # Some exception can append during query execution, such as invalid input, very huge lines, ...
+                try:
+                    # self.conn.execute("SET duckdb_encoding='latin1'")
+                    nb_columns_detected_by_duckdb = len(
+                        self.conn.query(query_nb_columns_detected_by_duckdb).columns
                     )
-                else:
-                    table_columns_types_list_join_option = ""
+                except duckdb.InvalidInputException as exc:  # capture exact error
+                    log.error(
+                        f"Invalid input while detecting columns for {database_ref}: {exc}"
+                    )
+                    nb_columns_detected_by_duckdb = 0
+                except Exception as exc:  # generic fallback
+                    log.error(
+                        f"Unexpected error while detecting columns for {database_ref}: {exc}"
+                    )
+                    nb_columns_detected_by_duckdb = 0
+                except ValueError:
+                    log.error(
+                        f"Failed to detect number of columns using duckdb for file: {database_ref}"
+                    )
+                    nb_columns_detected_by_duckdb = 0
 
-                # SQL form
-                sql_from = f"""read_csv('{database_ref}', names={table_columns}{table_columns_types_list_join_option}, auto_detect=True, compression='{database_compression}', skip={header_length}, delim='{delimiter}', hive_partitioning={hive_partitioning}, sample_size={sample_size}, max_line_size={MAX_LINE_SIZE})"""
+                # Check table columns
+                if not table_columns or (
+                    nb_columns_detected_by_duckdb != len(table_columns)
+                ):
+                    # Check columns from header
+                    table_columns = self.get_table_columns_from_format(
+                        database=database
+                    )
+
+                # If table columns
+                if table_columns:
+
+                    # Detect and force column type
+                    table_columns_types_list = []
+                    for table_column in table_columns:
+                        if table_column in DEFAULT_VCF_HEADER_DUCKDB_TYPES:
+                            table_columns_types_list.append(
+                                f"'{table_column}': {DEFAULT_VCF_HEADER_DUCKDB_TYPES.get(table_column)}"
+                            )
+
+                    # Create duckdb read_csv types option
+                    if table_columns_types_list:
+                        table_columns_types_list_join_option = (
+                            ", types={" + ", ".join(table_columns_types_list) + "}"
+                        )
+                    else:
+                        table_columns_types_list_join_option = ""
+
+                    # SQL form
+                    sql_from = f"""read_csv('{database_ref}', names={table_columns}{table_columns_types_list_join_option}, auto_detect=True, compression='{database_compression}', skip={header_length}, delim='{delimiter}', hive_partitioning={hive_partitioning}, sample_size={sample_size}, max_line_size={MAX_LINE_SIZE})"""
+
+                else:
+                    sql_from = f"read_csv('{database_ref}', auto_detect=True, compression='{database_compression}', skip={header_length}, delim='{delimiter}', hive_partitioning={hive_partitioning}, sample_size={sample_size}, max_line_size={MAX_LINE_SIZE})"
 
             else:
-                sql_from = f"read_csv('{database_ref}', auto_detect=True, compression='{database_compression}', skip={header_length}, delim='{delimiter}', hive_partitioning={hive_partitioning}, sample_size={sample_size}, max_line_size={MAX_LINE_SIZE})"
+
+                # Log
+                msg_err = (
+                    f"Input file '{database}' not a compatible partitionned CSV folder"
+                )
+
+                # Try to use schema
+                if database_schema:
+                    log.warning(msg_err)
+                    sql_from = f"({database_schema})"
+                else:
+                    log.error(msg_err)
+                    raise ValueError(msg_err)
 
         # JSON
         elif database_format in ["json"]:
@@ -2482,6 +2496,7 @@ class Database:
 
             # Query values
             default_empty_value = ""
+            default_value_mapping = {}
             query_export_format = None
             include_header = False
             post_process = False
@@ -2524,6 +2539,17 @@ class Database:
                     extra_columns = extra_columns_clean
 
                 default_empty_value = "."
+                default_value_mapping = {
+                    "CHROM": "chr",
+                    "POS": "0",
+                    "ID": ".",
+                    "REF": "N",
+                    "ALT": "N",
+                    "QUAL": ".",
+                    "FILTER": ".",
+                    "INFO": ".",
+                    "FORMAT": ".",
+                }
                 query_export_format = f"FORMAT CSV, DELIMITER '{delimiter}', HEADER, QUOTE '', COMPRESSION 'gzip'"
                 include_header = True
                 post_process = True
@@ -2590,6 +2616,7 @@ class Database:
 
             # BED
             elif output_type in ["bed"]:
+                default_empty_value = ""
                 query_export_format = f"FORMAT CSV, DELIMITER '{delimiter}', HEADER"
                 include_header = True
                 post_process = True
@@ -2665,8 +2692,11 @@ class Database:
                     query_column_name = needed_columns[needed_column]
                     query_column = f""" "{needed_columns[needed_column]}" """
                 else:
-                    query_column_name = default_empty_value
-                    query_column = f""" '{default_empty_value}' """
+                    default_empty_value_mapped = default_value_mapping.get(
+                        needed_column, default_empty_value
+                    )
+                    query_column_name = default_empty_value_mapped
+                    query_column = f""" '{default_empty_value_mapped}' """
                 query_column_as = f""" "{needed_column}" """
                 if query_column_name == needed_column:
                     query_columns.append(f""" {query_column} """)
@@ -2700,17 +2730,7 @@ class Database:
                 if output_type not in ["parquet"] or force_cast_as_flat:
                     query = cast_columns_query(query=query, conn=self.conn)
 
-                # Test empty query
-                df = self.conn.execute(query).fetch_record_batch(1)
                 query_empty = True
-                for d in df:
-                    query_empty = False
-                    break
-                if query_empty:
-                    log.warning("Export warning: Empty")
-                    remove_header_line = False
-                else:
-                    remove_header_line = True
 
                 # Schema names
                 schema_names = None
@@ -2745,71 +2765,41 @@ class Database:
                         )
                     tmp_files.append(query_output_database_tmp_bgzip)
 
-                    if include_header:
-
-                        # Open stream files (uncompressed and compressed)
-                        with open(query_output_database_tmp, mode="w") as f, pgzip.open(
-                            query_output_database_tmp,
-                            mode="w",
-                            thread=threads,
-                            compresslevel=compresslevel,
-                        ) as f_gz, pysam.BGZFile(
-                            query_output_database_tmp_bgzip, "w"
-                        ) as f_bgz:
-
-                            # Switch to compressed stream file
-                            if compression_mode_gzip:
-                                f = f_gz
-                            if compression_mode_bgzip:
-                                f = f_bgz
-
-                            # Generate header tmp file
-                            query_output_header_tmp = os.path.join(tmp_dir, "header")
-                            self.get_header_file(
-                                header_file=query_output_header_tmp,
-                                remove_header_line=remove_header_line,
-                                sql_query=query,
-                            )
-
-                            # Write header to tmp file
-                            with open(
-                                query_output_header_tmp, "r" + f_mode
-                            ) as output_header_tmp:
-                                # Keep header content for bgzip, if any
-                                header_content = output_header_tmp.read()
-                                f.write(header_content)
-
-                    # JSON format - Add special "[" character at the beginning of the file
-                    if export_options.get("format") in ["JSON"]:
-
-                        # Open stream files (uncompressed and compressed)
-                        with open(query_output_database_tmp, mode="a") as f, pgzip.open(
-                            query_output_database_tmp,
-                            mode="a",
-                            thread=threads,
-                            compresslevel=compresslevel,
-                        ) as f_gz:
-
-                            # Switch to compressed stream file
-                            if compression_mode_gzip:
-                                f = f_gz
-                                f.write(b"[\n")
-                            else:
-                                f.write("[\n")
-
                     # Init writer
                     writer = None
 
                     # Relocate query_output_database_tmp if not bgzip to not erase file when writing
                     # If query is empty, relaocate anyway to avoid issues of empty file (without header)
-                    # if compression_mode_bgzip and not query_empty:
-                    if compression_mode_bgzip and not query_empty:
+                    if compression_mode_bgzip:
                         query_output_database_tmp_bgzip = query_output_database_tmp
                     else:
                         query_output_database_tmp_bgzip = (
                             f"{query_output_database_tmp}.tmp"
                         )
                     tmp_files.append(query_output_database_tmp_bgzip)
+
+                    # Header content
+                    if include_header:
+
+                        # Generate header tmp file
+                        query_output_header_tmp = os.path.join(tmp_dir, "header")
+                        self.get_header_file(
+                            header_file=query_output_header_tmp,
+                            remove_header_line=True,
+                            sql_query=query,
+                        )
+
+                        # Write header to tmp file
+                        with open(
+                            query_output_header_tmp, "r" + f_mode
+                        ) as output_header_tmp:
+                            # Keep header content for bgzip, if any
+                            header_content = output_header_tmp.read()
+
+                    else:
+
+                        # No header content
+                        header_content = None
 
                     # Open stream files (uncompressed and compressed) for chunk
                     with open(query_output_database_tmp, mode="a") as f, pgzip.open(
@@ -2836,14 +2826,16 @@ class Database:
                         # For each chunk dataframe
                         for d in df:
 
-                            # Schema names
-                            schema_names = d.schema.names
-
                             # id of chunk
                             i += 1
 
+                            query_empty = False
+
+                            # Schema names
+                            schema_names = d.schema.names
+
                             # Log - number of records
-                            log.debug(f"Chunk {i}: records process...")
+                            log.debug(f"Export records process [{i}]...")
 
                             # Check process for first chunk
                             if i == 1:
@@ -2874,18 +2866,20 @@ class Database:
                                 # Switch of header in file for not first chunk
                                 header = False
 
+                            # Write header content if any
+                            if header_content:
+                                f.write(header_content)
+                                # Flush buffer to add header before writing dataframe
+                                f.flush()
+                                # Remove header for write it only once
+                                header_content = None
+
                             # CSV format
                             if export_options.get("format") in ["CSV"]:
 
                                 # Code with polars write directly to file
                                 # Due to structural types in Arrow, direct write in Arrow is not valid
                                 # Polars is used to write CSV directly to file
-
-                                # Write header content if any (for bgzip only, because no append mode)
-                                if compression_mode_bgzip and header_content:
-                                    f.write(header_content)
-                                    # Remove header for write it only once
-                                    header_content = None
 
                                 # Write kwargs
                                 write_kwargs = {
@@ -2910,35 +2904,47 @@ class Database:
                                 # Compressed mode gzip
                                 if compression_mode_gzip:
 
+                                    # First open bracket
+                                    if i == 1:
+                                        f.write(b"[\n")
                                     # Add comma at the beginning of dataframe (if not the first one) in bytes mode
-                                    if i > 1:
+                                    else:
                                         f.write(b",\n")
 
+                                    # Flush buffer to add bracket or comma before writing dataframe
+                                    f.flush()
+
                                     # Write dataframe in bytes mode
+                                    # Convert to list of dictionaries and write as JSON string
+                                    # write_json returns a string like '[{...},{...}]'
+                                    # We remove the brackets to handle chunking
                                     f.write(
                                         str.encode(
-                                            pl.from_arrow(d)
-                                            .write_ndjson()
-                                            .replace("\n{", ",\n{")
-                                            .replace("[", "")
-                                            .replace("]", "")
+                                            pl.from_arrow(d).write_json(
+                                                row_oriented=True
+                                            )[1:-1]
                                         )
                                     )
 
                                 # Not compressed mode gzip (string mode)
                                 else:
 
+                                    if i == 1:
+                                        f.write("[\n")
                                     # Add comma at the beginning of dataframe (if not the first one) in string mode
-                                    if i > 1:
+                                    else:
                                         f.write(",\n")
 
-                                    # Write dataframe in string mode
+                                    # Flush buffer to add bracket or comma before writing dataframe
+                                    f.flush()
+
+                                    # Convert to list of dictionaries and write as JSON string
+                                    # write_json returns a string like '[{...},{...}]'
+                                    # We remove the brackets to handle chunking
                                     f.write(
-                                        pl.from_arrow(d)
-                                        .write_ndjson()
-                                        .replace("\n{", ",\n{")
-                                        .replace("[", "")
-                                        .replace("]", "")
+                                        pl.from_arrow(d).write_json(row_oriented=True)[
+                                            1:-1
+                                        ]
                                     )
 
                             # Parquet format
@@ -2971,6 +2977,43 @@ class Database:
                                 else:
                                     writer.write_batch(d)
 
+                        # Header for empty query
+                        if query_empty and header_content:
+
+                            log.debug("Empty query - writing header only...")
+
+                            # Generate header tmp file with header line
+                            # Can not use header_content already read because of last line removal
+                            query_output_header_tmp = os.path.join(
+                                tmp_dir, "header_with_line"
+                            )
+                            self.get_header_file(
+                                header_file=query_output_header_tmp,
+                                remove_header_line=False,
+                                sql_query=query,
+                            )
+
+                            # Write header to tmp file
+                            with open(
+                                query_output_header_tmp, "r" + f_mode
+                            ) as output_header_tmp:
+                                # Keep header content for bgzip, if any
+                                header_content = output_header_tmp.read()
+                                f.write(header_content)
+
+                        # Finalize JSON format
+                        if export_options.get("format") in ["JSON"]:
+                            if query_empty:
+                                # Open JSON format for empty query
+                                if compression_mode_gzip:
+                                    f.write(b"[\n")
+                                else:
+                                    f.write("[\n")
+                            if compression_mode_gzip:
+                                f.write(b"]\n")
+                            else:
+                                f.write("]\n")
+
                     # Close Parquet writer
                     if export_options.get("format") in ["PARQUET"] and os.path.isfile(
                         query_output_database_tmp
@@ -2980,24 +3023,6 @@ class Database:
                                 query_output_database_tmp, df.schema
                             )
                         writer.close()
-
-                    # JSON format - Add special "]" character at the end of the file
-                    if export_options.get("format") in ["JSON"]:
-
-                        # Open stream files (uncompressed and compressed)
-                        with open(query_output_database_tmp, mode="a") as f, pgzip.open(
-                            query_output_database_tmp,
-                            mode="a",
-                            thread=threads,
-                            compresslevel=compresslevel,
-                        ) as f_gz:
-
-                            # Switch to compressed stream file
-                            if compression_mode_gzip:
-                                f = f_gz
-                                f.write(b"]\n")
-                            else:
-                                f.write("]\n")
 
                 # Export mode duckdb
                 elif export_mode == "duckdb":
@@ -3037,7 +3062,7 @@ class Database:
                         tmp_files.append(query_output_header_tmp)
                         self.get_header_file(
                             header_file=query_output_header_tmp,
-                            remove_header_line=remove_header_line,
+                            remove_header_line=not query_empty,
                         )
 
                         # Add tmp header file for concat and compress
