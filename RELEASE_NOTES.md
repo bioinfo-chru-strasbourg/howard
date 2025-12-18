@@ -11,8 +11,10 @@ Some news, improves and fixes
 
 ### Updates
 
+- Add strategy to manage resources, based on CTAS method and duckDB spilling identification ([[#462](https://github.com/bioinfo-chru-strasbourg/howard/issues/462)], [#466](https://github.com/bioinfo-chru-strasbourg/howard/issues/466))
 - Improve annotation update from external tools (e.g. snpEff, Annovar, splice...), to improve ressources ([#443](https://github.com/bioinfo-chru-strasbourg/howard/issues/443))
 - Improve BigWig/BigBed annotation with direct update without external generated VCF ([#444](https://github.com/bioinfo-chru-strasbourg/howard/issues/444))
+- Improve update table with CTAS method for calculation in SQL ([#459](https://github.com/bioinfo-chru-strasbourg/howard/issues/459))
 - ??? Update duckDB package (TODO)
 
 ### Fixes
@@ -23,7 +25,7 @@ Some news, improves and fixes
 - Fix Alphamissense download ([#448](https://github.com/bioinfo-chru-strasbourg/howard/issues/448))
 - Fix issue when some trancript annotations are missing ([#451](https://github.com/bioinfo-chru-strasbourg/howard/issues/451))
 - Fix external tool update with REF/ALT in upper case ([#451](https://github.com/bioinfo-chru-strasbourg/howard/issues/451))
-- Improve update table with CTAS method for calculation in SQL ([#459](https://github.com/bioinfo-chru-strasbourg/howard/issues/459))
+- Fix Aria2 threads limitation ([467](https://github.com/bioinfo-chru-strasbourg/howard/issues/467))
 
 ## 0.13.0
 

@@ -1655,6 +1655,7 @@ def download_file(
     try_aria: bool = True,
     aria_async_dns: bool = False,
     threads: int = 1,
+    threads_limit: int = 16,
     quiet: bool = True,
 ):
     """
@@ -1686,6 +1687,12 @@ def download_file(
     file. By default, it is set to 1, which means that only one connection will be made at a time.
     Increasing the value, defaults to 1
     :type threads: int (optional)
+    :param threads_limit: The `threads_limit` parameter is an integer that sets the maximum number of
+    threads that can be used for downloading the file with Aria. It limits the number of concurrent
+    threads to prevent excessive resource usage, and to ensure not exceed Aria limitation on the
+    maximum number of connections (16). By default, it is set to 16, meaning that the download process
+    will not use more than 16 threads at a time
+    :type threads_limit: int (optional)
     :param quiet: The `quiet` parameter is a boolean value that determines whether to suppress the
     output of the download process. If set to `True`, the output will be suppressed. If set to `False`,
     the output will be displayed. By default, it is set to `True`, defaults to True
@@ -1696,6 +1703,9 @@ def download_file(
 
     # Full path
     dest_file_path = full_path(dest_file_path)
+
+    # Threads limitation
+    threads = min(threads, threads_limit)
 
     # Create folder if not exists
     if not os.path.exists(os.path.dirname(dest_file_path)):
