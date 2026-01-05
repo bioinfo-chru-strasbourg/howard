@@ -1521,5 +1521,6 @@
     "chunking_partitions": {},
     "chunking_sort": {}
   },
-  "threads": {}
+  "threads": {},
+  "fast": {}
 }
