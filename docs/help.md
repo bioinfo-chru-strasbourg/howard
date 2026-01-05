@@ -1024,6 +1024,16 @@ Usage examples:
 
 </small>
 
+<small>
+
+>     --fast
+>
+>     Fast annotation mode (Experimental).
+>     Speedup export and reduce memory.
+>     Only Parquet annotation will be processed.
+
+</small>
+
 ## Annotation
 
 <small>
@@ -3239,6 +3249,18 @@ Usage examples:
 >
 >     Temporary folder (e.g. '/tmp').
 >     By default, '.tmp' for duckDB (see doc),external tools and python scripts.
+
+</small>
+
+<small>
+
+>     --access=<access mode> ['RW', 'RO'] (default: RW)
+>
+>     Access mode to variants input file in database.
+>     Either 'RW' for Read and Write, or 'RO' for Read Only.
+>     Read Only Access mode is usefull to not load data into database
+>     (especially input Parquet file) when it's not needed
+>     (e.g. queries, fast annotation mode), reducing memory impact
 
 </small>
 

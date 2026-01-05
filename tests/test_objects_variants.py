@@ -2878,3 +2878,226 @@ def test_get_columns():
             "sample3",
             "sample4",
         ]
+
+
+@pytest.mark.parametrize(
+    "access_input, access_param_mode",
+    [
+        (None, None),
+        (None, "param"),
+        (None, "config"),
+        (None, "param_and_config"),
+        ("RO", "param"),
+        ("RO", "config"),
+        ("RO", "param_and_config"),
+        ("RW", "param"),
+        ("RW", "config"),
+        ("RW", "param_and_config"),
+    ],
+)
+def test_get_access(access_input, access_param_mode):
+    """
+    This function tests the get_access method of the Variants class by creating an object and checking
+    if the access type is 'in_memory'.
+    """
+
+    # Init files
+    input_vcf = tests_data_folder + "/example.vcf.gz"
+
+    param = {}
+    config = {}
+
+    if access_param_mode == "config":
+        config["access"] = access_input
+
+    if access_param_mode == "param":
+        param["access"] = access_input
+
+    if access_param_mode == "param_and_config":
+        config["access"] = access_input
+        param["access"] = access_input
+
+    # Create object
+    variants = Variants(input=input_vcf, config=config, param=param, load=False)
+
+    # Check get_access
+    access_output = variants.get_access()
+    assert access_output == access_input
+
+
+@pytest.mark.parametrize(
+    "tmp_files, tmp_files_expected",
+    [
+        (None, []),
+        ([], []),
+        (["test"], ["test"]),
+        (["test1", "test2"], ["test1", "test2"]),
+    ],
+)
+def test_set_tmp_files(tmp_files, tmp_files_expected):
+    """
+    This function tests the set_tmp_files method of the Variants class by creating an object and
+    checking if the temporary files are set correctly.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.vcf.gz"
+
+        # Create object
+        variants = Variants(input=input_vcf, load=False)
+
+        # Check get_tmp_files
+        variants.set_tmp_files(tmp_files=tmp_files)
+        tmp_files_output = variants.get_tmp_files()
+        log.debug(tmp_files_output)
+        assert tmp_files_output == tmp_files_expected
+
+
+@pytest.mark.parametrize(
+    "init_tmp_files, tmp_files, tmp_files_expected",
+    [
+        (None, None, []),
+        (None, [], []),
+        (None, ["test"], ["test"]),
+        (None, ["test1", "test2"], ["test1", "test2"]),
+        ([], None, []),
+        ([], [], []),
+        ([], ["test"], ["test"]),
+        ([], ["test1", "test2"], ["test1", "test2"]),
+        (["test0"], None, ["test0"]),
+        (["test0"], [], ["test0"]),
+        (["test0"], ["test"], ["test0", "test"]),
+        (["test0"], ["test1", "test2"], ["test0", "test1", "test2"]),
+    ],
+)
+def test_add_tmp_files(init_tmp_files, tmp_files, tmp_files_expected):
+    """
+    This function tests the set_tmp_files method of the Variants class by creating an object and
+    checking if the temporary files are set correctly.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.vcf.gz"
+
+        # Create object
+        variants = Variants(input=input_vcf, load=True)
+
+        # Check get_tmp_files
+        variants.set_tmp_files(tmp_files=init_tmp_files)
+        tmp_files_output = variants.get_tmp_files()
+        log.debug(tmp_files_output)
+
+        # Add tmp files
+        variants.add_tmp_files(tmp_files=tmp_files)
+        tmp_files_output = variants.get_tmp_files()
+
+        assert tmp_files_output == tmp_files_expected
+
+
+@pytest.mark.parametrize(
+    "init_tmp_files, tmp_files, tmp_files_expected",
+    [
+        (None, None, []),
+        (None, [], []),
+        (None, ["test"], []),
+        (None, ["test1", "test2"], []),
+        ([], None, []),
+        ([], [], []),
+        ([], ["test"], []),
+        ([], ["test1", "test2"], []),
+        (["test0"], None, ["test0"]),
+        (["test0"], [], ["test0"]),
+        (["test0"], ["test"], ["test0"]),
+        (["test0"], ["test1", "test2"], ["test0"]),
+        (["test0"], ["test0"], []),
+        (["test0"], ["test1"], ["test0"]),
+        (["test0"], ["test0", "test1"], []),
+        (["test0"], ["test1", "test2"], ["test0"]),
+        (["test1", "test2"], ["test0"], ["test1", "test2"]),
+        (["test1", "test2"], ["test1"], ["test2"]),
+        (["test1", "test2"], ["test3"], ["test1", "test2"]),
+        (["test1", "test2"], ["test2", "test3"], ["test1"]),
+    ],
+)
+def test_remove_tmp_files(init_tmp_files, tmp_files, tmp_files_expected):
+    """
+    This function tests the set_tmp_files method of the Variants class by creating an object and
+    checking if the temporary files are set correctly.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.vcf.gz"
+
+        # Create object
+        variants = Variants(input=input_vcf, load=True)
+
+        # Check get_tmp_files
+        variants.set_tmp_files(tmp_files=init_tmp_files)
+        tmp_files_output = variants.get_tmp_files()
+        log.debug(tmp_files_output)
+
+        # Remove tmp files
+        variants.remove_tmp_files(tmp_files=tmp_files)
+        tmp_files_output = variants.get_tmp_files()
+
+        assert tmp_files_output == tmp_files_expected
+
+
+@pytest.mark.parametrize(
+    "init_tmp_files",
+    [
+        (None),
+        ([]),
+        (["test0"]),
+        (["test1", "test2"]),
+    ],
+)
+def test_clean_tmp_files(init_tmp_files):
+    """
+    This function tests the set_tmp_files method of the Variants class by creating an object and
+    checking if the temporary files are set correctly.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.vcf.gz"
+
+        # Create object
+        variants = Variants(input=input_vcf, load=True)
+
+        # Check get_tmp_files
+        variants.set_tmp_files(tmp_files=[])
+        tmp_files_output = variants.get_tmp_files()
+        log.debug(tmp_files_output)
+
+        # Create init tmp files
+        from pathlib import Path
+
+        for tmp_file in init_tmp_files or []:
+            file_path = Path(f"{tmp_dir}/{tmp_file}")
+            file_path.touch()
+            assert os.path.exists(f"{tmp_dir}/{tmp_file}")
+            variants.add_tmp_files(tmp_files=[f"{tmp_dir}/{tmp_file}"])
+
+        # Clean tmp files
+        tmp_files_deleted = variants.clean_tmp_files()
+        tmp_files_output = variants.get_tmp_files()
+
+        # Check empty tmp files
+        assert tmp_files_deleted == [
+            f"{tmp_dir}/{tmp_file}" for tmp_file in init_tmp_files or []
+        ]
+        assert tmp_files_output == []
+
+        # Check if all tmp file are deleted
+        for tmp_file in init_tmp_files or []:
+            log.debug(f"Checking tmp file deletion: {tmp_file}")
+            log.debug(f"Exists: {os.path.exists(f'{tmp_dir}/{tmp_file}')}")
+            assert not os.path.exists(f"{tmp_dir}/{tmp_file}")
