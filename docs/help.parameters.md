@@ -194,6 +194,7 @@ title: HOWARD Help Parameters
   - [<span class="toc-section-number">13.4</span>
     chunking_sort](#chunking_sort)
 - [<span class="toc-section-number">14</span> threads](#threads)
+- [<span class="toc-section-number">15</span> fast](#fast)
 
 # Introduction
 
@@ -3085,3 +3086,10 @@ Examples:
 >    "threads": 8
 > }
 > ```
+
+# fast
+
+Fast annotation mode (Experimental). Speedup export and reduce memory.
+Only Parquet annotation will be processed.
+
+Default: `False`
