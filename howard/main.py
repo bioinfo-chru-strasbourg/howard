@@ -161,8 +161,7 @@ def main() -> None:
     # Access
     if "access" not in args:
         args.access = None
-    else:
-        access = args.access
+    access = args.access
 
     # Config infos
     args.arguments_dict = arguments_dict
