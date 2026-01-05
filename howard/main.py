@@ -158,6 +158,12 @@ def main() -> None:
     elif args.log and not isinstance(args.log, str):
         args.log = args.log.name
 
+    # Access
+    if "access" not in args:
+        args.access = None
+    else:
+        access = args.access
+
     # Config infos
     args.arguments_dict = arguments_dict
     args.setup_cfg = setup_cfg
@@ -246,6 +252,10 @@ def main() -> None:
     # Tmp
     if "tmp" not in config or not config.get("tmp", None):
         config["tmp"] = tmp
+
+    # Tmp
+    if "access" not in config or not config.get("access", None):
+        config["access"] = access
 
     # duckDB settings
     if "duckdb_settings" not in config or not config.get("duckdb_settings", None):

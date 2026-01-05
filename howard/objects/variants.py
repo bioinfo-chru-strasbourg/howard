@@ -150,9 +150,106 @@ class Variants:
         # Samples
         self.set_samples()
 
+        # Temporary files
+        self.set_tmp_files()
+
         # Load data
         if load:
             self.load_data(input)
+
+    def set_tmp_files(self, tmp_files: list = []) -> None:
+        """
+        Set temporary files
+
+        :param tmp_files: The `tmp_files` parameter in the `set_tmp_files` method is a list of temporary
+        files that you want to set as the `tmp_files` attribute of the class. If no files are provided,
+        it defaults to an empty list
+        :type tmp_files: list
+
+        :return: The `set_tmp_files` method is returning `None`.
+        """
+
+        # Init
+        if tmp_files is None:
+            tmp_files = []
+
+        # Create tmp_files attribute
+        self.tmp_files = tmp_files
+
+    def get_tmp_files(self) -> list:
+        """
+        Get temporary files
+        """
+
+        # Return tmp_files attribute
+        return self.tmp_files
+
+    def add_tmp_files(self, tmp_files: list = []) -> None:
+        """
+        Extend a temporary file list to the list of temporary files
+
+        :param tmp_files: The `tmp_files` parameter in the `add_tmp_files` method is a list of temporary
+        files that you want to add to the `tmp_files` attribute of the class. If no files are provided,
+        it defaults to an empty list
+        :type tmp_files: list
+
+        :return: The `add_tmp_files` method is returning `None`.
+        """
+
+        # Init
+        if tmp_files is None:
+            tmp_files = []
+
+        # Append list to tmp_files attribute
+        self.tmp_files.extend(tmp_files)
+
+    def remove_tmp_files(self, tmp_files: list = []) -> None:
+        """
+        Remove files from temporary files attribute
+
+        :param tmp_files: The `tmp_files` parameter in the `remove_tmp_files` method is a list of
+        temporary files that you want to remove from the `tmp_files` attribute of the class. If no
+        files are provided, it defaults to an empty list
+        :type tmp_files: list
+
+        :return: The `remove_tmp_files` method is returning `None`.
+        """
+
+        # Init
+        if tmp_files is None:
+            tmp_files = []
+
+        # Remove tmp files from tmp_files attribute
+        self.tmp_files = [f for f in self.get_tmp_files() if f not in tmp_files]
+
+    def clean_tmp_files(self) -> list:
+        """
+        Remove temporary files
+        """
+
+        # Remove tmp_files files
+        tmp_files = self.get_tmp_files()
+        remove_if_exists(tmp_files)
+        self.tmp_files = []
+
+        return tmp_files
+
+    def get_access(self, default: str = None) -> str:
+        """
+
+        The function `get_access` retrieves the access level from the parameters or configuration,
+        returning a default value if not found.
+        :param default: The `default` parameter in the `get_access` function is used to specify a default
+        access level to return if the access level is not found in either the parameters or the
+        configuration. If the access level is not found in both places, the function will return the
+        value of the `default` parameter
+        :type default: str
+
+        :return: The method `get_access` is returning a string value that represents the access level.
+        """
+
+        # Find access in param then in config, otherwise return default
+        return self.get_param().get("access", self.get_config().get("access", default))
 
     def load_header(
         self,
@@ -475,16 +572,17 @@ class Variants:
             connexion_config["temp_directory"] = config["temp_directory"]
 
         # Access
-        if config.get("access", None):
-            access = config.get("access")
+        access = self.get_access(default=None)
+        if access:
+            access_mode = access
             if access in ["RO"]:
-                access = "READ_ONLY"
+                access_mode = "READ_ONLY"
             elif access in ["RW"]:
-                access = "READ_WRITE"
+                access_mode = "READ_WRITE"
             connexion_db = self.get_connexion_db()
             if connexion_db in ":memory:":
-                access = "READ_WRITE"
-            connexion_config["access_mode"] = access
+                access_mode = "READ_WRITE"
+            connexion_config["access_mode"] = access_mode
 
         return connexion_config
 
@@ -1658,7 +1756,8 @@ class Variants:
         """
 
         # Access
-        access = self.get_config().get("access", None)
+        # access = self.get_config().get("access", None)
+        access = self.get_access(default=None)
 
         # Clauses "select", "where", "update"
         if clause in ["select", "where", "update"]:
@@ -1721,6 +1820,10 @@ class Variants:
             remove_if_exists([connexion_db])
 
         log.debug(f"Connexion '{connexion_db}' closed.")
+
+        # Clean temporary files
+        tmp_files = self.clean_tmp_files()
+        log.debug(f"Temporary files: {len(tmp_files)} files removed.")
 
         return connexion_db
 
@@ -2016,7 +2119,8 @@ class Variants:
         table_variants = self.get_table_variants()
 
         # Access
-        access = self.get_config().get("access", None)
+        # access = self.get_config().get("access", None)
+        access = self.get_access(default=None)
         log.debug(f"access: {access}")
 
         # Input format and compress
@@ -2560,7 +2664,8 @@ class Variants:
             raise ValueError(msg_err)
 
         # Access
-        access = self.get_config().get("access", None)
+        # access = self.get_config().get("access", None)
+        access = self.get_access(default=None)
 
         # Added columns
         added_columns = []
@@ -2781,7 +2886,8 @@ class Variants:
         """
 
         # Access
-        access = self.get_config().get("access", None)
+        # access = self.get_config().get("access", None)
+        access = self.get_access(default=None)
 
         # get table variants
         table_variants = self.get_table_variants("FROM")
@@ -2808,7 +2914,8 @@ class Variants:
         """
 
         # Access
-        access = self.get_config().get("access", None)
+        # access = self.get_config().get("access", None)
+        access = self.get_access(default=None)
 
         # get table variants
         table_variants = self.get_table_variants("FROM")
@@ -3727,164 +3834,6 @@ class Variants:
 
             return None
 
-    # def update_from_vcf_duckdb_old(
-    #     self,
-    #     vcf_file: str,
-    #     update_existing_fields: bool = False,
-    #     remove_vcf_file: bool = True,
-    #     upper_case: bool = True,
-    # ) -> None:
-    #     """
-    #     It takes a VCF file and updates the INFO column of the variants table in the database with the
-    #     INFO column of the VCF file
-
-    #     :param vcf_file: The path to the VCF file you want to update the database with
-    #     :type vcf_file: str
-    #     :param update_existing_fields: If True, existing fields in the INFO column will be updated
-    #     with the values from the VCF file. If False, only new fields will be added, defaults to False
-    #     :type update_existing_fields: bool (optional)
-    #     :param remove_vcf_file: If True, the VCF file will be removed after the update is complete,
-    #     defaults to True
-    #     :type remove_vcf_file: bool (optional)
-    #     :param upper_case: If True, the ALT and REF fields will be compared in uppercase, defaults to True
-    #     :type upper_case: bool (optional)
-    #     :return: None
-    #     """
-
-    #     # variants table
-    #     table_variants = self.get_table_variants()
-
-    #     log.info(f"Update variants table from file '{os.path.basename(vcf_file)}'...")
-
-    #     with TemporaryDirectory(dir=self.get_tmp_dir()) as tmp_dir:
-
-    #         log.debug(f"Create parquet files from VCF '{vcf_file}'...")
-
-    #         # Create parquet from VCF
-    #         vcf_file_parquet_path = os.path.join(tmp_dir, "vcf_file.parquet")
-    #         vcf_file_parquet = Variants(
-    #             input=vcf_file, load=True, config={"access": "RO"}
-    #         )
-
-    #         log.debug(f"Variants input format {vcf_file_parquet.get_input_format()}")
-
-    #         if vcf_file_parquet.get_input_format() == "parquet":
-
-    #             # list of parquet files
-    #             list_of_parquet = [vcf_file]
-
-    #         else:
-
-    #             # Export parquet parameters
-    #             parquet_partitions = "None"
-    #             chunk_size = self.get_config().get("chunk_size", None)
-    #             threads = self.get_threads()
-
-    #             # Export parquet files
-    #             log.debug("Export VCF to partitioned parquet...")
-    #             vcf_file_parquet.export_output(
-    #                 output_file=vcf_file_parquet_path,
-    #                 parquet_partitions=parquet_partitions,
-    #                 chunk_size=chunk_size,
-    #                 threads=threads,
-    #                 export_header=True,
-    #             )
-    #             log.debug(f"Partitioned parquet generated: {vcf_file_parquet_path}")
-
-    #             if remove_vcf_file:
-    #                 remove_if_exists([vcf_file])
-
-    #             # list of parquet files
-    #             list_of_parquet = glob.glob(f"{vcf_file_parquet_path}/*.parquet")
-
-    #         log.debug(f"List of parquet: {list_of_parquet}")
-
-    #         # Update if fields exist
-    #         if update_existing_fields:
-    #             # list of header columns
-    #             header_columns = self.get_header().infos.keys()
-    #             header_columns_vcf_file_parquet = (
-    #                 vcf_file_parquet.get_header().infos.keys()
-    #             )
-
-    #             # columns that exist in both
-    #             common_columns = list(
-    #                 set(header_columns).intersection(
-    #                     set(header_columns_vcf_file_parquet)
-    #                 )
-    #             )
-
-    #             # Remove common columns
-    #             if len(common_columns) > 0:
-    #                 log.debug(f"Common columns to update/remove: {common_columns}")
-    #                 self.rename_info_fields(
-    #                     fields_to_rename=dict.fromkeys(common_columns, None)
-    #                 )
-    #             else:
-    #                 log.debug("No common columns to update/remove")
-
-    #         log.debug(
-    #             f"Update variants table from {len(list_of_parquet)} parquet files..."
-    #         )
-
-    #         # Upper case function for ALT and REF
-    #         if upper_case:
-    #             upper_func = "upper"
-    #         else:
-    #             upper_func = ""
-
-    #         for parquet_file in list_of_parquet:
-    #             log.debug(
-    #                 f"Update variants table from parquet file: {os.path.basename(parquet_file)}..."
-    #             )
-    #             sql_query_update = f"""
-    #             UPDATE {table_variants} as table_variants
-    #                 SET INFO = concat(
-    #                         CASE
-    #                             WHEN INFO NOT IN ('', '.')
-    #                             THEN INFO
-    #                             ELSE ''
-    #                         END,
-    #                         (
-    #                             SELECT
-    #                                 concat(
-    #                                     CASE
-    #                                         WHEN table_variants.INFO NOT IN ('','.') AND table_parquet.INFO NOT IN ('','.')
-    #                                         THEN ';'
-    #                                         ELSE ''
-    #                                     END
-    #                                     ,
-    #                                     CASE
-    #                                         WHEN table_parquet.INFO NOT IN ('','.')
-    #                                         THEN table_parquet.INFO
-    #                                         ELSE ''
-    #                                     END
-    #                                 )
-    #                             FROM read_parquet('{parquet_file}') as table_parquet
-    #                                     WHERE CAST(table_parquet.\"#CHROM\" AS VARCHAR) = CAST(table_variants.\"#CHROM\" AS VARCHAR)
-    #                                     AND table_parquet.\"POS\" = table_variants.\"POS\"
-    #                                     AND {upper_func}(table_parquet.\"ALT\") = {upper_func}(table_variants.\"ALT\")
-    #                                     AND {upper_func}(table_parquet.\"REF\") = {upper_func}(table_variants.\"REF\")
-    #                                     AND table_parquet.INFO NOT IN ('','.')
-    #                         )
-    #                     )
-    #                 ;
-    #                 """
-    #             # log.debug(f"sql_query_update: {sql_query_update}")
-    #             self.conn.execute(sql_query_update)
-
-    #         # Clean INFO fields that are empty
-    #         sql_query_clean = f"""
-    #             UPDATE {table_variants}
-    #             SET INFO = CASE
-    #                 WHEN INFO IN ('','.')
-    #                 THEN '.'
-    #                 ELSE INFO
-    #             END
-    #         """
-    #         # log.debug(f"sql_query_clean: {sql_query_clean}")
-    #         self.conn.execute(sql_query_clean)
-
     def update_from_vcf_sqlite(self, vcf_file: str) -> None:
         """
         It creates a temporary table in the SQLite database, loads the VCF file into the temporary
@@ -4158,6 +4107,12 @@ class Variants:
         # Merge param annotations list
         param["annotations"] = ",".join(param_annotation_list)
 
+        if "fast" in param and param["fast"]:
+            fast = True
+        else:
+            fast = False
+        log.debug(f"Fast mode: {fast}")
+
         # # debug
         # log.debug(f"param_annotations={param['annotations']}")
 
@@ -4400,35 +4355,30 @@ class Variants:
             if param.get("annotation", {}).get("parquet", None):
                 log.info("Annotations 'parquet'...")
                 self.annotation_parquet()
-            if param.get("annotation", {}).get("bcftools", None):
-                log.info("Annotations 'bcftools'...")
-                self.annotation_bcftools()
-            if param.get("annotation", {}).get("snpsift", None):
-                log.info("Annotations 'snpsift'...")
-                self.annotation_snpsift()
-            if param.get("annotation", {}).get("bigwig", None):
-                log.info("Annotations 'bigwig'...")
-                self.annotation_bigwig()
-            if param.get("annotation", {}).get("annovar", None):
-                log.info("Annotations 'annovar'...")
-                self.annotation_annovar()
-            if param.get("annotation", {}).get("snpeff", None):
-                log.info("Annotations 'snpeff'...")
-                self.annotation_snpeff()
-            if param.get("annotation", {}).get("exomiser", None) is not None:
-                log.info("Annotations 'exomiser'...")
-                self.annotation_exomiser()
-            if param.get("annotation", {}).get("splice", None) is not None:
-                log.info("Annotations 'splice' ...")
-                self.annotation_splice()
-
-        # # Explode INFOS fields into table fields
-        # if self.get_explode_infos():
-        #     self.explode_infos(
-        #         prefix=self.get_explode_infos_prefix(),
-        #         fields=self.get_explode_infos_fields(),
-        #         force=True,
-        #     )
+            if not fast:
+                if param.get("annotation", {}).get("bcftools", None):
+                    log.info("Annotations 'bcftools'...")
+                    self.annotation_bcftools()
+                if param.get("annotation", {}).get("snpsift", None):
+                    log.info("Annotations 'snpsift'...")
+                    self.annotation_snpsift()
+                if param.get("annotation", {}).get("bigwig", None):
+                    log.info("Annotations 'bigwig'...")
+                    self.annotation_bigwig()
+                if param.get("annotation", {}).get("annovar", None):
+                    log.info("Annotations 'annovar'...")
+                    self.annotation_annovar()
+                if param.get("annotation", {}).get("snpeff", None):
+                    log.info("Annotations 'snpeff'...")
+                    self.annotation_snpeff()
+                if param.get("annotation", {}).get("exomiser", None) is not None:
+                    log.info("Annotations 'exomiser'...")
+                    self.annotation_exomiser()
+                if param.get("annotation", {}).get("splice", None) is not None:
+                    log.info("Annotations 'splice' ...")
+                    self.annotation_splice()
+            else:
+                log.warning("Fast mode - skip some annotations tools")
 
     def annotation_bigwig(self, threads: int = None) -> None:
         """
@@ -7087,15 +7037,7 @@ class Variants:
 
             # Clean files
             # Tmp file remove command
-            if True:
-                remove_if_exists(tmp_files)
-                # tmp_files_remove_command = ""
-                # if tmp_files:
-                #     tmp_files_remove_command = " ".join(tmp_files)
-                # clean_command = f" rm -f {tmp_files_remove_command} "
-                # log.debug(f"Annotation Annovar - Annotation cleaning ")
-                # log.debug(f"Annotation - cleaning command: {clean_command}")
-                # run_parallel_commands([clean_command], 1)
+            remove_if_exists(tmp_files)
 
     # Parquet
     def annotation_parquet(self, threads: int = None) -> None:
@@ -7170,6 +7112,9 @@ class Variants:
 
         # Data
         table_variants = self.get_table_variants()
+
+        # Fast strategy
+        fast = self.get_param().get("fast", False)
 
         # Check if not empty
         log.debug("Check if not empty")
@@ -7992,19 +7937,29 @@ class Variants:
             # Perform update
             if len(update_sources) > 0:
                 log.info(f"Annotations - Perform with {len(update_sources)} sources...")
+
+                # Fast strategy
+                if fast:
+                    strategy = "fast"
+                else:
+                    strategy = None
+
                 self.update_table(
                     dest_table=table_variants,
                     sources=update_sources,
                     samples=10000,
-                    force_strategy=None,
+                    force_strategy=strategy,
                     chromosomes=None,
                     only_strategy=False,
                 )
             else:
                 log.info("No annotation sources")
 
+        # extend temporary files list
+        self.add_tmp_files(files_or_folders_to_remove)
+
         # Remove temporary files or folders
-        remove_if_exists(files_or_folders_to_remove)
+        # remove_if_exists(files_or_folders_to_remove)
 
     def annotation_splice(self, threads: int = None) -> None:
         """
@@ -11102,13 +11057,72 @@ class Variants:
                 conn.execute(f"DROP TABLE {dest_table}")
                 conn.execute(f"ALTER TABLE {new_dest_table} RENAME TO {dest_table}")
 
+        # ---------------------------
+        # FAST
+        # ---------------------------
+
+        elif strategy == "fast":
+
+            log.debug("Execute FAST strategy...")
+
+            # Create new dest table name
+            new_dest_table = f"tmp_new_{dest_table}_{get_random(10)}"
+
+            # Rename dest_table to new_dest_table
+            try:
+                conn.execute(f"ALTER TABLE {dest_table} RENAME TO {new_dest_table}")
+            except Exception as e:
+                log.debug(
+                    f"Failed to rename table {dest_table} to {new_dest_table}: {e}"
+                )
+                log.debug(f"trying to rename view {dest_table} to {new_dest_table}...")
+                try:
+                    conn.execute(f"ALTER VIEW {dest_table} RENAME TO {new_dest_table}")
+                except Exception as e:
+                    log.error(
+                        f"Failed to rename view {dest_table} to {new_dest_table}: {e}"
+                    )
+                    raise e
+
+            # Create view with updated data
+            sql = f"""
+                    CREATE VIEW {dest_table} AS
+                    WITH d AS (
+                        SELECT * {rowid_expr}
+                        FROM {new_dest_table}
+                    ),
+                    joined AS (
+                        SELECT
+                            {", ".join(column_exprs)}, _rowid
+                        FROM d
+                        {" ".join(join_clauses)}
+                    ),
+                    dedup AS (
+                        SELECT *
+                        FROM joined
+                        QUALIFY row_number() OVER (
+                            PARTITION BY _rowid
+                            -- ORDER BY "INFO" DESC NULLS LAST
+                        ) = 1
+                    )
+                    SELECT
+                        {", ".join(f'"{col}"' for col in dest_cols)}
+                    FROM dedup
+
+                    -- {"ORDER BY dedup._rowid" if physical_order else ""}
+                """
+
+            # log.debug(f"SQL for FAST strategy:\n{sql}")
+            conn.execute(sql)
+
         else:
             log.error(f"Strategy '{strategy}' NOT available")
             raise ValueError(f"Strategy '{strategy}' NOT available")
 
         # Remove source tables if cleanup
-        log.debug("Cleanup source tables/views...")
-        self.remove_tables_or_views(tables=list(list_of_sources_table.keys()))
+        if strategy != "fast":
+            log.debug("Cleanup source tables/views...")
+            self.remove_tables_or_views(tables=list(list_of_sources_table.keys()))
 
     def update_table(
         self,
@@ -15162,7 +15176,10 @@ class Variants:
 
         # Config
         config = self.get_config()
-        access = config.get("access")
+
+        # Access
+        # access = config.get("access")
+        access = self.get_access(default=None)
 
         # Init
         fields_processed = {
@@ -15371,7 +15388,10 @@ class Variants:
 
         # Init
         config = self.get_config()
-        access = config.get("access")
+
+        # Access
+        # access = config.get("access")
+        access = self.get_access(default=None)
 
         # Table
         if table is None:

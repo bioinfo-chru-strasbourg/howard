@@ -1241,6 +1241,15 @@ Annotation with Splice, as a list of options
 Genome Assembly (e.g. &#39;hg19&#39;, &#39;hg38&#39;).</code></pre>
 </blockquote>
 <p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --fast
+
+Fast annotation mode (Experimental).
+Speedup export and reduce memory.
+Only Parquet annotation will be processed.</code></pre>
+</blockquote>
+<p></small></p>
 <h2 data-number="8.2" id="annotation"><span
 class="header-section-number">8.2</span> Annotation</h2>
 <p><small></p>
@@ -3289,6 +3298,17 @@ For Parquet partitioning, files size will depend on the chunk size.</code></pre>
 
 Temporary folder (e.g. &#39;/tmp&#39;).
 By default, &#39;.tmp&#39; for duckDB (see doc),external tools and python scripts.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --access=&lt;access mode&gt; [&#39;RW&#39;, &#39;RO&#39;] (default: RW)
+
+Access mode to variants input file in database.
+Either &#39;RW&#39; for Read and Write, or &#39;RO&#39; for Read Only.
+Read Only Access mode is usefull to not load data into database
+(especially input Parquet file) when it&#39;s not needed
+(e.g. queries, fast annotation mode), reducing memory impact</code></pre>
 </blockquote>
 <p></small></p>
 <p><small></p>

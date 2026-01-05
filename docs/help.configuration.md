@@ -908,8 +908,10 @@ Examples:
 
 # access
 
-Access mode to variants file or database. Either 'RW' for Read and
-Write, or 'RO' for Read Only.
+Access mode to variants input file in database. Either 'RW' for Read and
+Write, or 'RO' for Read Only. Read Only Access mode is usefull to not
+load data into database (especially input Parquet file) when it's not
+needed (e.g. queries, fast annotation mode), reducing memory impact
 
 Type: `str`
 

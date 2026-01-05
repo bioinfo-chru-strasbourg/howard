@@ -2818,7 +2818,11 @@ class Database:
                             f = f_bgz
 
                         # Chunk query with batch of dataframes of chunk_size
-                        df = self.conn.execute(query).fetch_record_batch(chunk_size)
+                        log.debug("Exporting records in chunks...")
+                        df = self.conn.execute(query).fetch_record_batch(
+                            rows_per_batch=chunk_size
+                        )
+                        log.debug("Export records chunks retrieved.")
 
                         # id of chunk
                         i = 0

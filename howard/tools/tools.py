@@ -1743,6 +1743,14 @@ arguments = {
         "default": "Help",
         "type": str,
     },
+    # Fast
+    "fast": {
+        "help": """Fast annotation mode (Experimental).\n"""
+        """Speedup export and reduce memory.\n"""
+        """Only Parquet annotation will be processed.\n""",
+        "action": "store_true",
+        "default": False,
+    },
     # Common
     "genomes-folder": {
         "metavar": "genomes",
@@ -1909,8 +1917,11 @@ arguments = {
     },
     "access": {
         "metavar": "access mode",
-        "help": """Access mode to variants file or database.\n"""
-        """Either 'RW' for Read and Write, or 'RO' for Read Only.\n""",
+        "help": """Access mode to variants input file in database.\n"""
+        """Either 'RW' for Read and Write, or 'RO' for Read Only.\n"""
+        """Read Only Access mode is usefull to not load data into database\n"""
+        """(especially input Parquet file) when it's not needed\n"""
+        """(e.g. queries, fast annotation mode), reducing memory impact\n""",
         "default": "RW",
         "type": str,
         "choices": ["RW", "RO"],
@@ -1975,6 +1986,7 @@ shared_arguments = [
     "memory",
     "chunk_size",
     "tmp",
+    "access",
     "duckdb_settings",
     "interactive",
     "verbosity",
@@ -2160,6 +2172,7 @@ commands_arguments = {
                 "annotation_exomiser": False,
                 "annotation_splice": False,
                 "assembly": False,
+                "fast": False,
             },
             "Annotation": {
                 "annotations_update": False,
