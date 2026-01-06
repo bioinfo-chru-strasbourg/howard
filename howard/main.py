@@ -159,7 +159,13 @@ def main() -> None:
         args.log = args.log.name
 
     # Access
-    if "access" not in args:
+    if (
+        "access" not in args
+        or not args.access
+        or args.access == ""
+        or args.access is None
+        or args.access.lower() == "none"
+    ):
         args.access = None
     access = args.access
 

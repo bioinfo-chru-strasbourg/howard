@@ -1922,12 +1922,13 @@ arguments = {
         """Read Only Access mode is usefull to not load data into database\n"""
         """(especially input Parquet file) when it's not needed\n"""
         """(e.g. queries, fast annotation mode), reducing memory impact\n""",
-        "default": "RW",
+        "default": None,
         "type": str,
-        "choices": ["RW", "RO"],
+        "choices": ["RW", "RO", None, "None"],
         "gooey": {"widget": "Dropdown", "options": {}},
         "extra": {
             "examples": {
+                "Default mode (auto detection)": '"access": None',
                 "Read and Write mode": '"access": "RW"',
                 "Read only mode": '"access": "RO"',
             }
