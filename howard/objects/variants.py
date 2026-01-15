@@ -251,6 +251,19 @@ class Variants:
         # Find access in param then in config, otherwise return default
         return self.get_param().get("access", self.get_config().get("access", default))
 
+    def get_contigs(self) -> dict:
+        """
+        Get contigs from VCF header
+        """
+
+        # Get header
+        header = self.get_header()
+
+        # Construct dict)
+        contigs = {contig: header.contigs[contig] for contig in header.contigs}
+
+        return contigs
+
     def load_header(
         self,
         header=None,
@@ -3418,6 +3431,7 @@ class Variants:
         add_samples: bool = True,
         list_samples: list = [],
         where_clause: str = "",
+        sort: bool = True,
         index: bool = False,
         threads: int | None = None,
     ) -> bool | None:
@@ -3441,6 +3455,17 @@ class Variants:
         in the output VCF file. By default, all samples will be included. If you provide a list of
         samples, only those samples will be included in the output file
         :type list_samples: list
+        :param where_clause: The `where_clause` parameter in the `export_variant_vcf` function is a
+        string that represents a SQL WHERE clause. It is used to filter the variants that will be
+        exported to the VCF file. The `where_clause` allows you to specify conditions that the variants
+        must meet in order to be included in the output VCF file. If no `where_clause` is provided, all
+        variants will be exported
+        :type where_clause: str
+        :param sort: The `sort` parameter in the `export_variant_vcf` function is a boolean flag that
+        determines whether the output VCF file should be sorted based on genomic coordinates of the variants.
+        If `sort` is set to `True`, the output VCF file will be sorted. If `sort` is set to `False`, the output VCF file
+        will not be sorted. By default, the output VCF file is sorted
+        :type sort: bool (optional)
         :param index: The `index` parameter in the `export_variant_vcf` function is a boolean flag that
         determines whether or not to create an index for the output VCF file. If `index` is set to
         `True`, the output VCF file will be indexed using tabix. If `index`, defaults to False
@@ -3529,7 +3554,7 @@ class Variants:
             parquet_partitions=None,
             chunk_size=config.get("chunk_size", None),
             threads=threads,
-            sort=True,
+            sort=sort,
             index=index,
             order_by=None,
         )
@@ -4314,7 +4339,12 @@ class Variants:
                                             "duckdb",
                                         ]:
                                             annotation_tool = "parquet"
-                                        elif quick_annotation_format in ["bw"]:
+                                        elif quick_annotation_format.lower() in [
+                                            "bw",
+                                            "bb",
+                                            "bigwig",
+                                            "bigbed",
+                                        ]:
                                             annotation_tool = "bigwig"
                                         else:
                                             log.error(
@@ -4395,10 +4425,10 @@ class Variants:
         # DEBUG
         log.debug("Start annotation with bigwig databases")
 
-        # # Threads
-        # if not threads:
-        #     threads = self.get_threads()
-        # log.debug("Threads: " + str(threads))
+        # Threads
+        if not threads:
+            threads = self.get_threads()
+        log.debug("Threads: " + str(threads))
 
         # Config
         config = self.get_config()
@@ -4425,6 +4455,15 @@ class Variants:
             .get("annotations", None)
         )
         log.debug("Annotations: " + str(annotations))
+
+        # Param
+        annotations_param = (
+            self.get_param().get("annotation", {}).get("bigwig", {}).get("param", {})
+        )
+        log.debug("Annotations param: " + str(annotations_param))
+
+        # Chunk size
+        chunk_size = self.get_config().get("chunk_size", DEFAULT_CHUNK_SIZE)
 
         # Assembly
         assembly = self.get_param().get(
@@ -4461,7 +4500,7 @@ class Variants:
             with TemporaryDirectory(dir=self.get_tmp_dir()) as tmp_dir:
 
                 # Export VCF file
-                tmp_vcf_name = os.path.join(tmp_dir, "input.vcf.gz")
+                tmp_vcf_name = os.path.join(tmp_dir, "input.vcf")
 
                 # annotation_bigwig_config
                 annotation_bigwig_config_list = []
@@ -4508,7 +4547,12 @@ class Variants:
 
                         # Retrieve automatic annotation field name
                         annotation_field = clean_annotation_field(
-                            os.path.basename(db_file).replace(".bw", "")
+                            re.sub(
+                                r"\.(bw|bb|bigwig|bigbed)$",
+                                "",
+                                os.path.basename(db_file),
+                                flags=re.IGNORECASE,
+                            )
                         )
                         log.debug(
                             f"Create header file with annotation field '{annotation_field}' is an HTTP URL"
@@ -4534,7 +4578,7 @@ class Variants:
                         or db_hdr_file is None
                         or (not os.path.exists(db_file) and not db_file_is_http)
                         or not os.path.exists(db_hdr_file)
-                        or not db_file_type in ["bw"]
+                        or not db_file_type.lower() in ["bw", "bb", "bigwig", "bigbed"]
                     ):
                         # if False:
                         log.error("Annotation failed: database not valid")
@@ -4608,12 +4652,29 @@ class Variants:
                             cyvcf2_header_rename_dict[annotation_field_new] = (
                                 db_hdr_vcf_header_infos[annotation_field].id
                             )
+
+                            # Because values are normalized (mean or join) over the region
+                            # Force number to '.' if type is String
+                            # Force number to '1' if type is Integer of Float
+                            annotation_field_num = "."
+                            if (
+                                db_hdr_vcf_header_infos[annotation_field].type
+                                == "String"
+                            ):
+                                annotation_field_num = "."
+                            elif db_hdr_vcf_header_infos[annotation_field].type in [
+                                "Integer",
+                                "Float",
+                            ]:
+                                annotation_field_num = 1
+                            else:
+                                annotation_field_num = db_hdr_vcf_header_infos[
+                                    annotation_field
+                                ].num
                             cyvcf2_header_list.append(
                                 {
                                     "ID": annotation_field_new,
-                                    "Number": db_hdr_vcf_header_infos[
-                                        annotation_field
-                                    ].num,
+                                    "Number": annotation_field_num,
                                     "Type": db_hdr_vcf_header_infos[
                                         annotation_field
                                     ].type,
@@ -4637,42 +4698,107 @@ class Variants:
                             )
 
                         # Load bigwig database
-                        bw_db = pyBigWig.open(db_file)
+                        bw_db = pyBigWig.open(db_file, "r")
+
+                        # Check bigwig format
                         if bw_db.isBigWig():
                             log.debug(f"Database '{db_file}' is in 'BigWig' format")
+                        elif bw_db.isBigBed():
+                            log.debug(f"Database '{db_file}' is in 'BigBed' format")
                         else:
                             msg_err = f"Database '{db_file}' is NOT in 'BigWig' format"
                             log.error(msg_err)
                             raise ValueError(msg_err)
 
+                        # Annotation param method
+                        # Get default and update with annotation specific
+                        annotations_param_annotation_method = (
+                            annotations_param.get("default", {})
+                            .get("method", {})
+                            .copy()
+                        )
+                        annotations_param_annotation_method.update(
+                            annotations_param.get(annotation, {}).get("method", {})
+                        )
+
+                        # For each field, determine method by type if not defined
+                        for cyvcf2_header_index in cyvcf2_header_indexes.keys():
+                            if (
+                                cyvcf2_header_index
+                                not in annotations_param_annotation_method
+                            ):
+                                annotations_param_annotation_method[
+                                    cyvcf2_header_index
+                                ] = annotations_param_annotation_method.get(
+                                    db_hdr_vcf_header_infos[
+                                        cyvcf2_header_rename_dict[cyvcf2_header_index]
+                                    ].type,
+                                    (
+                                        "mean"
+                                        if db_hdr_vcf_header_infos[
+                                            cyvcf2_header_rename_dict[
+                                                cyvcf2_header_index
+                                            ]
+                                        ].type
+                                        in ["Integer", "Float"]
+                                        else "uniq"
+                                    ),
+                                )
+
+                        # log.debug(
+                        #     f"Annotation method param: {annotations_param_annotation_method}"
+                        # )
+
+                        # Append annotation config
                         annotation_bigwig_config_list.append(
                             {
                                 "db_file": db_file,
                                 "bw_db": bw_db,
+                                "bw_type": "bw" if bw_db.isBigWig() else "bb",
+                                "bw_format": "BigWig" if bw_db.isBigWig() else "BigBed",
+                                "vcf_reader": vcf_reader,
                                 "cyvcf2_header_rename_dict": cyvcf2_header_rename_dict,
                                 "cyvcf2_header_list": cyvcf2_header_list,
                                 "cyvcf2_header_indexes": cyvcf2_header_indexes,
+                                "bigwig_annotation": list(cyvcf2_header_indexes.keys())[
+                                    0
+                                ],
+                                "annotation_method": annotations_param_annotation_method,
                             }
                         )
+                        # log.debug(
+                        #     f"Annotation config: {annotation_bigwig_config_list[-1]}"
+                        # )
 
                 # Annotate
                 if annotation_bigwig_config_list:
 
-                    # Annotation config
-                    log.debug(
-                        f"annotation_bigwig_config={annotation_bigwig_config_list}"
-                    )
-
                     # Export VCF file
+                    # No sort and index needed
                     self.export_variant_vcf(
                         vcf_file=tmp_vcf_name,
                         remove_info=True,
                         add_samples=False,
-                        index=True,
+                        sort=False,
+                        index=False,
+                        threads=threads,
                     )
 
                     # Load input tmp file
-                    input_vcf = cyvcf2.VCF(tmp_vcf_name)
+                    log.debug("Load input VCF file...")
+                    input_vcf = cyvcf2.VCF(tmp_vcf_name, threads=threads, lazy=True)
+                    log.debug("Load input VCF file done.")
+
+                    # Remove tmp VCF file
+                    # Not needed anymore, because loaded in memory
+                    remove_if_exists(tmp_vcf_name)
+
+                    # Number of variants
+                    count_variants = self.get_query_to_df(
+                        f"""SELECT count(*) as count FROM {table_variants} as table_variants"""
+                    )
+                    num_variants = count_variants["count"][0]
+                    log.debug(f"Number of variants to annotate: {num_variants}")
 
                     # Add header in input file
                     for annotation_bigwig_config in annotation_bigwig_config_list:
@@ -4680,7 +4806,7 @@ class Variants:
                             "cyvcf2_header_list", []
                         ):
                             log.info(
-                                f"Annotations 'bigwig' database '{os.path.basename(annotation_bigwig_config.get('db_file'))}' - annotation field '{annotation_bigwig_config.get('cyvcf2_header_rename_dict',{}).get(cyvcf2_header_field.get('ID','Unknown'))}' -> '{cyvcf2_header_field.get('ID')}'"
+                                f"Annotations '{annotation_bigwig_config.get('bw_format','BigWig')}' database '{os.path.basename(annotation_bigwig_config.get('db_file'))}' - annotation field '{annotation_bigwig_config.get('cyvcf2_header_rename_dict',{}).get(cyvcf2_header_field.get('ID','Unknown'))}' -> '{cyvcf2_header_field.get('ID')}'"
                             )
                             input_vcf.add_info_to_header(cyvcf2_header_field)
 
@@ -4689,33 +4815,237 @@ class Variants:
                     output_vcf = cyvcf2.Writer(output_vcf_file, input_vcf)
 
                     # Fetch variants
-                    log.info(f"Annotations 'bigwig' start...")
+                    log.info("Annotations start...")
+                    variant_i = 0
                     for variant in input_vcf:
 
+                        # Log progress
+                        if variant_i and variant_i % chunk_size == 0:
+                            log.debug(
+                                f"Annotations - Processed {variant_i} variants [{variant_i/num_variants:.2%}]..."
+                            )
+                        variant_i += 1
+
+                        # For each bigwig annotation config, process annotation
                         for annotation_bigwig_config in annotation_bigwig_config_list:
 
                             # DB and indexes
                             bw_db = annotation_bigwig_config.get("bw_db", None)
                             bw_db_file = annotation_bigwig_config.get("db_file", None)
+                            vcf_header = annotation_bigwig_config.get(
+                                "vcf_reader", None
+                            )
                             cyvcf2_header_indexes = annotation_bigwig_config.get(
                                 "cyvcf2_header_indexes", None
                             )
-
-                            # Retrieve value from chrom pos
-                            res = bw_db.values(
-                                variant.CHROM, variant.POS - 1, variant.POS
+                            bigwig_annotation = annotation_bigwig_config.get(
+                                "bigwig_annotation", None
                             )
+                            bw_type = annotation_bigwig_config.get("bw_type", "bw")
 
-                            # For each annotation fields (and indexes)
-                            for cyvcf2_header_index in cyvcf2_header_indexes:
+                            # Annotation with bigwig
+                            if bw_type == "bw":
 
-                                # If value is NOT nNone
-                                if not np.isnan(
-                                    res[cyvcf2_header_indexes[cyvcf2_header_index]]
+                                # Annotation method
+                                annotation_method = annotation_bigwig_config.get(
+                                    "annotation_method", {}
+                                ).get(bigwig_annotation, "uniq")
+
+                                # Retrieve value from chrom pos start end
+                                # Try to get value over the variant region
+                                # Bydefault "mean" is used to retrevie value of a region
+                                # TODO: add parameter to choose method (mean, max, min, sum, coverage)
+                                # Due to out of bound errors, use TRY/EXCEPT
+                                # Location is 0-based in pyBigWig
+                                # Length base on REF allele length (TODO: check for SV)
+                                try:
+                                    variant_value = bw_db.stats(
+                                        variant.CHROM,
+                                        variant.POS - 1,
+                                        variant.POS + len(variant.REF) - 1,
+                                        type=annotation_method,
+                                    )[0]
+                                except RuntimeError as e:
+                                    # Output is empty list if error
+                                    variant_value = None
+
+                                # If value found and not NaN, add to variant INFO
+                                if variant_value is not None and not np.isnan(
+                                    variant_value
                                 ):
-                                    variant.INFO[cyvcf2_header_index] = res[
-                                        cyvcf2_header_indexes[cyvcf2_header_index]
-                                    ]
+                                    variant.INFO[bigwig_annotation] = variant_value
+
+                            # Annotation with bigbed
+                            elif bw_type == "bb":
+
+                                # Retrieve value from chrom pos start end
+                                # Try to get value over the variant region
+                                # Due to out of bound errors, use TRY/EXCEPT
+                                # Location is 0-based in pyBigBed
+                                # Length base on REF allele length (TODO: check for SV)
+                                # Result "res" is a list of tuples/entry (see pybigwig doc)
+                                # example:
+                                # [(3112004, 3112046, '59150\t190\t-\t0.057\t0.61\t119'), (3143183, 3143307, '8\t145\t+\t0.033\t0.48\t200'), (3143324, 3143420, '9\t240\t+\t0.101\t0.30\t480')]
+                                try:
+                                    res = bw_db.entries(
+                                        variant.CHROM,
+                                        variant.POS - 1,
+                                        variant.POS + len(variant.REF) - 1,
+                                    )
+                                except RuntimeError as e:
+                                    res = None
+
+                                # If result found
+                                if res is not None:
+
+                                    # Create values dict by header indexes (annotations)
+                                    cyvcf2_header_values = {
+                                        cyvcf2_header_index: []
+                                        for cyvcf2_header_index in cyvcf2_header_indexes
+                                    }
+
+                                    # For each entry
+                                    for entry in res:
+
+                                        # Extract and split values
+                                        # example: (3112004, 3112046, '59150\t190\t-\t0.057\t0.61\t119')
+                                        values = entry[2].split("\t")
+
+                                        # For each header index, get value and construct dict
+                                        for (
+                                            cyvcf2_header_index
+                                        ) in cyvcf2_header_indexes:
+
+                                            # Get value index, depend on annotation fields required
+                                            value_index = cyvcf2_header_indexes[
+                                                cyvcf2_header_index
+                                            ]
+
+                                            # Get value type from header infos
+                                            cyvcf2_header_index_infos_type = (
+                                                vcf_header.infos.get(
+                                                    cyvcf2_header_index
+                                                ).type
+                                            )
+
+                                            # Value is an integer, cast it
+                                            if (
+                                                cyvcf2_header_index_infos_type
+                                                == "Integer"
+                                            ):
+                                                value = int(values[value_index])
+
+                                            # Value is a float, cast it
+                                            elif (
+                                                cyvcf2_header_index_infos_type
+                                                == "Float"
+                                            ):
+                                                value = float(values[value_index])
+
+                                            # Value is a string, keep it
+                                            else:
+                                                value = values[value_index]
+
+                                            # Append value to dict
+                                            cyvcf2_header_values[
+                                                cyvcf2_header_index
+                                            ].append(value)
+
+                                    # Normalize values (mean for Integer/Float, join for String)
+                                    # and add to variant INFO
+                                    for cyvcf2_header_index in cyvcf2_header_values:
+
+                                        # Get value type from header infos
+                                        cyvcf2_header_index_infos_type = (
+                                            vcf_header.infos.get(
+                                                cyvcf2_header_index
+                                            ).type
+                                        )
+
+                                        # Get anotation method
+                                        annotation_method = (
+                                            annotation_bigwig_config.get(
+                                                "annotation_method", {}
+                                            ).get(cyvcf2_header_index, "uniq")
+                                        )
+
+                                        # Normalize value depending on method
+                                        if annotation_method == "mean":
+                                            # Calculate mean (by default)
+                                            value_norm = np.mean(
+                                                cyvcf2_header_values[
+                                                    cyvcf2_header_index
+                                                ]
+                                            )
+                                        elif annotation_method == "max":
+                                            # Calculate max
+                                            value_norm = np.max(
+                                                cyvcf2_header_values[
+                                                    cyvcf2_header_index
+                                                ]
+                                            )
+                                        elif annotation_method == "min":
+                                            # Calculate min
+                                            value_norm = np.min(
+                                                cyvcf2_header_values[
+                                                    cyvcf2_header_index
+                                                ]
+                                            )
+                                        elif annotation_method == "sum":
+                                            # Calculate sum
+                                            value_norm = np.sum(
+                                                cyvcf2_header_values[
+                                                    cyvcf2_header_index
+                                                ]
+                                            )
+                                        elif annotation_method == "coverage":
+                                            # Calculate coverage (number of values)
+                                            value_norm = len(
+                                                cyvcf2_header_values[
+                                                    cyvcf2_header_index
+                                                ]
+                                            )
+                                        elif annotation_method == "join":
+                                            # Join values
+                                            value_norm = ",".join(
+                                                cyvcf2_header_values[
+                                                    cyvcf2_header_index
+                                                ]
+                                            )
+                                        # elif annotation_method == "uniq":
+                                        #     # Join unique values
+                                        #     value_norm = ",".join(
+                                        #         set(
+                                        #             cyvcf2_header_values[
+                                        #                 cyvcf2_header_index
+                                        #             ]
+                                        #         )
+                                        #     )
+                                        else:
+                                            # Default to "join"
+                                            value_norm = ",".join(
+                                                set(
+                                                    cyvcf2_header_values[
+                                                        cyvcf2_header_index
+                                                    ]
+                                                )
+                                            )
+
+                                        # If Integer, cast to int (otherwise keep float)
+                                        # Error occure when trying to add a float value to int with pycvcf2
+                                        if cyvcf2_header_index_infos_type in [
+                                            "Integer"
+                                        ]:
+                                            value_norm = int(value_norm)
+
+                                        # Add to variant INFO
+                                        variant.INFO[cyvcf2_header_index] = value_norm
+
+                            else:
+                                msg_err = f"Annotations '{annotation_bigwig_config.get('bw_format','BigWig')}' database '{bw_db_file}' - type '{bw_type}' not supported yet"
+                                log.error(msg_err)
+                                # continue
+                                raise ValueError(msg_err)
 
                         # Add record in output file
                         output_vcf.write_record(variant)
@@ -4731,38 +5061,38 @@ class Variants:
                         try:
                             if bw_db is not None:
                                 log.debug(
-                                    f"Annotations 'bigwig' file '{bw_db_file}' closing..."
+                                    f"Annotations '{annotation_bigwig_config.get('bw_format','BigWig')}' file '{os.path.basename(bw_db_file)}' closing..."
                                 )
                                 bw_db.close()
                                 log.debug(
-                                    f"Annotations 'bigwig' file '{bw_db_file}' closed"
+                                    f"Annotations '{annotation_bigwig_config.get('bw_format','BigWig')}' file '{os.path.basename(bw_db_file)}' closed"
                                 )
                             else:
                                 log.debug(
-                                    f"Annotations 'bigwig' file '{bw_db_file}' is already closed or not open"
+                                    f"Annotations '{annotation_bigwig_config.get('bw_format','BigWig')}' file '{os.path.basename(bw_db_file)}' is already closed or not open"
                                 )
                         except RuntimeError as e:
                             log.error(
-                                f"RuntimeError while closing 'bigwig' file '{bw_db_file}': {e}"
+                                f"RuntimeError while closing '{annotation_bigwig_config.get('bw_format','BigWig')}' file '{os.path.basename(bw_db_file)}': {e}"
                             )
                         except Exception as e:
                             log.error(
-                                f"Unexpected error while closing 'bigwig' file '{bw_db_file}': {e}"
+                                f"Unexpected error while closing '{annotation_bigwig_config.get('bw_format','BigWig')}' file '{os.path.basename(bw_db_file)}': {e}"
                             )
 
                     # Log
-                    log.debug(f"Annotation done.")
+                    log.debug(f"Annotations done.")
 
                     # Close and write file
-                    log.info(f"Annotations 'bigwig' write...")
+                    log.info(f"Annotations write...")
                     output_vcf.close()
-                    log.debug(f"Write done.")
+                    log.debug(f"Annotations write done.")
 
                     # Update variants
-                    log.info(f"Annotations 'bigwig' update...")
+                    log.info(f"Annotations update...")
                     self.update_from_vcf(output_vcf_file)
                     remove_if_exists([output_vcf_file])
-                    log.debug(f"Update done.")
+                    log.debug(f"Annotations update done.")
 
         return True
 

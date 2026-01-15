@@ -915,11 +915,19 @@ needed (e.g. queries, fast annotation mode), reducing memory impact
 
 Type: `str`
 
-Choices: `['RW', 'RO']`
+Choices: `['RW', 'RO', None, 'None']`
 
-Default: `RW`
+Default: `None`
 
 Examples:
+
+> Default mode (auto detection)
+
+> ``` json
+> {
+>    "access": None
+> }
+> ```
 
 > Read and Write mode
 

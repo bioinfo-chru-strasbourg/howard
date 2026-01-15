@@ -7,7 +7,12 @@
 ##bcftools_normCommand=norm --regions=chr1,chr2,chr3,chr4,chr5,chr6,chr7,chr8,chr9,chr10,chr11,chr12,chr13,chr14,chr15,chr16,chr17,chr18,chr19,chr20,chr21,chr22,chrM,chrX,chrY --threads=4 --check-ref s -f /STARK/databases/genomes/current/hg19.fa /tmp//STARK/data/reformatDB/output4/hg19/nci60.vcf.sort.vcf.gz; Date=Sun Feb 12 22:38:42 2023
 ##bcftools_viewVersion=1.17+htslib-1.17
 ##bcftools_viewCommand=view -R tests/data/example.bed -o tests/data/annotations/nci60.vcf.gz -Oz /Users/lebechea/STARK/databases/annotations/current/hg19/nci60.vcf.gz; Date=Sun Mar 26 15:49:05 2023
-##INFO=<ID=gerp,Number=1,Type=Float,Description="GERP">
+##INFO=<ID=score1,Number=1,Type=Integer,Description="Score1">
+##INFO=<ID=score2,Number=1,Type=Integer,Description="Score2">
+##INFO=<ID=strand,Number=.,Type=String,Description="Strand">
+##INFO=<ID=thickStart,Number=1,Type=Integer,Description="thickStart">
+##INFO=<ID=thickEnd,Number=1,Type=Integer,Description="thickEnd">
+##INFO=<ID=itemRgb,Number=.,Type=String,Description="RGB values">
 ##FILTER=<ID=PASS,Description="All filters passed">
 ##contig=<ID=chr1,length=249250621>
 ##contig=<ID=chr2,length=243199373>
@@ -34,4 +39,4 @@
 ##contig=<ID=chrM,length=16571>
 ##contig=<ID=chrX,length=155270560>
 ##contig=<ID=chrY,length=59373566>
-#CHROM	START	END	gerp
+#CHROM	START	END	score1	score2	strand	thickStart	thickEnd	itemRgb
