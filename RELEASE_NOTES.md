@@ -2,22 +2,19 @@
 
 ## 0.14.0
 
-Some news, improves and fixes
+This release introduces several significant new features and improvements, primarily focused on enhancing annotation capabilities and overall performance. Key additions include a new BigWig/BigBed annotation method with aggregation, a fast strategy for Parquet annotation, and a chunking process to handle very large input files. This version also brings a new resource management strategy to optimize memory and speed. Updates focus on improving resource usage for annotation and calculation processes, ans external tools like snpEff and Annovar, while numerous fixes address issues with data downloads, VCF calculations, and transcript annotations.
 
 ### News
 
+- Add and improve BigWig/BigBed annotation, with aggregation methods ([#444](https://github.com/bioinfo-chru-strasbourg/howard/issues/444))
+- Add fast strategy for Parquet annotation ([#466](https://github.com/bioinfo-chru-strasbourg/howard/issues/466))
 - Add chunking process for huge input files ([#442](https://github.com/bioinfo-chru-strasbourg/howard/issues/442))
-- Add BigBed annotation, as BigWig format (TODO) ([#444](https://github.com/bioinfo-chru-strasbourg/howard/issues/444))
 
 ### Updates
 
-- Add strategy to manage resources, based on CTAS method and duckDB spilling identification ([#462](https://github.com/bioinfo-chru-strasbourg/howard/issues/462), [#466](https://github.com/bioinfo-chru-strasbourg/howard/issues/466))
-- Add fast strategy for Parquet annotation ([#466](https://github.com/bioinfo-chru-strasbourg/howard/issues/466))
 - Improve annotation update from external tools (e.g. snpEff, Annovar, splice...), to improve ressources ([#443](https://github.com/bioinfo-chru-strasbourg/howard/issues/443))
-- Improve BigWig/BigBed annotation with direct update without external generated VCF ([#444](https://github.com/bioinfo-chru-strasbourg/howard/issues/444))
-- Improve update table with CTAS method for calculation in SQL ([#459](https://github.com/bioinfo-chru-strasbourg/howard/issues/459))
+- Add strategy to manage resources, based on CTAS method and duckDB spilling identification ([#462](https://github.com/bioinfo-chru-strasbourg/howard/issues/462), [#466](https://github.com/bioinfo-chru-strasbourg/howard/issues/466), [#459](https://github.com/bioinfo-chru-strasbourg/howard/issues/459))
 - Improve Parquet annotation, resources dealing, fast parameter ([#466](https://github.com/bioinfo-chru-strasbourg/howard/issues/466))
-- ??? Update duckDB package (TODO)
 
 ### Fixes
 

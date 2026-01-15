@@ -2594,6 +2594,10 @@ def concat_and_compress_files(
     # Compression type for first input file
     compression_type_input0 = get_compression_type(input_files[0])
 
+    log.debug(
+        f"Concatenate and compress files into '{output_file}' with compression type '{compression_type}'..."
+    )
+
     # Check single file with same compression type to speed up process
     if len(input_files) == 1 and compression_type_input0 == compression_type:
         log.debug(
@@ -2601,6 +2605,7 @@ def concat_and_compress_files(
         )
         # os.rename(input_files[0], output_file_tmp)
         shutil.copyfile(input_files[0], output_file_tmp)
+        log.debug(f"File copied: {output_file_tmp}")
 
     # Concat and compress files in gzip
     elif compression_type in ["gzip"]:
@@ -2644,9 +2649,14 @@ def concat_and_compress_files(
                 block=block,
             )
 
+    log.debug(
+        f"Concatenate and compress files into '{output_file}' with compression type '{compression_type}' done."
+    )
+
     # Output file
     if sort:
         # Sort with pysam
+        log.debug(f"Sorting output file...")
         try:
             pysam.bcftools.sort(
                 f"-Oz{compression_level}",
@@ -2688,6 +2698,8 @@ def concat_and_compress_files(
                     f"Output file sorting (with tabix) failed: {output_file_tmp}"
                 )
 
+        log.debug(f"Sorting output file done.")
+
     else:
         # Rename tmp file
         os.rename(output_file_tmp, output_file)
@@ -2695,10 +2707,12 @@ def concat_and_compress_files(
     # Index file
     if index:
         # Index file with tabix
+        log.debug(f"Indexing output file...")
         try:
             pysam.tabix_index(output_file, preset="vcf", force=True)
         except:
             raise ValueError(f"Output file indexing failed: {output_file}")
+        log.debug(f"Indexing output file done.")
 
     # Return output file
     return os.path.exists(output_file)

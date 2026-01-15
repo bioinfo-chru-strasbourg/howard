@@ -372,8 +372,16 @@ class="toc-section-number">19.3</span> Explode</a></li>
 <li><a href="#export-6" id="toc-export-6"><span
 class="toc-section-number">19.4</span> Export</a></li>
 </ul></li>
+<li><a href="#bigwig-tool" id="toc-bigwig-tool"><span
+class="toc-section-number">20</span> BIGWIG tool</a>
+<ul>
+<li><a href="#main-options-17" id="toc-main-options-17"><span
+class="toc-section-number">20.1</span> Main options</a></li>
+<li><a href="#options-1" id="toc-options-1"><span
+class="toc-section-number">20.2</span> Options</a></li>
+</ul></li>
 <li><a href="#shared-arguments" id="toc-shared-arguments"><span
-class="toc-section-number">20</span> Shared arguments</a></li>
+class="toc-section-number">21</span> Shared arguments</a></li>
 </ul>
 </nav>
 <h1 data-number="1" id="introduction"><span
@@ -2847,16 +2855,17 @@ Path of refseq file.</code></pre>
 class="header-section-number">15.3</span> Options</h2>
 <p><small></p>
 <blockquote>
-<pre><code>    --show=&lt;show&gt;
+<pre><code>    --show
 
-None</code></pre>
+show variants in input file.</code></pre>
 </blockquote>
 <p></small></p>
 <p><small></p>
 <blockquote>
-<pre><code>    --limit=&lt;limit&gt;
+<pre><code>    --limit=&lt;limit&gt; [2, 5] (default: 2)
 
-None</code></pre>
+Limit of output variants.
+Either &#39;2&#39; or &#39;5&#39; lines.</code></pre>
 </blockquote>
 <p></small></p>
 <h1 data-number="16" id="to_excel-tool"><span
@@ -3246,8 +3255,68 @@ Use &#39;None&#39; (string) for NO partition but split parquet files into a fold
 Examples: &#39;#CHROM&#39;, &#39;#CHROM,REF&#39;, &#39;None&#39;.</code></pre>
 </blockquote>
 <p></small></p>
-<h1 data-number="20" id="shared-arguments"><span
-class="header-section-number">20</span> Shared arguments</h1>
+<h1 data-number="20" id="bigwig-tool"><span
+class="header-section-number">20</span> BIGWIG tool</h1>
+<p>BigWig/BigBed converter (Under development).</p>
+<p>Usage examples:</p>
+<blockquote>
+<p>howard bigwig &#x2013;input=tests/data/example.vcf.gz
+&#x2013;output=/tmp/example.bw</p>
+</blockquote>
+<blockquote>
+<p>howard bigwig &#x2013;input=tests/data/example.bb
+&#x2013;output=/tmp/example.bb</p>
+</blockquote>
+<blockquote>
+
+</blockquote>
+<h2 data-number="20.1" id="main-options-17"><span
+class="header-section-number">20.1</span> Main options</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --input=&lt;input&gt; | required
+
+Input file path.
+Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
+Files can be compressesd (e.g. vcf.gz, tsv.gz).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --output=&lt;output&gt;
+
+Output file path.
+Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
+Files can be compressesd (e.g. vcf.gz, tsv.gz).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --param=&lt;param&gt; (default: {})
+
+Parameters JSON file (or string) defines parameters to process 
+annotations, calculations, prioritizations, convertions and queries.</code></pre>
+</blockquote>
+<p></small></p>
+<h2 data-number="20.2" id="options-1"><span
+class="header-section-number">20.2</span> Options</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --show
+
+show variants in input file.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --limit=&lt;limit&gt; [2, 5] (default: 2)
+
+Limit of output variants.
+Either &#39;2&#39; or &#39;5&#39; lines.</code></pre>
+</blockquote>
+<p></small></p>
+<h1 data-number="21" id="shared-arguments"><span
+class="header-section-number">21</span> Shared arguments</h1>
 <p><small></p>
 <blockquote>
 <pre><code>    --config=&lt;config&gt; (default: {})
@@ -3302,7 +3371,7 @@ By default, &#39;.tmp&#39; for duckDB (see doc),external tools and python script
 <p></small></p>
 <p><small></p>
 <blockquote>
-<pre><code>    --access=&lt;access mode&gt; [&#39;RW&#39;, &#39;RO&#39;] (default: RW)
+<pre><code>    --access=&lt;access mode&gt; [&#39;RW&#39;, &#39;RO&#39;, None, &#39;None&#39;]
 
 Access mode to variants input file in database.
 Either &#39;RW&#39; for Read and Write, or &#39;RO&#39; for Read Only.

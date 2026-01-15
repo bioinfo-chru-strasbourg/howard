@@ -124,7 +124,11 @@ title: HOWARD Help
     Minimalize](#minimalize)
   - [<span class="toc-section-number">19.3</span> Explode](#explode-4)
   - [<span class="toc-section-number">19.4</span> Export](#export-6)
-- [<span class="toc-section-number">20</span> Shared
+- [<span class="toc-section-number">20</span> BIGWIG tool](#bigwig-tool)
+  - [<span class="toc-section-number">20.1</span> Main
+    options](#main-options-17)
+  - [<span class="toc-section-number">20.2</span> Options](#options-1)
+- [<span class="toc-section-number">21</span> Shared
   arguments](#shared-arguments)
 
 # Introduction
@@ -2755,17 +2759,18 @@ Usage examples:
 
 <small>
 
->     --show=<show>
+>     --show
 >
->     None
+>     show variants in input file.
 
 </small>
 
 <small>
 
->     --limit=<limit>
+>     --limit=<limit> [2, 5] (default: 2)
 >
->     None
+>     Limit of output variants.
+>     Either '2' or '5' lines.
 
 </small>
 
@@ -3193,6 +3198,69 @@ Usage examples:
 
 </small>
 
+# BIGWIG tool
+
+BigWig/BigBed converter (Under development).
+
+Usage examples:
+
+> howard bigwig --input=tests/data/example.vcf.gz
+> --output=/tmp/example.bw
+
+> howard bigwig --input=tests/data/example.bb --output=/tmp/example.bb
+
+> 
+
+## Main options
+
+<small>
+
+>     --input=<input> | required
+>
+>     Input file path.
+>     Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
+>     Files can be compressesd (e.g. vcf.gz, tsv.gz).
+
+</small>
+
+<small>
+
+>     --output=<output>
+>
+>     Output file path.
+>     Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
+>     Files can be compressesd (e.g. vcf.gz, tsv.gz).
+
+</small>
+
+<small>
+
+>     --param=<param> (default: {})
+>
+>     Parameters JSON file (or string) defines parameters to process 
+>     annotations, calculations, prioritizations, convertions and queries.
+
+</small>
+
+## Options
+
+<small>
+
+>     --show
+>
+>     show variants in input file.
+
+</small>
+
+<small>
+
+>     --limit=<limit> [2, 5] (default: 2)
+>
+>     Limit of output variants.
+>     Either '2' or '5' lines.
+
+</small>
+
 # Shared arguments
 
 <small>
@@ -3254,7 +3322,7 @@ Usage examples:
 
 <small>
 
->     --access=<access mode> ['RW', 'RO'] (default: RW)
+>     --access=<access mode> ['RW', 'RO', None, 'None']
 >
 >     Access mode to variants input file in database.
 >     Either 'RW' for Read and Write, or 'RO' for Read Only.

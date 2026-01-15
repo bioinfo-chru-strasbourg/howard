@@ -41,6 +41,7 @@ title: HOWARD Help Parameters
   - [<span class="toc-section-number">3.6</span> bigwig](#bigwig)
     - [<span class="toc-section-number">3.6.1</span>
       annotations](#annotations-4)
+    - [<span class="toc-section-number">3.6.2</span> param](#param)
   - [<span class="toc-section-number">3.7</span> exomiser](#exomiser)
     - [<span class="toc-section-number">3.7.1</span> release](#release)
     - [<span class="toc-section-number">3.7.2</span>
@@ -1026,11 +1027,20 @@ Examples:
 ## bigwig
 
 Annotation process using BigWig files. Provide a list of database files
-in BigWig format ('.bw') and annotation fields.
+in BigWig format ('.bw') or BigBed format ('.bb') and annotation fields.
+
+Parameters can be provided to define the aggregation method (e.g. mean,
+max, min, sum, coverage join, uniq) to use when multiple values are
+found for a variant position (such as for indels).
+
+Default methods can be defined for all databases (by annotation type),
+and specific methods can be defined for each database and field (default
+'mean' for Integer and Float, 'join' for String).
 
 Examples:
 
-> Annotation with multiple databases in BigWig format
+> Annotation with multiple databases in BigWig and BigBed formats, with
+> default and specific aggregation methods.
 
 > ``` json
 > {
@@ -1038,12 +1048,27 @@ Examples:
 >       "annotations": {
 >          "/path/to/database1.bw": {
 >             "field1": null,
->             "field2": null
+>             "field2": "field2_renamed"
 >          },
->          "/path/to/database2.bw": {
+>          "/path/to/database2.bb": {
 >             "field1": null,
 >             "field2": null
 >          }
+>       },
+>      "param": {
+>         "default": {
+>            "method": {
+>               "Integer": "mean",
+>               "Float": "mean",
+>               "String": "uniq"
+>            }
+>         },
+>         "/path/to/database1.bw": {
+>            "method": {
+>               "field1": "max",
+>               "field2_renamed": "min"
+>            }
+>         }
 >       }
 >    }
 > }
@@ -1051,7 +1076,8 @@ Examples:
 
 ### annotations
 
-Specify the list of database files in BigWig format.
+Specify the list of database files in BigWig or BigBed format (extension
+'.bw', '.bb', 'bigwig' or 'bigbed').
 
 This parameter enables users to select specific database fields and
 optionally rename them (e.g. '"field": null' to keep field name,
@@ -1064,9 +1090,9 @@ files within database folders (see Configuration doc) and assembly (see
 Parameter option).
 
 A URL can be provided as a database file (experimental). In this case,
-associated header file will be automatically generated with ua uniq
-value as the name of the file (cleaned for avoid special characters, and
-'.bw' extension).
+associated header file will be automatically generated with a uniq value
+as the name of the file (cleaned for avoid special characters, and '.bw'
+extension).
 
 Examples:
 
@@ -1082,7 +1108,7 @@ Examples:
 > }
 > ```
 
-> Annotation with GERP (only gerp score)
+> Annotation with GERP scores renamed
 
 > ``` json
 > {
@@ -1101,6 +1127,53 @@ Examples:
 >    "annotations": {
 >       "https://hgdownload.soe.ucsc.edu/gbdb/hg19/bbi/All_hg19_RS.bw": {
 >          "INFO": null
+>       }
+>    }
+> }
+> ```
+
+### param
+
+Parameters for BigWig/BigBed annotation, including default aggregation
+methods and specific aggregation methods for each database and field.
+
+Aggregation methods available: 'mean', 'max', 'min', 'sum', 'coverage'
+for Integer or Float value type, and 'join', 'uniq' for String value
+type.
+
+By default, 'mean' method is used for Integer and Float value type, and
+'join' method for String value type.
+
+Default and specific aggregation methods can be combined.
+
+Examples:
+
+> Parameters to define default aggregation methods by type
+
+> ``` json
+> {
+>    "param": {
+>       "default": {
+>          "method": {
+>             "Integer": "mean",
+>             "Float": "mean",
+>             "String": "uniq"
+>          }
+>       }
+>    }
+> }
+> ```
+
+> Parameters to define aggregation methods by annotations and fields
+
+> ``` json
+> {
+>    "param": {
+>       "/path/to/database1.bw": {
+>          "method": {
+>             "field1": "max",
+>             "field2_renamed": "min"
+>          }
 >       }
 >    }
 > }
