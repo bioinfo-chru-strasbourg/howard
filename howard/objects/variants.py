@@ -14644,6 +14644,7 @@ class Variants:
                 fields=param_explode.get("explode_infos_fields", None),
                 force=False,
                 fields_forced_as_varchar=False,
+                table_key=["#CHROM", "POS", "REF", "ALT", "transcript"],
             )
 
         # Create transcripts table description
