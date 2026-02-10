@@ -25,6 +25,7 @@ This release introduces several significant new features and improvements, prima
 - Fix issue when some trancript annotations are missing ([#451](https://github.com/bioinfo-chru-strasbourg/howard/issues/451))
 - Fix external tool update with REF/ALT in upper case ([#451](https://github.com/bioinfo-chru-strasbourg/howard/issues/451))
 - Fix Aria2 threads limitation ([467](https://github.com/bioinfo-chru-strasbourg/howard/issues/467))
+- Fix transcript export ([475](https://github.com/bioinfo-chru-strasbourg/howard/issues/475))
 
 ## 0.13.0
 
