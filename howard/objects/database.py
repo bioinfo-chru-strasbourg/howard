@@ -340,6 +340,63 @@ class Database:
             nb_line += 1
         return nb_line
 
+    def database_contains_header_line(self, database: str = None) -> bool:
+        """
+        The `database_contains_header_line` function checks if a given database file contains a header line.
+
+        :param database: The `database` parameter is a string that represents the name or path of the
+        database file that you want to check for the presence of a header line. This function will read
+        the first few lines of the specified database file and determine if any of those lines start with
+        a header indicator (e.g., "#") to identify if it contains a header line
+        :type database: str
+        :return: The function `database_contains_header_line` returns a boolean value indicating whether
+        the specified database file contains a header line. It returns `True` if a header line is found
+        in the database file, and `False` otherwise. If the database file does not exist or is a directory,
+        it returns `None`.
+        """
+
+        if not database:
+            return None
+
+        # Full path
+        database = full_path(database)
+
+        if not os.path.exists(database):
+            return None
+
+        elif os.path.isdir(database):
+            return None
+
+        else:
+
+            database_compressed = get_file_compressed(database)
+            database_compression_type = get_compression_type(database)
+
+            if database_compressed:
+                if database_compression_type in ["bgzip"]:
+                    with bgzf.open(database, "rt") as database_lines:
+                        for line in database_lines:
+                            if line.startswith("#"):
+                                return True
+                            else:
+                                break
+                else:
+                    with pgzip.open(database, "rt") as database_lines:
+                        for line in database_lines:
+                            if line.startswith("#"):
+                                return True
+                            else:
+                                break
+            else:
+                with open(database, "rt") as database_lines:
+                    for line in database_lines:
+                        if line.startswith("#"):
+                            return True
+                        else:
+                            break
+
+            return False
+
     def get_header_file_columns(self, header_file: str = None) -> list:
         """
         The function `get_header_columns` returns the header list of a VCF file.
@@ -1417,6 +1474,21 @@ class Database:
                         database=database
                     )
 
+                # Check if header exists
+                database_contains_header_line = self.database_contains_header_line(
+                    database=database
+                )
+                no_header = database_contains_header_line == False or (
+                    header_length == 0
+                    and (
+                        (table_columns is None or len(table_columns) == 0)
+                        or (
+                            nb_columns_detected_by_duckdb > 0
+                            and len(table_columns) != nb_columns_detected_by_duckdb
+                        )
+                    )
+                )
+
                 # If table columns
                 if table_columns:
 
@@ -1437,7 +1509,7 @@ class Database:
                         table_columns_types_list_join_option = ""
 
                     # SQL form
-                    sql_from = f"""read_csv('{database_ref}', names={table_columns}{table_columns_types_list_join_option}, auto_detect=True, compression='{database_compression}', skip={header_length}, delim='{delimiter}', hive_partitioning={hive_partitioning}, sample_size={sample_size}, max_line_size={MAX_LINE_SIZE})"""
+                    sql_from = f"""read_csv('{database_ref}', names={table_columns}{table_columns_types_list_join_option}, auto_detect=True, header={not no_header}, compression='{database_compression}', skip={header_length}, delim='{delimiter}', hive_partitioning={hive_partitioning}, sample_size={sample_size}, max_line_size={MAX_LINE_SIZE})"""
 
                 else:
                     sql_from = f"read_csv('{database_ref}', auto_detect=True, compression='{database_compression}', skip={header_length}, delim='{delimiter}', hive_partitioning={hive_partitioning}, sample_size={sample_size}, max_line_size={MAX_LINE_SIZE})"
