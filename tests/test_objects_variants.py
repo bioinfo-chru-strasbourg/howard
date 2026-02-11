@@ -1327,6 +1327,48 @@ def test_load_vcf():
     assert nb_variant_in_database == expected_number_of_variants
 
 
+def test_load_vcf_empty():
+    """
+    This function tests if a VCF file can be loaded into a Variants object and if the expected number of
+    variants is present in the resulting database.
+    """
+
+    # Init files
+    input_vcf = tests_data_folder + "/example.empty.vcf"
+
+    # Create object
+    variants = Variants(input=input_vcf, load=True)
+
+    # Check data loaded
+    result = variants.get_query_to_df("SELECT count(*) AS count FROM variants")
+    nb_variant_in_database = result["count"][0]
+
+    expected_number_of_variants = 0
+
+    assert nb_variant_in_database == expected_number_of_variants
+
+
+def test_load_vcf_empty_sample_int():
+    """
+    This function tests if a VCF file can be loaded into a Variants object and if the expected number of
+    variants is present in the resulting database.
+    """
+
+    # Init files
+    input_vcf = tests_data_folder + "/example.empty.sample_int.vcf"
+
+    # Create object
+    variants = Variants(input=input_vcf, load=True)
+
+    # Check data loaded
+    result = variants.get_query_to_df("SELECT count(*) AS count FROM variants")
+    nb_variant_in_database = result["count"][0]
+
+    expected_number_of_variants = 0
+
+    assert nb_variant_in_database == expected_number_of_variants
+
+
 def test_load_csv():
     """
     This function tests if a CSV file can be loaded into a Variants object and if the expected number of
