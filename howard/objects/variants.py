@@ -16426,7 +16426,7 @@ class Variants:
                                     list_transform(
                                         string_split(
                                             NULLIF(
-                                                string_split("{sample}", ':')[list_position(string_split("FORMAT", ':'), '{format}')]
+                                                string_split(CAST("{sample}" AS VARCHAR), ':')[list_position(string_split("FORMAT", ':'), '{format}')]
                                                 , ''
                                             )
                                             , ',')
@@ -16442,7 +16442,7 @@ class Variants:
                                     COALESCE(
                                         NULLIF(
                                             regexp_replace(
-                                                string_split("{sample}", ':')[list_position(string_split("FORMAT", ':'), '{format}')]
+                                                string_split(CAST("{sample}" AS VARCHAR), ':')[list_position(string_split("FORMAT", ':'), '{format}')]
                                                 , '^\\.$', ''
                                             )
                                         , ''
@@ -16559,7 +16559,7 @@ class Variants:
         query_create_view = f"""
             CREATE {view_type} IF NOT EXISTS {view} AS {query_select}
         """
-        # log.debug(f"Create view:{query_create_view}")
+        log.debug(f"Create view:{query_create_view}")
         self.execute_query(query=query_create_view)
         log.debug(f"View created: {view}")
 

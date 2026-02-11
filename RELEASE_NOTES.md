@@ -26,6 +26,7 @@ This release introduces several significant new features and improvements, prima
 - Fix external tool update with REF/ALT in upper case ([#451](https://github.com/bioinfo-chru-strasbourg/howard/issues/451))
 - Fix Aria2 threads limitation ([467](https://github.com/bioinfo-chru-strasbourg/howard/issues/467))
 - Fix transcript export ([475](https://github.com/bioinfo-chru-strasbourg/howard/issues/475))
+- Fix loading VCF with sample in integer format ([478](https://github.com/bioinfo-chru-strasbourg/howard/issues/478))
 
 ## 0.13.0
 
