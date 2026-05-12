@@ -567,7 +567,12 @@ def _handle_query(vcfdata_obj, param):
                 tablefmt="psql",
             )
         )
-    elif query_print_mode.lower() in ["no", "none", "null", "disabled"]:
+    elif query_print_mode and query_print_mode.lower() in [
+        "no",
+        "none",
+        "null",
+        "disabled",
+    ]:
         log.info("Query print mode disabled")
     else:
         print(vcfdata_obj.get_query_to_df(query, limit=query_limit))
