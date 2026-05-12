@@ -8778,10 +8778,12 @@ class Variants:
                 "BARCODE": {
                     "type": "python",
                     "name": "BARCODE",
-                    "description": "BARCODE as VaRank tool",
+                    "description": "BARCODE as VaRank tool ???",
                     "available": True,
                     "function_name": "calculation_barcode",
                     "function_params": [],
+                    "output_column_number": "1",
+                    "output_column_type": "Integer",
                 },
                 "BARCODEFAMILY": {
                     "type": "python",
@@ -12839,7 +12841,7 @@ class Variants:
             # Add barcode to header
             vcf_reader.infos[tag] = vcf.parser._Info(
                 tag,
-                ".",
+                "1",
                 "String",
                 vcf_infos_tags.get(tag, vcf_infos_tags.get(tag)),
                 "howard calculation",
