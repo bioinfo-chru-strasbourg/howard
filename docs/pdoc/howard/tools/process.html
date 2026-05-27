@@ -623,8 +623,15 @@
 </span><span id="L-567"><a href="#L-567"><span class="linenos">567</span></a>                <span class="n">tablefmt</span><span class="o">=</span><span class="s2">&quot;psql&quot;</span><span class="p">,</span>
 </span><span id="L-568"><a href="#L-568"><span class="linenos">568</span></a>            <span class="p">)</span>
 </span><span id="L-569"><a href="#L-569"><span class="linenos">569</span></a>        <span class="p">)</span>
-</span><span id="L-570"><a href="#L-570"><span class="linenos">570</span></a>    <span class="k">else</span><span class="p">:</span>
-</span><span id="L-571"><a href="#L-571"><span class="linenos">571</span></a>        <span class="nb">print</span><span class="p">(</span><span class="n">vcfdata_obj</span><span class="o">.</span><span class="n">get_query_to_df</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="n">query_limit</span><span class="p">))</span>
+</span><span id="L-570"><a href="#L-570"><span class="linenos">570</span></a>    <span class="k">elif</span> <span class="n">query_print_mode</span> <span class="ow">and</span> <span class="n">query_print_mode</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">[</span>
+</span><span id="L-571"><a href="#L-571"><span class="linenos">571</span></a>        <span class="s2">&quot;no&quot;</span><span class="p">,</span>
+</span><span id="L-572"><a href="#L-572"><span class="linenos">572</span></a>        <span class="s2">&quot;none&quot;</span><span class="p">,</span>
+</span><span id="L-573"><a href="#L-573"><span class="linenos">573</span></a>        <span class="s2">&quot;null&quot;</span><span class="p">,</span>
+</span><span id="L-574"><a href="#L-574"><span class="linenos">574</span></a>        <span class="s2">&quot;disabled&quot;</span><span class="p">,</span>
+</span><span id="L-575"><a href="#L-575"><span class="linenos">575</span></a>    <span class="p">]:</span>
+</span><span id="L-576"><a href="#L-576"><span class="linenos">576</span></a>        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Query print mode disabled&quot;</span><span class="p">)</span>
+</span><span id="L-577"><a href="#L-577"><span class="linenos">577</span></a>    <span class="k">else</span><span class="p">:</span>
+</span><span id="L-578"><a href="#L-578"><span class="linenos">578</span></a>        <span class="nb">print</span><span class="p">(</span><span class="n">vcfdata_obj</span><span class="o">.</span><span class="n">get_query_to_df</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="n">query_limit</span><span class="p">))</span>
 </span></pre></div>
 
 
@@ -634,7 +641,7 @@
 <div class="attr function">
             
         <span class="def">def</span>
-        <span class="name">process</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="n">args</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">module</span> <span class="s1">&#39;argparse&#39;</span> <span class="kn">from</span><span class="w"> </span><span class="s1">&#39;/Users/lebechea/miniconda3/envs/howard_devel/lib/python3.10/argparse.py&#39;</span><span class="o">&gt;</span></span><span class="return-annotation">) -> <span class="kc">None</span>:</span></span>
+        <span class="name">process</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="n">args</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">module</span> <span class="s1">&#39;argparse&#39;</span> <span class="kn">from</span><span class="w"> </span><span class="s1">&#39;/Users/lebechea/miniconda3/envs/howard/lib/python3.10/argparse.py&#39;</span><span class="o">&gt;</span></span><span class="return-annotation">) -> <span class="kc">None</span>:</span></span>
 
                 <label class="view-source-button" for="process-view-source"><span>View Source</span></label>
 

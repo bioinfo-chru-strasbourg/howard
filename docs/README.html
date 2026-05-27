@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>HOWARD README</title>
+  <style>
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 1000px;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      background-color: #1a1a1a;
+      border: none;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">HOWARD README</h1>
+</header>
+<h1 data-number="1" id="howard"><span
+class="header-section-number">1</span> HOWARD</h1>
+<figure>
+<img src="images/icon.png" title="HOWARD - Highly Open Workflow for Annotation & Ranking toward genomic variant
+Discovery"
+alt="HOWARD - Highly Open Workflow for Annotation & Ranking toward genomic variant
+Discovery" />
+<figcaption aria-hidden="true">
+HOWARD - Highly Open Workflow for Annotation &amp; Ranking toward
+genomic variant Discovery
+</figcaption>
+</figure>
+<p>Highly Open Workflow for Annotation &amp; Ranking toward genomic
+variant Discovery</p>
+<p>HOWARD annotates and prioritizes genetic variations, calculates and
+normalizes annotations, explore data with an interactive terminal,
+translates files in multiple formats (e.g.&#xA0;vcf, tsv, Parquet), generates
+variants statistics, and provides a graphical user interface.</p>
+<p>HOWARD annotation tool is primarily based on a built-in Parquet
+annotation method and external tools such as BCFTOOLS, ANNOVAR, snpEff,
+Exomiser, and Splice (see documentation, automatically downloaded if
+needed). Parquet annotation uses annotation databases in VCF or BED
+format, in multiple file formats: Parquet/DuckDB, VCF, BED, TSV, CSV,
+TBL, JSON.</p>
+<p>HOWARD calculation tool processes variants information to calculate
+new information, such as harmonizing allele frequency (VAF), extracting
+nomenclature (transcript, cNomen, pNomen etc.) from HGVS fields with an
+optional list of personalized transcripts, generating VaRank format
+barcodes.</p>
+<p>HOWARD prioritization tool uses profiles to flag variants
+(passed/filtered), calculate a prioritization score, and automatically
+generate a comment for each variant (e.g., &#x2018;polymorphism identified in
+dbSNP, associated with Lung Cancer, found in ClinVar database&#x2019;).
+Prioritization profiles are defined in a configuration file. A profile
+is defined as a list of annotation/value pairs, using wildcards and
+comparison options (contains, less than, greater than, equal, etc.).
+Annotation fields may be quality values (usually from callers, such as
+&#x2018;GQ&#x2019;, &#x2018;DP&#x2019;) or other annotation fields provided by annotation tools,
+such as HOWARD itself (e.g., COSMIC, ClinVar, 1000 Genomes, PolyPhen,
+SIFT). Multiple profiles can be used simultaneously, which is useful for
+defining multiple validation/prioritization levels (e.g., &#x2018;standard&#x2019;,
+&#x2018;stringent&#x2019;, &#x2018;rare variants&#x2019;, &#x2018;low allele frequency&#x2019;).</p>
+<p>HOWARD provides an interactive terminal for exploring data using SQL
+queries. With tables and views such as variants, variants_view, and
+header, data is structured based on their definitions (header format),
+enabling easy selection and filtering using the SQL language. Moreover,
+HOWARD provides a graphical user interface to easily launch available
+tools.</p>
+<p>HOWARD translates VCF format into multiple formats (e.g., VCF, TSV,
+Parquet) by sorting variants using specific fields (e.g.,
+&#x2018;prioritization score&#x2019;, &#x2018;allele frequency&#x2019;, &#x2018;gene symbol&#x2019;),
+including/excluding annotations/fields, including/excluding variants,
+and adding fixed columns. HOWARD also generates statistics using a
+build-in algorithm, snpEff, or BCFTOOLS.</p>
+<p>HOWARD is multithreaded, processing data across multiple variants and
+databases (data-scaling), and supports plugins for further analyses.</p>
+<h2 data-number="1.1" id="table-of-contents"><span
+class="header-section-number">1.1</span> Table of contents</h2>
+<ul>
+<li><a href="#installation">Installation</a>
+<ul>
+<li><a href="#download">Download</a></li>
+<li><a href="#python">Python</a></li>
+<li><a href="#docker">Docker</a></li>
+<li><a href="#databases">Databases</a></li>
+<li><a href="#configuration">Configuration</a></li>
+</ul></li>
+<li><a href="#tools">Tools</a>
+<ul>
+<li><a href="#parameters">Parameters</a></li>
+<li><a href="#stats">Stats</a></li>
+<li><a href="#convert">Convert</a></li>
+<li><a href="#query">Query</a></li>
+<li><a href="#annotation">Annotation</a></li>
+<li><a href="#calculation">Calculation</a></li>
+<li><a href="#prioritization">Prioritization</a></li>
+<li><a href="#hgvs-annotation">HGVS annotation</a></li>
+<li><a href="#process">Process</a></li>
+</ul></li>
+<li><a href="#documentation">Documentation</a></li>
+<li><a href="#contact">Contact</a></li>
+</ul>
+<h1 data-number="2" id="installation"><span
+class="header-section-number">2</span> Installation</h1>
+<p>HOWARD can be installed using <a href="#python">Python</a>, and a <a
+href="#docker">Docker</a> installation provides a CLI (Command Line
+Interface) with all external tools and useful databases. <a
+href="#databases">Databases</a> can be automatically downloaded, or
+home-made generated (created or downloaded).</p>
+<h2 data-number="2.1" id="download"><span
+class="header-section-number">2.1</span> Download</h2>
+<p>Download sources from gitHub</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> ~/howard/src</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> ~/howard/src</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> clone https://github.com/bioinfo-chru-strasbourg/howard.git .</span></code></pre></div>
+<h2 data-number="2.2" id="python"><span
+class="header-section-number">2.2</span> Python</h2>
+<h3 data-number="2.2.1" id="pip-install"><span
+class="header-section-number">2.2.1</span> Pip install</h3>
+<p>Install HOWARD using Python Pip tool, and run HOWARD for help
+options:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">conda</span> create <span class="at">--name</span><span class="op">=</span>howard python=3.10</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="ex">conda</span> activate howard</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="ex">python</span> <span class="at">-m</span> pip install <span class="at">-e</span> .</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="ex">howard</span> <span class="at">--help</span></span></code></pre></div>
+<pre class="text"><code> _   _  _____        ___    ____  ____
+| | | |/ _ \ \      / / \  |  _ \|  _ \ 
+| |_| | | | \ \ /\ / / _ \ | |_) | | | |
+|  _  | |_| |\ V  V / ___ \|  _ &lt;| |_| |
+|_| |_|\___/  \_/\_/_/   \_\_| \_\____/ 
+                                        
+HOWARD::0.14.0 [Antony Le Bechec, Jean-Baptiste Lamouche]
+HOWARD - Highly Open Workflow for Annotation &amp; Ranking toward genomic variant Discovery
+
+usage: howard [-h] {query,stats,convert,hgvs,annotation,calculation,prioritization,process,databases,gui} ...
+
+Shared arguments:
+  -h, --help            show this help message and exit
+
+Tools:
+  {query,stats,convert,hgvs,annotation,calculation,prioritization,process,databases,gui}
+    query               Query genetic variations file in SQL format.
+    stats               Statistics on genetic variations file.
+    convert             Convert genetic variations file to another format.
+    hgvs                HGVS annotation (HUGO internation nomenclature) using refGene,
+                        genome and transcripts list.
+    annotation          Annotation of genetic variations file using databases/files and tools.
+    calculation         Calculation operations on genetic variations file and genotype information.
+    prioritization      Prioritization of genetic variations based on annotations criteria (profiles).
+    process             Full genetic variations process: annotation, calculation, prioritization, 
+                        format, query, filter...
+    databases           Download databases and needed files for howard and associated tools
+    gui                 Graphical User Interface tools</code></pre>
+<p>On MacOS, follow this <a href="docs/INSTALL.macos.html">installation
+guide for MacOS</a></p>
+<h3 data-number="2.2.2" id="interactive-terminal"><span
+class="header-section-number">2.2.2</span> Interactive terminal</h3>
+<p>Launch HOWARD interactive terminal to explore a VCF file:</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">howard</span> query <span class="at">--input</span><span class="op">=</span><span class="st">&#39;tests/data/example.vcf.gz&#39;</span></span></code></pre></div>
+<pre class="text"><code> _   _  _____        ___    ____  ____  
+| | | |/ _ \ \      / / \  |  _ \|  _ \ 
+| |_| | | | \ \ /\ / / _ \ | |_) | | | |
+|  _  | |_| |\ V  V / ___ \|  _ &lt;| |_| |
+|_| |_|\___/  \_/\_/_/   \_\_| \_\____/ 
+                                        
+HOWARD::0.14.0 [Antony Le Bechec, Jean-Baptiste Lamouche]
+HOWARD - Highly Open Workflow for Annotation &amp; Ranking toward genomic variant Discovery
+
+#[2025-01-18 01:35:37]    INFO| Start
+#[2025-01-18 01:35:37]    INFO| Loading...
+#[2025-01-18 01:35:37]    INFO| End
+#[2025-01-18 01:35:37]    INFO| Start interative terminal
+#[2025-01-18 01:35:37]    INFO| Loading table &#39;header&#39;...
+#[2025-01-18 01:35:37]    INFO| Loading table &#39;variants_view&#39;...
+#[2025-01-18 01:35:37]    INFO| Interactive DuckDB SQL terminal
+#[2025-01-18 01:35:37]    INFO| - &#39;exit&#39; to quit.
+#[2025-01-18 01:35:37]    INFO| - &#39;help&#39; for a list of commands
+#[2025-01-18 01:35:37]        | &gt;&gt;&gt; SELECT
+#[2025-01-18 01:35:40]        | ++&gt;    &quot;#CHROM&quot;, &quot;POS&quot;, &quot;REF&quot;, &quot;ALT&quot;,
+#[2025-01-18 01:35:40]        | ++&gt;    INFOS.CLNSIG,
+#[2025-01-18 01:35:40]        | ++&gt;    SAMPLES.sample1.GT AS &#39;GT&#39;, 
+#[2025-01-18 01:35:40]        | ++&gt;    SAMPLES.sample1.DP AS &#39;DP&#39;
+#[2025-01-18 01:35:40]        | ++&gt;  FROM variants_view
+#[2025-01-18 01:35:40]        | ++&gt;  WHERE SAMPLES.sample1.DP &gt; 30
+#[2025-01-18 01:35:40]        | ++&gt;     OR INFOS.CLNSIG LIKE &#39;pathogenic&#39;
+#[2025-01-18 01:35:40]        | ++&gt;  
+  #CHROM       POS REF ALT      CLNSIG   GT   DP
+0   chr1     28736   A   C  pathogenic  0/1  729
+1   chr7  55249063   G   A        None  0/1  729
+2   chr1     69101   A   G        None  0/1  729
+#[2025-01-18 01:35:40]        | &gt;&gt;&gt; </code></pre>
+<p>Or use extended mode with Harlequin tool (<a
+href="https://harlequin.sh">https://harlequin.sh</a>):</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ex">howard</span> query <span class="at">--input</span><span class="op">=</span><span class="st">&#39;tests/data/example.vcf.gz&#39;</span> <span class="at">--interactive_mode</span><span class="op">=</span>harlequin</span></code></pre></div>
+<figure>
+<img src="images/harlequin.png" title="HOWARD Harlequin SQL IDE"
+alt="HOWARD Harlequin SQL IDE" />
+<figcaption aria-hidden="true">
+HOWARD Harlequin SQL IDE
+</figcaption>
+</figure>
+<h3 data-number="2.2.3" id="graphical-user-interface"><span
+class="header-section-number">2.2.3</span> Graphical User Interface</h3>
+<p>Install HOWARD Graphical User Interface using Python Pip tool with
+supplementary packages, and run as a tool:</p>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python</span> <span class="at">-m</span> pip install <span class="at">-r</span> requirements-gui.txt</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="ex">howard</span> gui</span></code></pre></div>
+<figure>
+<img src="images/howard-gui.png" title="HOWARD Graphical User Interface"
+alt="HOWARD Graphical User Interface" />
+<figcaption aria-hidden="true">
+HOWARD Graphical User Interface
+</figcaption>
+</figure>
+<h2 data-number="2.3" id="docker"><span
+class="header-section-number">2.3</span> Docker</h2>
+<p>In order to build, setup and create a persitent CLI (running
+container with all useful external tools such as <a
+href="https://samtools.github.io/bcftools/">BCFTools</a>, <a
+href="https://pcingola.github.io/SnpEff/">snpEff</a>, <a
+href="https://annovar.openbioinformatics.org/">Annovar</a>, <a
+href="https://www.sanger.ac.uk/tool/exomiser/">Exomiser</a>),
+docker-compose command build images and launch services as
+containers.</p>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker-compose</span> up <span class="at">-d</span></span></code></pre></div>
+<p>A setup container (HOWARD-setup) will download useful databases (take
+a while). To avoid databases download (see <a
+href="#databases">Databases section</a> to download manually), just
+start:</p>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker-compose</span> up <span class="at">-d</span> HOWARD-CLI</span></code></pre></div>
+<p>A Command Line Interface container (HOWARD-CLI) is started with host
+data and databases folders mounted (by default in ~/howard folder, i.e.
+<code>~/howard/data:/data</code> and
+<code>~/howard/databases:/databases</code>). Let&#x2019;s play within Docker
+HOWARD-CLI service!</p>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> exec <span class="at">-ti</span> HOWARD-CLI bash</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="ex">howard</span> <span class="at">--help</span></span></code></pre></div>
+<details>
+<summary>
+More details
+</summary>
+<p>Docker HOWARD-CLI container (Command Line Interface) can be used to
+execute commands.</p>
+<blockquote>
+<p>Example: Query of an existing VCF</p>
+<div class="sourceCode" id="cb11"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> exec HOWARD-CLI <span class="dt">\</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>   howard query <span class="dt">\</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>   <span class="at">--input</span><span class="op">=</span><span class="st">&#39;/tool/tests/data/example.vcf.gz&#39;</span> <span class="dt">\</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>   <span class="at">--query</span><span class="op">=</span><span class="st">&#39;SELECT * FROM variants&#39;</span></span></code></pre></div>
+</blockquote>
+<blockquote>
+<p>Example: VCF annotation using HOWARD-CLI (snpEff and ANNOVAR
+databases will be automatically downloaded), and query list of genes
+with HGVS</p>
+<div class="sourceCode" id="cb12"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> exec <span class="at">--workdir</span><span class="op">=</span>/tool HOWARD-CLI <span class="dt">\</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>   howard process <span class="dt">\</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>      <span class="at">--config</span><span class="op">=</span><span class="st">&#39;config/config.json&#39;</span> <span class="dt">\</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>      <span class="at">--param</span><span class="op">=</span><span class="st">&#39;config/param.json&#39;</span> <span class="dt">\</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>      <span class="at">--input</span><span class="op">=</span><span class="st">&#39;tests/data/example.vcf.gz&#39;</span> <span class="dt">\</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>      <span class="at">--output</span><span class="op">=</span><span class="st">&#39;/tmp/example.process.tsv&#39;</span> <span class="dt">\</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>      <span class="at">--explode_infos</span> <span class="dt">\</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>      <span class="at">--query</span><span class="op">=</span><span class="st">&quot;SELECT NOMEN, PZFlag, PZScore, PZComment </span><span class="dt">\</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a><span class="st">               FROM variants </span><span class="dt">\</span></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a><span class="st">               ORDER BY PZScore DESC&quot;</span></span></code></pre></div>
+</blockquote>
+</details>
+<h2 data-number="2.4" id="databases"><span
+class="header-section-number">2.4</span> Databases</h2>
+<p>Multiple databases can be automatically downloaded with databases
+tool, such as:</p>
+<table>
+<colgroup>
+<col style="width: 20%" />
+<col style="width: 80%" />
+</colgroup>
+<thead>
+<tr>
+<th>database</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://genome.ucsc.edu/cgi-bin/hgGateway">Genome</a></td>
+<td>Genome Reference Consortium Human</td>
+</tr>
+<tr>
+<td><a
+href="https://annovar.openbioinformatics.org/en/latest/">Annovar</a></td>
+<td>ANNOVAR is an efficient software tool to utilize update-to-date
+information to functionally annotate genetic variants detected from
+diverse genomes</td>
+</tr>
+<tr>
+<td><a href="https://pcingola.github.io/SnpEff/">snpEff</a></td>
+<td>Genetic variant annotation, and functional effect prediction
+toolbox</td>
+</tr>
+<tr>
+<td><a href="https://www.ncbi.nlm.nih.gov/refseq/">refSeq</a></td>
+<td>A comprehensive, integrated, non-redundant, well-annotated set of
+reference sequences including genomic, transcript, and protein</td>
+</tr>
+<tr>
+<td><a href="https://www.ncbi.nlm.nih.gov/snp/">dbSNP</a></td>
+<td>dbSNP contains human single nucleotide variations, microsatellites,
+and small-scale insertions and deletions along with publication,
+population frequency, molecular consequence, and genomic and RefSeq
+mapping information for both common variations and clinical
+mutations</td>
+</tr>
+<tr>
+<td><a
+href="https://sites.google.com/site/jpopgen/dbNSFP">dbNSFP</a></td>
+<td>dbNSFP is a database developed for functional prediction and
+annotation of all potential non-synonymous single-nucleotide variants
+(nsSNVs) in the human genome</td>
+</tr>
+<tr>
+<td><a
+href="https://github.com/google-deepmind/alphamissense">AlphaMissense</a></td>
+<td>AlphaMissense model implementation</td>
+</tr>
+<tr>
+<td><a href="https://www.sanger.ac.uk/tool/exomiser/">Exomiser</a></td>
+<td>The Exomiser is a Java program that finds potential disease-causing
+variants from whole-exome or whole-genome sequencing data</td>
+</tr>
+</tbody>
+</table>
+<details>
+<summary>
+More details
+</summary>
+<blockquote>
+<p>Example: Download Multiple databases in the same time for assembly
+&#x2018;hg19&#x2019; (can take a while)</p>
+<div class="sourceCode" id="cb13"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="ex">howard</span> databases <span class="dt">\</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>   <span class="at">--assembly</span><span class="op">=</span>hg19 <span class="dt">\</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>   <span class="at">--download-genomes</span><span class="op">=</span><span class="st">&#39;~/howard/databases/genomes/current&#39;</span> <span class="dt">\</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>   <span class="at">--download-genomes-provider</span><span class="op">=</span><span class="st">&#39;UCSC&#39;</span><span class="dt">\</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>   <span class="at">--download-genomes-contig-regex</span><span class="op">=</span><span class="st">&#39;chr[0-9XYM]+$&#39;</span> <span class="dt">\</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>   <span class="at">--download-annovar</span><span class="op">=</span><span class="st">&#39;~/howard/databases/annovar/current&#39;</span> <span class="dt">\</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>   <span class="at">--download-annovar-files</span><span class="op">=</span><span class="st">&#39;refGene,cosmic70,nci60&#39;</span> <span class="dt">\</span></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>   <span class="at">--download-snpeff</span><span class="op">=</span><span class="st">&#39;~/howard/databases/snpeff/current&#39;</span> <span class="dt">\</span></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>   <span class="at">--download-refseq</span><span class="op">=</span><span class="st">&#39;~/howard/databases/refseq/current&#39;</span> <span class="dt">\</span></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>   <span class="at">--download-refseq-format-file</span><span class="op">=</span><span class="st">&#39;ncbiRefSeq.txt&#39;</span> <span class="dt">\</span></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>   <span class="at">--download-dbnsfp</span><span class="op">=</span><span class="st">&#39;~/howard/databases/dbnsfp/current&#39;</span> <span class="dt">\</span></span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>   <span class="at">--download-dbnsfp-release</span><span class="op">=</span><span class="st">&#39;4.4a&#39;</span> <span class="dt">\</span></span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>   <span class="at">--download-dbnsfp-subdatabases</span> <span class="dt">\</span></span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>   <span class="at">--download-alphamissense</span><span class="op">=</span><span class="st">&#39;~/howard/databases/alphamissense/current&#39;</span> <span class="dt">\</span></span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>   <span class="at">--download-exomiser</span><span class="op">=</span><span class="st">&#39;~/howard/databases/exomiser/current&#39;</span> <span class="dt">\</span></span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>   <span class="at">--download-dbsnp</span><span class="op">=</span><span class="st">&#39;~/howard/databases/dbsnp/current&#39;</span> <span class="dt">\</span></span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>   <span class="at">--download-dbsnp-vcf</span> <span class="dt">\</span></span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>   <span class="at">--threads</span><span class="op">=</span>8</span></code></pre></div>
+</blockquote>
+<p>See <a href="docs/help.html#databases-tool">HOWARD Help Databases
+tool</a> for more information.</p>
+<p>Databases can be home-made generated, starting with a existing
+annotation file, especially using <a href="#convert">HOWARD convert</a>
+tool. These files need to contain specific fields (depending on the
+annotation type):</p>
+<ul>
+<li>variant annotation: &#x2018;#CHROM&#x2019;, &#x2018;POS&#x2019;, &#x2018;ALT&#x2019;, &#x2018;REF&#x2019;</li>
+<li>region annotation: &#x2018;#CHROM&#x2019;, &#x2018;START&#x2019;, &#x2018;STOP&#x2019;</li>
+</ul>
+<p>Each database annotation file is associated with a &#x2018;header&#x2019; file
+(&#x2018;.hdr&#x2019;), in VCF header format, to describe annotations within the
+database.</p>
+</details>
+<h2 data-number="2.5" id="configuration"><span
+class="header-section-number">2.5</span> Configuration</h2>
+<p>HOWARD Configuration JSON file defined default configuration
+regarding resources (e.g.&#xA0;threads, memory), settings (e.g.&#xA0;verbosity,
+temporary files), default folders (e.g.&#xA0;for databases) and paths to
+external tools.</p>
+<p>See <a href="docs/help.config.html">HOWARD Configuration JSON</a> for
+more information.</p>
+<h1 data-number="3" id="tools"><span
+class="header-section-number">3</span> Tools</h1>
+<p>HOWARD annotates and prioritizes genetic variations, calculates and
+normalizes annotations, convert on multiple formats, query variations
+and generates statistics. These tools require options or a <a
+href="help.param.html">Parameters JSON</a> file.</p>
+<h2 data-number="3.1" id="parameters"><span
+class="header-section-number">3.1</span> Parameters</h2>
+<p>HOWARD Parameters JSON file defined parameters to process
+annotations, prioritization, calculations, convertions and queries. Use
+this parameters file to configure tools, instead of options or as a main
+configuration (options will replace parameters in JSON file).</p>
+<p>See <a href="docs/help.param.html">HOWARD Parameters JSON</a> for
+more information.</p>
+<h2 data-number="3.2" id="stats"><span
+class="header-section-number">3.2</span> Stats</h2>
+<p>Statistics on genetic variations, such as: number of variants, number
+of samples, statistics by chromosome, genotypes by samples, annotations.
+Theses statsitics can be applied to VCF files and all database
+annotation files.</p>
+<details>
+<summary>
+More details
+</summary>
+<blockquote>
+<p>Example: Show example VCF statistics and brief overview</p>
+<div class="sourceCode" id="cb14"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="ex">howard</span> stats <span class="dt">\</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>   <span class="at">--input</span><span class="op">=</span><span class="st">&#39;tests/data/example.vcf.gz&#39;</span></span></code></pre></div>
+</blockquote>
+<p>See <a href="docs/help.html#stats-tool">HOWARD Help Stats tool</a>
+for more information.</p>
+</details>
+<h2 data-number="3.3" id="convert"><span
+class="header-section-number">3.3</span> Convert</h2>
+<p>Convert genetic variations file to another format. Multiple format
+are available, such as usual and official VCF format, but also other
+formats such as TSV, CSV, TBL, JSON and Parquet/duckDB. These formats
+need a header &#x2018;.hdr&#x2019; file to take advantage of the power of howard
+(especially through INFO/tag definition), and using howard convert tool
+automatically generate header file fo futher use (otherwise, an default
+&#x2018;.hdr&#x2019; file is generated).</p>
+<details>
+<summary>
+More details
+</summary>
+<blockquote>
+<p>Example: Translate VCF into TSV, export INFO/tags into columns, and
+show output file</p>
+<div class="sourceCode" id="cb15"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="ex">howard</span> convert <span class="dt">\</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>   <span class="at">--input</span><span class="op">=</span><span class="st">&#39;tests/data/example.vcf.gz&#39;</span> <span class="dt">\</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>   <span class="at">--explode_infos</span> <span class="dt">\</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>   <span class="at">--output</span><span class="op">=</span><span class="st">&#39;/tmp/example.tsv&#39;</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span> <span class="st">&#39;/tmp/example.tsv&#39;</span></span></code></pre></div>
+</blockquote>
+<p>See <a href="docs/help.html#convert-tool">HOWARD Help Convert
+tool</a> for more options.</p>
+</details>
+<h2 data-number="3.4" id="query"><span
+class="header-section-number">3.4</span> Query</h2>
+<p>Query genetic variations in SQL format. Data are loaded into
+&#x2018;variants&#x2019; table from various formats (e.g.&#xA0;VCF, TSV, Parquet&#x2026;). A view
+of variants &#x2018;variants_view&#x2019; and a table header &#x2018;header&#x2019; are available to
+easily explore data, by querying INFO/tag annotations. SQL query can
+also use external data within the request, such as a Parquet file(s).
+The &#x2018;&#x2013;interactive&#x2019; option opens a SQL terminal to dynamically launch SQL
+queries.</p>
+<details>
+<summary>
+More details
+</summary>
+<blockquote>
+<p>Example: Select variants in VCF with INFO Tags criterions, using
+&#x2018;variants_view&#x2019; view</p>
+<div class="sourceCode" id="cb16"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="ex">howard</span> query <span class="dt">\</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>   <span class="at">--input</span><span class="op">=</span><span class="st">&#39;tests/data/example.vcf.gz&#39;</span> <span class="dt">\</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>   <span class="at">--query</span><span class="op">=</span><span class="st">&#39;SELECT &quot;#CHROM&quot;, POS, REF, ALT, DP, CLNSIG, sample2, sample3 </span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="st">            FROM variants_view </span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="st">            WHERE DP &gt;= 50 OR CLNSIG NOT NULL </span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a><span class="st">            ORDER BY CLNSIG DESC, DP DESC&#39;</span></span></code></pre></div>
+</blockquote>
+<blockquote>
+<p>Example: Select INFO Tags in sections &#x2018;INFO&#x2019; and &#x2018;FORMAT&#x2019;, using
+&#x2018;header&#x2019; table</p>
+<div class="sourceCode" id="cb17"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="ex">howard</span> query <span class="dt">\</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>   <span class="at">--input</span><span class="op">=</span><span class="st">&#39;tests/data/example.vcf.gz&#39;</span> <span class="dt">\</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>   <span class="at">--query</span><span class="op">=</span><span class="st">&quot;SELECT * </span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="st">            FROM header</span></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a><span class="st">            WHERE &quot;</span>section<span class="st">&quot; in (&#39;INFO&#39;, &#39;FORMAT&#39;)&quot;</span></span></code></pre></div>
+</blockquote>
+<blockquote>
+<p>Example: Select number of variants in VCF, and open interactive
+terminal</p>
+<div class="sourceCode" id="cb18"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="ex">howard</span> query <span class="dt">\</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>   <span class="at">--input</span><span class="op">=</span><span class="st">&#39;tests/data/example.vcf.gz&#39;</span> <span class="dt">\</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>   <span class="at">--explode_infos</span> <span class="dt">\</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>   <span class="at">--query</span><span class="op">=</span><span class="st">&#39;SELECT count(*) AS nb_variants </span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a><span class="st">            FROM variants&#39;</span> <span class="dt">\</span></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>   <span class="at">--interactive</span></span></code></pre></div>
+</blockquote>
+<p>See <a href="docs/help.html#query-tool">HOWARD Help Query tool</a>
+for more options.</p>
+</details>
+<h2 data-number="3.5" id="annotation"><span
+class="header-section-number">3.5</span> Annotation</h2>
+<p>Annotation is mainly based on a build-in Parquet annotation method,
+using database format such as Parquet, duckdb, VCF, BED, TSV, JSON.
+External annotation tools are also available, such as BCFTOOLS, Annovar,
+snpEff, Exomiser and Splice. It uses available databases and homemade
+databases. Annovar and snpEff databases are automatically downloaded
+(see <a href="docs/help.html#databases-tool">HOWARD Help Databases
+tool</a>). All annotation parameters are defined in <a
+href="docs/help.param.html">HOWARD Parameters JSON</a> file.</p>
+<p>Quick annotation allows to annotates by simply listing annotation
+databases, or defining external tools keywords. These annotations can be
+combined.</p>
+<details>
+<summary>
+More details
+</summary>
+<blockquote>
+<p>Example: VCF annotation with Parquet and VCF databases, output as VCF
+format</p>
+<div class="sourceCode" id="cb19"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="ex">howard</span> annotation <span class="dt">\</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>   <span class="at">--input</span><span class="op">=</span><span class="st">&#39;tests/data/example.vcf.gz&#39;</span> <span class="dt">\</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>   <span class="at">--annotations</span><span class="op">=</span><span class="st">&#39;tests/databases/annotations/current/hg19/dbnsfp42a.parquet,</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="st">      tests/databases/annotations/current/hg19/cosmic70.vcf.gz&#39;</span> <span class="dt">\</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>   <span class="at">--output</span><span class="op">=</span><span class="st">&#39;/tmp/example.howard.vcf.gz&#39;</span></span></code></pre></div>
+</blockquote>
+<blockquote>
+<p>Example: VCF annotation with external tools (Annovar refGene and
+snpEff databases), output as TSV format</p>
+<div class="sourceCode" id="cb20"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="ex">howard</span> annotation <span class="dt">\</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>   <span class="at">--input</span><span class="op">=</span><span class="st">&#39;tests/data/example.vcf.gz&#39;</span> <span class="dt">\</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>   <span class="at">--annotations</span><span class="op">=</span><span class="st">&#39;annovar:refGene,snpeff&#39;</span> <span class="dt">\</span></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>   <span class="at">--output</span><span class="op">=</span><span class="st">&#39;/tmp/example.howard.tsv&#39;</span></span></code></pre></div>
+</blockquote>
+<p>See <a href="docs/help.html#annotation-tool">HOWARD Help Annotation
+tool</a> for more options.</p>
+</details>
+<h2 data-number="3.6" id="calculation"><span
+class="header-section-number">3.6</span> Calculation</h2>
+<p>Calculation processes variants information to generate new
+information, such as: identify variation type (VarType), harmonizes
+allele frequency (VAF) and calculate sttistics (VAF_stats), extracts
+Nomen (transcript, cNomen, pNomen&#x2026;) from an HGVS field (e.g.&#xA0;snpEff,
+Annovar) with an optional list of personalized transcripts, generates
+VaRank format barcode, identify trio inheritance.</p>
+<details>
+<summary>
+More details
+</summary>
+<blockquote>
+<p>Example: Identify variant types and generate a table of variant type
+count</p>
+<div class="sourceCode" id="cb21"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="ex">howard</span> calculation <span class="dt">\</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>   <span class="at">--input</span><span class="op">=</span><span class="st">&#39;tests/data/example.full.vcf&#39;</span> <span class="dt">\</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>   <span class="at">--calculations</span><span class="op">=</span><span class="st">&#39;vartype&#39;</span> <span class="dt">\</span></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>   <span class="at">--output</span><span class="op">=</span><span class="st">&#39;/tmp/example.calculation.tsv&#39;</span></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a><span class="ex">howard</span> query <span class="dt">\</span></span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>   <span class="at">--input</span><span class="op">=</span><span class="st">&#39;/tmp/example.calculation.tsv&#39;</span> <span class="dt">\</span></span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>   <span class="at">--explode_infos</span> <span class="dt">\</span></span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>   <span class="at">--query</span><span class="op">=</span><span class="st">&#39;SELECT</span></span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a><span class="st">               &quot;VARTYPE&quot; AS &#39;</span>VariantType<span class="st">&#39;,</span></span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a><span class="st">               count(*) AS &#39;</span>Count<span class="st">&#39;</span></span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a><span class="st">            FROM variants</span></span>
+<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a><span class="st">            GROUP BY &quot;VARTYPE&quot;</span></span>
+<span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a><span class="st">            ORDER BY count DESC&#39;</span></span></code></pre></div>
+<div class="sourceCode" id="cb22"><pre
+class="sourceCode ts"><code class="sourceCode typescript"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>  VariantType  Count</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="dv">0</span>         BND      <span class="dv">7</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a><span class="dv">1</span>         DUP      <span class="dv">6</span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a><span class="dv">2</span>         INS      <span class="dv">5</span></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a><span class="dv">3</span>         SNV      <span class="dv">4</span></span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a><span class="dv">4</span>         CNV      <span class="dv">3</span></span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a><span class="dv">5</span>         DEL      <span class="dv">3</span></span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a><span class="dv">6</span>         INV      <span class="dv">3</span></span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a><span class="dv">7</span>      MOSAIC      <span class="dv">2</span></span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a><span class="dv">8</span>       INDEL      <span class="dv">2</span></span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a><span class="dv">9</span>         MNV      <span class="dv">1</span></span></code></pre></div>
+</blockquote>
+<p>See <a href="docs/help.html#calculation-tool">HOWARD Help Calculation
+tool</a> for more options.</p>
+</details>
+<h2 data-number="3.7" id="prioritization"><span
+class="header-section-number">3.7</span> Prioritization</h2>
+<p>Prioritization algorithm uses profiles to flag variants (as passed or
+filtered), calculate a prioritization score, and automatically generate
+a comment for each variants (example: &#x2018;polymorphism identified in dbSNP.
+associated to Lung Cancer. Found in ClinVar database&#x2019;). Prioritization
+profiles are defined in a configuration file in JSON format. A profile
+is defined as a list of annotation/value, using wildcards and comparison
+options (contains, lower than, greater than, equal&#x2026;). Annotations fields
+may be quality values (usually from callers, such as &#x2018;DP&#x2019;) or other
+annotations fields provided by annotations tools, such as HOWARD itself
+(example: COSMIC, Clinvar, 1000genomes, PolyPhen, SIFT).</p>
+<p>Multiple profiles can be used simultaneously, which is useful to
+define multiple validation/prioritization levels (e.g.&#xA0;&#x2018;standard&#x2019;,
+&#x2018;stringent&#x2019;, &#x2018;rare variants&#x2019;). Prioritization score can be calculated
+following multiple mode, either &#x2018;HOWARD&#x2019; (incremental) or &#x2018;VaRank&#x2019;
+(maximum). Prioritization fields can be selected (PZScore, PZFlag,
+PZComment, PZTags, PZInfos).</p>
+<details>
+<summary>
+More details
+</summary>
+<blockquote>
+<p>Example: Prioritize variants from criteria on INFO annotations for
+profiles &#x2018;default&#x2019; and &#x2018;GERMLINE&#x2019; (from &#x2018;prioritization_profiles.json&#x2019;
+profiles configuration), export prioritization tags, and query variants
+passing filters</p>
+<div class="sourceCode" id="cb23"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="ex">howard</span> prioritization <span class="dt">\</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>   <span class="at">--input</span><span class="op">=</span><span class="st">&#39;tests/data/example.vcf.gz&#39;</span> <span class="dt">\</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>   <span class="at">--prioritization_config</span><span class="op">=</span><span class="st">&#39;config/prioritization_profiles.json&#39;</span> <span class="dt">\</span></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>   <span class="at">--prioritizations</span><span class="op">=</span><span class="st">&#39;default,GERMLINE&#39;</span> <span class="dt">\</span></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>   <span class="at">--default_profile</span><span class="op">=</span><span class="st">&#39;default&#39;</span> <span class="dt">\</span></span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>   <span class="at">--pzfields</span><span class="op">=</span><span class="st">&#39;PZFlag,PZScore,PZComment,PZTags,PZInfos&#39;</span> <span class="dt">\</span></span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>   <span class="at">--prioritization_score_mode</span><span class="op">=</span><span class="st">&#39;HOWARD&#39;</span> <span class="dt">\</span></span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>   <span class="at">--output</span><span class="op">=</span><span class="st">&#39;/tmp/example.prioritized.vcf.gz&#39;</span></span></code></pre></div>
+<div class="sourceCode" id="cb24"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="ex">howard</span> query <span class="dt">\</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>   <span class="at">--input</span><span class="op">=</span><span class="st">&#39;/tmp/example.prioritized.vcf.gz&#39;</span> <span class="dt">\</span></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>   <span class="at">--explode_infos</span> <span class="dt">\</span></span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>   <span class="at">--query</span><span class="op">=</span><span class="st">&quot;SELECT </span><span class="dt">\&quot;</span><span class="st">#CHROM</span><span class="dt">\&quot;</span><span class="st">, POS, ALT, REF, PZFlag, PZScore, PZTags, DP, CLNSIG </span><span class="dt">\</span></span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a><span class="st">            FROM variants </span><span class="dt">\</span></span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a><span class="st">            WHERE PZScore &gt; 0 </span><span class="dt">\</span></span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a><span class="st">              AND PZFlag == &#39;PASS&#39; </span><span class="dt">\</span></span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a><span class="st">            ORDER BY PZScore DESC&quot;</span></span></code></pre></div>
+<div class="sourceCode" id="cb25"><pre
+class="sourceCode ts"><code class="sourceCode typescript"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>  #CHROM       POS ALT REF PZFlag  PZScore                                             PZTags     DP      CLNSIG</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a><span class="dv">0</span>   chr7  <span class="dv">55249063</span>   A   G   PASS      <span class="dv">105</span>  [PZFlag#PASS<span class="op">,</span> PZScore#<span class="dv">105</span><span class="op">,</span> <span class="op">...</span>  <span class="fl">125.0</span>        None</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a><span class="dv">1</span>   chr1     <span class="dv">28736</span>   C   A   PASS       <span class="dv">15</span>  [PZFlag#PASS<span class="op">,</span> PZScore#<span class="dv">15</span><span class="op">,</span>  <span class="op">...</span>    <span class="kw">NaN</span>  pathogenic</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a><span class="dv">2</span>   chr1     <span class="dv">69101</span>   G   A   PASS        <span class="dv">5</span>  [PZFlag#PASS<span class="op">,</span> PZScore#<span class="dv">5</span><span class="op">,</span>   <span class="op">...</span>   <span class="fl">50.0</span>        None</span></code></pre></div>
+</blockquote>
+<p>See <a href="docs/help.html#prioritization-tool">HOWARD Help
+Prioritization tool</a> for more options.</p>
+</details>
+<h2 data-number="3.8" id="hgvs-annotation"><span
+class="header-section-number">3.8</span> HGVS Annotation</h2>
+<p>HOWARD annotates variants with HGVS annotation using HUGO HGVS
+internation Sequence Variant Nomenclature (http://varnomen.hgvs.org/).
+Annotation refere to refGene and genome to generate HGVS nomenclature
+for all available transcripts. This annotation add &#x2018;hgvs&#x2019; field into VCF
+INFO column of a VCF file. Several options are available, to add gene,
+exon and protein information, to generate a &#x201C;full format&#x201D; detailed
+annotation, to choose codon format.</p>
+<p>See <a href="docs/help.html#hgvs-tool">HOWARD Help HGVS tool</a> for
+more options.</p>
+<details>
+<summary>
+More details
+</summary>
+<blockquote>
+<p>Example: HGVS annotation with quick options</p>
+<div class="sourceCode" id="cb26"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="ex">howard</span> hgvs <span class="dt">\</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>   <span class="at">--input</span><span class="op">=</span><span class="st">&#39;tests/data/example.vcf.gz&#39;</span> <span class="dt">\</span></span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>   <span class="at">--output</span><span class="op">=</span><span class="st">&#39;/tmp/example.process.tsv&#39;</span> <span class="dt">\</span></span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>   <span class="at">--hgvs</span><span class="op">=</span>full_format,use_exon</span></code></pre></div>
+<div class="sourceCode" id="cb27"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="ex">howard</span> query <span class="dt">\</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>   <span class="at">--input</span><span class="op">=</span><span class="st">&#39;/tmp/example.process.tsv&#39;</span> <span class="dt">\</span></span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>   <span class="at">--explode_infos</span> <span class="dt">\</span></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>   <span class="at">--query</span><span class="op">=</span><span class="st">&quot;SELECT hgvs </span><span class="dt">\</span></span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a><span class="st">            FROM variants &quot;</span></span></code></pre></div>
+<div class="sourceCode" id="cb28"><pre
+class="sourceCode ts"><code class="sourceCode typescript"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>                                                hgvs</span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="dv">0</span>                   [WASH7P<span class="op">:</span>NR_024540<span class="op">.</span><span class="dv">1</span><span class="op">:</span>n<span class="op">.</span><span class="dv">50</span><span class="op">+</span><span class="dv">585</span><span class="er">T</span><span class="op">&gt;</span>G]</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a><span class="dv">1</span>   [FAM138A<span class="op">:</span>NR_026818<span class="op">.</span><span class="dv">1</span><span class="op">:</span>exon3<span class="op">:</span>n<span class="op">.</span><span class="dv">597</span><span class="er">T</span><span class="op">&gt;</span>G<span class="op">:</span>p<span class="op">.</span><span class="at">Tyr199Asp</span>]</span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a><span class="dv">2</span>  [OR4F5<span class="op">:</span>NM_001005484<span class="op">.</span><span class="dv">2</span><span class="op">:</span>NP_001005484<span class="op">.</span><span class="dv">2</span><span class="op">:</span>exon3<span class="op">:</span>c<span class="op">.</span><span class="fl">7.</span><span class="op">..</span></span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a><span class="dv">3</span>  [LINC01128<span class="op">:</span>NR_047526<span class="op">.</span><span class="dv">1</span><span class="op">:</span>n<span class="op">.</span><span class="dv">287</span><span class="op">+</span><span class="dv">3767</span><span class="er">A</span><span class="op">&gt;</span>G<span class="op">,</span> LINC0112<span class="op">...</span></span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a><span class="dv">4</span>  [LINC01128<span class="op">:</span>NR_047526<span class="op">.</span><span class="dv">1</span><span class="op">:</span>n<span class="op">.</span><span class="dv">287</span><span class="op">+</span><span class="dv">3768</span><span class="er">A</span><span class="op">&gt;</span>G<span class="op">,</span> LINC0112<span class="op">...</span></span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a><span class="dv">5</span>  [LINC01128<span class="op">:</span>NR_047526<span class="op">.</span><span class="dv">1</span><span class="op">:</span>n<span class="op">.</span><span class="dv">287</span><span class="op">+</span><span class="dv">3769</span><span class="er">A</span><span class="op">&gt;</span>G<span class="op">,</span> LINC0112<span class="op">...</span></span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a><span class="dv">6</span>  [EGFR<span class="op">:</span>NM_001346897<span class="op">.</span><span class="dv">2</span><span class="op">:</span>NP_001333826<span class="op">.</span><span class="dv">1</span><span class="op">:</span>exon19<span class="op">:</span>c<span class="op">.</span><span class="fl">2.</span><span class="op">..</span></span></code></pre></div>
+</blockquote>
+</details>
+<h2 data-number="3.9" id="process"><span
+class="header-section-number">3.9</span> Process</h2>
+<p>HOWARD process tool manage genetic variations to:</p>
+<ul>
+<li>annotates genetic variants with multiple annotation databases/files
+and tools</li>
+<li>calculates and normalizes annotations</li>
+<li>prioritizes variants with profiles (list of citeria) to calculate
+scores and flags</li>
+<li>annotates genetic variants with HGVS nomenclature</li>
+<li>translates into various formats</li>
+<li>query genetic variants and annotations</li>
+<li>generates variants statistics</li>
+</ul>
+<p>This process tool combines all other tools to pipe them in a uniq
+command, through available options or a parameters file in JSON format
+(see <a href="docs/help.param.html">HOWARD Parameters JSON</a>
+file).</p>
+<p>This process tool include a chunking process to handle large files by
+dividing them into smaller, more manageable pieces (chunks), by
+specifying chunk size and partitioning scheme. This approach allows each
+chunk to be processed independently, reducing memory usage, disk usage
+(duckDB swap), and can help prevent crashes or slowdowns due to memory
+constraints. Once all chunks are processed, the results are merged to
+produce the final output. Another chunking mode aim to load the entire
+input file into a intermediate duckdb storage file.</p>
+<p>See <a href="docs/help.html#process-tool">HOWARD Help Process
+tool</a> tool for more information.</p>
+<details>
+<summary>
+More details
+</summary>
+<blockquote>
+<p>Example: Full process command with options (HGVS, annotation,
+calculation and prioritization)</p>
+<div class="sourceCode" id="cb29"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="ex">howard</span> process <span class="dt">\</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>   <span class="at">--input</span><span class="op">=</span><span class="st">&#39;tests/data/example.vcf.gz&#39;</span> <span class="dt">\</span></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>   <span class="at">--output</span><span class="op">=</span><span class="st">&#39;/tmp/example.process.tsv&#39;</span> <span class="dt">\</span></span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>   <span class="at">--hgvs</span><span class="op">=</span><span class="st">&#39;full_format,use_exon&#39;</span> <span class="dt">\</span></span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>   <span class="at">--annotations</span><span class="op">=</span><span class="st">&#39;tests/databases/annotations/current/hg19/avsnp150.parquet,</span></span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a><span class="st">      tests/databases/annotations/current/hg19/dbnsfp42a.parquet,</span></span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a><span class="st">      tests/databases/annotations/current/hg19/gnomad211_genome.parquet,</span></span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a><span class="st">      bcftools:tests/databases/annotations/current/hg19/cosmic70.vcf.gz,</span></span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a><span class="st">      snpeff,</span></span>
+<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a><span class="st">      annovar:refGene&#39;</span> <span class="dt">\</span></span>
+<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a>   <span class="at">--calculations</span><span class="op">=</span><span class="st">&#39;vartype,snpeff_hgvs,VAF,NOMEN&#39;</span> <span class="dt">\</span></span>
+<span id="cb29-12"><a href="#cb29-12" aria-hidden="true" tabindex="-1"></a>   <span class="at">--prioritization_config</span><span class="op">=</span><span class="st">&#39;config/prioritization_profiles.json&#39;</span> <span class="dt">\</span></span>
+<span id="cb29-13"><a href="#cb29-13" aria-hidden="true" tabindex="-1"></a>   <span class="at">--prioritizations</span><span class="op">=</span><span class="st">&#39;default&#39;</span> <span class="dt">\</span></span>
+<span id="cb29-14"><a href="#cb29-14" aria-hidden="true" tabindex="-1"></a>   <span class="at">--explode_infos</span> <span class="dt">\</span></span>
+<span id="cb29-15"><a href="#cb29-15" aria-hidden="true" tabindex="-1"></a>   <span class="at">--query</span><span class="op">=</span><span class="st">&quot;SELECT NOMEN, PZFlag, PZScore </span><span class="dt">\</span></span>
+<span id="cb29-16"><a href="#cb29-16" aria-hidden="true" tabindex="-1"></a><span class="st">            FROM variants </span><span class="dt">\</span></span>
+<span id="cb29-17"><a href="#cb29-17" aria-hidden="true" tabindex="-1"></a><span class="st">            ORDER BY PZScore DESC&quot;</span></span></code></pre></div>
+<div class="sourceCode" id="cb30"><pre
+class="sourceCode ts"><code class="sourceCode typescript"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>                                            NOMEN    PZFlag  PZScore</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="dv">0</span>  EGFR<span class="op">:</span>NM_001346897<span class="op">:</span>exon19<span class="op">:</span>c<span class="op">.</span><span class="dv">2226</span><span class="er">G</span><span class="op">&gt;</span>A<span class="op">:</span>p<span class="op">.</span><span class="at">Gln742Gln</span>      PASS      <span class="dv">105</span></span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a><span class="dv">1</span>                    WASH7P<span class="op">:</span>NR_024540<span class="op">:</span>n<span class="op">.</span><span class="dv">50</span><span class="op">+</span><span class="dv">585</span><span class="er">T</span><span class="op">&gt;</span>G      PASS       <span class="dv">15</span></span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a><span class="dv">2</span>     OR4F5<span class="op">:</span>NM_001005484<span class="op">:</span>exon3<span class="op">:</span>c<span class="op">.</span><span class="dv">74</span><span class="er">A</span><span class="op">&gt;</span>G<span class="op">:</span>p<span class="op">.</span><span class="at">Glu25Gly</span>      PASS        <span class="dv">5</span></span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a><span class="dv">3</span>               LINC01128<span class="op">:</span>NR_047526<span class="op">:</span>n<span class="op">.</span><span class="dv">287</span><span class="op">+</span><span class="dv">3767</span><span class="er">A</span><span class="op">&gt;</span>G      PASS        <span class="dv">0</span></span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a><span class="dv">4</span>               LINC01128<span class="op">:</span>NR_047526<span class="op">:</span>n<span class="op">.</span><span class="dv">287</span><span class="op">+</span><span class="dv">3768</span><span class="er">A</span><span class="op">&gt;</span>G      PASS        <span class="dv">0</span></span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a><span class="dv">5</span>               LINC01128<span class="op">:</span>NR_047526<span class="op">:</span>n<span class="op">.</span><span class="dv">287</span><span class="op">+</span><span class="dv">3769</span><span class="er">A</span><span class="op">&gt;</span>G      PASS        <span class="dv">0</span></span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a><span class="dv">6</span>    FAM138A<span class="op">:</span>NR_026818<span class="op">:</span>exon3<span class="op">:</span>n<span class="op">.</span><span class="dv">597</span><span class="er">T</span><span class="op">&gt;</span>G<span class="op">:</span>p<span class="op">.</span><span class="at">Tyr199Asp</span>  FILTERED     <span class="op">-</span><span class="dv">100</span></span></code></pre></div>
+</blockquote>
+</details>
+<h1 data-number="4" id="documentation"><span
+class="header-section-number">4</span> Documentation</h1>
+<p><a href="docs/user_guide.html">HOWARD User Guide</a> is available to
+assist users for particular commands, such as software installation,
+databases download, annotation command, and so on.</p>
+<p><a href="docs/tips.html">HOWARD Tips</a> proposes some additional
+advices to handle HOWARD for particular use cases.</p>
+<p><a href="docs/help.html">HOWARD Help</a> describes options of all
+HOWARD tools. All information are also available for each tool using
+<code>--help</code> option.</p>
+<p><a href="docs/help.configuration.html">HOWARD Configuration JSON</a>
+describes configuration JSON file structure and options.</p>
+<p><a href="docs/help.parameters.html">HOWARD Parameters JSON</a>
+describes parameters JSON file structure and options.</p>
+<p><a href="docs/help.parameters.databases.html">HOWARD Parameters
+Databases JSON</a> describes configuration JSON file for databases
+download and convert.</p>
+<p><a href="plugins/README.html">HOWARD Plugins</a> describes how to
+create HOWARD plugins.</p>
+<p><a href="docs/pdoc/index.html">HOWARD Package</a> describes HOWARD
+Package, Classes and Functions.</p>
+<h1 data-number="5" id="contact"><span
+class="header-section-number">5</span> Contact</h1>
+<p><a
+href="https://www.chru-strasbourg.fr/service/bioinformatique-medicale-appliquee-au-diagnostic-unite-de/">Medical
+Bioinformatics applied to Diagnosis Lab</a> @ Strasbourg Univerty
+Hospital</p>
+<p><a
+href="bioinfo@chru-strasbourg.fr">bioinfo@chru-strasbourg.fr</a></p>
+<p><a href="https://github.com/bioinfo-chru-strasbourg">GitHub</a></p>
+</body>
+</html>

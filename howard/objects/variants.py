@@ -7512,7 +7512,18 @@ class Variants:
                 annotation_name = os.path.basename(annotation)
 
                 # Annotation fields
-                annotation_fields = annotations[annotation]
+                # Add backward compatibility if "annotation_fields" is in annotation dict (instead of directly in annotation value)
+                # Allow to add options for annotations
+                if "annotation_fields" in annotations[annotation]:
+                    annotation_fields = annotations[annotation].get(
+                        "annotation_fields", {}
+                    )
+                else:
+                    annotation_fields = annotations[annotation]
+
+                # Allow to add options for annotations
+                annotation_options = annotations[annotation].get("options", {})
+
                 if not annotation_fields:
                     annotation_fields = {"INFO": None}
 
@@ -7781,9 +7792,14 @@ class Variants:
                                     END
                                 """
                                 )
-                                sql_query_annotation_to_agregate.append(
-                                    f""" array_to_string(array_sort(array_distinct(string_split(string_agg(DISTINCT table_parquet_from."{annotation_field_column}", ','), ','))), ',') AS "{annotation_field_column}" """
-                                )
+                                if annotation_options.get("uniquify", True):
+                                    sql_query_annotation_to_agregate.append(
+                                        f""" array_to_string(array_sort(array_distinct(string_split(string_agg(DISTINCT table_parquet_from."{annotation_field_column}", ','), ','))), ',') AS "{annotation_field_column}" """
+                                    )
+                                else:
+                                    sql_query_annotation_to_agregate.append(
+                                        f""" array_to_string(string_split(string_agg(table_parquet_from."{annotation_field_column}", ','), ','), ',') AS "{annotation_field_column}" """
+                                    )
 
                         # Not to annotate
                         else:
@@ -8108,6 +8124,9 @@ class Variants:
                                                 {where_clause_batch_split}
                                                 ;
                                     """
+                                    # log.debug(
+                                    #     f"Annotation '{annotation_name}' - Chromosome '{chrom}' - batch [{batch_index}/{nb_windows}] - SQL query: {sql_query_annotation_chrom_interval_pos}"
+                                    # )
 
                                 # Parquet strategy
                                 # TABLE with Parquet intermediate files
