@@ -585,6 +585,84 @@ def test_annotation_parquet_with_all_formats():
                 assert False
 
 
+def test_annotation_parquet_regions_uniquify():
+    """
+    The `test_annotation_parquet_regions()` function tests the `annotation()` method of the `Variants`
+    class using a Parquet file as an annotation source with BED formats.
+    """
+
+    # Init files
+    input_vcf = tests_data_folder + "/example.vcf.gz"
+
+    # annotation regions with multi pos
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init
+        annotation_parquet = os.path.join(
+            tests_annotations_folder, f"annotation_regions.bed.gz"
+        )
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+
+        # Construct param dict
+        param = {
+            "annotation": {
+                "parquet": {
+                    "annotations": {
+                        annotation_parquet: {
+                            "annotation_fields": {"INFO": None},
+                            "options": {"uniquify": False},
+                        }
+                    }
+                }
+            }
+        }
+
+        # Create object
+        variants = Variants(
+            conn=None,
+            input=input_vcf,
+            output=output_vcf,
+            param=param,
+            load=True,
+        )
+
+        # Annotation
+        variants.annotation()
+
+        # return
+
+        # query annotated variant
+        result = variants.get_query_to_df(
+            "SELECT 1 AS count FROM variants WHERE INFO LIKE '%annot1=blue,red;annot2=orange,cherry;annot3=mars,venus,mars,jupyter'"
+        )
+        length = len(result)
+
+        assert length == 3
+
+        # query annotated variant
+        result = variants.get_query_to_df(
+            "SELECT 1 AS count FROM variants WHERE INFO LIKE '%annot1=yellow;annot2=banana;annot3=mars,pluto'"
+        )
+        length = len(result)
+
+        assert length == 3
+
+        # query annotated variant
+        result = variants.get_query_to_df(
+            "SELECT 1 AS count FROM variants WHERE INFO NOT LIKE '%annot1%' AND INFO NOT LIKE '%annot2%' AND INFO NOT LIKE '%annot3%'"
+        )
+        length = len(result)
+
+        assert length == 1
+
+        # Check if VCF is in correct format with pyVCF
+        variants.export_output()
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
+
+
 def test_annotation_parquet_regions():
     """
     The `test_annotation_parquet_regions()` function tests the `annotation()` method of the `Variants`

@@ -579,6 +579,25 @@ Examples:
 > }
 > ```
 
+> Annotation with options for a specific database
+
+> ``` json
+> {
+>    "parquet": {
+>       "annotations": {
+>          "/path/to/database.bed.gz": {
+>             "annotation_fields": {
+>                "INFO": null
+>             },
+>             "options": {
+>                "uniquify": false
+>             }
+>          }
+>       }
+>    }
+> }
+> ```
+
 ### annotations
 
 Specify a list of databases files available (formats such as Parquet,
@@ -597,6 +616,9 @@ on type and release (e.g. 'ALL', 'ALL:format=parquet',
 If a full path is not provided, the system will automatically detect
 files within database folders (see Configuration doc) and assembly (see
 Parameter option).
+
+Additionnal options can be added for each database (e.g. 'uniquify' to
+uniquify values or concatenate without aggregation, etc.)
 
 Examples:
 
@@ -671,6 +693,25 @@ Examples:
 >          "ALL": {
 >             "formats": ["parquet"],
 >             "releases": ["current"]
+>          }
+>       }
+>    }
+> }
+> ```
+
+> Annotation with OMIM as a BED file, without uniquification of
+> annotation values (useful for preserving original values for multiple
+> transcripts annotations)
+
+> ``` json
+> {
+>    "annotations": {
+>       "OMIM.bed.gz": {
+>          "annotation_fields": {
+>             "INFO": null
+>          },
+>          "options": {
+>             "uniquify": false
 >          }
 >       }
 >    }
