@@ -1266,7 +1266,7 @@ def test_get_sql_from():
     assert (
         database.get_sql_from(database_files.get("bed"))
         == f"""read_csv('{database_files.get("bed")}'"""
-        + """, names=['#CHROM', 'START', 'END', 'annot1', 'annot2'], types={'#CHROM': STRING, 'START': INT, 'END': INT}, auto_detect=True, header=True, compression='none', skip=33, delim='\t', hive_partitioning=0, sample_size=20480"""
+        + """, names=['#CHROM', 'START', 'END', 'annot1', 'annot2', 'annot3'], types={'#CHROM': STRING, 'START': INT, 'END': INT}, auto_detect=True, header=True, compression='none', skip=34, delim='\t', hive_partitioning=0, sample_size=20480"""
         + max_line_size_parameter
         + ")"
     )
@@ -1620,6 +1620,7 @@ def test_get_columns():
         "END",
         "annot1",
         "annot2",
+        "annot3",
     ]
 
     # Check refgene
@@ -1727,6 +1728,7 @@ def test_get_columns():
             [
                 "annot1",
                 "annot2",
+                "annot3",
             ],
         ),
         (
