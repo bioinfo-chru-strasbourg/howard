@@ -5657,6 +5657,8 @@ class Variants:
                     nb_annotation_field = 0
                     annotation_list = []
 
+                    annotation_name_map = {}
+
                     for annotation_field in annotation_fields:
 
                         # field new name, if parametered SKIPPED !!!!!! not managed actually TODO
@@ -5715,8 +5717,12 @@ class Variants:
                                 annotation_list.append(
                                     f"{annotation_fields_new_name}:=INFO/{annotation_field}"
                                 )
+                                annotation_name_map[annotation_field] = (
+                                    f"{annotation_fields_new_name}:=INFO/{annotation_field}"
+                                )
                             else:
                                 annotation_list.append(annotation_field)
+                                annotation_name_map[annotation_field] = annotation_field
 
                             nb_annotation_field += 1
 
@@ -5734,6 +5740,18 @@ class Variants:
                     log.info(
                         f"Annotation '{annotation_name}' - {nb_annotation_field} annotations available in vcf/bed file"
                     )
+
+                    if db_file_type in ["bed"]:
+                        # For bed file, we need to add CHROM, POS, POS in annotation list for bcftools annotate with bed file, and position all in order of columns in BED file (CHROM, POS, POS, then annotations), and with unwanted annotation as "-"
+                        annotation_list_bed = []
+                        for col in db_hdr_vcf.get_header_columns_as_list()[3:]:
+                            if col in annotation_name_map:
+                                annotation_list_bed.append(
+                                    annotation_name_map.get(col, col)
+                                )
+                            else:
+                                annotation_list_bed.append("-")
+                        annotation_list = annotation_list_bed
 
                     annotation_infos = ",".join(annotation_list)
 
