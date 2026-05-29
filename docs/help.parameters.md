@@ -590,7 +590,7 @@ Examples:
 >                "INFO": null
 >             },
 >             "options": {
->                "uniquify": false
+>                "uniquify": true
 >             }
 >          }
 >       }
@@ -699,9 +699,8 @@ Examples:
 > }
 > ```
 
-> Annotation with OMIM as a BED file, without uniquification of
-> annotation values (useful for preserving original values for multiple
-> transcripts annotations)
+> Annotation with OMIM as a BED file, with uniquification of annotation
+> values (e.g. merge overlaped gene annotations)
 
 > ``` json
 > {
@@ -711,7 +710,7 @@ Examples:
 >             "INFO": null
 >          },
 >          "options": {
->             "uniquify": false
+>             "uniquify": true
 >          }
 >       }
 >    }
