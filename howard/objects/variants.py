@@ -8746,7 +8746,7 @@ class Variants:
                 "snpeff_ann_explode": {
                     "type": "python",
                     "name": "snpeff_ann_explode",
-                    "description": "Explode snpEff annotations with uniquify values",
+                    "description": "Explode snpEff annotations",
                     "available": True,
                     "function_name": "calculation_extract_snpeff",
                     "function_params": ["ANN", None, "snpeff_", None, False],
@@ -8754,7 +8754,7 @@ class Variants:
                 "snpeff_ann_explode_uniquify": {
                     "type": "python",
                     "name": "snpeff_ann_explode_uniquify",
-                    "description": "Explode snpEff annotations",
+                    "description": "Explode snpEff annotations with uniquify values",
                     "available": True,
                     "function_name": "calculation_extract_snpeff",
                     "function_params": ["ANN", None, "snpeff_uniquify_", None, True],
