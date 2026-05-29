@@ -7810,7 +7810,7 @@ class Variants:
                                     END
                                 """
                                 )
-                                if annotation_options.get("uniquify", True):
+                                if annotation_options.get("uniquify", False):
                                     sql_query_annotation_to_agregate.append(
                                         f""" array_to_string(array_sort(array_distinct(string_split(string_agg(DISTINCT table_parquet_from."{annotation_field_column}", ','), ','))), ',') AS "{annotation_field_column}" """
                                     )
@@ -8027,20 +8027,31 @@ class Variants:
 
                             # Annotation with regions database
                             if parquet_type in ["regions"]:
+
+                                sql_query_annotation_table = f"""
+                                    WITH uniq_variants AS (
+                                        SELECT DISTINCT
+                                            "#CHROM",
+                                            POS
+                                        FROM variants
+                                        WHERE "#CHROM" = '{chrom}'
+                                    )
+                                    SELECT
+                                        '{chrom}' AS \"#CHROM\",
+                                        table_variants_from.\"POS\" AS \"POS\",
+                                        {",".join(sql_query_annotation_to_agregate)}
+                                    FROM uniq_variants as table_variants_from
+                                    LEFT JOIN {parquet_file_link} as table_parquet_from ON (
+                                        table_parquet_from."#CHROM" = '{chrom}'
+                                        AND table_variants_from.POS BETWEEN table_parquet_from.START AND table_parquet_from.END
+                                    )
+                                    WHERE table_variants_from.\"#CHROM\" in ('{chrom}')
+                                    GROUP BY table_variants_from.\"POS\"
+                                """
+
                                 sql_query_annotation_from_clause = f"""
                                     (
-                                        SELECT
-                                            '{chrom}' AS \"#CHROM\",
-                                            table_variants_from.\"POS\" AS \"POS\",
-                                            {",".join(sql_query_annotation_to_agregate)}
-                                        FROM {table_variants} as table_variants_from
-                                        LEFT JOIN {parquet_file_link} as table_parquet_from ON (
-                                            table_parquet_from."#CHROM" = '{chrom}'
-                                            AND table_variants_from.\"POS\" <= table_parquet_from.\"END\"
-                                            AND table_variants_from.\"POS\" + (len(table_variants_from.\"REF\")-1) >= (table_parquet_from.\"START\"+1)
-                                        )
-                                        WHERE table_variants_from.\"#CHROM\" in ('{chrom}')
-                                        GROUP BY table_variants_from.\"POS\"
+                                        {sql_query_annotation_table}
                                     )
                                     as table_parquet
                                 """

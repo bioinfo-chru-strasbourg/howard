@@ -31,4 +31,4 @@
 ##contig=<ID=chrM,length=16571>
 ##contig=<ID=chrX,length=155270560>
 ##contig=<ID=chrY,length=59373566>
-#CHROM	START	END	annot1	annot2
+#CHROM	START	END	annot1	annot2	annot3

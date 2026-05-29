@@ -2,8 +2,9 @@
 ##source=HOWARD
 ##reference=hg19
 ##annotation_list=annot1,annot2
-##INFO=<ID=annot1,Number=.,Type=String,Description="Annotation1 on region">
-##INFO=<ID=annot2,Number=.,Type=String,Description="Annotation2 on region">
+##INFO=<ID=annot1,Number=1,Type=String,Description="Annotation1 on region">
+##INFO=<ID=annot2,Number=1,Type=String,Description="Annotation2 on region">
+##INFO=<ID=annot3,Number=.,Type=String,Description="Annotation3 on region">
 ##FILTER=<ID=PASS,Description="All filters passed">
 ##contig=<ID=chr1,length=249250621>
 ##contig=<ID=chr2,length=243199373>
@@ -30,4 +31,4 @@
 ##contig=<ID=chrM,length=16571>
 ##contig=<ID=chrX,length=155270560>
 ##contig=<ID=chrY,length=59373566>
-#CHROM	START	END	annot1	annot2
+#CHROM	START	END	annot1	annot2	annot3

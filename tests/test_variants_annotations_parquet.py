@@ -15,6 +15,7 @@ import logging as log
 import os
 from tempfile import TemporaryDirectory
 import vcf  # type: ignore
+import pytest  # type: ignore
 
 from howard.objects.variants import Variants
 from howard.functions.commons import remove_if_exists
@@ -520,7 +521,25 @@ def test_annotations_parquet_no_samples():
             assert False
 
 
-def test_annotation_parquet_with_all_formats():
+@pytest.mark.parametrize(
+    "annotation_format",
+    [
+        ("vcf"),
+        ("vcf.gz"),
+        ("tsv"),
+        ("tsv.gz"),
+        ("csv"),
+        ("csv.gz"),
+        ("json"),
+        ("json.gz"),
+        ("tbl"),
+        ("tbl.gz"),
+        ("parquet"),
+        ("partition.parquet"),
+        ("duckdb"),
+    ],
+)
+def test_annotation_parquet_with_all_formats(annotation_format):
     """
     This function tests the `annotation()` method of the `Variants` class using a Parquet file as
     annotation source with various formats.
@@ -528,128 +547,101 @@ def test_annotation_parquet_with_all_formats():
 
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
-        for annotation_format in [
-            "vcf",
-            "vcf.gz",
-            "tsv",
-            "tsv.gz",
-            "csv",
-            "csv.gz",
-            "json",
-            "json.gz",
-            "tbl",
-            "tbl.gz",
-            "parquet",
-            "partition.parquet",
-            "duckdb",
-        ]:
-
-            # Init files
-            input_vcf = tests_data_folder + "/example.vcf.gz"
-            annotation_parquet = os.path.join(
-                tests_annotations_folder, f"nci60.{annotation_format}"
-            )
-            output_vcf = f"{tmp_dir}/output.vcf.gz"
-
-            # Construct param dict
-            param = {
-                "annotation": {
-                    "parquet": {"annotations": {annotation_parquet: {"INFO": None}}}
-                }
-            }
-
-            # Create object
-            variants = Variants(
-                conn=None, input=input_vcf, output=output_vcf, param=param, load=True
-            )
-
-            # Remove if output file exists
-            remove_if_exists([output_vcf])
-
-            # Annotation
-            variants.annotation()
-
-            # query annotated variant
-            result = variants.get_query_to_df(
-                "SELECT 1 AS count FROM variants WHERE \"#CHROM\" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66'"
-            )
-            length = len(result)
-
-            assert length == 1
-
-            # Check if VCF is in correct format with pyVCF
-            variants.export_output()
-            try:
-                vcf.Reader(filename=output_vcf)
-            except:
-                assert False
-
-
-def test_annotation_parquet_regions_uniquify():
-    """
-    The `test_annotation_parquet_regions()` function tests the `annotation()` method of the `Variants`
-    class using a Parquet file as an annotation source with BED formats.
-    """
-
-    # Init files
-    input_vcf = tests_data_folder + "/example.vcf.gz"
-
-    # annotation regions with multi pos
-    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
-
-        # Init
+        # Init files
+        input_vcf = tests_data_folder + "/example.vcf.gz"
         annotation_parquet = os.path.join(
-            tests_annotations_folder, f"annotation_regions.bed.gz"
+            tests_annotations_folder, f"nci60.{annotation_format}"
         )
         output_vcf = f"{tmp_dir}/output.vcf.gz"
 
         # Construct param dict
         param = {
             "annotation": {
-                "parquet": {
-                    "annotations": {
-                        annotation_parquet: {
-                            "annotation_fields": {"INFO": None},
-                            "options": {"uniquify": False},
-                        }
-                    }
-                }
+                "parquet": {"annotations": {annotation_parquet: {"INFO": None}}}
             }
         }
 
         # Create object
         variants = Variants(
-            conn=None,
-            input=input_vcf,
-            output=output_vcf,
-            param=param,
-            load=True,
+            conn=None, input=input_vcf, output=output_vcf, param=param, load=True
         )
+
+        # Remove if output file exists
+        remove_if_exists([output_vcf])
 
         # Annotation
         variants.annotation()
 
-        # return
-
         # query annotated variant
         result = variants.get_query_to_df(
-            "SELECT 1 AS count FROM variants WHERE INFO LIKE '%annot1=blue,red;annot2=orange,cherry;annot3=mars,venus,mars,jupyter'"
+            "SELECT 1 AS count FROM variants WHERE \"#CHROM\" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66'"
         )
         length = len(result)
 
-        assert length == 3
+        assert length == 1
 
-        # query annotated variant
-        result = variants.get_query_to_df(
-            "SELECT 1 AS count FROM variants WHERE INFO LIKE '%annot1=yellow;annot2=banana;annot3=mars,pluto'"
+        # Check if VCF is in correct format with pyVCF
+        variants.export_output()
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
+
+
+@pytest.mark.parametrize(
+    "annotation_format",
+    [
+        ("vcf"),
+        ("vcf.gz"),
+        ("tsv"),
+        ("tsv.gz"),
+        ("csv"),
+        ("csv.gz"),
+        ("json"),
+        ("json.gz"),
+        ("tbl"),
+        ("tbl.gz"),
+        ("parquet"),
+        ("partition.parquet"),
+        ("duckdb"),
+    ],
+)
+def test_annotation_parquet_input_multi_pos(annotation_format):
+    """
+    This function tests the `annotation()` method of the `Variants` class using a Parquet file as
+    annotation source with various formats.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.multi_pos.vcf"
+        annotation_parquet = os.path.join(
+            tests_annotations_folder, f"nci60.{annotation_format}"
         )
-        length = len(result)
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
 
-        assert length == 3
+        # Construct param dict
+        param = {
+            "annotation": {
+                "parquet": {"annotations": {annotation_parquet: {"INFO": None}}}
+            }
+        }
+
+        # Create object
+        variants = Variants(
+            conn=None, input=input_vcf, output=output_vcf, param=param, load=True
+        )
+
+        # Remove if output file exists
+        remove_if_exists([output_vcf])
+
+        # Annotation
+        variants.annotation()
 
         # query annotated variant
         result = variants.get_query_to_df(
-            "SELECT 1 AS count FROM variants WHERE INFO NOT LIKE '%annot1%' AND INFO NOT LIKE '%annot2%' AND INFO NOT LIKE '%annot3%'"
+            "SELECT 1 AS count FROM variants WHERE \"#CHROM\" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66'"
         )
         length = len(result)
 
@@ -671,7 +663,6 @@ def test_annotation_parquet_regions():
 
     # Init files
     input_vcf = tests_data_folder + "/example.vcf.gz"
-    input_multi_pos_vcf = tests_data_folder + "/example.multi_pos.vcf"
 
     # annotation regions
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
@@ -880,6 +871,94 @@ def test_annotation_parquet_regions():
         except:
             assert False
 
+
+def test_annotation_parquet_regions_uniquify():
+    """
+    The `test_annotation_parquet_regions()` function tests the `annotation()` method of the `Variants`
+    class using a Parquet file as an annotation source with BED formats.
+    """
+
+    # Init files
+    input_vcf = tests_data_folder + "/example.vcf.gz"
+
+    # annotation regions with multi pos
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init
+        annotation_parquet = os.path.join(
+            tests_annotations_folder, f"annotation_regions.bed.gz"
+        )
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+
+        # Construct param dict
+        param = {
+            "annotation": {
+                "parquet": {
+                    "annotations": {
+                        annotation_parquet: {
+                            "annotation_fields": {"INFO": None},
+                            "options": {"uniquify": True},
+                        }
+                    }
+                }
+            }
+        }
+
+        # Create object
+        variants = Variants(
+            conn=None,
+            input=input_vcf,
+            output=output_vcf,
+            param=param,
+            load=True,
+        )
+
+        # Annotation
+        variants.annotation()
+
+        # return
+
+        # query annotated variant
+        result = variants.get_query_to_df(
+            "SELECT 1 AS count FROM variants WHERE INFO LIKE '%annot1=blue,red;annot2=cherry,orange;annot3=jupyter,mars,venus'"
+        )
+        length = len(result)
+
+        assert length == 3
+
+        # query annotated variant
+        result = variants.get_query_to_df(
+            "SELECT 1 AS count FROM variants WHERE INFO LIKE '%annot1=yellow;annot2=banana;annot3=mars,pluto'"
+        )
+        length = len(result)
+
+        assert length == 3
+
+        # query annotated variant
+        result = variants.get_query_to_df(
+            "SELECT 1 AS count FROM variants WHERE INFO NOT LIKE '%annot1%' AND INFO NOT LIKE '%annot2%' AND INFO NOT LIKE '%annot3%'"
+        )
+        length = len(result)
+
+        assert length == 1
+
+        # Check if VCF is in correct format with pyVCF
+        variants.export_output()
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
+
+
+def test_annotation_parquet_regions_input_multi_pos():
+    """
+    The `test_annotation_parquet_regions()` function tests the `annotation()` method of the `Variants`
+    class using a Parquet file as an annotation source with BED formats.
+    """
+
+    # Init files
+    input_vcf = tests_data_folder + "/example.multi_pos.vcf"
+
     # annotation regions with multi pos
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
@@ -895,11 +974,101 @@ def test_annotation_parquet_regions():
                 "parquet": {"annotations": {annotation_parquet: {"INFO": None}}}
             }
         }
+        param = {
+            "annotation": {
+                "parquet": {
+                    "annotations": {
+                        annotation_parquet: {
+                            "annotation_fields": {"INFO": None},
+                            "options": {"uniquify": False},
+                        }
+                    }
+                }
+            }
+        }
 
         # Create object
         variants = Variants(
             conn=None,
-            input=input_multi_pos_vcf,
+            input=input_vcf,
+            output=output_vcf,
+            param=param,
+            load=True,
+        )
+
+        # Annotation
+        variants.annotation()
+
+        # return
+
+        # query annotated variant
+        result = variants.get_query_to_df(
+            "SELECT 1 AS count FROM variants WHERE INFO LIKE '%annot1=blue,red%' AND INFO LIKE '%annot2=orange,cherry%' AND INFO LIKE '%annot3=mars,venus,mars,jupyter%'"
+        )
+        length = len(result)
+
+        assert length == 5
+
+        # query annotated variant
+        result = variants.get_query_to_df(
+            "SELECT 1 AS count FROM variants WHERE INFO LIKE '%annot1=yellow%' AND INFO LIKE '%annot2=banana%' AND INFO LIKE '%annot3=mars,pluto%'"
+        )
+        length = len(result)
+
+        assert length == 5
+
+        # query annotated variant
+        result = variants.get_query_to_df(
+            "SELECT 1 AS count FROM variants WHERE INFO NOT LIKE '%annot1%' AND INFO NOT LIKE '%annot2%' AND INFO NOT LIKE '%annot3%'"
+        )
+        length = len(result)
+
+        assert length == 1
+
+        # Check if VCF is in correct format with pyVCF
+        variants.export_output()
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
+
+
+def test_annotation_parquet_regions_input_multi_pos_uniquify():
+    """
+    The `test_annotation_parquet_regions()` function tests the `annotation()` method of the `Variants`
+    class using a Parquet file as an annotation source with BED formats.
+    """
+
+    # Init files
+    input_vcf = tests_data_folder + "/example.multi_pos.vcf"
+
+    # annotation regions with multi pos without uniquify option (all annotations should be kept, even if duplicated)
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init
+        annotation_parquet = os.path.join(
+            tests_annotations_folder, f"annotation_regions.bed.gz"
+        )
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+
+        # Construct param dict
+        param = {
+            "annotation": {
+                "parquet": {
+                    "annotations": {
+                        annotation_parquet: {
+                            "annotation_fields": {"INFO": None},
+                            "options": {"uniquify": True},
+                        }
+                    }
+                }
+            }
+        }
+
+        # Create object
+        variants = Variants(
+            conn=None,
+            input=input_vcf,
             output=output_vcf,
             param=param,
             load=True,
