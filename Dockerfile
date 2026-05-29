@@ -66,7 +66,7 @@ ENV TOOL=/tool
 ENV DATABASES=/databases
 
 # YUM and Perl
-ENV YUM_INSTALL="gcc bc make wget perl-devel which zlib-devel zlib bzip2-devel bzip2 xz-devel xz ncurses-devel unzip curl-devel java-17 htop libgomp aria2 docker-ce"
+ENV YUM_INSTALL="gcc bc make wget perl-devel which zlib-devel zlib bzip2-devel bzip2 xz-devel xz ncurses-devel unzip curl-devel java-21 htop libgomp aria2 docker-ce"
 ENV PERL_INSTALL="perl-Switch perl-Time-HiRes perl-Data-Dumper perl-Digest-MD5 perl-Tk perl-devel"
 
 
