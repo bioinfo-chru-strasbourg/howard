@@ -24,6 +24,123 @@ from howard.objects.variants import Variants
 from test_needed import tests_folder, tests_config, tests_data_folder
 
 
+# f"/Users/lebechea/STARK/data/testfixx_VANNOT_KLA2601860.design.bed_transcript_id.vcf",
+
+
+@pytest.mark.parametrize(
+    "input_vcf, columns",
+    [
+        (
+            f"{tests_data_folder}/example.ann.transcripts.bad_id.vcf",
+            [
+                "#CHROM",
+                "ALT",
+                "Ensembl_geneid",
+                "GeneName",
+                "INFO",
+                "LIST_S2_pred",
+                "LIST_S2_score",
+                "POS",
+                "REF",
+                "transcript",
+                "transcript_list",
+                "transcript_mapped",
+            ],
+        ),
+    ],
+)
+def test_create_transcript_view_with_infos_column_bad_transcript_ids(
+    input_vcf, columns
+):
+    """
+    The function `test_create_transcript_view_with_infos_column_bad_transcript_ids` creates a transcript view from a VCF file using
+    specified parameters and checks the resulting table for data.
+
+    :param input_vcf: It seems like the `input_vcf` parameter is missing in the provided code snippet.
+    Could you please provide the value or path that should be assigned to the `input_vcf` variable in
+    the `test_create_transcript_view_with_infos_column_bad_transcript_ids` function?
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        output_vcf = f"{tmp_dir}/output.vcf"
+
+        # Construct param dict
+        param = {
+            "transcripts": {
+                "table": "transcripts",
+                "struct": {
+                    "from_columns_map": [  # format List, e.g. dbNSFP columns
+                        {
+                            "transcripts_column": "Ensembl_transcriptid",
+                            "transcripts_infos_columns": [
+                                "genename",
+                                "Ensembl_geneid",
+                                "LIST_S2_score",
+                                "LIST_S2_pred",
+                            ],
+                            "column_rename": None,
+                            "column_clean": False,
+                            "column_case": None,
+                        }
+                    ]
+                },
+            }
+        }
+
+        # Config
+        config = tests_config
+
+        # Create object
+        variants = Variants(
+            conn=None,
+            input=input_vcf,
+            output=output_vcf,
+            config=config,
+            param=param,
+            load=True,
+        )
+
+        # Create transcript view
+        transcripts_table = variants.create_transcript_view()
+
+        # Check table exists
+        assert transcripts_table is not None
+
+        # Check table content
+        query_check = f"""
+            SELECT count(*) AS count FROM {transcripts_table}
+        """
+        check = variants.get_query_to_df(query=query_check)
+        assert check["count"][0] > 0
+
+        # Check table columns
+        query_check = f"""
+            SELECT * FROM transcripts
+        """
+        check_variants = variants.get_query_to_df(query=query_check)
+        # log.debug(f"check_variants columns: {sorted(set(check_variants.columns))}")
+        # log.debug(f"check_variants: {check_variants}")
+
+        assert sorted(set([f.lower() for f in check_variants.columns])) == sorted(
+            set([f.lower() for f in columns])
+        )
+
+        # ReCreate transcript view
+        transcripts_table = variants.create_transcript_view()
+
+        # Check table content
+        query_check2 = f"""
+            SELECT count(*) as count FROM {transcripts_table}
+        """
+        check2 = variants.get_query_to_df(query=query_check2)
+        assert check2["count"][0] > 0
+
+        # Check if number of lines is the same
+        assert check["count"][0] == check2["count"][0]
+
+
 @pytest.mark.parametrize(
     "input_vcf, columns",
     [

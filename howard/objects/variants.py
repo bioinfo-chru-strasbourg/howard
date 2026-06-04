@@ -14283,7 +14283,11 @@ class Variants:
                 query = f""" 
                     SELECT
                         "#CHROM", POS, REF, ALT,
-                        "{transcripts_column}" AS 'transcript',
+                        CASE -- prevent issues with group by and association of variants with all available transcripts when no transcript information is available (NULL or '.' or '')
+                            WHEN {transcripts_column} IN ('.', '') OR {transcripts_column} IS NULL
+                            THEN 'UN_' || CAST(CAST(random() * 1000000 AS INTEGER) AS VARCHAR)
+                            ELSE {transcripts_column}
+                        END AS 'transcript',
                         {", ".join(clause_select_tanscripts)}
                     FROM (
                         SELECT 
@@ -16609,7 +16613,7 @@ class Variants:
         query_create_view = f"""
             CREATE {view_type} IF NOT EXISTS {view} AS {query_select}
         """
-        log.debug(f"Create view:{query_create_view}")
+        # log.debug(f"Create view:{query_create_view}")
         self.execute_query(query=query_create_view)
         log.debug(f"View created: {view}")
 

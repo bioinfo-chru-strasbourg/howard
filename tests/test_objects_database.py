@@ -839,7 +839,7 @@ def test_set_header():
     # Set bed
     database = Database(database=database_files.get("bed"))
     assert database.header
-    assert list(database.header.infos) == ["annot1", "annot2"]
+    assert list(database.header.infos) == ["annot1", "annot2", "annot3"]
 
     # Set json
     database = Database(database=database_files.get("json"))
