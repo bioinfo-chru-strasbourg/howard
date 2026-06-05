@@ -11021,7 +11021,7 @@ class Variants:
                                 {", ".join(where_clause_join_keys)},
                                 {", ".join(where_column_exprs)},
                                 row_number() OVER () AS _rowid
-                            FROM variants d
+                            FROM {dest_table} d
                             {" ".join(where_clause_join_clauses)}
                         );
                 """
