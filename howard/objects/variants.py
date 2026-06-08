@@ -8690,7 +8690,7 @@ class Variants:
                     "type": "sql",
                     "name": "variant_chr_pos_alt_ref",
                     "description": "Create a variant ID with chromosome, position, alt and ref",
-                    "available": False,
+                    "available": True,
                     "output_column_name": "variant_chr_pos_alt_ref",
                     "output_column_number": 1,
                     "output_column_type": "String",
@@ -8719,6 +8719,35 @@ class Variants:
                             END
                             """,
                     "info_fields": ["SVTYPE"],
+                    "operation_info": True,
+                },
+                "MERGED_HGVS": {
+                    "type": "sql",
+                    "name": "merged_hgvs",
+                    "description": "Merge HGVS nomenclatures from snpEff (snpeff_hgvs) and ANNOVAR (AAChange_refGene) into merged_hgvs field",
+                    "available": True,
+                    "table": "variants",
+                    "output_column_name": "merged_hgvs",
+                    "output_column_number": ".",
+                    "output_column_type": "String",
+                    "output_column_description": "Merge HGVS nomenclatures from snpEff (snpeff_hgvs) and ANNOVAR (AAChange_refGene) into merged_hgvs field",
+                    "operation_query": """
+                            list_aggregate(
+                                list_distinct(
+                                    list_reduce(
+                                        [
+                                            "snpeff_hgvs",
+                                            "AAChange_refGene",
+                                        ],
+                                        (a, b) -> list_concat(a, b)
+                                    )
+                                ),
+                                'string_agg',
+                                ','
+                            )
+
+                            """,
+                    "info_fields": ["snpeff_hgvs", "AAChange_refGene"],
                     "operation_info": True,
                 },
                 "snpeff_extract": {
@@ -8932,7 +8961,7 @@ class Variants:
             },
             "prioritizations": {
                 "default": {
-                    "ANN2": [
+                    "ANN": [
                         {
                             "type": "contains",
                             "value": "HIGH",
