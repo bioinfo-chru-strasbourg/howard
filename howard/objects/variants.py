@@ -15107,46 +15107,45 @@ class Variants:
         if "transcript" in fields_to_explode:
             fields_to_explode.remove("transcript")
 
-        # Fields intranscripts table
+        # Fields in transcripts table
         query_transcripts_table = f"""
             DESCRIBE SELECT * FROM {transcripts_table}
         """
-        query_transcripts_table = self.get_query_to_df(query=query_transcripts_table)
+        query_transcripts_table_description = self.get_query_to_df(
+            query=query_transcripts_table
+        )
 
         # Check fields to explode
         for field_to_explode in fields_to_explode:
             if field_to_explode not in self.get_header_infos_list() + list(
-                query_transcripts_table.column_name
+                query_transcripts_table_description.column_name
             ):
                 msg_err = f"INFO/{field_to_explode} NOT IN header"
                 log.error(msg_err)
                 raise ValueError(msg_err)
 
-        # Create view as table
-        annotation_view_name = "annotation_view_for_transcripts_prioritization_" + str(
-            random.randrange(1000000)
-        )
-        annotation_view_name = self.create_annotations_view(
-            table=transcripts_table,
-            view=annotation_view_name,
-            view_type="table",
-            view_mode="explore",
-            info_prefix_column="",
-            detect_type_list=True,
-            fields=fields_to_explode + ["transcript"],
-            fields_not_exists=False,
-            fields_forced_as_varchar=False,
-            fields_needed_all=False,
-        )
-        transcripts_table = annotation_view_name
-
         # Transcript preference file
+        # First look for transcripts_preference, then for transcripts_preference_file for backward compatibility, and get full path
         transcripts_preference_file = (
             param.get("transcripts", {})
             .get("prioritization", {})
             .get("prioritization_transcripts", {})
         )
+        transcripts_preference_file = (
+            param.get("transcripts", {})
+            .get("prioritization", {})
+            .get("prioritization_transcripts_file", transcripts_preference_file)
+        )
         transcripts_preference_file = full_path(transcripts_preference_file)
+
+        # Transcript preference columns
+        transcript_preference_columns = (
+            param.get("transcripts", {})
+            .get("prioritization", {})
+            .get("prioritization_transcripts_columns", [])
+        )
+        if transcript_preference_columns is None:
+            transcript_preference_columns = []
 
         # Transcript preference forced
         transcript_preference_force = (
@@ -15161,7 +15160,37 @@ class Variants:
             .get("prioritization_transcripts_version_force", False)
         )
 
+        # Create view as table
+        annotation_view_name = "annotation_view_for_transcripts_prioritization_" + str(
+            random.randrange(1000000)
+        )
+        annotation_view_name = self.create_annotations_view(
+            table=transcripts_table,
+            view=annotation_view_name,
+            view_type="table",
+            view_mode="explore",
+            info_prefix_column="",
+            detect_type_list=True,
+            fields=fields_to_explode + ["transcript"] + transcript_preference_columns,
+            fields_not_exists=False,
+            fields_forced_as_varchar=False,
+            fields_needed_all=False,
+        )
+        transcripts_table = annotation_view_name
+
         # Transcripts Ranking
+
+        # Default values
+
+        # Order by
+        order_by = " , ".join(query_update_order_list)
+
+        # Left join
+        left_join = ""
+
+        # where clause
+        where_clause = ""
+
         if transcripts_preference_file:
 
             # Transcripts file to dataframe
@@ -15179,9 +15208,9 @@ class Variants:
 
             # Order by depending to transcript preference forcing
             if transcript_preference_force:
-                order_by = f""" transcripts_preference.transcripts_preference_order ASC, {" , ".join(query_update_order_list)} """
+                order_by = f""" transcripts_preference.transcripts_preference_order ASC, {order_by} """
             else:
-                order_by = f""" {" , ".join(query_update_order_list)}, transcripts_preference.transcripts_preference_order ASC """
+                order_by = f""" {order_by}, transcripts_preference.transcripts_preference_order ASC """
 
             # Transcript columns joined depend on version consideration
             if transcript_version_force:
@@ -15189,15 +15218,8 @@ class Variants:
             else:
                 transcripts_version_join = f""" split_part({transcripts_table}.transcript, '.', 1) = split_part(transcripts_preference.transcripts_preference, '.', 1) """
 
-            # Query ranking for update
-            query_update_ranking = f"""
-                SELECT
-                    "#CHROM", POS, REF, ALT, {transcripts_table}.transcript, {" ".join(query_update_select_list)}
-                    ROW_NUMBER() OVER (
-                        PARTITION BY "#CHROM", POS, REF, ALT
-                        ORDER BY {order_by}
-                    ) AS rn
-                FROM {transcripts_table}
+            # Left join
+            left_join = f"""
                 LEFT JOIN 
                     (
                         SELECT transcript AS 'transcripts_preference', row_number() OVER () AS transcripts_preference_order
@@ -15206,18 +15228,70 @@ class Variants:
                 ON {transcripts_version_join}
             """
 
-        else:
+        if transcript_preference_columns:
+            # Add transcript preference columns in select to filter only if exists in this column (can be varchar (list of values separated by ',') or array
 
-            # Query ranking for update
-            query_update_ranking = f"""
-                SELECT
-                    "#CHROM", POS, REF, ALT, transcript, {" ".join(query_update_select_list)}
-                    ROW_NUMBER() OVER (
-                        PARTITION BY "#CHROM", POS, REF, ALT
-                        ORDER BY {" , ".join(query_update_order_list)}
-                    ) AS rn
-                FROM {transcripts_table}
-            """
+            # List of transcript filter on columns depending on forcing or not of transcript preference and version
+            transcripts_filter_array = []
+
+            for transcript_preference_column in transcript_preference_columns:
+
+                # Check if transcript preference column exists in transcripts table description and get its type
+                try:
+                    transcript_preference_column_type = (
+                        query_transcripts_table_description[
+                            query_transcripts_table_description.get("column_name", None)
+                            == transcript_preference_column
+                        ]
+                        .get("column_type", None)
+                        .iloc[0]
+                    )
+                except:
+                    msg_err = f"Transcript preference column '{transcript_preference_column}' not found in transcripts table description"
+                    log.error(msg_err)
+                    raise ValueError(msg_err)
+
+                # Transcript filter as list if is an array or not
+                if transcript_preference_column_type.endswith("[]"):
+                    transcript_filter_column_as_list = f""" {transcripts_table}."{transcript_preference_column}"::VARCHAR[] """
+                else:
+                    transcript_filter_column_as_list = f""" string_split({transcripts_table}."{transcript_preference_column}"::VARCHAR, ',')"""
+
+                # Create transcript filter for current column depending on forcing or not of transcript preference and version
+                if transcript_version_force:
+                    transcripts_filter_array.append(f"""
+                        array_contains({transcript_filter_column_as_list}, {transcripts_table}."transcript")
+                    """)
+                else:
+                    transcripts_filter_array.append(f"""
+                         array_contains(list_transform({transcript_filter_column_as_list}, x -> split_part(x, '.', 1)), split_part({transcripts_table}.transcript, '.', 1))
+                    """)
+
+            # Create transcript filter on columns
+            if where_clause:
+                where_clause += " AND "
+            else:
+                where_clause = " WHERE"
+            where_clause += (
+                "(" + " OR ".join(transcripts_filter_array) + ")"
+                if transcripts_filter_array
+                else ""
+            )
+
+        # Query ranking for update
+        query_update_ranking = f"""
+            SELECT
+                "#CHROM", POS, REF, ALT,
+                {transcripts_table}.transcript AS transcript,
+                {" ".join(query_update_select_list)}
+                ROW_NUMBER() OVER (
+                    PARTITION BY "#CHROM", POS, REF, ALT
+                    ORDER BY {order_by}
+                ) AS rn
+            FROM {transcripts_table}
+            {left_join}
+            {where_clause}
+        """
 
         # Export Transcripts prioritization infos to variants table
         query_update = f"""
