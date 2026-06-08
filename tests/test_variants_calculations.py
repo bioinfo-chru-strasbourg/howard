@@ -479,6 +479,166 @@ def test_calculation_nomen():
             assert False
 
 
+def test_calculation_nomen_one_hgvs_field():
+    """
+    This function tests the calculation and annotation of genetic variants using input parameters and
+    checks if the output VCF file is in the correct format.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.annotated.hgvs.annovar.snpeff.vcf"
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+        input_param = {
+            "calculation": {
+                "calculations": {
+                    "NOMEN": {
+                        "options": {
+                            "hgvs_fields": ["AAChange_refGene"],
+                        }
+                    }
+                }
+            },
+        }
+
+        # Create object
+        variants = Variants(
+            input=input_vcf,
+            output=output_vcf,
+            config=tests_config,
+            param=input_param,
+            load=True,
+        )
+
+        # Annotation
+        variants.annotation()
+
+        # Calculation
+        variants.calculation()
+
+        # Check number of NOMEN (2)
+        result = variants.get_query_to_df(
+            """SELECT INFO FROM variants WHERE INFO LIKE '%NOMEN=%' """
+        )
+        assert len(result) == 2
+
+        # Check if VCF is in correct format with pyVCF
+        remove_if_exists([output_vcf])
+        variants.export_output()
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
+
+
+def test_calculation_nomen_two_hgvs_fields():
+    """
+    This function tests the calculation and annotation of genetic variants using input parameters and
+    checks if the output VCF file is in the correct format.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.annotated.hgvs.annovar.snpeff.vcf"
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+        input_param = {
+            "calculation": {
+                "calculations": {
+                    "NOMEN": {
+                        "options": {
+                            "hgvs_fields": ["AAChange_refGene", "snpeff_hgvs"],
+                        }
+                    }
+                }
+            },
+        }
+
+        # Create object
+        variants = Variants(
+            input=input_vcf,
+            output=output_vcf,
+            config=tests_config,
+            param=input_param,
+            load=True,
+        )
+
+        # Annotation
+        variants.annotation()
+
+        # Calculation
+        variants.calculation()
+
+        # Check number of NOMEN (2)
+        result = variants.get_query_to_df(
+            """SELECT INFO FROM variants WHERE INFO LIKE '%NOMEN=%' """
+        )
+        assert len(result) == 7
+
+        # Check if VCF is in correct format with pyVCF
+        remove_if_exists([output_vcf])
+        variants.export_output()
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
+
+
+def test_calculation_nomen_two_hgvs_fields_uniquify():
+    """
+    This function tests the calculation and annotation of genetic variants using input parameters and
+    checks if the output VCF file is in the correct format.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.annotated.hgvs.annovar.snpeff.vcf"
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+        input_param = {
+            "calculation": {
+                "calculations": {
+                    "NOMEN": {
+                        "options": {
+                            "hgvs_fields": ["AAChange_refGene", "snpeff_hgvs"],
+                            "uniquify_hgvs": False,
+                        }
+                    }
+                }
+            },
+        }
+
+        # Create object
+        variants = Variants(
+            input=input_vcf,
+            output=output_vcf,
+            config=tests_config,
+            param=input_param,
+            load=True,
+        )
+
+        # Annotation
+        variants.annotation()
+
+        # Calculation
+        variants.calculation()
+
+        # Check number of NOMEN (2)
+        result = variants.get_query_to_df(
+            """SELECT INFO FROM variants WHERE INFO LIKE '%NOMEN=%' """
+        )
+        assert len(result) == 7
+
+        # Check if VCF is in correct format with pyVCF
+        remove_if_exists([output_vcf])
+        variants.export_output()
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
+
+
 def test_calculation_merged_hgvs():
     """
     This function tests the calculation of merging multiple HGVS annotations.
@@ -487,10 +647,11 @@ def test_calculation_merged_hgvs():
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
-        input_vcf = tests_data_folder + "/example.annotated.annovar.snpeff.vcf"
+        # input_vcf = tests_data_folder + "/example.annotated.annovar.snpeff.vcf"
+        input_vcf = tests_data_folder + "/example.annotated.hgvs.annovar.snpeff.vcf"
         output_vcf = f"{tmp_dir}/output.vcf.gz"
         input_param = {
-            "calculation": {"calculations": {"SNPEFF_HGVS": None, "MERGED_HGVS": None}},
+            "calculation": {"calculations": {"MERGED_HGVS": None}},
         }
 
         # Create object

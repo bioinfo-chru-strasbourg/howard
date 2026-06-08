@@ -1524,6 +1524,8 @@ Examples:
 >      "NOMEN": {
 >        "options": {
 >          "hgvs_field": "snpeff_hgvs",
+>          "hgvs_fields": ["snpeff_hgvs"],
+>          "uniquify_hgvs": false,
 >          "transcripts": "tests/data/transcripts.tsv",
 >          "transcripts_table": "variants",
 >          "transcripts_column": "PZTTranscript",

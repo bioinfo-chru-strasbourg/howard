@@ -1,156 +1,266 @@
 {
-  "variant_chr_pos_alt_ref": {
-    "type": "sql",
-    "name": "variant_chr_pos_alt_ref",
-    "description": "Create a variant ID with chromosome, position, alt and ref",
-    "available": true,
-    "output_column_name": "variant_chr_pos_alt_ref",
-    "output_column_number": "1",
-    "output_column_type": "String",
-    "output_column_description": "variant ID with chromosome, position, alt and ref",
-    "operation_query": " concat(\"#CHROM\", '_', POS, '_', REF, '_', ALT) ",
-    "operation_info": true
-  },
-  "VARTYPE": {
-    "type": "sql",
-    "name": "VARTYPE",
-    "description": "Variant type (e.g. SNV, INDEL, MNV, BND...)",
-    "available": true,
-    "output_column_name": "VARTYPE",
-    "output_column_number": "1",
-    "output_column_type": "String",
-    "output_column_description": "Variant type: SNV if X>Y, MOSAIC if X>Y,Z or X,Y>Z, INDEL if XY>Z or X>YZ",
-    "operation_query": [
-      "CASE",
-      "WHEN \"SVTYPE\" NOT NULL THEN \"SVTYPE\"",
-      "WHEN LENGTH(REF) = 1 AND LENGTH(ALT) = 1 THEN 'SNV'",
-      "WHEN REF LIKE '%,%' OR ALT LIKE '%,%' THEN 'MOSAIC'",
-      "WHEN LENGTH(REF) == LENGTH(ALT) AND LENGTH(REF) > 1 THEN 'MNV'",
-      "WHEN LENGTH(REF) <> LENGTH(ALT) THEN 'INDEL'",
-      "ELSE 'UNDEFINED'",
-      "END"
-    ],
-    "info_fields": ["SVTYPE"],
-    "operation_info": true
-  },
-  "snpeff_hgvs": {
+  "calculations": {
+    "variant_chr_pos_alt_ref": {
+      "type": "sql",
+      "name": "variant_chr_pos_alt_ref",
+      "description": "Create a variant ID with chromosome, position, alt and ref",
+      "available": true,
+      "output_column_name": "variant_chr_pos_alt_ref",
+      "output_column_number": "1",
+      "output_column_type": "String",
+      "output_column_description": "variant ID with chromosome, position, alt and ref",
+      "operation_query": " concat(\"#CHROM\", '_', \"POS\", '_', \"REF\", '_', \"ALT\") ",
+      "operation_info": true
+    },
+    "VARTYPE": {
+      "type": "sql",
+      "name": "VARTYPE",
+      "description": "Variant type (e.g. SNV, INDEL, MNV, BND...)",
+      "available": true,
+      "table": "variants",
+      "output_column_name": "VARTYPE",
+      "output_column_number": "1",
+      "output_column_type": "String",
+      "output_column_description": "Variant type: SNV if X>Y, MOSAIC if X>Y,Z or X,Y>Z, INDEL if XY>Z or X>YZ",
+      "operation_query": [
+        "CASE",
+        "WHEN \"SVTYPE\" NOT NULL THEN \"SVTYPE\"",
+        "WHEN LENGTH(REF) = 1 AND LENGTH(ALT) = 1 THEN 'SNV'",
+        "WHEN REF LIKE '%,%' OR ALT LIKE '%,%' THEN 'MOSAIC'",
+        "WHEN LENGTH(REF) == LENGTH(ALT) AND LENGTH(REF) > 1 THEN 'MNV'",
+        "WHEN LENGTH(REF) <> LENGTH(ALT) THEN 'INDEL'",
+        "ELSE 'UNDEFINED'",
+        "END"
+      ],
+      "info_fields": ["SVTYPE"],
+      "operation_info": true
+    },
+    "MERGED_HGVS": {
+      "type": "sql",
+      "name": "merged_hgvs",
+      "description": "Merge HGVS nomenclatures from snpEff (snpeff_hgvs) and ANNOVAR (AAChange_refGene) into merged_hgvs field",
+      "available": true,
+      "table": "variants",
+      "output_column_name": "merged_hgvs",
+      "output_column_number": ".",
+      "output_column_type": "String",
+      "output_column_description": "Merge HGVS nomenclatures from snpEff (snpeff_hgvs) and ANNOVAR (AAChange_refGene) into merged_hgvs field",
+      "operation_query": [
+        "list_aggregate(",
+        "list_distinct(",
+        "list_reduce(",
+        "[\"snpeff_hgvs\", \"AAChange_refGene\"],",
+        "(a, b) -> list_concat(a, b)",
+        ")",
+        "),",
+        "'string_agg',",
+        "','",
+        ")"
+      ],
+      "info_fields": ["snpeff_hgvs", "AAChange_refGene"],
+      "operation_info": true
+    },
+    "snpeff_extract": {
+      "type": "python",
+      "name": "snpeff_hgvs",
+      "description": "HGVS nomenclatures from snpEff annotation",
+      "available": true,
+      "function_name": "calculation_extract_snpeff",
+      "function_params": ["ANN", "snpeff_hgvs", "snpeff_", "snpeff_json", false]
+    },
+    "snpeff_hgvs": {
       "type": "python",
       "name": "snpeff_hgvs",
       "description": "HGVS nomenclatures from snpEff annotation",
       "available": true,
       "function_name": "calculation_extract_snpeff",
       "function_params": ["ANN", "snpeff_hgvs", null, null, false]
-  },
-  "snpeff_ann_explode": {
+    },
+    "snpeff_ann_explode": {
       "type": "python",
       "name": "snpeff_ann_explode",
-      "description": "Explode snpEff annotations with uniquify values",
-      "available": true,
-      "function_name": "calculation_extract_snpeff",
-      "function_params": ["ANN", null, "snpeff_", null, false]
-  },
-  "snpeff_ann_explode_uniquify": {
-      "type": "python",
-      "name": "snpeff_ann_explode_uniquify",
       "description": "Explode snpEff annotations",
       "available": true,
       "function_name": "calculation_extract_snpeff",
+      "function_params": ["ANN", null, "snpeff_", null, false]
+    },
+    "snpeff_ann_explode_uniquify": {
+      "type": "python",
+      "name": "snpeff_ann_explode_uniquify",
+      "description": "Explode snpEff annotations with uniquify values",
+      "available": true,
+      "function_name": "calculation_extract_snpeff",
       "function_params": ["ANN", null, "snpeff_uniquify_", null, true]
-  },
-  "snpeff_ann_explode_json": {
+    },
+    "snpeff_ann_explode_json": {
       "type": "python",
       "name": "snpeff_ann_explode_json",
       "description": "Explode snpEff annotations in JSON format",
       "available": true,
       "function_name": "calculation_extract_snpeff",
       "function_params": ["ANN", null, null, "snpeff_json", true]
-  },
-  "NOMEN": {
-    "type": "python",
-    "name": "NOMEN",
-    "description": "NOMEN information (e.g. NOMEN, CNOMEN, PNOMEN...) from HGVS nomenclature field",
-    "available": true,
-    "function_name": "calculation_extract_nomen",
-    "function_params": []
-  },
-  "FINDBYPIPELINE": {
-    "type": "python",
-    "name": "FINDBYPIPELINE",
-    "description": "Number of pipeline that identify the variant (for multi pipeline VCF)",
-    "available": true,
-    "function_name": "calculation_find_by_pipeline",
-    "function_params": ["findbypipeline"]
-  },
-  "FINDBYSAMPLE": {
-    "type": "python",
-    "name": "FINDBYSAMPLE",
-    "description": "Number of sample that have a genotype for the variant (for multi sample VCF)",
-    "available": true,
-    "function_name": "calculation_find_by_pipeline",
-    "function_params": ["findbysample"]
-  },
-  "GENOTYPECONCORDANCE": {
-    "type": "python",
-    "name": "GENOTYPECONCORDANCE",
-    "description": "Concordance of genotype for multi caller VCF",
-    "available": true,
-    "function_name": "calculation_genotype_concordance",
-    "function_params": []
-  },
-  "BARCODE": {
-    "type": "python",
-    "name": "BARCODE",
-    "description": "BARCODE as VaRank tool",
-    "available": true,
-    "function_name": "calculation_barcode",
-    "function_params": []
-  },
-  "BARCODEFAMILY": {
-    "type": "python",
-    "name": "BARCODEFAMILY",
-    "description": "BARCODEFAMILY as VaRank tool",
-    "available": true,
-    "function_name": "calculation_barcode_family",
-    "function_params": ["BCF"]
-  },
-  "TRIO": {
-    "type": "python",
-    "name": "TRIO",
-    "description": "Inheritance for a trio family",
-    "available": true,
-    "function_name": "calculation_trio",
-    "function_params": []
-  },
-  "VAF": {
-    "type": "python",
-    "name": "VAF",
-    "description": "Variant Allele Frequency (VAF) harmonization",
-    "available": true,
-    "function_name": "calculation_vaf_normalization",
-    "function_params": []
-  },
-  "VAF_stats": {
-    "type": "python",
-    "name": "VAF_stats",
-    "description": "Variant Allele Frequency (VAF) statistics",
-    "available": true,
-    "function_name": "calculation_genotype_stats",
-    "function_params": ["VAF"]
-  },
-  "DP_stats": {
-    "type": "python",
-    "name": "DP_stats",
-    "description": "Depth (DP) statistics",
-    "available": true,
-    "function_name": "calculation_genotype_stats",
-    "function_params": ["DP"]
-  },
-  "variant_id": {
-    "type": "python",
-    "name": "variant_id",
-    "description": "Variant ID generated from variant position and type",
-    "available": true,
-    "function_name": "calculation_variant_id",
-    "function_params": []
+    },
+    "NOMEN": {
+      "type": "python",
+      "name": "NOMEN",
+      "description": "NOMEN information (e.g. NOMEN, CNOMEN, PNOMEN...) from HGVS nomenclature field (see parameters help)",
+      "available": true,
+      "function_name": "calculation_extract_nomen",
+      "function_params": []
+    },
+    "NOMEN_SNPEFF": {
+      "type": "python",
+      "name": "NOMEN",
+      "description": "NOMEN information (e.g. NOMEN, CNOMEN, PNOMEN...) from HGVS nomenclature field (see parameters help)",
+      "available": true,
+      "function_name": "calculation_extract_nomen",
+      "function_params": ["snpeff_hgvs"]
+    },
+    "RECREATE_INFO_FIELDS": {
+      "type": "python",
+      "name": "RENAME_INFO_FIELDS",
+      "description": "Recreate INFO_tags, rename or remove tags",
+      "available": true,
+      "function_name": "calculation_recreate_info_fields",
+      "function_params": []
+    },
+    "RENAME_INFO_FIELDS": {
+      "type": "python",
+      "name": "RENAME_INFO_FIELDS",
+      "description": "Rename or remove INFO/tags",
+      "available": true,
+      "function_name": "calculation_rename_info_fields",
+      "function_params": []
+    },
+    "FINDBYPIPELINE": {
+      "type": "python",
+      "name": "FINDBYPIPELINE",
+      "description": "Number of pipeline that identify the variant (for multi pipeline VCF)",
+      "available": true,
+      "function_name": "calculation_find_by_pipeline",
+      "function_params": ["findbypipeline"]
+    },
+    "FINDBYSAMPLE": {
+      "type": "python",
+      "name": "FINDBYSAMPLE",
+      "description": "Number of sample that have a genotype for the variant (for multi sample VCF)",
+      "available": true,
+      "function_name": "calculation_find_by_pipeline",
+      "function_params": ["findbysample"]
+    },
+    "GENOTYPECONCORDANCE": {
+      "type": "python",
+      "name": "GENOTYPECONCORDANCE",
+      "description": "Concordance of genotype for multi caller VCF",
+      "available": true,
+      "function_name": "calculation_genotype_concordance",
+      "function_params": []
+    },
+    "BARCODE": {
+      "type": "python",
+      "name": "BARCODE",
+      "description": "BARCODE as VaRank tool",
+      "available": true,
+      "function_name": "calculation_barcode",
+      "function_params": [],
+      "output_column_number": "1",
+      "output_column_type": "Integer"
+    },
+    "BARCODEFAMILY": {
+      "type": "python",
+      "name": "BARCODEFAMILY",
+      "description": "BARCODEFAMILY as VaRank tool",
+      "available": true,
+      "function_name": "calculation_barcode_family",
+      "function_params": ["BCF"]
+    },
+    "TRIO": {
+      "type": "python",
+      "name": "TRIO",
+      "description": "Inheritance for a trio family",
+      "available": true,
+      "function_name": "calculation_trio",
+      "function_params": []
+    },
+    "VAF": {
+      "type": "python",
+      "name": "VAF",
+      "description": "Variant Allele Frequency (VAF) harmonization",
+      "available": true,
+      "function_name": "calculation_vaf_normalization",
+      "function_params": []
+    },
+    "VAF_stats": {
+      "type": "python",
+      "name": "VAF_stats",
+      "description": "Variant Allele Frequency (VAF) statistics",
+      "available": true,
+      "function_name": "calculation_genotype_stats",
+      "function_params": ["VAF"]
+    },
+    "DP_stats": {
+      "type": "python",
+      "name": "DP_stats",
+      "description": "Depth (DP) statistics",
+      "available": true,
+      "function_name": "calculation_genotype_stats",
+      "function_params": ["DP"]
+    },
+    "variant_id": {
+      "type": "python",
+      "name": "variant_id",
+      "description": "Variant ID generated from variant position and type",
+      "available": true,
+      "function_name": "calculation_variant_id",
+      "function_params": []
+    },
+    "transcripts_json": {
+      "type": "python",
+      "name": "transcripts_json",
+      "description": "Add transcripts annotations in JSON format (field 'transcripts_json')",
+      "available": true,
+      "function_name": "calculation_transcripts_annotation",
+      "function_params": ["transcripts_json", null]
+    },
+    "transcripts_ann": {
+      "type": "python",
+      "name": "transcripts_ann",
+      "description": "Add transcripts annotations in structured format (field 'transcripts_ann')",
+      "available": true,
+      "function_name": "calculation_transcripts_annotation",
+      "function_params": [null, "transcripts_ann"]
+    },
+    "transcripts_annotations": {
+      "type": "python",
+      "name": "transcripts_annotations",
+      "description": "Add transcripts annotations in JSON and/or structured format (see param JSON file)",
+      "available": true,
+      "function_name": "calculation_transcripts_annotation",
+      "function_params": [null, null]
+    },
+    "transcripts_prioritization": {
+      "type": "python",
+      "name": "transcripts_prioritization",
+      "description": "Prioritize transcripts with a prioritization profile (using param.json)",
+      "available": true,
+      "function_name": "calculation_transcripts_prioritization",
+      "function_params": [false]
+    },
+    "transcripts_prioritization_strict": {
+      "type": "python",
+      "name": "transcripts_prioritization",
+      "description": "Prioritize transcripts with a prioritization profile (using param.json)",
+      "available": true,
+      "function_name": "calculation_transcripts_prioritization",
+      "function_params": [true]
+    },
+    "transcripts_export": {
+      "type": "python",
+      "name": "transcripts_export",
+      "description": "Export transcripts table/view as a file (using param.json)",
+      "available": true,
+      "function_name": "calculation_transcripts_export",
+      "function_params": []
+    }
   }
 }

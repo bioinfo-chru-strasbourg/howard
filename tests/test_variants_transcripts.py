@@ -2586,7 +2586,33 @@ def test_transcripts_create_view_export_explode(output):
                 # "transcripts_column": "PZTTranscript",
                 # "transcripts_order": ["column", "file"],
             },
-            ["NM_001005484", "NM_005228", "NR_026818", "NR_024540", "NR_047519"],
+            # Values when not sorting by hgvs (new values are correct because of the same scores)
+            [
+                "NM_001005484",
+                "NM_005228",
+                "NR_026818",
+                "NR_024540",
+                "NR_047519",
+            ],
+        ),
+        (
+            {
+                "hgvs_field": ["snpeff_hgvs"],
+                "uniquify_hgvs": True,
+                # "transcripts": f"{tests_data_folder}/transcripts.tsv",
+                # "transcripts_table": "variants",
+                # "transcripts_column": "PZTTranscript",
+                # "transcripts_order": ["column", "file"],
+            },
+            # Values when sorting by hgvs (new values are correct because of the same scores)
+            [
+                "NM_001005484",
+                "NM_001346898",
+                "NR_024540",
+                "NR_026822",
+                "NR_047525",
+                "NR_047526",
+            ],
         ),
         (
             {
@@ -2596,7 +2622,33 @@ def test_transcripts_create_view_export_explode(output):
                 # "transcripts_column": "PZTTranscript",
                 # "transcripts_order": ["column", "file"],
             },
-            ["NR_047519", "NR_036266", "NM_001346897", "NM_001005484", "NR_024540"],
+            # Values when not sorting by hgvs (new values are correct because of the same scores)
+            [
+                "NR_047519",
+                "NR_036266",
+                "NM_001346897",
+                "NM_001005484",
+                "NR_024540",
+            ],
+        ),
+        (
+            {
+                "hgvs_field": "snpeff_hgvs",
+                "uniquify_hgvs": True,
+                "transcripts": f"{tests_data_folder}/transcripts.tsv",
+                # "transcripts_table": "variants",
+                # "transcripts_column": "PZTTranscript",
+                # "transcripts_order": ["column", "file"],
+            },
+            # Values when sorting by hgvs (new values are correct because of the same scores)
+            [
+                "NM_001005484",
+                "NM_001346897",
+                "NR_024540",
+                "NR_036266",
+                "NR_047525",
+                "NR_047526",
+            ],
         ),
         (
             {
@@ -2721,6 +2773,14 @@ def test_transcripts_create_view_prioritize_nomen(nomen_options, tnomen_expected
         # NOMEN
         variants.calculation_extract_nomen()
 
+        # # DEVEL
+        # query_devel = f"""
+        #     SELECT * FROM transcripts
+        # """
+        # log.debug(
+        #     f""" check transcripts = {variants.get_query_to_df(query=query_devel).to_string()} """
+        # )
+
         # Explode
         variants.explode_infos(
             fields=["TNOMEN", "TVNOMEN", "GNOMEN", "PZTTranscript"],
@@ -2728,8 +2788,8 @@ def test_transcripts_create_view_prioritize_nomen(nomen_options, tnomen_expected
         )
 
         # DEVEL
-        query_check = f"""
-        SELECT "#CHROM", POS, REF, ALT, GNOMEN, TNOMEN, TVNOMEN, PZTTranscript, INFO FROM variants
+        query_check = """
+            SELECT "#CHROM", POS, REF, ALT, GNOMEN, TNOMEN, TVNOMEN, PZTTranscript, INFO FROM variants
         """
         check = variants.get_query_to_df(query=query_check)
 
