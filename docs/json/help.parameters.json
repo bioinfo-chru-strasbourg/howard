@@ -1088,7 +1088,8 @@
       "          \"PZTScore\": \"DESC\"",
       "     }",
       "     \"prioritization_score_mode\": \"HOWARD\",",
-      "     \"prioritization_transcripts\": null,",
+      "     \"prioritization_transcripts_file\": null,",
+      "     \"prioritization_transcripts_columns\": null,",
       "     \"prioritization_transcripts_force\": false,",
       "     \"prioritization_transcripts_version_force\": false",
       "  },",
@@ -1346,7 +1347,8 @@
         "      \"PZTFlag\": \"DESC\",",
         "      \"PZTScore\": \"DESC\"",
         "   },",
-        "   \"prioritization_transcripts\": null,",
+        "   \"prioritization_transcripts_file\": null,",
+        "   \"prioritization_transcripts_columns\": null,",
         "   \"prioritization_transcripts_force\": false,",
         "   \"prioritization_transcripts_version_force\": false",
         "}"
@@ -1390,7 +1392,7 @@
           "}"
         ]
       },
-      "prioritization_transcripts": {
+      "prioritization_transcripts_file": {
         "__help": [
           "Defines a file with an ordered list of transcripts of preference. The first transcript in this list will be chosen, if no order is define (see above), or if this list is not forced (see below)."
         ],
@@ -1399,7 +1401,19 @@
         "__code_type": "json",
         "__examples_code": [
           "# File with transcripts of preference:",
-          "\"prioritization_transcripts\": \"transcripts.tsv\""
+          "\"prioritization_transcripts_file\": \"transcripts.tsv\""
+        ]
+      },
+        "prioritization_transcripts_columns": {
+        "__help": [
+          "Defines the columns to use as allowed transcripts from the transcripts table for prioritization. This option filter transcripts that are not not present in these columns. Useful to ensure transcripts are present in HGVS annotation for example, or are at least annotated by some transcript annotation sources."
+        ],
+        "__type": "Path",
+        "__default": null,
+        "__code_type": "json",
+        "__examples_code": [
+          "# Columns that contains transcripts allowed for prioritization (e.g. 'FeatureID' from snpEff HGVS annotation, 'DBNSFP_transcript' from dbNSFP annotation):",
+          "\"prioritization_transcripts_columns\": [\"FeatureID\", \"DBNSFP_transcript\"]"
         ]
       },
       "prioritization_transcripts_force": {
