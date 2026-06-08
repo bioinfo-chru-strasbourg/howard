@@ -974,18 +974,6 @@ def test_transcripts_prioritization(input_vcf):
             param=param_with_prioritization, strict=False
         )
 
-        # # DEVEL
-        # query_check = """
-        #     SELECT * FROM variants
-        # """
-        # check = variants.get_query_to_df(query=query_check)
-        # log.debug(f"check={check}")
-        # query_check = """
-        #     SELECT * FROM transcripts
-        # """
-        # check = variants.get_query_to_df(query=query_check)
-        # log.debug(f"check={check}")
-
         # Check transcript prioritization result
         # Check table content
         query_check = """
@@ -996,6 +984,397 @@ def test_transcripts_prioritization(input_vcf):
         """
         check = variants.get_query_to_df(query=query_check)
         assert len(check) > 0
+
+        # Check if VCF is in correct format with pyVCF
+        remove_if_exists([output_vcf])
+        variants.export_output(output_file=output_vcf)
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
+
+
+@pytest.mark.parametrize(
+    "input_vcf, param_prioritization, where_clause, raise_value_error, param_struct",
+    [
+        (  # With transcripts of preference selected without columns
+            f"{tests_data_folder}/example.ann.transcripts.vcf.gz",
+            {
+                "profiles": ["transcripts"],
+                "prioritization_config": f"{tests_data_folder}/prioritization_transcripts_profiles.json",
+                "pzprefix": "PZT",
+                "pzfields": ["Score", "Flag"],
+                "prioritization_score_mode": "HOWARD",
+                "prioritization_transcripts_order": {
+                    "PZTFlag": "ASC",
+                    "PZTScore": "DESC",
+                },
+                "prioritization_transcripts_file": f"{tests_data_folder}/transcripts.for_prioritization.tsv",
+                "prioritization_transcripts_columns": None,
+                "prioritization_transcripts_force": False,
+                "prioritization_transcripts_version_force": False,
+            },
+            """
+                "#CHROM" = 'chr7'
+                AND POS = 55249063
+                AND contains(INFO, 'PZTTranscript=NR_047551')
+            """,
+            None,
+            None,
+        ),
+        (  # With transcripts of preference selected with columns after ordering
+            f"{tests_data_folder}/example.ann.transcripts.vcf.gz",
+            {
+                "profiles": ["transcripts"],
+                "prioritization_config": f"{tests_data_folder}/prioritization_transcripts_profiles.json",
+                "pzprefix": "PZT",
+                "pzfields": ["Score", "Flag"],
+                "prioritization_score_mode": "HOWARD",
+                "prioritization_transcripts_order": {
+                    "PZTFlag": "ASC",
+                    "PZTScore": "DESC",
+                },
+                "prioritization_transcripts_file": f"{tests_data_folder}/transcripts.for_prioritization.tsv",
+                "prioritization_transcripts_columns": ["FeatureID"],
+                "prioritization_transcripts_force": False,
+                "prioritization_transcripts_version_force": False,
+            },
+            """
+                "#CHROM" = 'chr7'
+                AND POS = 55249063
+                AND contains(INFO, 'PZTTranscript=NR_047551')
+            """,
+            None,
+            None,
+        ),
+        (  # With transcripts of preference selected without columns
+            f"{tests_data_folder}/example.annotation.multisources.transcripts.vcf",
+            {
+                "profiles": ["transcripts"],
+                "prioritization_config": f"{tests_data_folder}/prioritization_transcripts_profiles.json",
+                "pzprefix": "PZT",
+                "pzfields": ["Score", "Flag"],
+                "prioritization_score_mode": "HOWARD",
+                "prioritization_transcripts_order": {
+                    "PZTFlag": "ASC",
+                    "PZTScore": "DESC",
+                },
+                "prioritization_transcripts_file": f"{tests_data_folder}/transcripts.for_prioritization2.tsv",
+                # "prioritization_transcripts_columns": None,
+                "prioritization_transcripts_force": False,
+                "prioritization_transcripts_version_force": False,
+            },
+            # NM_005422
+            # NM_001378761
+            """
+                "#CHROM" = 'chr11'
+                AND POS = 120973430
+                AND contains(INFO, 'PZTTranscript=NM_001378761')
+            """,
+            None,
+            {
+                "table": "transcripts",
+                "column_id": "transcript",
+                "transcripts_info_json": "transcripts_json",
+                "transcripts_info_field": "transcripts_json",
+                "transcript_id_remove_version": True,
+                "struct": {
+                    "from_column_format": [
+                        {
+                            "transcripts_column": "ANN",
+                            "transcripts_infos_column": "Feature_ID",
+                            "column_rename": None,
+                            "column_clean": True,
+                            "column_case": None,
+                        }
+                    ],
+                    "from_columns_map": [
+                        {
+                            "transcripts_column": "Ensembl_transcriptid",
+                            "transcripts_infos_columns": [
+                                "genename",
+                                "Ensembl_geneid",
+                                "LIST_S2_score",
+                                "LIST_S2_pred",
+                            ],
+                            "column_rename": None,
+                            "column_clean": False,
+                            "column_case": None,
+                        },
+                        {
+                            "transcripts_column": "Ensembl_transcriptid",
+                            "transcripts_infos_columns": [
+                                "genename",
+                                "VARITY_R_score",
+                                "Aloft_pred",
+                            ],
+                            "column_rename": None,
+                            "column_clean": False,
+                            "column_case": None,
+                        },
+                        {
+                            "transcripts_column": "SPiP_transcript",
+                            "transcripts_infos_columns": [
+                                "SPiP_SPiPscore",
+                                "SPiP_Interpretation",
+                                "SPiP_InterConfident",
+                                "SPiP_DistSS",
+                                "SPiP_NearestSS",
+                                "SPiP_RegType",
+                                "SPiP_SPiCEproba",
+                                "SPiP_deltaESRscore",
+                                "SPiP_deltaMES",
+                                "SPiP_mutInPBarea",
+                                "SPiP_classProbaCryptMut",
+                                "SPiP_classProbaCryptWT",
+                                "SPiP_posCryptMut",
+                                "SPiP_posCryptWT",
+                            ],
+                        },
+                        {
+                            "transcripts_column": "OMIM_transcript",
+                            "transcripts_infos_columns": [
+                                "OMIM_phenotype",
+                            ],
+                        },
+                    ],
+                },
+            },
+        ),
+        (  # With transcripts of preference selected without columns
+            f"{tests_data_folder}/example.annotation.multisources.transcripts.vcf",
+            {
+                "profiles": ["transcripts"],
+                "prioritization_config": f"{tests_data_folder}/prioritization_transcripts_profiles.json",
+                "pzprefix": "PZT",
+                "pzfields": ["Score", "Flag"],
+                "prioritization_score_mode": "HOWARD",
+                "prioritization_transcripts_order": {
+                    "PZTFlag": "ASC",
+                    "PZTScore": "DESC",
+                },
+                "prioritization_transcripts_file": f"{tests_data_folder}/transcripts.for_prioritization2.tsv",
+                "prioritization_transcripts_columns": [
+                    "FeatureID",
+                    "SPiP_classProbaCryptMut",  # Example with String as a list, but not a list of transcripts
+                    "SPiP_deltaESRscore",  # Example with String as a list, but not a list of transcripts
+                    # "SPiP_exonSize",  # Example with annotation that does NOT exist in transcript table (error)
+                ],
+                "prioritization_transcripts_force": False,
+                "prioritization_transcripts_version_force": False,
+            },
+            """
+                "#CHROM" = 'chr11'
+                AND POS = 120973430
+                AND contains(INFO, 'PZTTranscript=NM_005422')
+            """,
+            None,
+            {
+                "table": "transcripts",
+                "column_id": "transcript",
+                "transcripts_info_json": "transcripts_json",
+                "transcripts_info_field": "transcripts_json",
+                "transcript_id_remove_version": True,
+                "struct": {
+                    "from_column_format": [
+                        {
+                            "transcripts_column": "ANN",
+                            "transcripts_infos_column": "Feature_ID",
+                            "column_rename": None,
+                            "column_clean": True,
+                            "column_case": None,
+                        }
+                    ],
+                    "from_columns_map": [
+                        {
+                            "transcripts_column": "Ensembl_transcriptid",
+                            "transcripts_infos_columns": [
+                                "genename",
+                                "Ensembl_geneid",
+                                "LIST_S2_score",
+                                "LIST_S2_pred",
+                            ],
+                            "column_rename": None,
+                            "column_clean": False,
+                            "column_case": None,
+                        },
+                        {
+                            "transcripts_column": "Ensembl_transcriptid",
+                            "transcripts_infos_columns": [
+                                "genename",
+                                "VARITY_R_score",
+                                "Aloft_pred",
+                            ],
+                            "column_rename": None,
+                            "column_clean": False,
+                            "column_case": None,
+                        },
+                        {
+                            "transcripts_column": "SPiP_transcript",
+                            "transcripts_infos_columns": [
+                                "SPiP_SPiPscore",
+                                "SPiP_Interpretation",
+                                "SPiP_InterConfident",
+                                "SPiP_DistSS",
+                                "SPiP_NearestSS",
+                                "SPiP_RegType",
+                                "SPiP_SPiCEproba",
+                                "SPiP_deltaESRscore",
+                                "SPiP_deltaMES",
+                                "SPiP_mutInPBarea",
+                                "SPiP_classProbaCryptMut",
+                                "SPiP_classProbaCryptWT",
+                                "SPiP_posCryptMut",
+                                "SPiP_posCryptWT",
+                            ],
+                        },
+                        {
+                            "transcripts_column": "OMIM_transcript",
+                            "transcripts_infos_columns": [
+                                "OMIM_phenotype",
+                            ],
+                        },
+                    ],
+                },
+            },
+        ),
+    ],
+)
+def test_transcripts_prioritization_multiple_param_multi_sources_transcripts(
+    input_vcf,
+    param_prioritization,
+    where_clause,
+    raise_value_error,
+    param_struct,
+):
+    """
+    The `test_transcripts_prioritization_multiple_param` function tests transcript prioritization
+    functionality in a genetic variant analysis pipeline with configurable parameters.
+
+    :param input_vcf: It seems like the `input_vcf` parameter is the path or reference to the VCF
+    (Variant Call Format) file that contains genetic variant data. This file is likely used as input for
+    the genetic variant analysis pipeline where the transcript prioritization functionality is being
+    tested
+    :param param_prioritization: The `param_prioritization` parameter is a dictionary that contains
+    information about the prioritization configuration for transcripts in a genetic variant analysis
+    pipeline. It includes details such as profiles, prioritization configuration file path, prefix, and
+    score mode. This parameter is used to customize how transcripts are prioritized during the
+    :param where_clause: The `where_clause` parameter in the `test_transcripts_prioritization` function
+    is a SQL WHERE clause that is used to filter the results of a query. It specifies a condition that
+    must be met for a row to be included in the result set
+    :param raise_value_error: The `raise_value_error` parameter in the `test_transcripts_prioritization`
+    function is a boolean flag that determines whether the test should raise a `ValueError` and check if
+    the raised error message matches a specific value. If `raise_value_error` is `True`, the test will
+    raise
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        output_vcf = f"{tmp_dir}/output.vcf"
+
+        # Construct param dict
+        param = {}
+
+        if not param_struct:
+            param_struct = {
+                "table": "transcripts",
+                "column_id": "transcript",
+                "transcripts_info_json": "transcripts_json",
+                "transcripts_info_field": "transcripts_json",
+                "transcript_id_remove_version": True,
+                "struct": {
+                    "from_column_format": [
+                        {
+                            "transcripts_column": "ANN",
+                            "transcripts_infos_column": "Feature_ID",
+                            "column_rename": None,
+                            "column_clean": True,
+                            "column_case": None,
+                        }
+                    ],
+                    "from_columns_map": [
+                        {
+                            "transcripts_column": "Ensembl_transcriptid",
+                            "transcripts_infos_columns": [
+                                "genename",
+                                "Ensembl_geneid",
+                                "LIST_S2_score",
+                                "LIST_S2_pred",
+                            ],
+                            "column_rename": None,
+                            "column_clean": False,
+                            "column_case": None,
+                        },
+                        {
+                            "transcripts_column": "Ensembl_transcriptid",
+                            "transcripts_infos_columns": [
+                                "genename",
+                                "VARITY_R_score",
+                                "Aloft_pred",
+                            ],
+                            "column_rename": None,
+                            "column_clean": False,
+                            "column_case": None,
+                        },
+                    ],
+                },
+            }
+
+        # Param without prioritization
+        param_without_prioritization = {"transcripts": dict(param_struct)}
+
+        # Param with prioritization
+        param_with_prioritization = {"transcripts": dict(param_struct)}
+        param_with_prioritization["transcripts"]["prioritization"] = dict(
+            param_prioritization
+        )
+
+        # Create object
+        variants = Variants(
+            conn=None,
+            input=input_vcf,
+            output=output_vcf,
+            param=param,
+            load=True,
+        )
+
+        # Create transcript view
+        transcripts_table = variants.create_transcript_view(
+            param=param_without_prioritization
+        )
+
+        # Check table exists
+        assert transcripts_table is not None
+
+        # If Raise with Value Error
+        if raise_value_error:
+
+            # Catch ValueError
+            with pytest.raises(ValueError) as excinfo:
+
+                # Prioritization
+                variants.transcripts_prioritization(param=param_with_prioritization)
+
+            assert str(excinfo.value) == raise_value_error
+
+        # If expected results
+        if where_clause:
+
+            # Prioritization
+            assert variants.transcripts_prioritization(param=param_with_prioritization)
+
+            # Check transcript prioritization result
+            # Check table content
+            query_check = f"""
+                SELECT * FROM variants
+                WHERE {where_clause}
+            """
+            check = variants.get_query_to_df(query=query_check)
+            assert len(check) > 0
+
+            # Export
+            ########
 
         # Check if VCF is in correct format with pyVCF
         remove_if_exists([output_vcf])
@@ -1330,19 +1709,6 @@ def test_transcripts_prioritization_multiple_param(
 
             assert str(excinfo.value) == raise_value_error
 
-        # # DEVEL
-        # query_check_devel = f"""
-        #     SELECT INFO FROM variants
-        # """
-        # check_devel = variants.get_query_to_df(query=query_check_devel)
-        # log.debug(f"check: {check_devel.to_string()}")
-        # # DEVEL
-        # query_check_devel = f"""
-        #     SELECT * FROM transcripts
-        # """
-        # check_devel = variants.get_query_to_df(query=query_check_devel)
-        # log.debug(f"check: {check_devel.to_string()}")
-
         # If expected results
         if where_clause:
 
@@ -1358,16 +1724,16 @@ def test_transcripts_prioritization_multiple_param(
             check = variants.get_query_to_df(query=query_check)
             assert len(check) > 0
 
-            # Export
-            ########
+        # Export
+        ########
 
-            # Check if VCF is in correct format with pyVCF
-            remove_if_exists([output_vcf])
-            variants.export_output(output_file=output_vcf)
-            try:
-                vcf.Reader(filename=output_vcf)
-            except:
-                assert False
+        # Check if VCF is in correct format with pyVCF
+        remove_if_exists([output_vcf])
+        variants.export_output(output_file=output_vcf)
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
 
 
 @pytest.mark.parametrize(
@@ -2586,7 +2952,33 @@ def test_transcripts_create_view_export_explode(output):
                 # "transcripts_column": "PZTTranscript",
                 # "transcripts_order": ["column", "file"],
             },
-            ["NM_001005484", "NM_005228", "NR_026818", "NR_024540", "NR_047519"],
+            # Values when not sorting by hgvs (new values are correct because of the same scores)
+            [
+                "NM_001005484",
+                "NM_005228",
+                "NR_026818",
+                "NR_024540",
+                "NR_047519",
+            ],
+        ),
+        (
+            {
+                "hgvs_field": ["snpeff_hgvs"],
+                "uniquify_hgvs": True,
+                # "transcripts": f"{tests_data_folder}/transcripts.tsv",
+                # "transcripts_table": "variants",
+                # "transcripts_column": "PZTTranscript",
+                # "transcripts_order": ["column", "file"],
+            },
+            # Values when sorting by hgvs (new values are correct because of the same scores)
+            [
+                "NM_001005484",
+                "NM_001346898",
+                "NR_024540",
+                "NR_026822",
+                "NR_047525",
+                "NR_047526",
+            ],
         ),
         (
             {
@@ -2596,7 +2988,33 @@ def test_transcripts_create_view_export_explode(output):
                 # "transcripts_column": "PZTTranscript",
                 # "transcripts_order": ["column", "file"],
             },
-            ["NR_047519", "NR_036266", "NM_001346897", "NM_001005484", "NR_024540"],
+            # Values when not sorting by hgvs (new values are correct because of the same scores)
+            [
+                "NR_047519",
+                "NR_036266",
+                "NM_001346897",
+                "NM_001005484",
+                "NR_024540",
+            ],
+        ),
+        (
+            {
+                "hgvs_field": "snpeff_hgvs",
+                "uniquify_hgvs": True,
+                "transcripts": f"{tests_data_folder}/transcripts.tsv",
+                # "transcripts_table": "variants",
+                # "transcripts_column": "PZTTranscript",
+                # "transcripts_order": ["column", "file"],
+            },
+            # Values when sorting by hgvs (new values are correct because of the same scores)
+            [
+                "NM_001005484",
+                "NM_001346897",
+                "NR_024540",
+                "NR_036266",
+                "NR_047525",
+                "NR_047526",
+            ],
         ),
         (
             {
@@ -2721,6 +3139,14 @@ def test_transcripts_create_view_prioritize_nomen(nomen_options, tnomen_expected
         # NOMEN
         variants.calculation_extract_nomen()
 
+        # # DEVEL
+        # query_devel = f"""
+        #     SELECT * FROM transcripts
+        # """
+        # log.debug(
+        #     f""" check transcripts = {variants.get_query_to_df(query=query_devel).to_string()} """
+        # )
+
         # Explode
         variants.explode_infos(
             fields=["TNOMEN", "TVNOMEN", "GNOMEN", "PZTTranscript"],
@@ -2728,8 +3154,8 @@ def test_transcripts_create_view_prioritize_nomen(nomen_options, tnomen_expected
         )
 
         # DEVEL
-        query_check = f"""
-        SELECT "#CHROM", POS, REF, ALT, GNOMEN, TNOMEN, TVNOMEN, PZTTranscript, INFO FROM variants
+        query_check = """
+            SELECT "#CHROM", POS, REF, ALT, GNOMEN, TNOMEN, TVNOMEN, PZTTranscript, INFO FROM variants
         """
         check = variants.get_query_to_df(query=query_check)
 

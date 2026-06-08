@@ -479,6 +479,214 @@ def test_calculation_nomen():
             assert False
 
 
+def test_calculation_nomen_one_hgvs_field():
+    """
+    This function tests the calculation and annotation of genetic variants using input parameters and
+    checks if the output VCF file is in the correct format.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.annotated.hgvs.annovar.snpeff.vcf"
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+        input_param = {
+            "calculation": {
+                "calculations": {
+                    "NOMEN": {
+                        "options": {
+                            "hgvs_fields": ["AAChange_refGene"],
+                        }
+                    }
+                }
+            },
+        }
+
+        # Create object
+        variants = Variants(
+            input=input_vcf,
+            output=output_vcf,
+            config=tests_config,
+            param=input_param,
+            load=True,
+        )
+
+        # Annotation
+        variants.annotation()
+
+        # Calculation
+        variants.calculation()
+
+        # Check number of NOMEN (2)
+        result = variants.get_query_to_df(
+            """SELECT INFO FROM variants WHERE INFO LIKE '%NOMEN=%' """
+        )
+        assert len(result) == 2
+
+        # Check if VCF is in correct format with pyVCF
+        remove_if_exists([output_vcf])
+        variants.export_output()
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
+
+
+def test_calculation_nomen_two_hgvs_fields():
+    """
+    This function tests the calculation and annotation of genetic variants using input parameters and
+    checks if the output VCF file is in the correct format.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.annotated.hgvs.annovar.snpeff.vcf"
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+        input_param = {
+            "calculation": {
+                "calculations": {
+                    "NOMEN": {
+                        "options": {
+                            "hgvs_fields": ["AAChange_refGene", "snpeff_hgvs"],
+                        }
+                    }
+                }
+            },
+        }
+
+        # Create object
+        variants = Variants(
+            input=input_vcf,
+            output=output_vcf,
+            config=tests_config,
+            param=input_param,
+            load=True,
+        )
+
+        # Annotation
+        variants.annotation()
+
+        # Calculation
+        variants.calculation()
+
+        # Check number of NOMEN (2)
+        result = variants.get_query_to_df(
+            """SELECT INFO FROM variants WHERE INFO LIKE '%NOMEN=%' """
+        )
+        assert len(result) == 7
+
+        # Check if VCF is in correct format with pyVCF
+        remove_if_exists([output_vcf])
+        variants.export_output()
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
+
+
+def test_calculation_nomen_two_hgvs_fields_uniquify():
+    """
+    This function tests the calculation and annotation of genetic variants using input parameters and
+    checks if the output VCF file is in the correct format.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.annotated.hgvs.annovar.snpeff.vcf"
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+        input_param = {
+            "calculation": {
+                "calculations": {
+                    "NOMEN": {
+                        "options": {
+                            "hgvs_fields": ["AAChange_refGene", "snpeff_hgvs"],
+                            "uniquify_hgvs": False,
+                        }
+                    }
+                }
+            },
+        }
+
+        # Create object
+        variants = Variants(
+            input=input_vcf,
+            output=output_vcf,
+            config=tests_config,
+            param=input_param,
+            load=True,
+        )
+
+        # Annotation
+        variants.annotation()
+
+        # Calculation
+        variants.calculation()
+
+        # Check number of NOMEN (2)
+        result = variants.get_query_to_df(
+            """SELECT INFO FROM variants WHERE INFO LIKE '%NOMEN=%' """
+        )
+        assert len(result) == 7
+
+        # Check if VCF is in correct format with pyVCF
+        remove_if_exists([output_vcf])
+        variants.export_output()
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
+
+
+def test_calculation_merged_hgvs():
+    """
+    This function tests the calculation of merging multiple HGVS annotations.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        # input_vcf = tests_data_folder + "/example.annotated.annovar.snpeff.vcf"
+        input_vcf = tests_data_folder + "/example.annotated.hgvs.annovar.snpeff.vcf"
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+        input_param = {
+            "calculation": {"calculations": {"MERGED_HGVS": None}},
+        }
+
+        # Create object
+        variants = Variants(
+            input=input_vcf,
+            output=output_vcf,
+            config=tests_config,
+            param=input_param,
+            load=True,
+        )
+
+        # Annotation
+        variants.annotation()
+
+        # Calculation
+        variants.calculation()
+
+        # Check number of NOMEN
+        annovar_hgvs = "AAChange_refGene=EGFR:NM_001346941:exon14:c.1560G>A:p.Q520Q,EGFR:NM_001346897:exon19:c.2226G>A:p.Q742Q,EGFR:NM_001346899:exon19:c.2226G>A:p.Q742Q,EGFR:NM_001346898:exon20:c.2361G>A:p.Q787Q,EGFR:NM_001346900:exon20:c.2202G>A:p.Q734Q,EGFR:NM_005228:exon20:c.2361G>A:p.Q787Q"
+        snpeff_hgvs = "snpeff_hgvs=EGFR:NM_005228.5:exon20:c.2361G>A:p.Gln787Gln,EGFR:NM_001346897.2:exon19:c.2226G>A:p.Gln742Gln,EGFR:NM_001346898.2:exon20:c.2361G>A:p.Gln787Gln,EGFR:NM_001346941.2:exon14:c.1560G>A:p.Gln520Gln,EGFR:NM_001346899.1:exon19:c.2226G>A:p.Gln742Gln,EGFR:NM_001346900.2:exon20:c.2202G>A:p.Gln734Gln,EGFR-AS1:NR_047551.1:exon2:n.1201C>T"
+        merged_hgvs = "merged_hgvs=EGFR:NM_005228:exon20:c.2361G>A:p.Q787Q,EGFR:NM_001346898:exon20:c.2361G>A:p.Q787Q,EGFR:NM_001346898.2:exon20:c.2361G>A:p.Gln787Gln,EGFR:NM_001346899:exon19:c.2226G>A:p.Q742Q,EGFR:NM_001346900.2:exon20:c.2202G>A:p.Gln734Gln,EGFR:NM_001346941:exon14:c.1560G>A:p.Q520Q,EGFR:NM_001346900:exon20:c.2202G>A:p.Q734Q,EGFR:NM_005228.5:exon20:c.2361G>A:p.Gln787Gln,EGFR-AS1:NR_047551.1:exon2:n.1201C>T,EGFR:NM_001346899.1:exon19:c.2226G>A:p.Gln742Gln,EGFR:NM_001346941.2:exon14:c.1560G>A:p.Gln520Gln,EGFR:NM_001346897:exon19:c.2226G>A:p.Q742Q,EGFR:NM_001346897.2:exon19:c.2226G>A:p.Gln742Gln"
+        result = variants.get_query_to_df(
+            f"""SELECT INFO FROM variants WHERE INFO LIKE '%{annovar_hgvs}%' AND INFO LIKE '%{snpeff_hgvs}%' AND INFO LIKE '%{merged_hgvs}%' """
+        )
+        assert len(result) == 1
+
+        # Check if VCF is in correct format with pyVCF
+        remove_if_exists([output_vcf])
+        variants.export_output()
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
+
+
 def test_calculation_vartype():
     """
     This function tests the calculation of variant types in a VCF file using the Variants class.
