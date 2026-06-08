@@ -161,10 +161,12 @@ title: HOWARD Help Parameters
     - [<span class="toc-section-number">10.11.7</span>
       prioritization_transcripts_order](#prioritization_transcripts_order)
     - [<span class="toc-section-number">10.11.8</span>
-      prioritization_transcripts](#prioritization_transcripts)
+      prioritization_transcripts_file](#prioritization_transcripts_file)
     - [<span class="toc-section-number">10.11.9</span>
-      prioritization_transcripts_force](#prioritization_transcripts_force)
+      prioritization_transcripts_columns](#prioritization_transcripts_columns)
     - [<span class="toc-section-number">10.11.10</span>
+      prioritization_transcripts_force](#prioritization_transcripts_force)
+    - [<span class="toc-section-number">10.11.11</span>
       prioritization_transcripts_version_force](#prioritization_transcripts_version_force)
   - [<span class="toc-section-number">10.12</span> export](#export-1)
     - [<span class="toc-section-number">10.12.1</span> output](#output)
@@ -2144,7 +2146,8 @@ Examples:
 >              "PZTScore": "DESC"
 >         }
 >         "prioritization_score_mode": "HOWARD",
->         "prioritization_transcripts": null,
+>         "prioritization_transcripts_file": null,
+>         "prioritization_transcripts_columns": null,
 >         "prioritization_transcripts_force": false,
 >         "prioritization_transcripts_version_force": false
 >      },
@@ -2551,7 +2554,8 @@ Examples:
 >          "PZTFlag": "DESC",
 >          "PZTScore": "DESC"
 >       },
->       "prioritization_transcripts": null,
+>       "prioritization_transcripts_file": null,
+>       "prioritization_transcripts_columns": null,
 >       "prioritization_transcripts_force": false,
 >       "prioritization_transcripts_version_force": false
 >    }
@@ -2652,7 +2656,7 @@ Examples:
 > }
 > ```
 
-### prioritization_transcripts
+### prioritization_transcripts_file
 
 Defines a file with an ordered list of transcripts of preference. The
 first transcript in this list will be chosen, if no order is define (see
@@ -2668,7 +2672,31 @@ Examples:
 
 > ``` json
 > {
->    "prioritization_transcripts": "transcripts.tsv"
+>    "prioritization_transcripts_file": "transcripts.tsv"
+> }
+> ```
+
+### prioritization_transcripts_columns
+
+Defines the columns to use as allowed transcripts from the transcripts
+table for prioritization. This option filter transcripts that are not
+not present in these columns. Useful to ensure transcripts are present
+in HGVS annotation for example, or are at least annotated by some
+transcript annotation sources.
+
+Type: `Path`
+
+Default: `None`
+
+Examples:
+
+> Columns that contains transcripts allowed for prioritization (e.g.
+> 'FeatureID' from snpEff HGVS annotation, 'DBNSFP_transcript' from
+> dbNSFP annotation):
+
+> ``` json
+> {
+>    "prioritization_transcripts_columns": ["FeatureID", "DBNSFP_transcript"]
 > }
 > ```
 
