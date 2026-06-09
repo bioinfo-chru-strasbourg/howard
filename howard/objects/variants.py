@@ -1,7 +1,5 @@
-import datetime
 import gc
 import glob
-import gzip
 import io
 import math
 import os
@@ -10,66 +8,41 @@ import random
 import re
 import sqlite3
 import string
-import subprocess
-from tempfile import NamedTemporaryFile, TemporaryDirectory
+from tempfile import TemporaryDirectory
 import tempfile
 import duckdb  # type: ignore
 import json
 import yaml  # type: ignore
 import Bio.bgzf as bgzf  # type: ignore
 import pandas as pd  # type: ignore
-import polars as pl  # type: ignore
-from pyfaidx import Fasta  # type: ignore
 import numpy as np  # type: ignore
 import vcf  # type: ignore
 import logging as log
 import fastparquet as fp  # type: ignore
-import cyvcf2  # type: ignore
-import pyBigWig  # type: ignore
 
 from howard.functions.commons import (
     DEFAULT_CHUNK_SIZE,
     DEFAULT_ASSEMBLY,
-    add_value_into_dict,
-    annotation_file_find,
-    barcode,
     cast_columns_query,
-    check_docker_image_exists,
     clean_annotation_field,
-    command,
     convert_markdown_to_html,
     convert_markdown_to_pdf,
     detect_column_type,
     duckdb_has_spilled,
     escape_markdown_table_chars,
     extract_memory_in_go,
-    find,
-    find_file_prefix,
-    find_genome,
-    findbypipeline,
     full_path,
-    genotype_stats,
-    genotypeconcordance,
-    get_bin_command,
     get_file_compressed,
     get_file_format,
     get_memory,
     get_random,
-    get_tmp,
-    merge_regions,
-    params_string_to_dict,
     remove_if_exists,
     run_parallel_commands,
-    transcripts_file_to_df,
-    trio,
-    vaf_normalization,
     vcf_required,
     file_format_delimiters,
-    folder_config,
     code_type_map,
     comparison_map,
     code_type_map_to_sql,
-    code_type_map_to_vcf,
     sort_contigs,
     choose_update_strategy_safe,
 )
@@ -82,9 +55,14 @@ from .variants_mixin.view import variants_view
 from .variants_mixin.transcripts import variants_transcripts
 from .variants_mixin.annotation import variants_annotation
 from .variants_mixin.calculation import variants_calculation
+from .variants_mixin.tmp import variants_tmp
 
 class Variants(
-    variants_view, variants_transcripts, variants_annotation, variants_calculation
+    variants_view,
+    variants_transcripts,
+    variants_annotation,
+    variants_calculation,
+    variants_tmp,
 ):
 
     def __init__(
@@ -138,82 +116,94 @@ class Variants(
         if load:
             self.load_data(input)
 
-    def set_tmp_files(self, tmp_files: list = []) -> None:
-        """
-        Set temporary files
+    # def set_tmp_files(self, tmp_files: list = []) -> None:
+    #     """
+    #     Set temporary files
 
-        :param tmp_files: The `tmp_files` parameter in the `set_tmp_files` method is a list of temporary
-        files that you want to set as the `tmp_files` attribute of the class. If no files are provided,
-        it defaults to an empty list
-        :type tmp_files: list
+    #     :param tmp_files: The `tmp_files` parameter in the `set_tmp_files` method is a list of temporary
+    #     files that you want to set as the `tmp_files` attribute of the class. If no files are provided,
+    #     it defaults to an empty list
+    #     :type tmp_files: list
 
-        :return: The `set_tmp_files` method is returning `None`.
-        """
+    #     :return: The `set_tmp_files` method is returning `None`.
+    #     """
 
-        # Init
-        if tmp_files is None:
-            tmp_files = []
+    #     # Init
+    #     if tmp_files is None:
+    #         tmp_files = []
 
-        # Create tmp_files attribute
-        self.tmp_files = tmp_files
+    #     # Create tmp_files attribute
+    #     self.tmp_files = tmp_files
 
-    def get_tmp_files(self) -> list:
-        """
-        Get temporary files
-        """
+    # def get_tmp_files(self) -> list:
+    #     """
+    #     Get temporary files
+    #     """
 
-        # Return tmp_files attribute
-        return self.tmp_files
+    #     # Return tmp_files attribute
+    #     return self.tmp_files
 
-    def add_tmp_files(self, tmp_files: list = []) -> None:
-        """
-        Extend a temporary file list to the list of temporary files
+    # def add_tmp_files(self, tmp_files: list = []) -> None:
+    #     """
+    #     Extend a temporary file list to the list of temporary files
 
-        :param tmp_files: The `tmp_files` parameter in the `add_tmp_files` method is a list of temporary
-        files that you want to add to the `tmp_files` attribute of the class. If no files are provided,
-        it defaults to an empty list
-        :type tmp_files: list
+    #     :param tmp_files: The `tmp_files` parameter in the `add_tmp_files` method is a list of temporary
+    #     files that you want to add to the `tmp_files` attribute of the class. If no files are provided,
+    #     it defaults to an empty list
+    #     :type tmp_files: list
 
-        :return: The `add_tmp_files` method is returning `None`.
-        """
+    #     :return: The `add_tmp_files` method is returning `None`.
+    #     """
 
-        # Init
-        if tmp_files is None:
-            tmp_files = []
+    #     # Init
+    #     if tmp_files is None:
+    #         tmp_files = []
 
-        # Append list to tmp_files attribute
-        self.tmp_files.extend(tmp_files)
+    #     # Append list to tmp_files attribute
+    #     self.tmp_files.extend(tmp_files)
 
-    def remove_tmp_files(self, tmp_files: list = []) -> None:
-        """
-        Remove files from temporary files attribute
+    # def remove_tmp_files(self, tmp_files: list = []) -> None:
+    #     """
+    #     Remove files from temporary files attribute
 
-        :param tmp_files: The `tmp_files` parameter in the `remove_tmp_files` method is a list of
-        temporary files that you want to remove from the `tmp_files` attribute of the class. If no
-        files are provided, it defaults to an empty list
-        :type tmp_files: list
+    #     :param tmp_files: The `tmp_files` parameter in the `remove_tmp_files` method is a list of
+    #     temporary files that you want to remove from the `tmp_files` attribute of the class. If no
+    #     files are provided, it defaults to an empty list
+    #     :type tmp_files: list
 
-        :return: The `remove_tmp_files` method is returning `None`.
-        """
+    #     :return: The `remove_tmp_files` method is returning `None`.
+    #     """
 
-        # Init
-        if tmp_files is None:
-            tmp_files = []
+    #     # Init
+    #     if tmp_files is None:
+    #         tmp_files = []
 
-        # Remove tmp files from tmp_files attribute
-        self.tmp_files = [f for f in self.get_tmp_files() if f not in tmp_files]
+    #     # Remove tmp files from tmp_files attribute
+    #     self.tmp_files = [f for f in self.get_tmp_files() if f not in tmp_files]
 
-    def clean_tmp_files(self) -> list:
-        """
-        Remove temporary files
-        """
+    # def clean_tmp_files(self) -> list:
+    #     """
+    #     Remove temporary files
+    #     """
 
-        # Remove tmp_files files
-        tmp_files = self.get_tmp_files()
-        remove_if_exists(tmp_files)
-        self.tmp_files = []
+    #     # Remove tmp_files files
+    #     tmp_files = self.get_tmp_files()
+    #     remove_if_exists(tmp_files)
+    #     self.tmp_files = []
 
-        return tmp_files
+    #     return tmp_files
+
+    # def get_tmp_dir(self) -> str:
+    #     """
+    #     The function `get_tmp_dir` returns the temporary directory path based on configuration
+    #     parameters or a default path.
+    #     :return: The `get_tmp_dir` method is returning the temporary directory path based on the
+    #     configuration, parameters, and a default value of "/tmp".
+    #     """
+
+    #     return get_tmp(
+    #         config=self.get_config(), param=self.get_param(), default_tmp="/tmp"
+    #     )
 
     def get_access(self, default: str = None) -> str:
         """
@@ -1761,18 +1751,6 @@ class Variants(
         else:
             table_variants = self.table_variants
         return table_variants
-
-    def get_tmp_dir(self) -> str:
-        """
-        The function `get_tmp_dir` returns the temporary directory path based on configuration
-        parameters or a default path.
-        :return: The `get_tmp_dir` method is returning the temporary directory path based on the
-        configuration, parameters, and a default value of "/tmp".
-        """
-
-        return get_tmp(
-            config=self.get_config(), param=self.get_param(), default_tmp="/tmp"
-        )
 
     def get_connexion_type(self) -> str:
         """
