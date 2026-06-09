@@ -1443,16 +1443,21 @@ class variants_calculation:
         # Remove tables and view
         self.remove_tables_or_views(tables=[annotations_view, nomen_annotations_view])
 
-    def calculation_find_by_pipeline(self, tag: str = "findbypipeline") -> None:
+    def calculation_find_by_pipeline(
+        self, tag: str = "findbypipeline", method: str = "count"
+    ) -> None:
         """
         The function `calculation_find_by_pipeline` performs a calculation to find the number of
-        pipeline/sample for a variant and updates the variant information in a VCF file.
+        pipeline/sample for a variant and updates the variant information in a VCF file. It checks if the VCF file contains the "FORMAT" column and sample information, then it creates a new annotation field in the VCF header for the "findbypipeline" information. The function retrieves the variant information from the variants table, applies a calculation to determine the number of pipelines/samples for each variant, and updates the "INFO" field in the variants table with this information. Finally, it cleans up any temporary columns and dataframes used during the calculation.
 
         :param tag: The `tag` parameter is a string that represents the annotation field for the
         "findbypipeline" information in the VCF file. It is used to create the annotation field in the
         VCF header and to update the corresponding field in the variants table, defaults to
         findbypipeline
         :type tag: str (optional)
+        :param method: The `method` parameter is a string that specifies the method to be used for
+        calculating the "findbypipeline" information. It determines how the number of pipelines/samples for a variant will be counted. The default value is "count", which means that the function will count the number of pipelines/samples for each variant. Other possible values for this parameter could be "list", which would mean that the function will create a list of pipelines/samples for each variant instead of counting them. The specific implementation of the "findbypipeline" calculation will depend on the chosen method and how the data is structured in the variants table and the VCF file.
+        :type method: str (optional)
         """
 
         # if FORMAT and samples
@@ -1466,7 +1471,7 @@ class variants_calculation:
 
             # VCF infos tags
             vcf_infos_tags = {
-                findbypipeline_tag: f"Number of pipeline/sample for a variant ({findbypipeline_tag})",
+                findbypipeline_tag: f"Samples of a variant ({method})",
             }
 
             # Prefix
@@ -1499,7 +1504,7 @@ class variants_calculation:
             dataframe_findbypipeline[findbypipeline_infos] = (
                 dataframe_findbypipeline.apply(
                     lambda row: findbypipeline(
-                        row, samples=self.get_header_sample_list()
+                        row, samples=self.get_header_sample_list(), method=method
                     ),
                     axis=1,
                 )
