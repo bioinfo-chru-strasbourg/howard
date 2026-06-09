@@ -1247,19 +1247,24 @@ def get_file_format(filename: str = None) -> str:
     return filename_format
 
 
-def findbypipeline(df, samples: list = []):
+def findbypipeline(df, samples: list = [], method: str = "count"):
     """
     This function takes a dataframe and a list of samples, and returns the number of pipelines found in
-    the samples that have a non-null GT value.
+    the samples that have a non-null GT value. The function can return either a count of the pipelines or a list of the pipelines found, depending on the specified method.
 
     :param df: The input dataframe containing genetic variant information
     :param samples: The `samples` parameter is a list of strings representing the names of the
     samples/pipelines to be searched for in the input dataframe `df`
     :type samples: list
+    :param method: The `method` parameter in the `findbypipeline` function is used to specify the type of
+    output that the function should return. It can take two values: "count" or "list". If `method`
+    is set to "count", the function will return a string in the format of "nb_pipeline_find/nb_pipeline", where `nb_pipeline_find` is the number of pipelines in the input list `samples` that have a non-null GT value in the input dataframe `df`, and `nb_pipeline` is the total number of pipelines in the input list `samples`. If `method` is set to "list", the function will return a comma-separated string of the names of the pipelines in the input list `samples` that have a non-null GT value in the input dataframe `df`. If the input list `samples` is empty, the function will return "0/0" for the "count" method and an empty string for the "list" method.
+    :type method: str (optional)
+
     :return: a string in the format of "nb_pipeline_find/nb_pipeline", where nb_pipeline_find is the
     number of pipelines in the input list samples that have a non-null GT value in the input dataframe
     df, and nb_pipeline is the total number of pipelines in the input list samples. If the input list
-    samples is empty, the function returns "0/0".
+    samples is empty, the function returns "0/0" for the "count" method and an empty string for the "list" method.
     """
 
     # format
@@ -1272,6 +1277,7 @@ def findbypipeline(df, samples: list = []):
     # init
     nb_pipeline = len(samples)
     nb_pipeline_find = 0
+    list_pipeline_find = []
 
     # For each sample/pipeline
     for sample in samples:
@@ -1288,8 +1294,16 @@ def findbypipeline(df, samples: list = []):
         # Check if GT not null
         if sample_dict["GT"].replace("0", ".") not in ["", ".", "./.", ".|."]:
             nb_pipeline_find += 1
+            list_pipeline_find.append(sample)
 
-    return f"{nb_pipeline_find}/{nb_pipeline}"
+    if method == "count":
+        return f"{nb_pipeline_find}/{nb_pipeline}"
+    elif method == "list":
+        return ",".join(list_pipeline_find)
+    else:
+        return None
+
+    # return f"{nb_pipeline_find}/{nb_pipeline}", ",".join(list_pipeline_find)
 
 
 def genotypeconcordance(df, samples: list = []):

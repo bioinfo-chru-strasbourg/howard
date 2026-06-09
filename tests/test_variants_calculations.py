@@ -1053,6 +1053,124 @@ def test_calculation_nomen_snpeff_hgvs_notranscripts():
     assert str(e.value) == f"Transcript file '{transcripts_file}' does NOT exist"
 
 
+def test_calculation_find_and_list_bypipeline():
+    """
+    This is a test function for the "FINDBYPIPELINE" calculation in the Variants class, which checks if
+    the calculation is performed correctly and the output VCF file is in the correct format.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.full.vcf.gz"
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+
+        # Construct param dict
+        param = {
+            "calculation": {
+                "calculations": {"FINDBYPIPELINE": None, "LISTBYPIPELINE": None}
+            }
+        }
+
+        # Create object
+        variants = Variants(
+            conn=None, input=input_vcf, output=output_vcf, param=param, load=True
+        )
+
+        # Calculation
+        variants.calculation()
+
+        result = variants.get_query_to_df(
+            """ SELECT INFO FROM variants WHERE INFO LIKE '%findbypipeline%' """
+        )
+        assert len(result) == 42
+
+        result = variants.get_query_to_df(
+            """ SELECT INFO FROM variants WHERE INFO LIKE '%listbypipeline%' """
+        )
+        assert len(result) == 42
+
+        result = variants.get_query_to_df(
+            """ SELECT * FROM variants WHERE INFO LIKE '%findbypipeline=4/4%' """
+        )
+        assert len(result) == 7
+
+        result = variants.get_query_to_df(
+            """ SELECT * FROM variants WHERE INFO LIKE '%listbypipeline=sample1,sample2,sample3,sample4%' """
+        )
+        assert len(result) == 7
+
+        result = variants.get_query_to_df(
+            """ SELECT * FROM variants WHERE INFO LIKE '%findbypipeline=3/4%' """
+        )
+        assert len(result) == 7
+
+        result = variants.get_query_to_df(
+            """ SELECT * FROM variants WHERE INFO LIKE '%findbypipeline=1/4;listbypipeline=sample1' """
+        )
+        assert len(result) == 1
+
+        # Check if VCF is in correct format with pyVCF
+        remove_if_exists([output_vcf])
+        variants.export_output()
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
+
+
+def test_calculation_listbypipeline():
+    """
+    This is a test function for the "LISTBYPIPELINE" calculation in the Variants class, which checks if
+    the calculation is performed correctly and the output VCF file is in the correct format.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.vcf.gz"
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+
+        # Construct param dict
+        param = {"calculation": {"calculations": {"LISTBYPIPELINE": None}}}
+
+        # Create object
+        variants = Variants(
+            conn=None, input=input_vcf, output=output_vcf, param=param, load=True
+        )
+
+        # Calculation
+        variants.calculation()
+
+        result = variants.get_query_to_df(
+            """ SELECT INFO FROM variants WHERE INFO LIKE '%listbypipeline%' """
+        )
+        assert len(result) == 7
+
+        result = variants.get_query_to_df(
+            """ SELECT * FROM variants WHERE INFO LIKE '%listbypipeline=sample1,sample2,sample3,sample4%' """
+        )
+        assert len(result) == 1
+
+        result = variants.get_query_to_df(
+            """ SELECT * FROM variants WHERE INFO LIKE '%listbypipeline=sample1,sample2,sample3%' """
+        )
+        assert len(result) == 1
+
+        result = variants.get_query_to_df(
+            """ SELECT * FROM variants WHERE INFO LIKE '%listbypipeline=sample1' """
+        )
+        assert len(result) == 0
+
+        # Check if VCF is in correct format with pyVCF
+        remove_if_exists([output_vcf])
+        variants.export_output()
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
+
+
 def test_calculation_findbypipeline():
     """
     This is a test function for the "FINDBYPIPELINE" calculation in the Variants class, which checks if
@@ -1102,7 +1220,7 @@ def test_calculation_findbypipeline():
 
 def test_calculation_findbysample():
     """
-    This is a test function for the "FINDBYPIPELINE" calculation in the Variants class, which checks if
+    This is a test function for the "FINDBYSAMPLE" calculation in the Variants class, which checks if
     the calculation is performed correctly and the output VCF file is in the correct format.
     """
 

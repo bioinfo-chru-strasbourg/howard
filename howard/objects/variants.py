@@ -4140,7 +4140,15 @@ class Variants(
                     "description": "Number of pipeline that identify the variant (for multi pipeline VCF)",
                     "available": True,
                     "function_name": "calculation_find_by_pipeline",
-                    "function_params": ["findbypipeline"],
+                    "function_params": ["findbypipeline", "count"],
+                },
+                "LISTBYPIPELINE": {
+                    "type": "python",
+                    "name": "LISTBYPIPELINE",
+                    "description": "List of pipelines that identify the variant (for multi pipeline VCF)",
+                    "available": True,
+                    "function_name": "calculation_find_by_pipeline",
+                    "function_params": ["listbypipeline", "list"],
                 },
                 "FINDBYSAMPLE": {
                     "type": "python",
@@ -4148,7 +4156,15 @@ class Variants(
                     "description": "Number of sample that have a genotype for the variant (for multi sample VCF)",
                     "available": True,
                     "function_name": "calculation_find_by_pipeline",
-                    "function_params": ["findbysample"],
+                    "function_params": ["findbysample", "count"],
+                },
+                "LISTBYSAMPLE": {
+                    "type": "python",
+                    "name": "LISTBYSAMPLE",
+                    "description": "List of samples that have a genotype for the variant (for multi sample VCF)",
+                    "available": True,
+                    "function_name": "calculation_find_by_pipeline",
+                    "function_params": ["listbysample", "list"],
                 },
                 "GENOTYPECONCORDANCE": {
                     "type": "python",
