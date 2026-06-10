@@ -1096,6 +1096,7 @@ Usage examples:
 > --output=/tmp/example.ann.tsv --param=config/param.json
 
 > howard calculation --show_calculations
+> --show_calculations_md=/tmp/calculations.md
 
 > 
 
@@ -1157,6 +1158,14 @@ Usage examples:
 >     --show_calculations
 >
 >     Show available calculation operations.
+
+</small>
+
+<small>
+
+>     --show_calculations_md=<show_calculations_md>
+>
+>     Show available calculation operations into a Markdown file.
 
 </small>
 

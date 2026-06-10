@@ -3617,8 +3617,17 @@ class variants_annotation:
                 else:
                     annotation_fields = annotations[annotation]
 
-                # Allow to add options for annotations
+                # Options for annotations
                 annotation_options = annotations[annotation].get("options", {})
+
+                # Check options
+                annotation_option_uniquify = annotation_options.get("uniquify", False)
+                annotation_option_force_update_annotation = annotation_options.get(
+                    "force_update_annotation", force_update_annotation
+                )
+                annotation_option_force_append_annotation = annotation_options.get(
+                    "force_append_annotation", force_append_annotation
+                )
 
                 if not annotation_fields:
                     annotation_fields = {"INFO": None}
@@ -3771,8 +3780,10 @@ class variants_annotation:
                         # force_update_annotation = True
                         # force_append_annotation = True
                         if annotation_field in parquet_hdr_vcf_header_infos and (
-                            force_update_annotation
-                            or force_append_annotation
+                            # force_update_annotation
+                            annotation_option_force_update_annotation
+                            # or force_append_annotation
+                            or annotation_option_force_append_annotation
                             or (
                                 annotation_fields_new_name
                                 not in self.get_header().infos
@@ -3787,7 +3798,8 @@ class variants_annotation:
                             # explode infos for the field
                             annotation_fields_new_name_info_msg = ""
                             if (
-                                force_update_annotation
+                                # force_update_annotation
+                                annotation_option_force_update_annotation
                                 and annotation_fields_new_name
                                 in self.get_header().infos
                             ):
@@ -3859,7 +3871,8 @@ class variants_annotation:
                             )
 
                             # Append
-                            if force_append_annotation:
+                            #if force_append_annotation:
+                            if annotation_option_force_append_annotation:
                                 query_case_when_append = f""" AND REGEXP_EXTRACT(concat(';', table_variants.INFO), ';{annotation_fields_new_name}=([^;]*)',1) IN ('','.') """
                             else:
                                 query_case_when_append = ""
@@ -3888,7 +3901,8 @@ class variants_annotation:
                                     END
                                 """
                                 )
-                                if annotation_options.get("uniquify", False):
+                                # if annotation_options.get("uniquify", False):
+                                if annotation_option_uniquify:
                                     sql_query_annotation_to_agregate.append(
                                         f""" array_to_string(array_sort(array_distinct(string_split(string_agg(DISTINCT table_parquet_from."{annotation_field_column}", ','), ','))), ',') AS "{annotation_field_column}" """
                                     )
@@ -3900,7 +3914,8 @@ class variants_annotation:
                         # Not to annotate
                         else:
 
-                            if force_update_annotation:
+                            # if force_update_annotation:
+                            if annotation_option_force_update_annotation:
                                 annotation_message = "forced"
                             else:
                                 annotation_message = "skipped"
@@ -3916,7 +3931,8 @@ class variants_annotation:
 
                     # Check if ALL fields have to be annotated. Thus concat all INFO field
                     # allow_annotation_full_info = True
-                    allow_annotation_full_info = not force_append_annotation
+                    # allow_annotation_full_info = not force_append_annotation
+                    allow_annotation_full_info = not annotation_option_force_append_annotation
 
                     if parquet_type in ["regions"]:
                         allow_annotation_full_info = False

@@ -29,12 +29,368 @@ class variants_calculation:
     # Calculation #
     ###############
 
+    def get_config_calculations_default(self) -> dict:
+        """
+        The function `get_config_calculations_default` returns a dictionary containing default configurations for
+        various calculations.
+
+        :return: The function `get_config_calculations_default` returns a dictionary containing default configuration
+        settings for different calculations.
+        """
+
+        config_default = {
+            "variant_chr_pos_alt_ref": {
+                "type": "sql",
+                "name": "variant_chr_pos_alt_ref",
+                "description": "Create a variant ID with chromosome, position, alt and ref",
+                "comment": "This calculation generates a variant ID with chromosome, position, alt and ref, with format '#CHROM_POS_REF_ALT'. Useful for variant identification and comparison across datasets",
+                "available": True,
+                "output_column_name": "variant_chr_pos_alt_ref",
+                "output_column_number": 1,
+                "output_column_type": "String",
+                "output_column_description": "variant ID with chromosome, position, alt and ref",
+                "operation_query": """ concat("#CHROM", '_', "POS", '_', "REF", '_', "ALT") """,
+                "operation_info": True,
+            },
+            "VARTYPE": {
+                "type": "sql",
+                "name": "VARTYPE",
+                "description": "Variant type (e.g. SNV, INDEL, MNV, BND...)",
+                "comment": "Determine the type of variant based on its characteristics, such as the length of the reference and alternate alleles, and the presence of structural variant information. This calculation classifies variants into types like SNV, INDEL, MNV, BND, etc., which is essential for downstream analysis and interpretation.",
+                "available": True,
+                "table": "variants",
+                "output_column_name": "VARTYPE",
+                "output_column_number": 1,
+                "output_column_type": "String",
+                "output_column_description": "Variant type: SNV if X>Y, MOSAIC if X>Y,Z or X,Y>Z, INDEL if XY>Z or X>YZ",
+                "operation_query": """
+                        CASE
+                            WHEN "SVTYPE" NOT NULL THEN "SVTYPE"
+                            WHEN LENGTH(REF) = 1 AND LENGTH(ALT) = 1 THEN 'SNV'
+                            WHEN REF LIKE '%,%' OR ALT LIKE '%,%' THEN 'MOSAIC'
+                            WHEN LENGTH(REF) == LENGTH(ALT) AND LENGTH(REF) > 1 THEN 'MNV'
+                            WHEN LENGTH(REF) <> LENGTH(ALT) THEN 'INDEL'
+                            ELSE 'UNDEFINED'
+                        END
+                        """,
+                "info_fields": ["SVTYPE"],
+                "operation_info": True,
+            },
+            "MERGED_HGVS": {
+                "type": "sql",
+                "name": "merged_hgvs",
+                "description": "Merge HGVS nomenclatures from snpEff (snpeff_hgvs) and ANNOVAR (AAChange_refGene) into merged_hgvs field",
+                "comment": "This calculation merges HGVS nomenclatures from snpEff (snpeff_hgvs) and ANNOVAR (AAChange_refGene) into a single field called merged_hgvs. It aggregates distinct HGVS annotations from both sources, concatenating them with a comma separator. This unified field allows for easier access to HGVS information regardless of the annotation source, facilitating downstream analysis and interpretation.",
+                "available": True,
+                "table": "variants",
+                "output_column_name": "merged_hgvs",
+                "output_column_number": ".",
+                "output_column_type": "String",
+                "output_column_description": "Merge HGVS nomenclatures from snpEff (snpeff_hgvs) and ANNOVAR (AAChange_refGene) into merged_hgvs field",
+                "operation_query": """
+                        list_aggregate(
+                            list_distinct(
+                                list_reduce(
+                                    [
+                                        "snpeff_hgvs",
+                                        "AAChange_refGene",
+                                    ],
+                                    (a, b) -> list_concat(a, b)
+                                )
+                            ),
+                            'string_agg',
+                            ','
+                        )
+                        """,
+                "info_fields": ["snpeff_hgvs", "AAChange_refGene"],
+                "operation_info": True,
+            },
+            "snpeff_extract": {
+                "type": "python",
+                "name": "snpeff_extract",
+                "description": "HGVS nomenclatures from snpEff annotation",
+                "comment": "Extract HGVS nomenclatures from snpEff annotation (field ANN) and create new INFO fields with prefix 'snpeff_' (e.g. snpeff_hgvs, snpeff_impact, snpeff_gene_name...). This calculation parses the ANN field from snpEff annotations, extracting relevant information such as HGVS nomenclatures, impact, gene name, etc., and creates new INFO fields with a 'snpeff_' prefix for easier access and downstream analysis.",
+                "available": True,
+                "function_name": "calculation_extract_snpeff",
+                "function_params": [
+                    "ANN",
+                    "snpeff_hgvs",
+                    "snpeff_",
+                    "snpeff_json",
+                    False,
+                ],
+            },
+            "snpeff_hgvs": {
+                "type": "python",
+                "name": "snpeff_hgvs",
+                "description": "HGVS nomenclatures from snpEff annotation",
+                "comment": "Extract HGVS nomenclatures from snpEff annotation (field ANN) and create new INFO field 'snpeff_hgvs'. This calculation specifically targets the extraction of HGVS nomenclatures from the ANN field of snpEff annotations, creating a new INFO field named 'snpeff_hgvs' that contains the extracted HGVS information for easier access and downstream analysis.",
+                "available": True,
+                "function_name": "calculation_extract_snpeff",
+                "function_params": ["ANN", "snpeff_hgvs", None, None, False],
+            },
+            "snpeff_ann_explode": {
+                "type": "python",
+                "name": "snpeff_ann_explode",
+                "description": "Explode snpEff annotations",
+                "comment": "Explode snpEff annotations from the ANN field, creating new INFO fields with prefix 'snpeff_' for each annotation. This calculation takes the ANN field from snpEff annotations, which may contain multiple annotations for a single variant, and explodes it so that each annotation is represented in separate INFO fields with a 'snpeff_' prefix. This allows for easier access to individual annotations and facilitates downstream analysis.",
+                "available": True,
+                "function_name": "calculation_extract_snpeff",
+                "function_params": ["ANN", None, "snpeff_", None, False],
+            },
+            "snpeff_ann_explode_uniquify": {
+                "type": "python",
+                "name": "snpeff_ann_explode_uniquify",
+                "description": "Explode snpEff annotations with uniquify values",
+                "comment": "Explode snpEff annotations from the ANN field, creating new INFO fields with prefix 'snpeff_uniquify_' for each annotation and ensuring unique values. This calculation takes the ANN field from snpEff annotations, which may contain multiple annotations for a single variant, and explodes it so that each annotation is represented in separate INFO fields with a 'snpeff_uniquify_' prefix, ensuring that only unique values are retained. This allows for easier access to individual annotations and facilitates downstream analysis.",
+                "available": True,
+                "function_name": "calculation_extract_snpeff",
+                "function_params": ["ANN", None, "snpeff_uniquify_", None, True],
+            },
+            "snpeff_ann_explode_json": {
+                "type": "python",
+                "name": "snpeff_ann_explode_json",
+                "description": "Explode snpEff annotations in JSON format",
+                "comment": "Explode snpEff annotations from the ANN field, creating a new INFO field 'snpeff_json' in JSON format that contains all annotations. This calculation takes the ANN field from snpEff annotations, which may contain multiple annotations for a single variant, and explodes it into a structured JSON format stored in a new INFO field named 'snpeff_json'. This allows for easier access to all annotations in a single field and facilitates downstream analysis.",
+                "available": True,
+                "function_name": "calculation_extract_snpeff",
+                "function_params": ["ANN", None, None, "snpeff_json", True],
+            },
+            "NOMEN": {
+                "type": "python",
+                "name": "NOMEN",
+                "description": "NOMEN information (e.g. NOMEN, CNOMEN, PNOMEN...) from HGVS nomenclature field (see parameters help)",
+                "comment": "Extract NOMEN information (e.g. NOMEN, CNOMEN, PNOMEN...) from HGVS nomenclature field (see parameters help). This calculation parses the HGVS nomenclature field to extract specific NOMEN information such as NOMEN, CNOMEN, PNOMEN, etc., based on the parameters provided. It creates new INFO fields with the extracted NOMEN information for easier access and downstream analysis.",
+                "available": True,
+                "function_name": "calculation_extract_nomen",
+                "function_params": [],
+            },
+            "NOMEN_SNPEFF": {
+                "type": "python",
+                "name": "NOMEN_SNPEFF",
+                "description": "NOMEN information (e.g. NOMEN, CNOMEN, PNOMEN...) from HGVS nomenclature field (see parameters help)",
+                "comment": "Extract NOMEN information (e.g. NOMEN, CNOMEN, PNOMEN...) from HGVS nomenclature field (see parameters help). This calculation parses the HGVS nomenclature field to extract specific NOMEN information such as NOMEN, CNOMEN, PNOMEN, etc., specifically based on snpEff HGVS annotations field 'snpeff_hgvs'. It creates new INFO fields with the extracted NOMEN information for easier access and downstream analysis.",
+                "available": True,
+                "function_name": "calculation_extract_nomen",
+                "function_params": ["snpeff_hgvs"],
+            },
+            "RECREATE_INFO_FIELDS": {
+                "type": "python",
+                "name": "RECREATE_INFO_FIELDS",
+                "description": "Recreate INFO_tags, rename or remove tags",
+                "comment": "Recreate INFO_tags, rename or remove tags. This calculation allows for the recreation of INFO fields by renaming existing tags or removing them based on specified parameters. It provides flexibility in managing INFO fields, enabling users to customize their VCF annotations according to their analysis needs.",
+                "available": True,
+                "function_name": "calculation_recreate_info_fields",
+                "function_params": [],
+            },
+            "RENAME_INFO_FIELDS": {
+                "type": "python",
+                "name": "RENAME_INFO_FIELDS",
+                "description": "Rename or remove INFO/tags",
+                "comment": [
+                    "Rename or remove INFO/tags. This calculation allows for the renaming of existing INFO fields or the removal of specific tags based on provided parameters. It helps in standardizing or customizing INFO fields in the VCF according to user requirements and facilitates downstream analysis. Use paramter section 'calculation_RENAME_INFO_FIELDS' in param.json to specify the INFO fields to rename or remove.",
+                    "",
+                    "This example will rename INFO field 'ENOMEN' to 'exon' and remove INFO fields 'SPiP', 'SPiP_Alt' and 'SPiP_distSS' from the 'variants' table:",
+                    "",
+                    """{"fields_to_rename": {"ENOMEN": "exon", "SPiP": null, "SPiP_Alt": null, "SPiP_distSS": null }, "table": "variants"}""",
+                ],
+                "available": True,
+                "function_name": "calculation_rename_info_fields",
+                "function_params": [],
+            },
+            "FINDBYPIPELINE": {
+                "type": "python",
+                "name": "FINDBYPIPELINE",
+                "description": "Number of pipeline that identify the variant (for multi pipeline VCF)",
+                "comment": "Number of pipeline that identify the variant (for multi pipeline VCF). This calculation counts the number of pipelines that identify a given variant in a multi-pipeline VCF file. It helps in assessing the confidence of variant calls by determining how many different pipelines support the presence of the variant.",
+                "available": True,
+                "function_name": "calculation_find_by_pipeline",
+                "function_params": ["findbypipeline", "count"],
+            },
+            "LISTBYPIPELINE": {
+                "type": "python",
+                "name": "LISTBYPIPELINE",
+                "description": "List of pipelines that identify the variant (for multi pipeline VCF)",
+                "comment": "List of pipelines that identify the variant (for multi pipeline VCF). This calculation provides a list of pipelines that identify a given variant in a multi-pipeline VCF file. It helps in understanding which pipelines support the presence of the variant.",
+                "available": True,
+                "function_name": "calculation_find_by_pipeline",
+                "function_params": ["listbypipeline", "list"],
+            },
+            "FINDBYSAMPLE": {
+                "type": "python",
+                "name": "FINDBYSAMPLE",
+                "description": "Number of sample that have a genotype for the variant (for multi sample VCF)",
+                "comment": "Number of sample that have a genotype for the variant (for multi sample VCF). This calculation counts the number of samples that have a genotype for a given variant in a multi-sample VCF file. It helps in assessing the presence of the variant across different samples.",
+                "available": True,
+                "function_name": "calculation_find_by_pipeline",
+                "function_params": ["findbysample", "count"],
+            },
+            "LISTBYSAMPLE": {
+                "type": "python",
+                "name": "LISTBYSAMPLE",
+                "description": "List of samples that have a genotype for the variant (for multi sample VCF)",
+                "comment": "List of samples that have a genotype for the variant (for multi sample VCF). This calculation provides a list of samples that have a genotype for a given variant in a multi-sample VCF file. It helps in understanding which samples support the presence of the variant.",
+                "available": True,
+                "function_name": "calculation_find_by_pipeline",
+                "function_params": ["listbysample", "list"],
+            },
+            "GENOTYPECONCORDANCE": {
+                "type": "python",
+                "name": "GENOTYPECONCORDANCE",
+                "description": "Concordance of genotype for multi caller VCF",
+                "comment": "Concordance of genotype for multi caller VCF. This calculation assesses the concordance of genotypes for a given variant across multiple callers in a multi-caller VCF file. It helps in evaluating the consistency of genotype calls and can be used to identify variants with high confidence based on agreement among different callers.",
+                "available": True,
+                "function_name": "calculation_genotype_concordance",
+                "function_params": [],
+            },
+            "BARCODE": {
+                "type": "python",
+                "name": "BARCODE",
+                "description": "BARCODE as VaRank tool",
+                "comment": "BARCODE as VaRank tool. This calculation generates a BARCODE for each sample based on sample genotype (0 for reference, 1 for heterozygous, 2 for homozygous alternate).",
+                "available": True,
+                "function_name": "calculation_barcode",
+                "function_params": [],
+                "output_column_number": "1",
+                "output_column_type": "Integer",
+            },
+            "BARCODEFAMILY": {
+                "type": "python",
+                "name": "BARCODEFAMILY",
+                "description": "BARCODEFAMILY as VaRank tool",
+                "comment": "BARCODEFAMILY as VaRank tool. This calculation generates a BARCODE for each family based on sample genotype (0 for reference, 1 for heterozygous, 2 for homozygous alternate) and family relationships.",
+                "available": True,
+                "function_name": "calculation_barcode_family",
+                "function_params": ["BCF"],
+            },
+            "TRIO": {
+                "type": "python",
+                "name": "TRIO",
+                "description": "Inheritance for a trio family",
+                "comment": "Inheritance for a trio family. This calculation assesses the inheritance pattern of a variant within a trio family (father, mother, and child). It helps in understanding the transmission of genetic variants and identifying potential de novo mutations.",
+                "available": True,
+                "function_name": "calculation_trio",
+                "function_params": [],
+            },
+            "VAF": {
+                "type": "python",
+                "name": "VAF",
+                "description": "Variant Allele Frequency (VAF) harmonization",
+                "comment": "Variant Allele Frequency (VAF) harmonization. This calculation normalizes the Variant Allele Frequency (VAF) across different samples and callers to ensure consistency in VAF representation. It helps in comparing VAF values across samples and callers by applying a harmonization process.",
+                "available": True,
+                "function_name": "calculation_vaf_normalization",
+                "function_params": [],
+            },
+            "VAF_stats": {
+                "type": "python",
+                "name": "VAF_stats",
+                "description": "Variant Allele Frequency (VAF) statistics",
+                "comment": "Variant Allele Frequency (VAF) statistics. This calculation provides statistical measures for the Variant Allele Frequency (VAF) across different samples. It helps in understanding the distribution and variability of VAF values.",
+                "available": True,
+                "function_name": "calculation_genotype_stats",
+                "function_params": ["VAF"],
+            },
+            "DP_stats": {
+                "type": "python",
+                "name": "DP_stats",
+                "description": "Depth (DP) statistics",
+                "comment": "Depth (DP) statistics. This calculation provides statistical measures for the sequencing depth (DP) across different samples. It helps in understanding the coverage and reliability of variant calls.",
+                "available": True,
+                "function_name": "calculation_genotype_stats",
+                "function_params": ["DP"],
+            },
+            "variant_id": {
+                "type": "python",
+                "name": "variant_id",
+                "description": "Variant ID generated from variant position and type",
+                "comment": "Variant ID generated from variant position and variation (ref and alt) and type (SVTYPE). This calculation creates a unique identifier for each variant, facilitating variant tracking and comparison across datasets.",
+                "available": True,
+                "function_name": "calculation_variant_id",
+                "function_params": [],
+            },
+            "transcripts_annotations": {
+                "type": "python",
+                "name": "transcripts_annotations",
+                "description": "Perform transcripts annotations and generate a transcripts table/view (using JSON parameters file)",
+                "comment": "Perform transcripts annotations and generate a transcripts table/view. This calculation allows for the inclusion of transcript annotations in both JSON and structured formats, providing flexibility in how transcript information is stored and accessed within the variant analysis pipeline. The specific format(s) used can be determined based on parameters specified in the JSON parameter file in 'transcripts' section (see help.parameters.md), or directly in the calculation parameters.",
+                "available": True,
+                "function_name": "calculation_transcripts_annotation",
+                "function_params": [None, None],
+            },
+            "transcripts_annotations_json_format": {
+                "type": "python",
+                "name": "transcripts_json",
+                "description": "Perform transcripts annotations and export into INFO field in JSON format (field 'transcripts_json')",
+                "comment": "Perform transcripts annotations and generate a transcripts table/view. This calculation allows for the inclusion of transcript annotations in both JSON and structured formats, providing flexibility in how transcript information is stored and accessed within the variant analysis pipeline. The specific format(s) used can be determined based on parameters specified in the JSON parameter file in 'transcripts' section (see help.parameters.md). Then and add transcripts fields into INFO fields in structured format (field 'transcripts_ann'). This calculation allows for the inclusion of transcript annotations in a JSON format, facilitating the integration of transcript information into the variant analysis pipeline.",
+                "available": True,
+                "function_name": "calculation_transcripts_annotation",
+                "function_params": ["transcripts_json", None],
+            },
+            "transcripts_annotations_struct_format": {
+                "type": "python",
+                "name": "transcripts_ann",
+                "description": "Perform transcripts annotations and export into INFO field in structured format (field 'transcripts_ann')",
+                "comment": "Perform transcripts annotations and generate a transcripts table/view. This calculation allows for the inclusion of transcript annotations in both JSON and structured formats, providing flexibility in how transcript information is stored and accessed within the variant analysis pipeline. The specific format(s) used can be determined based on parameters specified in the JSON parameter file in 'transcripts' section (see help.parameters.md). Then and add transcripts fields into INFO fields in structured format (field 'transcripts_ann'). This calculation allows for the inclusion of transcript annotations in a structured format, facilitating the integration of transcript information into the variant analysis pipeline.",
+                "available": True,
+                "function_name": "calculation_transcripts_annotation",
+                "function_params": [None, "transcripts_ann"],
+            },
+            "transcripts_prioritization": {
+                "type": "python",
+                "name": "transcripts_prioritization",
+                "description": "Prioritize transcripts with a prioritization profile (using JSON parameters file)",
+                "comment": "Prioritize transcripts with a prioritization profile. This calculation allows for the prioritization of transcripts based on a predefined profile specified in the JSON parameter file, either in 'transcripts' section or directly in the calculation parameters (see help.parameters.md), helping to identify the most relevant transcripts for further analysis.",
+                "available": True,
+                "function_name": "calculation_transcripts_prioritization",
+                "function_params": [False],
+            },
+            "transcripts_prioritization_strict": {
+                "type": "python",
+                "name": "transcripts_prioritization_strict",
+                "description": "Prioritize transcripts with a prioritization profile (using JSON parameters file)",
+                "comment": "Prioritize transcripts with a prioritization profile, ensuring that all needed annotations are present and considered. This calculation allows for the prioritization of transcripts based on a predefined profile specified in the JSON parameter file, either in 'transcripts' section or directly in the calculation parameters (see help.parameters.md), helping to identify the most relevant transcripts for further analysis.",
+                "available": True,
+                "function_name": "calculation_transcripts_prioritization",
+                "function_params": [True],
+            },
+            "transcripts_export": {
+                "type": "python",
+                "name": "transcripts_export",
+                "description": "Export transcripts table/view as a file (using JSON parameters file)",
+                "comment": [
+                    "Export transcripts table/view as a file. This calculation allows for the export of the transcripts table or view generated from transcript annotations to an external file format such as TSV or CSV. The parameters for this calculation can be specified in the JSON parameter file, either in 'transcripts' section or directly in the calculation parameters (see help.parameters.md), including options for the output file path, format, and any filters to apply during export."
+                ],
+                "available": True,
+                "function_name": "calculation_transcripts_export",
+                "function_params": [],
+            },
+        }
+
+        return config_default
+
     def get_operations_help(
-        self, operations_config_dict: dict = {}, operations_config_file: str = None
+        self,
+        operations_config_dict: dict = {},
+        operations_config_file: str = None,
+        show_calculations_md: str = None,
+        format: str = "text",
     ) -> list:
+
+        # Param
+        param = self.get_param()
+
+        # Param calculation config file
+        if show_calculations_md is None:
+            show_calculations_md = param.get("calculation", {}).get(
+                "show_calculations_md", None
+            )
 
         # Init
         operations_help = []
+        operations_help_md = [
+            "# Calculations",
+            "List of available calculations",
+        ]
 
         # operations
         operations = self.get_config_json(
@@ -42,21 +398,40 @@ class variants_calculation:
             config_dict=operations_config_dict,
             config_file=operations_config_file,
         )
+
+        # Sort operations by key
+        operations = dict(sorted(operations.items(), key=lambda x: x[0].upper()))
+
         for op in operations:
             op_name = operations[op].get("name", op).upper()
             op_description = operations[op].get("description", op_name)
+            op_comment = operations[op].get("comment", op_name)
             op_available = operations[op].get("available", False)
             if op_available:
+                if isinstance(op_comment, list):
+                    op_comment = "\n".join(op_comment).strip()
                 operations_help.append(f"   {op_name}: {op_description}")
-
-        # Sort operations
-        operations_help.sort()
+                operations_help_md.append(f"## {op_name}")
+                operations_help_md.append(f"{op_description}")
+                operations_help_md.append(f"{op_comment}")
 
         # insert header
         operations_help.insert(0, "Available calculation operations:")
 
+        # Write operations help in markdown file
+        if show_calculations_md is not None:
+            with open(show_calculations_md, "w") as f:
+                f.write("\n\n".join(operations_help_md))
+
         # Return
-        return operations_help
+        if format == "text":
+            return operations_help
+        elif format == "markdown":
+            return [
+                f"Markdown file generated with operations help: {show_calculations_md}"
+            ]
+        else:
+            return None
 
     def calculation(
         self,
@@ -2445,8 +2820,23 @@ class variants_calculation:
         :type info_format: str
         """
 
+        # Param from calculation
+        param_calculation = self.get_param().get("calculation", {}).copy()
+        param_transcripts_annotation = {
+            k.upper(): v for k, v in param_calculation.get("calculations", {}).items()
+        }.get("TRANSCRIPTS_ANNOTATIONS", None)
+
+        if param_transcripts_annotation:
+            param_calculation_transcripts_annotation = {
+                "transcripts": param_transcripts_annotation
+            }
+        else:
+            param_calculation_transcripts_annotation = None
+
         # Create transcripts table
-        transcripts_table = self.create_transcript_view()
+        transcripts_table = self.create_transcript_view(
+            param=param_calculation_transcripts_annotation
+        )
 
         # Add info field
         if transcripts_table:
@@ -2464,13 +2854,30 @@ class variants_calculation:
         prioritizes transcripts based on certain criteria.
         """
 
+        # Param from calculation
+        param_calculation = self.get_param().get("calculation", {}).copy()
+        param_transcripts_prioritization = {
+            k.upper(): v for k, v in param_calculation.get("calculations", {}).items()
+        }.get("TRANSCRIPTS_PRIORITIZATION", None)
+
+        if param_transcripts_prioritization:
+            param_calculation_transcripts_prioritization = {
+                "transcripts": param_transcripts_prioritization
+            }
+        else:
+            param_calculation_transcripts_prioritization = None
+
         # Create transcripts table
-        transcripts_table = self.create_transcript_view()
+        transcripts_table = self.create_transcript_view(
+            param=param_calculation_transcripts_prioritization
+        )
 
         # Add info field
         if transcripts_table:
             self.transcripts_prioritization(
-                transcripts_table=transcripts_table, strict=strict
+                transcripts_table=transcripts_table,
+                strict=strict,
+                param=param_calculation_transcripts_prioritization,
             )
         else:
             log.info("No Transcripts to process. Check param.json file configuration")
@@ -2478,11 +2885,48 @@ class variants_calculation:
     def calculation_transcripts_export(self) -> None:
         """ """
 
+        # Param from calculation
+        param_calculation = self.get_param().get("calculation", {}).copy()
+        param_transcripts_export = {
+            k.upper(): v for k, v in param_calculation.get("calculations", {}).items()
+        }.get("TRANSCRIPTS_EXPORT", None)
+
+        if param_transcripts_export:
+            param_calculation_transcripts_export = {
+                "transcripts": param_transcripts_export
+            }
+        else:
+            param_calculation_transcripts_export = None
+
+        if (
+            param_calculation_transcripts_export
+            and param_calculation_transcripts_export.get("transcripts", None)
+        ):
+            param_calculation_transcripts_export_export = (
+                param_calculation_transcripts_export.get("transcripts", {}).get(
+                    "export", None
+                )
+            )
+            param_calculation_transcripts_export_explode = (
+                param_calculation_transcripts_export.get("transcripts", {}).get(
+                    "explode", None
+                )
+            )
+        else:
+            param_calculation_transcripts_export_export = None
+            param_calculation_transcripts_export_explode = None
+
         # Create transcripts table
-        transcripts_table = self.create_transcript_view()
+        transcripts_table = self.create_transcript_view(
+            param=param_calculation_transcripts_export
+        )
 
         # Add info field
         if transcripts_table:
-            self.transcripts_export(transcripts_table=transcripts_table)
+            self.transcripts_export(
+                transcripts_table=transcripts_table,
+                param_export=param_calculation_transcripts_export_export,
+                param_explode=param_calculation_transcripts_export_explode,
+            )
         else:
             log.info("No Transcripts to process. Check param.json file configuration")
