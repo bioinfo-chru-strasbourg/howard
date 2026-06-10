@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>HOWARD Help Calculations</title>
+  <style>
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 1000px;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      background-color: #1a1a1a;
+      border: none;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">HOWARD Help Calculations</h1>
+</header>
+<h1 data-number="1" id="calculations"><span
+class="header-section-number">1</span> Calculations</h1>
+<p>List of available calculations</p>
+<h2 data-number="1.1" id="barcode"><span
+class="header-section-number">1.1</span> BARCODE</h2>
+<p>BARCODE as VaRank tool</p>
+<p>BARCODE as VaRank tool. This calculation generates a BARCODE for each
+sample based on sample genotype (0 for reference, 1 for heterozygous, 2
+for homozygous alternate).</p>
+<h2 data-number="1.2" id="barcodefamily"><span
+class="header-section-number">1.2</span> BARCODEFAMILY</h2>
+<p>BARCODEFAMILY as VaRank tool</p>
+<p>BARCODEFAMILY as VaRank tool. This calculation generates a BARCODE
+for each family based on sample genotype (0 for reference, 1 for
+heterozygous, 2 for homozygous alternate) and family relationships.</p>
+<h2 data-number="1.3" id="dp_stats"><span
+class="header-section-number">1.3</span> DP_STATS</h2>
+<p>Depth (DP) statistics</p>
+<p>Depth (DP) statistics. This calculation provides statistical measures
+for the sequencing depth (DP) across different samples. It helps in
+understanding the coverage and reliability of variant calls.</p>
+<h2 data-number="1.4" id="findbypipeline"><span
+class="header-section-number">1.4</span> FINDBYPIPELINE</h2>
+<p>Number of pipeline that identify the variant (for multi pipeline
+VCF)</p>
+<p>Number of pipeline that identify the variant (for multi pipeline
+VCF). This calculation counts the number of pipelines that identify a
+given variant in a multi-pipeline VCF file. It helps in assessing the
+confidence of variant calls by determining how many different pipelines
+support the presence of the variant.</p>
+<h2 data-number="1.5" id="findbysample"><span
+class="header-section-number">1.5</span> FINDBYSAMPLE</h2>
+<p>Number of sample that have a genotype for the variant (for multi
+sample VCF)</p>
+<p>Number of sample that have a genotype for the variant (for multi
+sample VCF). This calculation counts the number of samples that have a
+genotype for a given variant in a multi-sample VCF file. It helps in
+assessing the presence of the variant across different samples.</p>
+<h2 data-number="1.6" id="genotypeconcordance"><span
+class="header-section-number">1.6</span> GENOTYPECONCORDANCE</h2>
+<p>Concordance of genotype for multi caller VCF</p>
+<p>Concordance of genotype for multi caller VCF. This calculation
+assesses the concordance of genotypes for a given variant across
+multiple callers in a multi-caller VCF file. It helps in evaluating the
+consistency of genotype calls and can be used to identify variants with
+high confidence based on agreement among different callers.</p>
+<h2 data-number="1.7" id="listbypipeline"><span
+class="header-section-number">1.7</span> LISTBYPIPELINE</h2>
+<p>List of pipelines that identify the variant (for multi pipeline
+VCF)</p>
+<p>List of pipelines that identify the variant (for multi pipeline VCF).
+This calculation provides a list of pipelines that identify a given
+variant in a multi-pipeline VCF file. It helps in understanding which
+pipelines support the presence of the variant.</p>
+<h2 data-number="1.8" id="listbysample"><span
+class="header-section-number">1.8</span> LISTBYSAMPLE</h2>
+<p>List of samples that have a genotype for the variant (for multi
+sample VCF)</p>
+<p>List of samples that have a genotype for the variant (for multi
+sample VCF). This calculation provides a list of samples that have a
+genotype for a given variant in a multi-sample VCF file. It helps in
+understanding which samples support the presence of the variant.</p>
+<h2 data-number="1.9" id="merged_hgvs"><span
+class="header-section-number">1.9</span> MERGED_HGVS</h2>
+<p>Merge HGVS nomenclatures from snpEff (snpeff_hgvs) and ANNOVAR
+(AAChange_refGene) into merged_hgvs field</p>
+<p>This calculation merges HGVS nomenclatures from snpEff (snpeff_hgvs)
+and ANNOVAR (AAChange_refGene) into a single field called merged_hgvs.
+It aggregates distinct HGVS annotations from both sources, concatenating
+them with a comma separator. This unified field allows for easier access
+to HGVS information regardless of the annotation source, facilitating
+downstream analysis and interpretation.</p>
+<h2 data-number="1.10" id="nomen"><span
+class="header-section-number">1.10</span> NOMEN</h2>
+<p>NOMEN information (e.g.&#xA0;NOMEN, CNOMEN, PNOMEN&#x2026;) from HGVS
+nomenclature field (see parameters help)</p>
+<p>Extract NOMEN information (e.g.&#xA0;NOMEN, CNOMEN, PNOMEN&#x2026;) from HGVS
+nomenclature field (see parameters help). This calculation parses the
+HGVS nomenclature field to extract specific NOMEN information such as
+NOMEN, CNOMEN, PNOMEN, etc., based on the parameters provided. It
+creates new INFO fields with the extracted NOMEN information for easier
+access and downstream analysis.</p>
+<h2 data-number="1.11" id="nomen_snpeff"><span
+class="header-section-number">1.11</span> NOMEN_SNPEFF</h2>
+<p>NOMEN information (e.g.&#xA0;NOMEN, CNOMEN, PNOMEN&#x2026;) from HGVS
+nomenclature field (see parameters help)</p>
+<p>Extract NOMEN information (e.g.&#xA0;NOMEN, CNOMEN, PNOMEN&#x2026;) from HGVS
+nomenclature field (see parameters help). This calculation parses the
+HGVS nomenclature field to extract specific NOMEN information such as
+NOMEN, CNOMEN, PNOMEN, etc., specifically based on snpEff HGVS
+annotations field &#x2018;snpeff_hgvs&#x2019;. It creates new INFO fields with the
+extracted NOMEN information for easier access and downstream
+analysis.</p>
+<h2 data-number="1.12" id="recreate_info_fields"><span
+class="header-section-number">1.12</span> RECREATE_INFO_FIELDS</h2>
+<p>Recreate INFO_tags, rename or remove tags</p>
+<p>Recreate INFO_tags, rename or remove tags. This calculation allows
+for the recreation of INFO fields by renaming existing tags or removing
+them based on specified parameters. It provides flexibility in managing
+INFO fields, enabling users to customize their VCF annotations according
+to their analysis needs.</p>
+<h2 data-number="1.13" id="rename_info_fields"><span
+class="header-section-number">1.13</span> RENAME_INFO_FIELDS</h2>
+<p>Rename or remove INFO/tags</p>
+<p>Rename or remove INFO/tags. This calculation allows for the renaming
+of existing INFO fields or the removal of specific tags based on
+provided parameters. It helps in standardizing or customizing INFO
+fields in the VCF according to user requirements and facilitates
+downstream analysis. Use paramter section
+&#x2018;calculation_RENAME_INFO_FIELDS&#x2019; in param.json to specify the INFO
+fields to rename or remove.</p>
+<p>This example will rename INFO field &#x2018;ENOMEN&#x2019; to &#x2018;exon&#x2019; and remove
+INFO fields &#x2018;SPiP&#x2019;, &#x2018;SPiP_Alt&#x2019; and &#x2018;SPiP_distSS&#x2019; from the &#x2018;variants&#x2019;
+table:</p>
+<p>{&#x201C;fields_to_rename&#x201D;: {&#x201C;ENOMEN&#x201D;: &#x201C;exon&#x201D;, &#x201C;SPiP&#x201D;: null, &#x201C;SPiP_Alt&#x201D;:
+null, &#x201C;SPiP_distSS&#x201D;: null }, &#x201C;table&#x201D;: &#x201C;variants&#x201D;}</p>
+<h2 data-number="1.14" id="snpeff_ann_explode"><span
+class="header-section-number">1.14</span> SNPEFF_ANN_EXPLODE</h2>
+<p>Explode snpEff annotations</p>
+<p>Explode snpEff annotations from the ANN field, creating new INFO
+fields with prefix &#x2018;snpeff_&#x2019; for each annotation. This calculation takes
+the ANN field from snpEff annotations, which may contain multiple
+annotations for a single variant, and explodes it so that each
+annotation is represented in separate INFO fields with a &#x2018;snpeff_&#x2019;
+prefix. This allows for easier access to individual annotations and
+facilitates downstream analysis.</p>
+<h2 data-number="1.15" id="snpeff_ann_explode_json"><span
+class="header-section-number">1.15</span> SNPEFF_ANN_EXPLODE_JSON</h2>
+<p>Explode snpEff annotations in JSON format</p>
+<p>Explode snpEff annotations from the ANN field, creating a new INFO
+field &#x2018;snpeff_json&#x2019; in JSON format that contains all annotations. This
+calculation takes the ANN field from snpEff annotations, which may
+contain multiple annotations for a single variant, and explodes it into
+a structured JSON format stored in a new INFO field named &#x2018;snpeff_json&#x2019;.
+This allows for easier access to all annotations in a single field and
+facilitates downstream analysis.</p>
+<h2 data-number="1.16" id="snpeff_ann_explode_uniquify"><span
+class="header-section-number">1.16</span>
+SNPEFF_ANN_EXPLODE_UNIQUIFY</h2>
+<p>Explode snpEff annotations with uniquify values</p>
+<p>Explode snpEff annotations from the ANN field, creating new INFO
+fields with prefix &#x2018;snpeff_uniquify_&#x2019; for each annotation and ensuring
+unique values. This calculation takes the ANN field from snpEff
+annotations, which may contain multiple annotations for a single
+variant, and explodes it so that each annotation is represented in
+separate INFO fields with a &#x2018;snpeff_uniquify_&#x2019; prefix, ensuring that
+only unique values are retained. This allows for easier access to
+individual annotations and facilitates downstream analysis.</p>
+<h2 data-number="1.17" id="snpeff_extract"><span
+class="header-section-number">1.17</span> SNPEFF_EXTRACT</h2>
+<p>HGVS nomenclatures from snpEff annotation</p>
+<p>Extract HGVS nomenclatures from snpEff annotation (field ANN) and
+create new INFO fields with prefix &#x2018;snpeff_&#x2019; (e.g.&#xA0;snpeff_hgvs,
+snpeff_impact, snpeff_gene_name&#x2026;). This calculation parses the ANN field
+from snpEff annotations, extracting relevant information such as HGVS
+nomenclatures, impact, gene name, etc., and creates new INFO fields with
+a &#x2018;snpeff_&#x2019; prefix for easier access and downstream analysis.</p>
+<h2 data-number="1.18" id="snpeff_hgvs"><span
+class="header-section-number">1.18</span> SNPEFF_HGVS</h2>
+<p>HGVS nomenclatures from snpEff annotation</p>
+<p>Extract HGVS nomenclatures from snpEff annotation (field ANN) and
+create new INFO field &#x2018;snpeff_hgvs&#x2019;. This calculation specifically
+targets the extraction of HGVS nomenclatures from the ANN field of
+snpEff annotations, creating a new INFO field named &#x2018;snpeff_hgvs&#x2019; that
+contains the extracted HGVS information for easier access and downstream
+analysis.</p>
+<h2 data-number="1.19" id="transcripts_annotations"><span
+class="header-section-number">1.19</span> TRANSCRIPTS_ANNOTATIONS</h2>
+<p>Perform transcripts annotations and generate a transcripts table/view
+(using JSON parameters file)</p>
+<p>Perform transcripts annotations and generate a transcripts
+table/view. This calculation allows for the inclusion of transcript
+annotations in both JSON and structured formats, providing flexibility
+in how transcript information is stored and accessed within the variant
+analysis pipeline. The specific format(s) used can be determined based
+on parameters specified in the JSON parameter file in &#x2018;transcripts&#x2019;
+section (see help.parameters.html), or directly in the calculation
+parameters.</p>
+<h2 data-number="1.20" id="transcripts_json"><span
+class="header-section-number">1.20</span> TRANSCRIPTS_JSON</h2>
+<p>Perform transcripts annotations and export into INFO field in JSON
+format (field &#x2018;transcripts_json&#x2019;)</p>
+<p>Perform transcripts annotations and generate a transcripts
+table/view. This calculation allows for the inclusion of transcript
+annotations in both JSON and structured formats, providing flexibility
+in how transcript information is stored and accessed within the variant
+analysis pipeline. The specific format(s) used can be determined based
+on parameters specified in the JSON parameter file in &#x2018;transcripts&#x2019;
+section (see help.parameters.html). Then and add transcripts fields into
+INFO fields in structured format (field &#x2018;transcripts_ann&#x2019;). This
+calculation allows for the inclusion of transcript annotations in a JSON
+format, facilitating the integration of transcript information into the
+variant analysis pipeline.</p>
+<h2 data-number="1.21" id="transcripts_ann"><span
+class="header-section-number">1.21</span> TRANSCRIPTS_ANN</h2>
+<p>Perform transcripts annotations and export into INFO field in
+structured format (field &#x2018;transcripts_ann&#x2019;)</p>
+<p>Perform transcripts annotations and generate a transcripts
+table/view. This calculation allows for the inclusion of transcript
+annotations in both JSON and structured formats, providing flexibility
+in how transcript information is stored and accessed within the variant
+analysis pipeline. The specific format(s) used can be determined based
+on parameters specified in the JSON parameter file in &#x2018;transcripts&#x2019;
+section (see help.parameters.html). Then and add transcripts fields into
+INFO fields in structured format (field &#x2018;transcripts_ann&#x2019;). This
+calculation allows for the inclusion of transcript annotations in a
+structured format, facilitating the integration of transcript
+information into the variant analysis pipeline.</p>
+<h2 data-number="1.22" id="transcripts_export"><span
+class="header-section-number">1.22</span> TRANSCRIPTS_EXPORT</h2>
+<p>Export transcripts table/view as a file (using JSON parameters
+file)</p>
+<p>Export transcripts table/view as a file. This calculation allows for
+the export of the transcripts table or view generated from transcript
+annotations to an external file format such as TSV or CSV. The
+parameters for this calculation can be specified in the JSON parameter
+file, either in &#x2018;transcripts&#x2019; section or directly in the calculation
+parameters (see help.parameters.html), including options for the output
+file path, format, and any filters to apply during export.</p>
+<h2 data-number="1.23" id="transcripts_prioritization"><span
+class="header-section-number">1.23</span>
+TRANSCRIPTS_PRIORITIZATION</h2>
+<p>Prioritize transcripts with a prioritization profile (using JSON
+parameters file)</p>
+<p>Prioritize transcripts with a prioritization profile. This
+calculation allows for the prioritization of transcripts based on a
+predefined profile specified in the JSON parameter file, either in
+&#x2018;transcripts&#x2019; section or directly in the calculation parameters (see
+help.parameters.html), helping to identify the most relevant transcripts
+for further analysis.</p>
+<h2 data-number="1.24" id="transcripts_prioritization_strict"><span
+class="header-section-number">1.24</span>
+TRANSCRIPTS_PRIORITIZATION_STRICT</h2>
+<p>Prioritize transcripts with a prioritization profile (using JSON
+parameters file)</p>
+<p>Prioritize transcripts with a prioritization profile, ensuring that
+all needed annotations are present and considered. This calculation
+allows for the prioritization of transcripts based on a predefined
+profile specified in the JSON parameter file, either in &#x2018;transcripts&#x2019;
+section or directly in the calculation parameters (see
+help.parameters.html), helping to identify the most relevant transcripts
+for further analysis.</p>
+<h2 data-number="1.25" id="trio"><span
+class="header-section-number">1.25</span> TRIO</h2>
+<p>Inheritance for a trio family</p>
+<p>Inheritance for a trio family. This calculation assesses the
+inheritance pattern of a variant within a trio family (father, mother,
+and child). It helps in understanding the transmission of genetic
+variants and identifying potential de novo mutations.</p>
+<h2 data-number="1.26" id="vaf"><span
+class="header-section-number">1.26</span> VAF</h2>
+<p>Variant Allele Frequency (VAF) harmonization</p>
+<p>Variant Allele Frequency (VAF) harmonization. This calculation
+normalizes the Variant Allele Frequency (VAF) across different samples
+and callers to ensure consistency in VAF representation. It helps in
+comparing VAF values across samples and callers by applying a
+harmonization process.</p>
+<h2 data-number="1.27" id="vaf_stats"><span
+class="header-section-number">1.27</span> VAF_STATS</h2>
+<p>Variant Allele Frequency (VAF) statistics</p>
+<p>Variant Allele Frequency (VAF) statistics. This calculation provides
+statistical measures for the Variant Allele Frequency (VAF) across
+different samples. It helps in understanding the distribution and
+variability of VAF values.</p>
+<h2 data-number="1.28" id="variant_chr_pos_alt_ref"><span
+class="header-section-number">1.28</span> VARIANT_CHR_POS_ALT_REF</h2>
+<p>Create a variant ID with chromosome, position, alt and ref</p>
+<p>This calculation generates a variant ID with chromosome, position,
+alt and ref, with format &#x2018;#CHROM_POS_REF_ALT&#x2019;. Useful for variant
+identification and comparison across datasets</p>
+<h2 data-number="1.29" id="variant_id"><span
+class="header-section-number">1.29</span> VARIANT_ID</h2>
+<p>Variant ID generated from variant position and type</p>
+<p>Variant ID generated from variant position and variation (ref and
+alt) and type (SVTYPE). This calculation creates a unique identifier for
+each variant, facilitating variant tracking and comparison across
+datasets.</p>
+<h2 data-number="1.30" id="vartype"><span
+class="header-section-number">1.30</span> VARTYPE</h2>
+<p>Variant type (e.g.&#xA0;SNV, INDEL, MNV, BND&#x2026;)</p>
+<p>Determine the type of variant based on its characteristics, such as
+the length of the reference and alternate alleles, and the presence of
+structural variant information. This calculation classifies variants
+into types like SNV, INDEL, MNV, BND, etc., which is essential for
+downstream analysis and interpretation.</p>
+</body>
+</html>

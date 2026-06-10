@@ -827,6 +827,20 @@ arguments = {
         "action": "store_true",
         "default": False,
     },
+    "show_calculations_md": {
+        "metavar": "show_calculations_md",
+        "help": """Show available calculation operations into a Markdown file.\n""",
+        "required": False,
+        "default": None,
+        "type": PathType(exists=None, type=None),
+        "gooey": {"widget": "FileSaver"},
+        "extra": {
+            "param_section": "calculation",
+            "examples": {
+                "Calculation configuration JSON file as an option": """"show_calculations_md": "/tmp/calculations.md" """
+            },
+        },
+    },
     "hgvs_field": {
         "metavar": "HGVS field",
         "help": """HGVS INFO/tag containing a list o HGVS annotations.\n""",
@@ -2192,7 +2206,7 @@ commands_arguments = {
         """   howard calculation --input=tests/data/example.vcf.gz --output=/tmp/example.calculated.tsv --calculations='BARCODEFAMILY' --family_pedigree='sample1,sample2,sample4' \n"""
         """   howard calculation --input=tests/data/example.ann.transcripts.vcf.gz --output=/tmp/example.calculation.transcripts.tsv --param=config/param.transcripts.json --calculations='TRANSCRIPTS_ANNOTATIONS,TRANSCRIPTS_PRIORITIZATION,TRANSCRIPTS_EXPORT' \n"""
         """   howard calculation --input=tests/data/example.ann.vcf.gz --output=/tmp/example.ann.tsv --param=config/param.json \n"""
-        """   howard calculation --show_calculations \n"""
+        """   howard calculation --show_calculations --show_calculations_md=/tmp/calculations.md\n"""
         """    \n""",
         "groups": {
             "main": {
@@ -2201,7 +2215,11 @@ commands_arguments = {
                 "param": False,
                 "calculations": False,
             },
-            "Calculation": {"calculation_config": False, "show_calculations": False},
+            "Calculation": {
+                "calculation_config": False,
+                "show_calculations": False,
+                "show_calculations_md": False,
+            },
             "NOMEN": {"hgvs_field": False, "transcripts": False},
             "TRIO": {"trio_pedigree": False},
             "BARCODEFAMILY": {"family_pedigree": False},

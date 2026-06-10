@@ -22,6 +22,330 @@ from howard.functions.commons import remove_if_exists
 from test_needed import tests_folder, tests_data_folder, tests_config
 
 
+def test_calculation_transcript_annotations():
+    """
+    Test calculation `transcript_annotations` which performs transcripts annotations and generate a transcripts table/view, using dict parameters directly in calculation paramters.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = f"{tests_data_folder}/example.ann.transcripts.vcf.gz"
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+
+        # Construct param dict
+        param = {
+            "calculation": {
+                "calculations": {
+                    "transcripts_annotations": {
+                        "table": "transcripts",
+                        "column_id": "transcript",
+                        "transcripts_info_json": "transcripts_json",
+                        "transcripts_info_field": "transcripts_json",
+                        "struct": {
+                            "from_column_format": [
+                                {
+                                    "transcripts_column": "ANN",
+                                    "transcripts_infos_column": "Feature_ID",
+                                    "column_rename": None,
+                                    "column_clean": True,
+                                    "column_case": None,
+                                },
+                                {
+                                    "transcripts_column": "ANN",
+                                    "transcripts_infos_column": "Feature_ID",
+                                    "column_rename": None,
+                                    "column_clean": True,
+                                    "column_case": None,
+                                },
+                            ],
+                            "from_columns_map": [
+                                {
+                                    "transcripts_column": "Ensembl_transcriptid",
+                                    "transcripts_infos_columns": [
+                                        "genename",
+                                        "Ensembl_geneid",
+                                        "LIST_S2_score",
+                                        "LIST_S2_pred",
+                                    ],
+                                    "column_rename": None,
+                                    "column_clean": False,
+                                    "column_case": None,
+                                },
+                                {
+                                    "transcripts_column": "Ensembl_transcriptid",
+                                    "transcripts_infos_columns": [
+                                        "genename",
+                                        "VARITY_R_score",
+                                        "Aloft_pred",
+                                    ],
+                                    "column_rename": None,
+                                    "column_clean": False,
+                                    "column_case": None,
+                                },
+                            ],
+                            "from_variants": {
+                                "fields": ["CLNSIG", "DP"],
+                                "prefix": "",
+                            },
+                        },
+                    }
+                }
+            }
+        }
+
+        # Create object
+        variants = Variants(
+            input=input_vcf,
+            output=output_vcf,
+            config=tests_config,
+            param=param,
+            load=True,
+        )
+
+        # Calculation
+        variants.calculation()
+
+        # Check if transcript table exists and is not empty
+        result = variants.get_query_to_df("""SELECT INFO FROM transcripts """)
+        assert len(result) > 0
+
+        # Check if VCF is in correct format with pyVCF
+        remove_if_exists([output_vcf])
+        variants.export_output()
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
+
+
+def test_calculation_transcript_annotations_and_prioritization():
+    """
+    Test calculation `transcript_annotations` which performs transcripts annotations and generate a transcripts table/view, using dict parameters directly in calculation paramters. Then check if the generated transcripts table can be used for the `transcripts_prioritization` calculation and if the output VCF is in the correct format with pyVCF.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = f"{tests_data_folder}/example.ann.transcripts.vcf.gz"
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+
+        # Construct param dict
+        param = {
+            "calculation": {
+                "calculations": {
+                    "transcripts_annotations": {
+                        "table": "transcripts",
+                        "column_id": "transcript",
+                        "transcripts_info_json": "transcripts_json",
+                        "transcripts_info_field": "transcripts_json",
+                        "struct": {
+                            "from_column_format": [
+                                {
+                                    "transcripts_column": "ANN",
+                                    "transcripts_infos_column": "Feature_ID",
+                                    "column_rename": None,
+                                    "column_clean": True,
+                                    "column_case": None,
+                                },
+                                {
+                                    "transcripts_column": "ANN",
+                                    "transcripts_infos_column": "Feature_ID",
+                                    "column_rename": None,
+                                    "column_clean": True,
+                                    "column_case": None,
+                                },
+                            ],
+                            "from_columns_map": [
+                                {
+                                    "transcripts_column": "Ensembl_transcriptid",
+                                    "transcripts_infos_columns": [
+                                        "genename",
+                                        "Ensembl_geneid",
+                                        "LIST_S2_score",
+                                        "LIST_S2_pred",
+                                    ],
+                                    "column_rename": None,
+                                    "column_clean": False,
+                                    "column_case": None,
+                                },
+                                {
+                                    "transcripts_column": "Ensembl_transcriptid",
+                                    "transcripts_infos_columns": [
+                                        "genename",
+                                        "VARITY_R_score",
+                                        "Aloft_pred",
+                                    ],
+                                    "column_rename": None,
+                                    "column_clean": False,
+                                    "column_case": None,
+                                },
+                            ],
+                            "from_variants": {
+                                "fields": ["CLNSIG", "DP"],
+                                "prefix": "",
+                            },
+                        },
+                    },
+                    "transcripts_prioritization": {
+                        "prioritization": {
+                            "profiles": ["transcripts"],
+                            "prioritization_config": f"{tests_data_folder}/prioritization_transcripts_profiles.json",
+                            "pzprefix": "PZT",
+                            "prioritization_score_mode": "HOWARD",
+                        },
+                    },
+                }
+            }
+        }
+
+        # Create object
+        variants = Variants(
+            input=input_vcf,
+            output=output_vcf,
+            config=tests_config,
+            param=param,
+            load=True,
+        )
+
+        # Calculation
+        variants.calculation()
+
+        # Check if transcript table exists and is not empty
+        result = variants.get_query_to_df("""SELECT INFO FROM transcripts """)
+        assert len(result) > 0
+
+        # Check number of variant with transcript prioritization
+        result = variants.get_query_to_df(
+            """SELECT INFO FROM variants WHERE INFO LIKE '%PZTTranscript=%' """
+        )
+        assert len(result) == 7
+
+        # Check if VCF is in correct format with pyVCF
+        remove_if_exists([output_vcf])
+        variants.export_output()
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
+
+
+def test_calculation_transcript_annotations_and_export():
+    """
+    Test calculation `transcript_annotations` which performs transcripts annotations and generate a transcripts table/view, using dict parameters directly in calculation paramters. Then check if the generated transcripts table can be used for the `transcripts_export` calculation and if the output VCF is in the correct format with pyVCF.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = f"{tests_data_folder}/example.ann.transcripts.vcf.gz"
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+
+        # Construct param dict
+        param = {
+            "calculation": {
+                "calculations": {
+                    "transcripts_annotations": {
+                        "table": "transcripts",
+                        "column_id": "transcript",
+                        "transcripts_info_json": "transcripts_json",
+                        "transcripts_info_field": "transcripts_json",
+                        "struct": {
+                            "from_column_format": [
+                                {
+                                    "transcripts_column": "ANN",
+                                    "transcripts_infos_column": "Feature_ID",
+                                    "column_rename": None,
+                                    "column_clean": True,
+                                    "column_case": None,
+                                },
+                                {
+                                    "transcripts_column": "ANN",
+                                    "transcripts_infos_column": "Feature_ID",
+                                    "column_rename": None,
+                                    "column_clean": True,
+                                    "column_case": None,
+                                },
+                            ],
+                            "from_columns_map": [
+                                {
+                                    "transcripts_column": "Ensembl_transcriptid",
+                                    "transcripts_infos_columns": [
+                                        "genename",
+                                        "Ensembl_geneid",
+                                        "LIST_S2_score",
+                                        "LIST_S2_pred",
+                                    ],
+                                    "column_rename": None,
+                                    "column_clean": False,
+                                    "column_case": None,
+                                },
+                                {
+                                    "transcripts_column": "Ensembl_transcriptid",
+                                    "transcripts_infos_columns": [
+                                        "genename",
+                                        "VARITY_R_score",
+                                        "Aloft_pred",
+                                    ],
+                                    "column_rename": None,
+                                    "column_clean": False,
+                                    "column_case": None,
+                                },
+                            ],
+                            "from_variants": {
+                                "fields": ["CLNSIG", "DP"],
+                                "prefix": "",
+                            },
+                        },
+                    },
+                    "transcripts_export": {
+                        "export": {
+                            "output": f"{tmp_dir}/output.transcripts.tsv",
+                            "export_header": False,
+                            "add_info": True,
+                        },
+                        "explode": {
+                            "explode_infos": True,
+                            "explode_infos_fields": "PZTScore,variant_type_rank",
+                        },
+                    },
+                }
+            }
+        }
+
+        # Create object
+        variants = Variants(
+            input=input_vcf,
+            output=output_vcf,
+            config=tests_config,
+            param=param,
+            load=True,
+        )
+
+        # Calculation
+        variants.calculation()
+
+        # Check if transcript table exists and is not empty
+        result = variants.get_query_to_df("""SELECT INFO FROM transcripts """)
+        assert len(result) > 0
+
+        # Check if output transcripts exists and as content (at least one line with a transcript, so 2 lines with header)
+        assert os.path.exists(f"{tmp_dir}/output.transcripts.tsv")
+        if os.path.exists(f"{tmp_dir}/output.transcripts.tsv"):
+            with open(f"{tmp_dir}/output.transcripts.tsv", "r") as f:
+                lines = f.readlines()
+                content_lines = [line for line in lines if line.strip()]
+                assert len(content_lines) > 1
+
+        # Check if VCF is in correct format with pyVCF
+        remove_if_exists([output_vcf])
+        variants.export_output()
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
+
+
 def test_calculation_sql_on_table():
     """
     The function `test_calculation_sql_on_table` performs various calculations and checks on a table of

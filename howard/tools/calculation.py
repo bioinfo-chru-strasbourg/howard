@@ -49,11 +49,23 @@ def calculation(args: argparse) -> None:
     operations_config_file = param.get("calculation", {}).get("calculation_config")
 
     # Show calculation
-    if param.get("calculation", {}).get("show_calculations", False):
-        for help_line in vcfdata_obj.get_operations_help(
-            operations_config_file=operations_config_file
-        ):
-            log.info(help_line)
+    if param.get("calculation", {}).get("show_calculations", False) or param.get(
+        "calculation", {}
+    ).get("show_calculations_md", None):
+
+        if param.get("calculation", {}).get("show_calculations", False):
+            for help_line in vcfdata_obj.get_operations_help(
+                operations_config_file=operations_config_file
+            ):
+                log.info(help_line)
+
+        # Show calculation in markdown
+        if param.get("calculation", {}).get("show_calculations_md", None):
+            for help_line in vcfdata_obj.get_operations_help(
+                operations_config_file=operations_config_file, format="markdown"
+            ):
+                log.info(help_line)
+
         exit()
 
     # Calculation

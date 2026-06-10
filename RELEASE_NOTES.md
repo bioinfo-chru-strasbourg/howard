@@ -15,6 +15,7 @@ This release introduces several significant new features and improvements, prima
 - Improve annotation update from external tools (e.g. snpEff, Annovar, splice...), to improve ressources ([#443](https://github.com/bioinfo-chru-strasbourg/howard/issues/443))
 - Add strategy to manage resources, based on CTAS method and duckDB spilling identification ([#462](https://github.com/bioinfo-chru-strasbourg/howard/issues/462), [#466](https://github.com/bioinfo-chru-strasbourg/howard/issues/466), [#459](https://github.com/bioinfo-chru-strasbourg/howard/issues/459))
 - Improve Parquet annotation (add options), resources dealing, fast parameter ([#466](https://github.com/bioinfo-chru-strasbourg/howard/issues/466))
+- Improve calculation, and add some pertinent calculations ([#501](https://github.com/bioinfo-chru-strasbourg/howard/issues/501))
 
 ### Fixes
 
