@@ -1955,6 +1955,14 @@ Notes:
 
 </small>
 
+<small>
+
+>     --download-annovar-force-update
+>
+>     Force update Annovar databases if different size, even if they already exist.
+
+</small>
+
 ## refSeq
 
 <small>

@@ -1,3 +1,4 @@
+import gzip
 import multiprocessing
 import os
 from pathlib import Path
@@ -2526,8 +2527,21 @@ def concat_into_infile(
                         shutil.copyfileobj(infile, compressed_file)
         elif input_compression_type in ["gzip"]:
             # See https://pypi.org/project/mgzip/
-            with mgzip.open(input_file, "r" + open_type, thread=threads) as infile:
-                shutil.copyfileobj(infile, compressed_file)
+            # log.debug(f"Reading gzip file '{input_file}' with mgzip...")
+            try:
+                with mgzip.open(input_file, "r" + open_type, thread=threads) as infile:
+                    shutil.copyfileobj(infile, compressed_file)
+            except Exception as e:
+                log.warning(f"Error reading gzip file '{input_file}' with mgzip: {e}")
+                log.warning(f"Retrying reading gzip file '{input_file}' with gzip...")
+                try:
+                    with gzip.open(input_file, "r" + open_type) as infile:
+                        shutil.copyfileobj(infile, compressed_file)
+                except Exception as e:
+                    log.error(f"Error reading gzip file '{input_file}' with gzip: {e}")
+                    raise ValueError(
+                        f"Error reading gzip file '{input_file}' with both mgzip and gzip libraries. Please check the file integrity and format."
+                    )
         elif input_compression_type in ["none"]:
             with open(input_file, "r" + open_type) as infile:
                 shutil.copyfileobj(infile, compressed_file)

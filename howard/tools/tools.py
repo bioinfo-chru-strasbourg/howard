@@ -1174,6 +1174,11 @@ arguments = {
         "default": DEFAULT_ANNOVAR_URL,
         "type": str,
     },
+    "download-annovar-force-update": {
+        "help": """Force update Annovar databases if different size, even if they already exist.\n""",
+        "action": "store_true",
+        "default": False,
+    },
     # snpEff
     "download-snpeff": {
         "metavar": "snpEff",
@@ -2364,6 +2369,7 @@ commands_arguments = {
                 "download-annovar": False,
                 "download-annovar-files": False,
                 "download-annovar-url": False,
+                "download-annovar-force-update": False,
             },
             "refSeq": {
                 "download-refseq": False,

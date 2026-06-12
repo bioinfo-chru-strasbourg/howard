@@ -549,6 +549,7 @@ def databases_download_annovar(
     annovar_url: str = "http://www.openbioinformatics.org/annovar/download",
     threads: int = 1,
     force_check_dblist: bool = True,
+    force_update: bool = True,
 ) -> None:
     """
     This function downloads and extracts Annovar databases for specified assemblies and files.
@@ -686,14 +687,26 @@ def databases_download_annovar(
             # Find files in url but not in folder
             files_to_download = []
             for file in matched_files:
+                log.debug(f"Check file '{file}' in Annovar URL...")
                 file_url_size = next(
                     (d for d in data if fnmatch.fnmatch(d["file"], file)), None
                 ).get("size", 0)
                 file_folder_size = list_files_in_folder_size.get(file, 0)
-                if file not in list_files_in_folder or int(file_url_size) != int(
-                    file_folder_size
+                log.debug(
+                    f"   Check download: {file not in list_files_in_folder or (int(file_url_size) != int(file_folder_size) and force_update)} ({file} not in list_files_in_folder or ({int(file_url_size)} != {int(file_folder_size)}) and {force_update})"
+                )
+                if file not in list_files_in_folder or (
+                    int(file_url_size) != int(file_folder_size) and force_update
                 ):
                     files_to_download.append(file)
+                if file not in list_files_in_folder:
+                    log.warning(
+                        f"   Download: File '{file}' not found in Annovar folder but exists in Annovar server."
+                    )
+                elif int(file_url_size) != int(file_folder_size):
+                    log.warning(
+                        f"   Update: File '{file}' already exists in Annovar folder but with different size than in Annovar server."
+                    )
 
             # List of files to download
             log.debug(f"List of file to download: {files_to_download}")
@@ -708,6 +721,13 @@ def databases_download_annovar(
                     file_url = os.path.join(annovar_url, file)
                     file_path = os.path.join(folder_assembly, file)
 
+                    log.debug(f"Rename file {file_path} with date if exists...")
+                    if os.path.exists(file_path):
+                        file_path_old = (
+                            file_path + "." + str(os.path.getmtime(file_path)) + ".bak"
+                        )
+                        log.debug(f"   Rename file {file_path} to {file_path_old}...")
+                        os.rename(file_path, file_path_old)
                     log.debug(f"Download file {file} from {file_url} to {file_path}...")
                     download_file(file_url, file_path, threads=threads)
                     log.debug(f"Extract file {file} to {folder_assembly}...")

@@ -27,6 +27,8 @@ title: HOWARD Help Parameters Databases
     download_annovar_files](#download_annovar_files)
   - [<span class="toc-section-number">7.3</span>
     download_annovar_url](#download_annovar_url)
+  - [<span class="toc-section-number">7.4</span>
+    download_annovar_force_update](#download_annovar_force_update)
 - [<span class="toc-section-number">8</span> refseq](#refseq)
   - [<span class="toc-section-number">8.1</span>
     download_refseq](#download_refseq)
@@ -429,6 +431,13 @@ Annovar databases URL (see Annovar Doc).
 Type: `str`
 
 Default: `http://www.openbioinformatics.org/annovar/download`
+
+## download_annovar_force_update
+
+Force update Annovar databases if different size, even if they already
+exist.
+
+Default: `False`
 
 # refseq
 

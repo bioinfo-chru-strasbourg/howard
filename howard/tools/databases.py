@@ -209,6 +209,9 @@ def databases(args: argparse) -> None:
             annovar_url=param_databases_annovar.get("download_annovar_url"),
             threads=threads,
             force_check_dblist=True,
+            force_update=param_databases_annovar.get(
+                "download_annovar_force_update", False
+            ),
         )
 
     # snpEff

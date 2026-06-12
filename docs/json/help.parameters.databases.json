@@ -140,7 +140,8 @@
     "__help": ["Annovar download."],
         "download_annovar": {},
         "download_annovar_files": {},
-        "download_annovar_url": {}
+        "download_annovar_url": {},
+        "download_annovar_force_update": {}
     },
     "refseq": {
     "__help": ["refSeq download."],
