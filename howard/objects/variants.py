@@ -15,7 +15,6 @@ import json
 import yaml  # type: ignore
 import Bio.bgzf as bgzf  # type: ignore
 import pandas as pd  # type: ignore
-import numpy as np  # type: ignore
 import vcf  # type: ignore
 import logging as log
 import fastparquet as fp  # type: ignore
@@ -40,8 +39,6 @@ from howard.functions.commons import (
     run_parallel_commands,
     vcf_required,
     file_format_delimiters,
-    code_type_map,
-    comparison_map,
     code_type_map_to_sql,
     sort_contigs,
     choose_update_strategy_safe,
@@ -55,13 +52,16 @@ from .variants_mixin.view import variants_view
 from .variants_mixin.transcripts import variants_transcripts
 from .variants_mixin.annotation import variants_annotation
 from .variants_mixin.calculation import variants_calculation
+from .variants_mixin.prioritization import variants_prioritization
 from .variants_mixin.tmp import variants_tmp
+
 
 class Variants(
     variants_view,
     variants_transcripts,
     variants_annotation,
     variants_calculation,
+    variants_prioritization,
     variants_tmp,
 ):
 
@@ -116,94 +116,6 @@ class Variants(
         if load:
             self.load_data(input)
 
-    # def set_tmp_files(self, tmp_files: list = []) -> None:
-    #     """
-    #     Set temporary files
-
-    #     :param tmp_files: The `tmp_files` parameter in the `set_tmp_files` method is a list of temporary
-    #     files that you want to set as the `tmp_files` attribute of the class. If no files are provided,
-    #     it defaults to an empty list
-    #     :type tmp_files: list
-
-    #     :return: The `set_tmp_files` method is returning `None`.
-    #     """
-
-    #     # Init
-    #     if tmp_files is None:
-    #         tmp_files = []
-
-    #     # Create tmp_files attribute
-    #     self.tmp_files = tmp_files
-
-    # def get_tmp_files(self) -> list:
-    #     """
-    #     Get temporary files
-    #     """
-
-    #     # Return tmp_files attribute
-    #     return self.tmp_files
-
-    # def add_tmp_files(self, tmp_files: list = []) -> None:
-    #     """
-    #     Extend a temporary file list to the list of temporary files
-
-    #     :param tmp_files: The `tmp_files` parameter in the `add_tmp_files` method is a list of temporary
-    #     files that you want to add to the `tmp_files` attribute of the class. If no files are provided,
-    #     it defaults to an empty list
-    #     :type tmp_files: list
-
-    #     :return: The `add_tmp_files` method is returning `None`.
-    #     """
-
-    #     # Init
-    #     if tmp_files is None:
-    #         tmp_files = []
-
-    #     # Append list to tmp_files attribute
-    #     self.tmp_files.extend(tmp_files)
-
-    # def remove_tmp_files(self, tmp_files: list = []) -> None:
-    #     """
-    #     Remove files from temporary files attribute
-
-    #     :param tmp_files: The `tmp_files` parameter in the `remove_tmp_files` method is a list of
-    #     temporary files that you want to remove from the `tmp_files` attribute of the class. If no
-    #     files are provided, it defaults to an empty list
-    #     :type tmp_files: list
-
-    #     :return: The `remove_tmp_files` method is returning `None`.
-    #     """
-
-    #     # Init
-    #     if tmp_files is None:
-    #         tmp_files = []
-
-    #     # Remove tmp files from tmp_files attribute
-    #     self.tmp_files = [f for f in self.get_tmp_files() if f not in tmp_files]
-
-    # def clean_tmp_files(self) -> list:
-    #     """
-    #     Remove temporary files
-    #     """
-
-    #     # Remove tmp_files files
-    #     tmp_files = self.get_tmp_files()
-    #     remove_if_exists(tmp_files)
-    #     self.tmp_files = []
-
-    #     return tmp_files
-
-    # def get_tmp_dir(self) -> str:
-    #     """
-    #     The function `get_tmp_dir` returns the temporary directory path based on configuration
-    #     parameters or a default path.
-    #     :return: The `get_tmp_dir` method is returning the temporary directory path based on the
-    #     configuration, parameters, and a default value of "/tmp".
-    #     """
-
-    #     return get_tmp(
-    #         config=self.get_config(), param=self.get_param(), default_tmp="/tmp"
-    #     )
 
     def get_access(self, default: str = None) -> str:
         """
@@ -827,22 +739,14 @@ class Variants(
             # DuckDB connexion
             if connexion_format in ["duckdb"]:
 
-                # Deprecated code: fail when empty result and limit
-                # df = (
-                #     self.conn.execute(query)
-                #     .fetch_record_batch(limit)
-                #     .read_next_batch()
-                #     .to_pandas()
-                # )
-
-                result = self.conn.execute(query).fetch_record_batch(limit)
+                result = self.get_connexion().execute(query).fetch_record_batch(limit)
                 if result is None:
                     df = result.df()
                 else:
                     try:
                         df = result.read_next_batch().to_pandas()
                     except StopIteration:
-                        df = self.conn.execute(query).df()[0:limit]
+                        df = self.get_connexion().execute(query).df()[0:limit]
 
             # SQLite connexion
             elif connexion_format in ["sqlite"]:
@@ -853,7 +757,7 @@ class Variants(
 
             # DuckDB connexion
             if connexion_format in ["duckdb"]:
-                df = self.conn.execute(query).df()
+                df = self.get_connexion().execute(query).df()
 
             # SQLite connexion
             elif connexion_format in ["sqlite"]:
@@ -1096,7 +1000,7 @@ class Variants(
                 """
 
                 # Get samples stats by genotype for each sample in the header
-                sql_query_genotype_df = self.conn.execute(sql_query_samples).df()
+                sql_query_genotype_df = self.get_connexion().execute(sql_query_samples).df()
                 non_null_genotypes = sql_query_genotype_df[
                     sql_query_genotype_df["genotype"].str.contains(r"\d")
                 ]
@@ -1256,7 +1160,7 @@ class Variants(
                     """
 
             # Get quality stats
-            qual_stats = self.conn.execute(sql_query_qual).df().to_dict(orient="index")
+            qual_stats = self.get_connexion().execute(sql_query_qual).df().to_dict(orient="index")
 
         else:
 
@@ -1290,7 +1194,7 @@ class Variants(
 
             # Get filter stats
             filter_stats = (
-                self.conn.execute(sql_query_filter).df().to_dict(orient="index")
+                self.get_connexion().execute(sql_query_filter).df().to_dict(orient="index")
             )
 
         else:
@@ -1733,7 +1637,6 @@ class Variants(
         """
 
         # Access
-        # access = self.get_config().get("access", None)
         access = self.get_access(default=None)
 
         # Clauses "select", "where", "update"
@@ -1775,7 +1678,7 @@ class Variants(
         """
 
         log.debug(f"Close connexion...")
-        self.conn.close()
+        self.get_connexion().close()
 
         connexion_db = self.get_connexion_db()
 
@@ -2018,7 +1921,7 @@ class Variants(
         :param sep: The `sep` parameter in the `insert_file_to_table` function is used to specify the
         separator character that is used in the file being read. In this case, the default separator is
         set to `\t`, which represents a tab character. You can change this parameter to a different
-        separator character if, defaults to \t
+        separator character if needed, defaults to \t
         :type sep: str (optional)
         :param chunksize: The `chunksize` parameter specifies the number of rows to read in at a time
         when processing the file in chunks. In the provided code snippet, the default value for
@@ -2041,9 +1944,10 @@ class Variants(
                     sql_insert_into = (
                         f"INSERT INTO variants ({columns}) SELECT {columns} FROM chunk"
                     )
-                    self.conn.execute(sql_insert_into)
+                    #self.conn.execute(sql_insert_into)
+                    self.get_connexion().execute(sql_insert_into)
                 elif connexion_format in ["sqlite"]:
-                    chunk.to_sql("variants", self.conn, if_exists="append", index=False)
+                    chunk.to_sql("variants", self.get_connexion(), if_exists="append", index=False)
 
     def load_data(
         self,
@@ -2145,7 +2049,7 @@ class Variants(
                         sql_load = (
                             f"CREATE TABLE {table_variants} AS SELECT * FROM {sql_from}"
                         )
-                    self.conn.execute(sql_load)
+                    self.get_connexion().execute(sql_load)
                     log.debug(f"Load Data into {table_variants} - done.")
 
                 except Exception as e:
@@ -2196,7 +2100,7 @@ class Variants(
             sql_create_table_columns_sql = ", ".join(sql_create_table_columns)
             sql_create_table_columns_list_sql = ", ".join(sql_create_table_columns_list)
             sql_create_table = f"CREATE TABLE IF NOT EXISTS {table_variants} ({sql_create_table_columns_sql})"
-            self.conn.execute(sql_create_table)
+            self.get_connexion().execute(sql_create_table)
 
             # chunksize define length of file chunk load file
             chunksize = 100000
@@ -2813,7 +2717,7 @@ class Variants(
                                 f"Explode INFO fields - Explode all {len(sql_info_alter_table_array)} fields..."
                             )
                             # log.debug(sql_info_alter_table)
-                            self.conn.execute(sql_info_alter_table)
+                            self.get_connexion().execute(sql_info_alter_table)
                     else:
                         sql_info_alter_num = 0
                         for sql_info_alter in sql_info_alter_table_array:
@@ -2828,7 +2732,7 @@ class Variants(
                                 f"Explode INFO fields - Explode field {sql_info_alter_num}/{len(sql_info_alter_table_array)}..."
                             )
                             # log.debug(sql_info_alter_table)
-                            self.conn.execute(sql_info_alter_table)
+                            self.get_connexion().execute(sql_info_alter_table)
 
             # Remove view_source
             self.remove_tables_or_views(tables=[view_source])
@@ -2854,18 +2758,18 @@ class Variants(
         if self.get_indexing() and access not in ["RO"]:
             # Create index
             sql_create_table_index = f'CREATE INDEX IF NOT EXISTS idx_{self.get_table_variants()} ON {table_variants} ("#CHROM", "POS", "REF", "ALT")'
-            self.conn.execute(sql_create_table_index)
+            self.get_connexion().execute(sql_create_table_index)
             sql_create_table_index = f'CREATE INDEX IF NOT EXISTS idx_{self.get_table_variants()}_chrom ON {table_variants} ("#CHROM")'
-            self.conn.execute(sql_create_table_index)
+            self.get_connexion().execute(sql_create_table_index)
             sql_create_table_index = f'CREATE INDEX IF NOT EXISTS idx_{self.get_table_variants()}_pos ON {table_variants} ("POS")'
-            self.conn.execute(sql_create_table_index)
+            self.get_connexion().execute(sql_create_table_index)
             sql_create_table_index = f'CREATE INDEX IF NOT EXISTS idx_{self.get_table_variants()}_ref ON {table_variants} ( "REF")'
-            self.conn.execute(sql_create_table_index)
+            self.get_connexion().execute(sql_create_table_index)
             sql_create_table_index = f'CREATE INDEX IF NOT EXISTS idx_{self.get_table_variants()}_alt ON {table_variants} ("ALT")'
-            self.conn.execute(sql_create_table_index)
+            self.get_connexion().execute(sql_create_table_index)
             for field in self.index_additionnal_fields:
                 sql_create_table_index = f""" CREATE INDEX IF NOT EXISTS "idx_{self.get_table_variants()}_{field}" ON {table_variants} ("{field}") """
-                self.conn.execute(sql_create_table_index)
+                self.get_connexion().execute(sql_create_table_index)
 
     def drop_indexes(self) -> None:
         """
@@ -2888,11 +2792,11 @@ class Variants(
             elif connexion_format in ["sqlite"]:
                 sql_list_indexes = f"SELECT name FROM sqlite_master WHERE type='index' AND tbl_name='{table_variants}';"
 
-            list_indexes = self.conn.execute(sql_list_indexes)
+            list_indexes = self.get_connexion().execute(sql_list_indexes)
             index_names = [row[0] for row in list_indexes.fetchall()]
             for index in index_names:
                 sql_drop_table_index = f""" DROP INDEX IF EXISTS "{index}" """
-                self.conn.execute(sql_drop_table_index)
+                self.get_connexion().execute(sql_drop_table_index)
 
     def read_vcf_header(self, f) -> list:
         """
@@ -2936,7 +2840,7 @@ class Variants(
         :return: The result of the query is being returned.
         """
         if query:
-            return self.conn.execute(query)  # .fetchall()
+            return self.get_connexion().execute(query)  # .fetchall()
         else:
             return None
 
@@ -3819,7 +3723,7 @@ class Variants(
         sql_create = (
             f"CREATE TEMPORARY TABLE {table_vcf} AS SELECT * FROM variants WHERE 0"
         )
-        self.conn.execute(sql_create)
+        self.get_connexion().execute(sql_create)
 
         # Loading VCF into temporaire table
         vcf_df = pd.read_csv(
@@ -3857,11 +3761,11 @@ class Variants(
                             AND table_vcf.\"REF\" = table_variants.\"REF\"
                         )
         """
-        self.conn.execute(sql_query_update)
+        self.get_connexion().execute(sql_query_update)
 
         # Drop temporary table
         sql_drop = f"DROP TABLE {table_vcf}"
-        self.conn.execute(sql_drop)
+        self.get_connexion().execute(sql_drop)
 
     def drop_variants_table(self) -> None:
         """
@@ -3870,7 +3774,7 @@ class Variants(
 
         table_variants = self.get_table_variants()
         sql_table_variants = f"DROP TABLE IF EXISTS {table_variants}"
-        self.conn.execute(sql_table_variants)
+        self.get_connexion().execute(sql_table_variants)
 
     def set_variant_id(
         self, variant_id_column: str = "variant_id", force: bool = None
@@ -3917,7 +3821,7 @@ class Variants(
             )
 
             # Update column
-            self.conn.execute(f"""
+            self.get_connexion().execute(f"""
                     UPDATE {table_variants}
                     SET "{variant_id_column}" = hash('{assembly}', "#CHROM", "POS", "REF", "ALT", '"{prefix}SVTYPE"')
                 """)
@@ -3993,48 +3897,49 @@ class Variants(
 
         config_default = {
             "calculations": self.get_config_calculations_default(),
-            "prioritizations": {
-                "default": {
-                    "ANN": [
-                        {
-                            "type": "contains",
-                            "value": "HIGH",
-                            "score": 5,
-                            "flag": "PASS",
-                            "comment": [
-                                "The variant is assumed to have high (disruptive) impact in the protein, probably causing protein truncation, loss of function or triggering nonsense mediated decay"
-                            ],
-                        },
-                        {
-                            "type": "contains",
-                            "value": "MODERATE",
-                            "score": 3,
-                            "flag": "PASS",
-                            "comment": [
-                                "A non-disruptive variant that might change protein effectiveness"
-                            ],
-                        },
-                        {
-                            "type": "contains",
-                            "value": "LOW",
-                            "score": 0,
-                            "flag": "FILTERED",
-                            "comment": [
-                                "Assumed to be mostly harmless or unlikely to change protein behavior"
-                            ],
-                        },
-                        {
-                            "type": "contains",
-                            "value": "MODIFIER",
-                            "score": 0,
-                            "flag": "FILTERED",
-                            "comment": [
-                                "Usually non-coding variants or variants affecting non-coding genes, where predictions are difficult or there is no evidence of impact"
-                            ],
-                        },
-                    ],
-                }
-            },
+            "prioritizations": self.get_config_prioritizations_default(),
+            #     {
+            #     "default": {
+            #         "ANN": [
+            #             {
+            #                 "type": "contains",
+            #                 "value": "HIGH",
+            #                 "score": 5,
+            #                 "flag": "PASS",
+            #                 "comment": [
+            #                     "The variant is assumed to have high (disruptive) impact in the protein, probably causing protein truncation, loss of function or triggering nonsense mediated decay"
+            #                 ],
+            #             },
+            #             {
+            #                 "type": "contains",
+            #                 "value": "MODERATE",
+            #                 "score": 3,
+            #                 "flag": "PASS",
+            #                 "comment": [
+            #                     "A non-disruptive variant that might change protein effectiveness"
+            #                 ],
+            #             },
+            #             {
+            #                 "type": "contains",
+            #                 "value": "LOW",
+            #                 "score": 0,
+            #                 "flag": "FILTERED",
+            #                 "comment": [
+            #                     "Assumed to be mostly harmless or unlikely to change protein behavior"
+            #                 ],
+            #             },
+            #             {
+            #                 "type": "contains",
+            #                 "value": "MODIFIER",
+            #                 "score": 0,
+            #                 "flag": "FILTERED",
+            #                 "comment": [
+            #                     "Usually non-coding variants or variants affecting non-coding genes, where predictions are difficult or there is no evidence of impact"
+            #                 ],
+            #             },
+            #         ],
+            #     }
+            # },
         }
 
         return config_default.get(name, None)
@@ -4087,825 +3992,6 @@ class Variants(
                 raise ValueError(msg_error)
 
         return configuration
-
-    def prioritization(
-        self,
-        table: str = None,
-        pz_prefix: str = None,
-        pz_param: dict = None,
-        pz_keys: list = None,
-        strict: bool = False,
-    ) -> bool:
-        """
-        Processes VCF files, adds new INFO fields, and prioritizes variants based on configured profiles and criteria.
-
-        Args:
-            table (str, optional): The name of the table (presumably a VCF file) on which the prioritization operation will be performed.
-                If not provided, the default variants table will be used.
-            pz_prefix (str, optional): A prefix to be added to certain INFO fields in the VCF file during the prioritization process.
-                Defaults to "PZ" if not provided.
-            pz_param (dict, optional): Additional parameters specific to the prioritization process. These parameters can include settings
-                related to prioritization profiles, fields, scoring modes, flags, comments, and other configurations needed for the prioritization
-                of variants.
-            pz_keys (list, optional): The keys used to join the prioritization table with the variant table. Defaults to ["#CHROM", "POS", "REF", "ALT"]
-                if not provided.
-            strict (bool, optional): Whether to enforce strict prioritization criteria availability in view (need to be in header and in column). Defaults to False.
-
-        Returns:
-            bool: True if the prioritization operation is successful, False otherwise.
-        """
-
-        # Config
-        config = self.get_config()
-
-        # Param
-        param = self.get_param()
-
-        # Prioritization param
-        if pz_param is not None:
-            prioritization_param = pz_param
-        else:
-            prioritization_param = param.get("prioritization", {})
-
-        # Configuration profiles
-        prioritization_config_file = prioritization_param.get(
-            "prioritization_config", None
-        )
-        prioritization_config_file = full_path(prioritization_config_file)
-        prioritizations_config = self.get_config_json(
-            name="prioritizations", config_file=prioritization_config_file
-        )
-
-        # Prioritization prefix
-        pz_prefix_default = "PZ"
-        if pz_prefix is None:
-            pz_prefix = prioritization_param.get("pzprefix", pz_prefix_default)
-
-        # Prioritization options
-        profiles = prioritization_param.get("profiles", [])
-        if isinstance(profiles, str):
-            profiles = profiles.split(",")
-        pzfields = prioritization_param.get(
-            "pzfields", [f"{pz_prefix}Flag", f"{pz_prefix}Score"]
-        )
-        if isinstance(pzfields, str):
-            pzfields = pzfields.split(",")
-        default_profile = prioritization_param.get("default_profile", None)
-        pzfields_sep = prioritization_param.get("pzfields_sep", "_")
-        prioritization_score_mode = prioritization_param.get(
-            "prioritization_score_mode", "HOWARD"
-        )
-
-        # Quick Prioritizations
-        prioritizations = param.get("prioritizations", None)
-        if prioritizations:
-            log.info("Quick Prioritization:")
-            for profile in prioritizations.split(","):
-                if profile not in profiles:
-                    profiles.append(profile)
-                    log.info(f"   {profile}")
-
-        # Keys for prioritization join
-        if pz_keys is None:
-            pz_keys = ["#CHROM", "POS", "REF", "ALT"]
-
-        # If profile "ALL" provided, all profiles in the config profiles
-        if "ALL" in profiles:
-            profiles = list(prioritizations_config.keys())
-
-        for profile in profiles:
-            if prioritizations_config.get(profile, None):
-                log.debug(f"Profile '{profile}' configured")
-            else:
-                msg_error = f"Profile '{profile}' NOT configured"
-                log.error(msg_error)
-                raise ValueError(msg_error)
-
-        if profiles:
-            log.info(f"Prioritization... ")
-        else:
-            log.debug(f"No profile defined")
-            return False
-
-        if not default_profile and len(profiles):
-            default_profile = profiles[0]
-
-        log.debug("Profiles availables: " + str(list(prioritizations_config.keys())))
-        log.debug("Profiles to check: " + str(list(profiles)))
-
-        # Variables
-        if table is not None:
-            table_variants = table
-        else:
-            table_variants = self.get_table_variants(clause="update")
-        log.debug(f"Table to prioritize: {table_variants}")
-
-        # Added columns
-        added_columns = []
-
-        # Create list of PZfields
-        # List of PZFields
-        list_of_pzfields_original = pzfields + [
-            pzfield + pzfields_sep + profile
-            for pzfield in pzfields
-            for profile in profiles
-        ]
-        list_of_pzfields = []
-        log.debug(f"{list_of_pzfields_original}")
-
-        # Remove existing PZfields to use if exists
-        for pzfield in list_of_pzfields_original:
-            if self.get_header().infos.get(pzfield, None) is None:
-                list_of_pzfields.append(pzfield)
-                log.debug(f"VCF Input - Header - PZfield '{pzfield}' not in VCF")
-            else:
-                log.debug(f"VCF Input - Header - PZfield '{pzfield}' already in VCF")
-
-        if list_of_pzfields:
-
-            # PZfields tags description
-            PZfields_INFOS = {
-                f"{pz_prefix}Tags": {
-                    "ID": f"{pz_prefix}Tags",
-                    "Number": ".",
-                    "Type": "String",
-                    "Description": "Variant tags based on annotation criteria",
-                },
-                f"{pz_prefix}Score": {
-                    "ID": f"{pz_prefix}Score",
-                    "Number": 1,
-                    "Type": "Integer",
-                    "Description": "Variant score based on annotation criteria",
-                },
-                f"{pz_prefix}Flag": {
-                    "ID": f"{pz_prefix}Flag",
-                    "Number": 1,
-                    "Type": "String",
-                    "Description": "Variant flag based on annotation criteria",
-                },
-                f"{pz_prefix}Comment": {
-                    "ID": f"{pz_prefix}Comment",
-                    "Number": ".",
-                    "Type": "String",
-                    "Description": "Variant comment based on annotation criteria",
-                },
-                f"{pz_prefix}Infos": {
-                    "ID": f"{pz_prefix}Infos",
-                    "Number": ".",
-                    "Type": "String",
-                    "Description": "Variant infos based on annotation criteria",
-                },
-                f"{pz_prefix}Class": {
-                    "ID": f"{pz_prefix}Class",
-                    "Number": ".",
-                    "Type": "String",
-                    "Description": "Variant class based on annotation criteria",
-                },
-            }
-
-            # Create INFO fields if not exist
-            for field in PZfields_INFOS:
-                field_ID = PZfields_INFOS[field]["ID"]
-                field_description = PZfields_INFOS[field]["Description"]
-                if field_ID not in self.get_header().infos and field_ID in pzfields:
-                    field_description = (
-                        PZfields_INFOS[field]["Description"]
-                        + f", profile {default_profile}"
-                    )
-                    self.get_header().infos[field_ID] = vcf.parser._Info(
-                        field_ID,
-                        PZfields_INFOS[field]["Number"],
-                        PZfields_INFOS[field]["Type"],
-                        field_description,
-                        "unknown",
-                        "unknown",
-                        code_type_map[PZfields_INFOS[field]["Type"]],
-                    )
-
-            # Create INFO fields if not exist for each profile
-            for profile in prioritizations_config:
-                if profile in profiles or profiles == []:
-                    for field in PZfields_INFOS:
-                        field_ID = PZfields_INFOS[field]["ID"] + pzfields_sep + profile
-                        field_description = (
-                            PZfields_INFOS[field]["Description"]
-                            + f", profile {profile}"
-                        )
-                        if (
-                            field_ID not in self.get_header().infos
-                            and field in pzfields
-                        ):
-                            self.get_header().infos[field_ID] = vcf.parser._Info(
-                                field_ID,
-                                PZfields_INFOS[field]["Number"],
-                                PZfields_INFOS[field]["Type"],
-                                field_description,
-                                "unknown",
-                                "unknown",
-                                code_type_map[PZfields_INFOS[field]["Type"]],
-                            )
-
-            # Header
-            for pzfield in list_of_pzfields:
-                if re.match(f"{pz_prefix}Score.*", pzfield):
-                    added_column = self.add_column(
-                        table_name=table_variants,
-                        column_name=pzfield,
-                        column_type="INTEGER",
-                        default_value="0",
-                    )
-                elif re.match(f"{pz_prefix}Flag.*", pzfield):
-                    added_column = self.add_column(
-                        table_name=table_variants,
-                        column_name=pzfield,
-                        column_type="BOOLEAN",
-                        default_value="1",
-                    )
-                elif re.match(f"{pz_prefix}Class.*", pzfield):
-                    added_column = self.add_column(
-                        table_name=table_variants,
-                        column_name=pzfield,
-                        column_type="VARCHAR[]",
-                        default_value="null",
-                    )
-                else:
-                    added_column = self.add_column(
-                        table_name=table_variants,
-                        column_name=pzfield,
-                        column_type="STRING",
-                        default_value="''",
-                    )
-                added_columns.append(added_column)
-
-            # Profiles
-            if profiles:
-
-                # foreach profile in configuration file
-                for profile in prioritizations_config:
-
-                    # If profile is asked in param, or ALL are asked (empty profile [])
-                    if profile in profiles or profiles == []:
-                        log.info(f"Profile '{profile}'")
-
-                        sql_set_info_option = ""
-
-                        sql_set_info = []
-
-                        # PZ fields set
-
-                        # PZScore
-                        if (
-                            f"{pz_prefix}Score{pzfields_sep}{profile}"
-                            in list_of_pzfields
-                        ):
-                            sql_set_info.append(f"""
-                                    concat(
-                                        '{pz_prefix}Score{pzfields_sep}{profile}=',
-                                        {pz_prefix}Score{pzfields_sep}{profile}
-                                    ) 
-                                """)
-                            if (
-                                profile == default_profile
-                                and f"{pz_prefix}Score" in list_of_pzfields
-                            ):
-                                sql_set_info.append(f"""
-                                        concat(
-                                            '{pz_prefix}Score=',
-                                            {pz_prefix}Score{pzfields_sep}{profile}
-                                        )
-                                    """)
-
-                        # PZFlag
-                        if (
-                            f"{pz_prefix}Flag{pzfields_sep}{profile}"
-                            in list_of_pzfields
-                        ):
-                            sql_set_info.append(f"""
-                                    concat(
-                                        '{pz_prefix}Flag{pzfields_sep}{profile}=',
-                                        CASE 
-                                            WHEN {pz_prefix}Flag{pzfields_sep}{profile}==1
-                                            THEN 'PASS'
-                                            WHEN {pz_prefix}Flag{pzfields_sep}{profile}==0
-                                            THEN 'FILTERED'
-                                        END
-                                    ) 
-                                """)
-                            if (
-                                profile == default_profile
-                                and f"{pz_prefix}Flag" in list_of_pzfields
-                            ):
-                                sql_set_info.append(f"""
-                                        concat(
-                                            '{pz_prefix}Flag=',
-                                            CASE 
-                                                WHEN {pz_prefix}Flag{pzfields_sep}{profile}==1
-                                                THEN 'PASS'
-                                                WHEN {pz_prefix}Flag{pzfields_sep}{profile}==0
-                                                THEN 'FILTERED'
-                                            END
-                                        )
-                                    """)
-
-                        # PZClass
-                        if (
-                            f"{pz_prefix}Class{pzfields_sep}{profile}"
-                            in list_of_pzfields
-                        ):
-                            sql_set_info.append(f"""
-                                    concat(
-                                        '{pz_prefix}Class{pzfields_sep}{profile}=',
-                                        CASE
-                                            WHEN len({pz_prefix}Class{pzfields_sep}{profile}) > 0
-                                            THEN list_aggregate(list_distinct({pz_prefix}Class{pzfields_sep}{profile}), 'string_agg', ',')
-                                            ELSE '.'
-                                        END 
-                                    )
-                                    
-                                """)
-                            if (
-                                profile == default_profile
-                                and f"{pz_prefix}Class" in list_of_pzfields
-                            ):
-                                sql_set_info.append(f"""
-                                        concat(
-                                            '{pz_prefix}Class=',
-                                            CASE
-                                                WHEN len({pz_prefix}Class{pzfields_sep}{profile}) > 0
-                                                THEN list_aggregate(list_distinct({pz_prefix}Class{pzfields_sep}{profile}), 'string_agg', ',')
-                                                ELSE '.'
-                                            END 
-                                        )
-                                    """)
-
-                        # PZComment
-                        if (
-                            f"{pz_prefix}Comment{pzfields_sep}{profile}"
-                            in list_of_pzfields
-                        ):
-                            sql_set_info.append(f"""
-                                    CASE
-                                        WHEN {pz_prefix}Comment{pzfields_sep}{profile} NOT IN ('')
-                                        THEN concat('{pz_prefix}Comment{pzfields_sep}{profile}=', {pz_prefix}Comment{pzfields_sep}{profile})
-                                        ELSE ''
-                                    END
-                                """)
-                            if (
-                                profile == default_profile
-                                and f"{pz_prefix}Comment" in list_of_pzfields
-                            ):
-                                sql_set_info.append(f"""
-                                        CASE
-                                            WHEN {pz_prefix}Comment{pzfields_sep}{profile} NOT IN ('')
-                                            THEN concat('{pz_prefix}Comment=', {pz_prefix}Comment{pzfields_sep}{profile})
-                                            ELSE ''
-                                        END
-                                    """)
-
-                        # PZInfos
-                        if (
-                            f"{pz_prefix}Infos{pzfields_sep}{profile}"
-                            in list_of_pzfields
-                        ):
-                            sql_set_info.append(f"""
-                                    CASE
-                                        WHEN {pz_prefix}Infos{pzfields_sep}{profile} NOT IN ('')
-                                        THEN concat('{pz_prefix}Infos{pzfields_sep}{profile}=', {pz_prefix}Infos{pzfields_sep}{profile})
-                                        ELSE ''
-                                    END
-                                """)
-                            if (
-                                profile == default_profile
-                                and f"{pz_prefix}Infos" in list_of_pzfields
-                            ):
-                                sql_set_info.append(f"""
-                                        CASE
-                                            WHEN {pz_prefix}Infos{pzfields_sep}{profile} NOT IN ('')
-                                            THEN concat('{pz_prefix}Infos=', {pz_prefix}Infos{pzfields_sep}{profile})
-                                            ELSE ''
-                                        END
-                                    """)
-
-                        # Merge PZfields
-                        sql_set_info_option = ""
-                        sql_set_sep = ""
-                        for sql_set in sql_set_info:
-                            if sql_set_sep:
-                                sql_set_info_option += f"""
-                                    , concat('{sql_set_sep}', {sql_set})
-                                """
-                            else:
-                                sql_set_info_option += f"""
-                                    , {sql_set}
-                                """
-                            sql_set_sep = ";"
-
-                        sql_queries = []
-                        criterion_fields_profile = []
-                        annotation_view_name = (
-                            "annotation_view_for_prioritization_"
-                            + str(random.randrange(1000000))
-                        )
-                        annotations_view_prefix = ""
-                        annotations_view_struct = "INFOS"
-                        for annotation in prioritizations_config[profile]:
-
-                            # skip special sections
-                            if annotation.startswith("_"):
-                                continue
-
-                            # Log
-                            log.info(f"Profile '{profile}' - Filter '{annotation}'")
-
-                            # For each criterions
-                            for criterion in prioritizations_config[profile][
-                                annotation
-                            ]:
-
-                                # Criterion mode
-                                criterion_mode = None
-                                if np.any(
-                                    np.isin(list(criterion.keys()), ["type", "value"])
-                                ):
-                                    criterion_mode = "operation"
-                                elif np.any(
-                                    np.isin(list(criterion.keys()), ["sql", "fields"])
-                                ):
-                                    criterion_mode = "sql"
-                                log.debug(f"Criterion Mode: {criterion_mode}")
-
-                                if criterion_mode in ["operation"]:
-                                    log.warning(
-                                        f"Prioritization criterion mode '{criterion_mode}' is deprecated. Please use 'sql' mode instead."
-                                    )
-                                    log.debug(f"Criterion: {criterion}")
-
-                                # Criterion parameters
-                                criterion_type = criterion.get("type", None)
-                                criterion_value = criterion.get("value", None)
-                                criterion_sql = criterion.get("sql", None)
-                                criterion_fields = criterion.get("fields", None)
-                                criterion_score = criterion.get("score", 0)
-                                criterion_flag = criterion.get("flag", "PASS")
-                                criterion_class = criterion.get("class", None)
-                                criterion_flag_bool = criterion_flag == "PASS"
-                                criterion_comment = (
-                                    ", ".join(criterion.get("comment", []))
-                                    .replace("'", "''")
-                                    .replace(";", ",")
-                                    .replace("\t", " ")
-                                )
-                                criterion_infos = (
-                                    str(criterion)
-                                    .replace("'", "''")
-                                    .replace(";", ",")
-                                    .replace("\t", " ")
-                                )
-
-                                # SQL
-                                if criterion_sql is not None and isinstance(
-                                    criterion_sql, list
-                                ):
-                                    criterion_sql = " ".join(criterion_sql)
-
-                                # Fields and explode
-                                if criterion_fields is None:
-                                    criterion_fields = [annotation]
-                                if not isinstance(criterion_fields, list):
-                                    criterion_fields = str(criterion_fields).split(",")
-
-                                # Class
-                                if criterion_class is not None and not isinstance(
-                                    criterion_class, list
-                                ):
-                                    criterion_class = str(criterion_class).split(",")
-
-                                # Add criterion fields to the list of profile's criteria
-                                criterion_fields_profile = list(
-                                    set(criterion_fields_profile + criterion_fields)
-                                )
-
-                                # Create annotations view for prioritization
-                                log.debug(
-                                    f"""Profile '{profile}' - Prioritization - Create '{annotation_view_name}' view with '{criterion_fields_profile}'... """
-                                )
-                                annotation_view_name = self.create_annotations_view(
-                                    view=annotation_view_name,
-                                    table=table_variants,
-                                    view_type="view",
-                                    view_mode="explore",
-                                    info_prefix_column=annotations_view_prefix,
-                                    info_struct_column=annotations_view_struct,
-                                    fields=criterion_fields_profile + pz_keys,
-                                    fields_not_exists=(not strict),
-                                    only_in_columns=strict,
-                                    strict=strict,
-                                    drop_view=True,
-                                    detect_type_list=True,
-                                )
-
-                                # Describe annotation view and dict
-                                annotation_view_describe = self.get_query_to_df(
-                                    f"DESCRIBE {annotation_view_name}"
-                                )
-                                annotation_view_describe_dict = (
-                                    annotation_view_describe.set_index("column_name")[
-                                        "column_type"
-                                    ].to_dict()
-                                )
-
-                                # Keys for join
-                                clause_join = []
-                                for key in pz_keys:
-                                    if key in annotation_view_describe_dict:
-                                        clause_join.append(
-                                            f""" "{table_variants}"."{key}" == "{annotation_view_name}"."{key}" """
-                                        )
-
-                                sql_set = []
-                                sql_set_info = []
-
-                                # PZ fields set
-
-                                # PZScore
-                                if (
-                                    f"{pz_prefix}Score{pzfields_sep}{profile}"
-                                    in list_of_pzfields
-                                ):
-                                    # VaRank prioritization score mode
-                                    if prioritization_score_mode.upper().strip() in [
-                                        "VARANK",
-                                        "MAX",
-                                        "MAXIMUM",
-                                        "TOP",
-                                    ]:
-                                        sql_set.append(
-                                            f"{pz_prefix}Score{pzfields_sep}{profile} = CASE WHEN {criterion_score}>{pz_prefix}Score{pzfields_sep}{profile} THEN {criterion_score} ELSE {pz_prefix}Score{pzfields_sep}{profile} END "
-                                        )
-                                    # default HOWARD prioritization score mode
-                                    else:
-                                        sql_set.append(
-                                            f"{pz_prefix}Score{pzfields_sep}{profile} = {pz_prefix}Score{pzfields_sep}{profile} + {criterion_score}"
-                                        )
-
-                                # PZFlag
-                                if (
-                                    f"{pz_prefix}Flag{pzfields_sep}{profile}"
-                                    in list_of_pzfields
-                                ):
-                                    sql_set.append(
-                                        f"{pz_prefix}Flag{pzfields_sep}{profile} = {pz_prefix}Flag{pzfields_sep}{profile} AND {criterion_flag_bool}"
-                                    )
-
-                                # PZClass
-                                if (
-                                    f"{pz_prefix}Class{pzfields_sep}{profile}"
-                                    in list_of_pzfields
-                                    and criterion_class is not None
-                                ):
-                                    sql_set.append(
-                                        f" {pz_prefix}Class{pzfields_sep}{profile} = list_concat(list_distinct({pz_prefix}Class{pzfields_sep}{profile}), {criterion_class}) "
-                                    )
-
-                                # PZComment
-                                if (
-                                    f"{pz_prefix}Comment{pzfields_sep}{profile}"
-                                    in list_of_pzfields
-                                ):
-                                    sql_set.append(f"""
-                                            {pz_prefix}Comment{pzfields_sep}{profile} = 
-                                                concat(
-                                                    {pz_prefix}Comment{pzfields_sep}{profile},
-                                                    CASE 
-                                                        WHEN {pz_prefix}Comment{pzfields_sep}{profile}!=''
-                                                        THEN ', '
-                                                        ELSE ''
-                                                    END,
-                                                    '{criterion_comment}'
-                                                )
-                                        """)
-
-                                # PZInfos
-                                if (
-                                    f"{pz_prefix}Infos{pzfields_sep}{profile}"
-                                    in list_of_pzfields
-                                ):
-                                    sql_set.append(f"""
-                                            {pz_prefix}Infos{pzfields_sep}{profile} = 
-                                                concat(
-                                                    {pz_prefix}Infos{pzfields_sep}{profile},
-                                                    '{criterion_infos}'
-                                                )
-                                        """)
-                                sql_set_option = ",".join(sql_set)
-
-                                # Criterion and comparison
-                                if sql_set_option:
-
-                                    # Operation mode
-                                    if criterion_mode in ["operation"]:
-
-                                        # Check if value is a float
-                                        try:
-
-                                            # Test if criterion is a float
-                                            float(criterion_value)
-
-                                            # Query test cast as float
-                                            query_test_cast = f"""
-                                                SELECT "{annotation_view_name}"."{annotations_view_prefix}{annotation}"
-                                                    FROM "{annotation_view_name}"
-                                                    WHERE CAST("{annotation_view_name}"."{annotations_view_prefix}{annotation}" AS FLOAT) > 0
-                                                LIMIT 1
-                                            """
-                                            self.execute_query(query_test_cast)
-
-                                            sql_update = f"""
-                                                UPDATE "{table_variants}"
-                                                SET {sql_set_option}
-                                                FROM (
-                                                    SELECT *
-                                                    FROM "{annotation_view_name}"
-                                                    WHERE (
-                                                        CAST("{annotation_view_name}"."{annotations_view_prefix}{annotation}" AS VARCHAR) NOT IN ('','.')
-                                                        AND   CAST("{annotation_view_name}"."{annotations_view_prefix}{annotation}" AS FLOAT){comparison_map[criterion_type]}{criterion_value}
-                                                        )
-                                                    ) AS "{annotation_view_name}"
-                                                WHERE ({" AND ".join(clause_join)})
-                                                
-                                            """
-                                        # If not a float
-                                        except:
-                                            contains_option = ""
-                                            if criterion_type == "contains":
-                                                contains_option = ".*"
-                                            sql_update = f"""
-                                                UPDATE "{table_variants}"
-                                                SET {sql_set_option}
-                                                FROM (
-                                                    SELECT *
-                                                    FROM "{annotation_view_name}"
-                                                    WHERE (
-                                                    CAST("{annotation_view_name}"."{annotations_view_prefix}{annotation}" AS STRING) SIMILAR TO '{contains_option}{criterion_value}{contains_option}'
-                                                        )
-                                                    ) AS "{annotation_view_name}"
-                                                WHERE ({" AND ".join(clause_join)})
-                                                  
-                                            """
-                                        sql_queries.append(sql_update)
-
-                                    # SQL mode
-                                    elif criterion_mode in ["sql"]:
-
-                                        sql_update = f"""
-                                            UPDATE {table_variants}
-                                            SET {sql_set_option}
-                                            FROM (
-                                                SELECT *
-                                                FROM "{annotation_view_name}"
-                                                WHERE ({criterion_sql})
-                                                ) AS "{annotation_view_name}"
-                                            WHERE ({" AND ".join(clause_join)})
-                                        """
-                                        sql_queries.append(sql_update)
-
-                                    else:
-                                        msg_err = f"Prioritization criterion mode failed (either 'operation' or 'sql')"
-                                        log.error(msg_err)
-                                        raise ValueError(msg_err)
-
-                                else:
-                                    log.warning(
-                                        f"NO SQL SET option for '{annotation}' - '{criterion}'"
-                                    )
-
-                        # PZTags
-                        if (
-                            f"{pz_prefix}Tags{pzfields_sep}{profile}"
-                            in list_of_pzfields
-                        ):
-
-                            # Create PZFalgs value
-                            pztags_value = ""
-                            pztags_sep_default = ","
-                            pztags_sep = ""
-                            for pzfield in pzfields:
-                                if pzfield not in [f"{pz_prefix}Tags"]:
-                                    if (
-                                        f"{pzfield}{pzfields_sep}{profile}"
-                                        in list_of_pzfields
-                                    ):
-                                        if pzfield in [f"{pz_prefix}Flag"]:
-                                            pztags_value += f"""{pztags_sep}{pzfield}#', 
-                                                CASE WHEN {pz_prefix}Flag{pzfields_sep}{profile}
-                                                    THEN 'PASS'
-                                                    ELSE 'FILTERED'
-                                                END, '"""
-                                        elif pzfield in [f"{pz_prefix}Class"]:
-                                            pztags_value += f"""{pztags_sep}{pzfield}#', 
-                                                CASE WHEN len({pz_prefix}Class{pzfields_sep}{profile}) > 0
-                                                    THEN list_aggregate(list_distinct({pz_prefix}Class{pzfields_sep}{profile}), 'string_agg', ',')
-                                                    ELSE '.'
-                                                END, '"""
-                                        else:
-                                            pztags_value += f"{pztags_sep}{pzfield}#', {pzfield}{pzfields_sep}{profile}, '"
-                                        pztags_sep = pztags_sep_default
-
-                            # Add Query update for PZFlags
-                            sql_update_pztags = f"""
-                                UPDATE {table_variants}
-                                SET INFO = concat(
-                                        INFO,
-                                        CASE WHEN INFO NOT in ('','.')
-                                                THEN ';'
-                                                ELSE ''
-                                        END,
-                                        '{pz_prefix}Tags{pzfields_sep}{profile}={pztags_value}'
-                                    )
-                                WHERE 1=1
-                                """
-                            sql_queries.append(sql_update_pztags)
-
-                            # Add Query update for PZFlags for default
-                            if profile == default_profile:
-                                sql_update_pztags_default = f"""
-                                UPDATE {table_variants}
-                                SET INFO = concat(
-                                        INFO,
-                                        ';',
-                                        '{pz_prefix}Tags={pztags_value}'
-                                    )
-                                    WHERE 1=1
-                                """
-                                sql_queries.append(sql_update_pztags_default)
-
-                        log.info(f"""Profile '{profile}' - Prioritization... """)
-
-                        # Chromosomes list
-                        sql_uniq_chrom = f"""
-                            SELECT DISTINCT "#CHROM"
-                            FROM {table_variants}
-                        """
-                        chroms = self.get_query_to_df(sql_uniq_chrom)["#CHROM"].tolist()
-
-                        for chrom in chroms:
-
-                            log.debug(
-                                f"""Profile '{profile}' - Prioritization query - Chromosome '{chrom}'... """
-                            )
-
-                            if sql_queries:
-
-                                # Query num
-                                num_query = 0
-
-                                # For each query
-                                for sql_query in sql_queries:
-
-                                    # Query num
-                                    num_query += 1
-
-                                    sql_query_chrom = f"""
-                                        {sql_query}
-                                        AND {table_variants}."#CHROM" LIKE '{chrom}' 
-                                    """
-                                    log.debug(
-                                        f"""Profile '{profile}' - Prioritization query - Chromosome '{chrom}' [{num_query}/{len(sql_queries)}]"""
-                                    )
-                                    # log.debug(
-                                    #     f"""sql_query_chrom:\n{sql_query_chrom}"""
-                                    # )
-                                    self.execute_query(query=sql_query_chrom)
-
-                        # Update INFO field
-                        log.info(f"""Profile '{profile}' - Update... """)
-                        sql_query_update = f"""
-                            UPDATE {table_variants}
-                            SET INFO =  
-                                concat(
-                                    CASE
-                                        WHEN INFO NOT IN ('','.')
-                                        THEN concat(INFO, ';')
-                                        ELSE ''
-                                    END
-                                    {sql_set_info_option}
-                                )
-                        """
-                        # log.debug(f"sql_query_update={sql_query_update}")
-                        self.execute_query(query=sql_query_update)
-
-                        # Remove annotations view for prioritization
-                        self.remove_tables_or_views(tables=[annotation_view_name])
-
-        else:
-
-            log.warning(f"No profiles in parameters")
-
-        # Remove added columns
-        for added_column in added_columns:
-            self.drop_column(column=added_column)
-
-        return True
 
     ################
     # Update table #

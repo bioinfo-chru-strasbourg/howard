@@ -306,7 +306,16 @@ class variants_calculation:
                 "comment": "Variant ID generated from variant position and variation (ref and alt) and type (SVTYPE). This calculation creates a unique identifier for each variant, facilitating variant tracking and comparison across datasets.",
                 "available": True,
                 "function_name": "calculation_variant_id",
-                "function_params": [],
+                "function_params": {},
+            },
+            "variant_id_varid": {
+                "type": "python",
+                "name": "variant_id_varid",
+                "description": "Variant ID generated from variant position and type, using 'varid' as INFO tag",
+                "comment": "Variant ID generated from variant position and variation (ref and alt) and type (SVTYPE). This calculation creates a unique identifier for each variant, facilitating variant tracking and comparison across datasets.",
+                "available": True,
+                "function_name": "calculation_variant_id",
+                "function_params": {"variant_id_tag": "varid"},
             },
             "transcripts_annotations": {
                 "type": "python",
@@ -553,9 +562,7 @@ class variants_calculation:
 
                         # Python process
                         if operation_type == "python":
-                            self.calculation_process_function(
-                                operation=operation, operation_name=operation_name
-                            )
+                            self.calculation_process_function(operation=operation)
 
                         # SQL process
                         elif operation_type == "sql":
@@ -780,7 +787,7 @@ class variants_calculation:
             raise ValueError(msg_err)
 
     def calculation_process_function(
-        self, operation: dict, operation_name: str = "unknown"
+        self, operation: dict, operation_name: str = None
     ) -> None:
         """
         The `calculation_process_function` takes in an operation dictionary and performs the specified
@@ -794,29 +801,140 @@ class variants_calculation:
         :type operation_name: str (optional)
         """
 
-        operation_name = operation["name"]
+        if operation_name is None:
+            operation_name = operation["name"]
         log.debug(f"process Python {operation_name}")
         function_name = operation["function_name"]
         function_params = operation["function_params"]
-        getattr(self, function_name)(*function_params)
 
-    def calculation_variant_id(self) -> None:
+        # getattr(self, function_name)(*function_params)
+        log.debug(f"function_params={function_params}")
+        if function_params is not None:
+            if isinstance(function_params, dict):
+                # Add operation_name in function_params
+                if "operation_name" in function_params:
+                    log.warning(
+                        f"operation_name already in function_params for {operation_name}, it will be overwritten"
+                    )
+                function_params["operation_name"] = operation_name
+                # Dict -> **
+                getattr(self, function_name)(**function_params)
+            elif isinstance(function_params, list):
+                # List -> *
+                getattr(self, function_name)(*function_params)
+            else:
+                # Not dict neither list
+                log.error(
+                    f"Param function type not supported for {operation_name}: {type(function_params)}"
+                )
+                raise TypeError(f"Function parameters must be a dict or a list.")
+        else:
+            # No parameters
+            getattr(self, function_name)()
+
+    def get_operation_params(
+        self,
+        operation_params: dict = None,
+        operation_name: str = None,
+    ):
+
+        # Operation name
+        operation_name = operation_params.get("operation_name", operation_name)
+
+        # Operation param for test
+        operation_params_test = operation_params.copy()
+        operation_params_test.pop("operation_name", None)
+
+        # Param from JSON parameters file
+        param = self.get_param()
+
+        # Param from operation name
+        try:
+            param_operation = (
+                param.get("calculation", {})
+                .get("calculations", {})
+                .get(operation_name, {})
+            )
+        except Exception as e:
+            # log.error(f"Error retrieving operation parameters for {operation_name}: {e}")
+            param_operation = None
+
+        # If no operation params, try to get from JSON parameters file
+        if operation_params_test is None or len(operation_params_test) == 0:
+            operation_params = param_operation
+
+        if operation_params is None:
+            operation_params = {}
+
+        # Return
+        return operation_params, operation_name
+
+    def calculation_variant_id(
+        self,
+        variant_id_tag: str = None,
+        variant_id_tag_info: str = None,
+        keep_variant_id_tag_column: bool = None,
+        **kwargs,
+    ) -> None:
         """
         The function `calculation_variant_id` adds a variant ID annotation to a VCF file header and
         updates the INFO field of a variants table with the variant ID.
         """
 
+        log.debug(f"Calculation variant ID...")
+
+        operation_params, _ = self.get_operation_params(
+            operation_params=kwargs, operation_name="variant_id"
+        )
+
+        ### Parameters for variant ID calculation
+
         # variant_id annotation field
-        variant_id_tag = self.get_variant_id_column()
-        added_columns = [variant_id_tag]
+        variant_id_tag = (
+            operation_params.get("variant_id_tag")
+            or variant_id_tag
+            or self.get_variant_id_column()
+        )
 
-        # variant_id hgvs tags"
-        vcf_infos_tags = {
-            variant_id_tag: "howard variant ID annotation",
-        }
+        # variant_id_tag_info
+        if variant_id_tag_info is None:
+            variant_id_tag_info = (
+                operation_params.get("variant_id_tag_info")
+                or variant_id_tag_info
+                or "howard variant ID annotation"
+            )
 
-        # Variants table
-        table_variants = self.get_table_variants()
+        # keep_variant_id_tag_column
+        keep_variant_id_tag_column = (
+            operation_params.get("keep_variant_id_tag_column")
+            or keep_variant_id_tag_column
+            or False
+        )
+
+        # variant_id_tag_number
+        variant_id_tag_number = 1
+
+        # variant_id_tag_type
+        variant_id_tag_type = "String"
+
+        # variant_id_tag_source
+        variant_id_tag_source = "howard calculation"
+
+        # variant_id_tag_version
+        variant_id_tag_version = "0"
+
+        # variant_id_tag_type_code
+        variant_id_tag_type_code = self.code_type_map.get(variant_id_tag_type)
+
+        ### Get variant ID column name and generate ids if not exist
+
+        # get variant_id_column
+        variant_id_column = self.get_variant_id_column(variant_id_column=variant_id_tag)
+
+        # Add columns for calculation
+        added_columns = [variant_id_column]
+
+        ### Get header and add variant_id to header
 
         # Header
         vcf_reader = self.get_header()
@@ -824,13 +942,18 @@ class variants_calculation:
         # Add variant_id to header
         vcf_reader.infos[variant_id_tag] = vcf.parser._Info(
             variant_id_tag,
-            ".",
-            "String",
-            vcf_infos_tags.get(variant_id_tag, "howard variant ID annotation"),
-            "howard calculation",
-            "0",
-            self.code_type_map.get("String"),
+            variant_id_tag_number,
+            variant_id_tag_type,
+            variant_id_tag_info,
+            variant_id_tag_source,
+            variant_id_tag_version,
+            variant_id_tag_type_code,
         )
+
+        ### Prepare update query to add variant_id into INFO field of variants table
+
+        # Variants table
+        table_variants = self.get_table_variants()
 
         # Update
         sql_update = f"""
@@ -843,14 +966,15 @@ class variants_calculation:
                         ELSE concat("INFO", ';')
                     END,
                     '{variant_id_tag}=',
-                    "{variant_id_tag}"
+                    "{variant_id_column}"
                 )
         """
-        self.conn.execute(sql_update)
+        self.get_connexion().execute(sql_update)
 
         # Remove added columns
-        for added_column in added_columns:
-            self.drop_column(column=added_column)
+        if not keep_variant_id_tag_column:
+            for added_column in added_columns:
+                self.drop_column(column=added_column)
 
     def calculation_extract_snpeff(
         self,
