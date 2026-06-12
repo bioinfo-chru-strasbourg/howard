@@ -3247,6 +3247,7 @@ class variants_annotation:
                 files=list(annotations.keys()),
                 assemblies=[assembly],
                 force_check_dblist=False,
+                force_update=False,
             )
 
             for annotation in annotations:
@@ -3871,7 +3872,7 @@ class variants_annotation:
                             )
 
                             # Append
-                            #if force_append_annotation:
+                            # if force_append_annotation:
                             if annotation_option_force_append_annotation:
                                 query_case_when_append = f""" AND REGEXP_EXTRACT(concat(';', table_variants.INFO), ';{annotation_fields_new_name}=([^;]*)',1) IN ('','.') """
                             else:

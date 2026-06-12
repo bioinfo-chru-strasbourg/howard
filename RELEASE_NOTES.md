@@ -30,6 +30,7 @@ This release introduces several significant new features and improvements, prima
 - Fix transcript export ([#475](https://github.com/bioinfo-chru-strasbourg/howard/issues/475))
 - Fix loading VCF with sample in integer format ([#478](https://github.com/bioinfo-chru-strasbourg/howard/issues/478))
 - Fix region annotations with BED file ([#487](https://github.com/bioinfo-chru-strasbourg/howard/issues/487))
+- Fix annovar download to prevent inappropriate update ([#507](https://github.com/bioinfo-chru-strasbourg/howard/issues/507))
 
 ## 0.13.0
 
