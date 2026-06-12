@@ -15,7 +15,8 @@ This release introduces several significant new features and improvements, prima
 - Improve annotation update from external tools (e.g. snpEff, Annovar, splice...), to improve ressources ([#443](https://github.com/bioinfo-chru-strasbourg/howard/issues/443))
 - Add strategy to manage resources, based on CTAS method and duckDB spilling identification ([#462](https://github.com/bioinfo-chru-strasbourg/howard/issues/462), [#466](https://github.com/bioinfo-chru-strasbourg/howard/issues/466), [#459](https://github.com/bioinfo-chru-strasbourg/howard/issues/459))
 - Improve Parquet annotation (add options), resources dealing, fast parameter ([#466](https://github.com/bioinfo-chru-strasbourg/howard/issues/466))
-- Improve calculation, and add some pertinent calculations ([#501](https://github.com/bioinfo-chru-strasbourg/howard/issues/501))
+- Improve transcripts process (calculation), especially for transcript prioritization ([#475](https://github.com/bioinfo-chru-strasbourg/howard/issues/475), [#492](https://github.com/bioinfo-chru-strasbourg/howard/issues/492), [#495](https://github.com/bioinfo-chru-strasbourg/howard/issues/495))
+- Improve calculation tool by adding named parameters on section ([#503](https://github.com/bioinfo-chru-strasbourg/howard/issues/503), [#505](https://github.com/bioinfo-chru-strasbourg/howard/issues/505)), and add/improve some pertinent calculations ([#496](https://github.com/bioinfo-chru-strasbourg/howard/issues/496), [#501](https://github.com/bioinfo-chru-strasbourg/howard/issues/501))
 
 ### Fixes
 
@@ -25,10 +26,10 @@ This release introduces several significant new features and improvements, prima
 - Fix Alphamissense download ([#448](https://github.com/bioinfo-chru-strasbourg/howard/issues/448))
 - Fix issue when some trancript annotations are missing ([#451](https://github.com/bioinfo-chru-strasbourg/howard/issues/451))
 - Fix external tool update with REF/ALT in upper case ([#451](https://github.com/bioinfo-chru-strasbourg/howard/issues/451))
-- Fix Aria2 threads limitation ([467](https://github.com/bioinfo-chru-strasbourg/howard/issues/467))
-- Fix transcript export ([475](https://github.com/bioinfo-chru-strasbourg/howard/issues/475))
-- Fix loading VCF with sample in integer format ([478](https://github.com/bioinfo-chru-strasbourg/howard/issues/478))
-- Fix region annotations with BED file ([487](https://github.com/bioinfo-chru-strasbourg/howard/issues/487))
+- Fix Aria2 threads limitation ([#467](https://github.com/bioinfo-chru-strasbourg/howard/issues/467))
+- Fix transcript export ([#475](https://github.com/bioinfo-chru-strasbourg/howard/issues/475))
+- Fix loading VCF with sample in integer format ([#478](https://github.com/bioinfo-chru-strasbourg/howard/issues/478))
+- Fix region annotations with BED file ([#487](https://github.com/bioinfo-chru-strasbourg/howard/issues/487))
 
 ## 0.13.0
 

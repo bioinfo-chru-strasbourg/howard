@@ -2258,10 +2258,33 @@ def test_calculation_dp_stats():
             assert False
 
 
-def test_calculation_variant_id():
+@pytest.mark.parametrize(
+    "calculation_name, variant_id_tag, variant_id_tag_info, keep_variant_id_tag_column",
+    [
+        (
+            calculation_name,
+            variant_id_tag,
+            variant_id_tag_info,
+            keep_variant_id_tag_column,
+        )
+        for calculation_name in ["variant_id", "variant_id_varid"]
+        for variant_id_tag in [
+            None,
+            "variant_id",
+            "var_id",
+            "id",
+            "variantID",
+            "varID",
+        ]
+        for variant_id_tag_info in [None, "HOWARD variant ID generation"]
+        for keep_variant_id_tag_column in [False, True]
+    ],
+)
+def test_calculation_variant_id(
+    calculation_name, variant_id_tag, variant_id_tag_info, keep_variant_id_tag_column
+):
     """
-    This is a test function for the calculation of depth statistics in a VCF file using the Variants
-    class in Python.
+    This is a test function for the calculation of variant IDs in a VCF file using the Variants class in Python.
     """
 
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
@@ -2270,8 +2293,24 @@ def test_calculation_variant_id():
         input_vcf = tests_data_folder + "/example.vcf.gz"
         output_vcf = f"{tmp_dir}/output.vcf.gz"
 
+        # Check if variant_id_tag is None and set default tag name and params
+        if variant_id_tag is None:
+            variant_id_tag_param = {}
+            if calculation_name == "variant_id":
+                variant_id_tag = "variant_id"
+            elif calculation_name == "variant_id_varid":
+                variant_id_tag = "varid"
+        else:
+            variant_id_tag_param = {"variant_id_tag": variant_id_tag}
+
+        # Add info and keep column param
+        variant_id_tag_param["variant_id_tag_info"] = variant_id_tag_info
+        variant_id_tag_param["keep_variant_id_tag_column"] = keep_variant_id_tag_column
+
         # Construct param dict
-        param = {"calculation": {"calculations": {"variant_id": None}}}
+        param = {
+            "calculation": {"calculations": {calculation_name: variant_id_tag_param}}
+        }  # test custom tag name
 
         # Create object
         variants = Variants(
@@ -2286,18 +2325,33 @@ def test_calculation_variant_id():
 
         # Check if all variant have variant_id
         result = variants.get_query_to_df(
-            """ SELECT INFO FROM variants WHERE INFO LIKE '%variant_id%' """
+            f""" SELECT INFO FROM variants WHERE INFO LIKE '%{variant_id_tag}%' """
         )
         assert len(result) == 7
 
         # Explode info
-        variants.explode_infos(prefix="INFO/")
+        variants.explode_infos(prefix="INFO/", fields=[variant_id_tag])
 
         # Check distinct variant_id
         result = variants.get_query_to_df(
-            """ SELECT distinct "INFO/variant_id" FROM variants """
+            f""" SELECT distinct "INFO/{variant_id_tag}" FROM variants """
         )
         assert len(result) == 7
+
+        # Check if variant ID column exists or not
+        if keep_variant_id_tag_column:
+            result = variants.get_query_to_df(
+                f""" SELECT "{variant_id_tag}" FROM variants """
+            )
+            assert len(result) == 7
+        else:
+            try:
+                result = variants.get_query_to_df(
+                    f""" SELECT "{variant_id_tag}" FROM variants """
+                )
+                assert False
+            except:
+                assert True
 
         # Check if VCF is in correct format with pyVCF
         remove_if_exists([output_vcf])

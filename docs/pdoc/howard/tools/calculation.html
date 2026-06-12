@@ -105,24 +105,36 @@
 </span><span id="L-49"><a href="#L-49"><span class="linenos">49</span></a>    <span class="n">operations_config_file</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;calculation&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;calculation_config&quot;</span><span class="p">)</span>
 </span><span id="L-50"><a href="#L-50"><span class="linenos">50</span></a>
 </span><span id="L-51"><a href="#L-51"><span class="linenos">51</span></a>    <span class="c1"># Show calculation</span>
-</span><span id="L-52"><a href="#L-52"><span class="linenos">52</span></a>    <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;calculation&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;show_calculations&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
-</span><span id="L-53"><a href="#L-53"><span class="linenos">53</span></a>        <span class="k">for</span> <span class="n">help_line</span> <span class="ow">in</span> <span class="n">vcfdata_obj</span><span class="o">.</span><span class="n">get_operations_help</span><span class="p">(</span>
-</span><span id="L-54"><a href="#L-54"><span class="linenos">54</span></a>            <span class="n">operations_config_file</span><span class="o">=</span><span class="n">operations_config_file</span>
-</span><span id="L-55"><a href="#L-55"><span class="linenos">55</span></a>        <span class="p">):</span>
-</span><span id="L-56"><a href="#L-56"><span class="linenos">56</span></a>            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">help_line</span><span class="p">)</span>
-</span><span id="L-57"><a href="#L-57"><span class="linenos">57</span></a>        <span class="n">exit</span><span class="p">()</span>
-</span><span id="L-58"><a href="#L-58"><span class="linenos">58</span></a>
-</span><span id="L-59"><a href="#L-59"><span class="linenos">59</span></a>    <span class="c1"># Calculation</span>
-</span><span id="L-60"><a href="#L-60"><span class="linenos">60</span></a>    <span class="n">vcfdata_obj</span><span class="o">.</span><span class="n">calculation</span><span class="p">(</span><span class="n">operations_config_file</span><span class="o">=</span><span class="n">operations_config_file</span><span class="p">)</span>
+</span><span id="L-52"><a href="#L-52"><span class="linenos">52</span></a>    <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;calculation&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;show_calculations&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span> <span class="ow">or</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+</span><span id="L-53"><a href="#L-53"><span class="linenos">53</span></a>        <span class="s2">&quot;calculation&quot;</span><span class="p">,</span> <span class="p">{}</span>
+</span><span id="L-54"><a href="#L-54"><span class="linenos">54</span></a>    <span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;show_calculations_md&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+</span><span id="L-55"><a href="#L-55"><span class="linenos">55</span></a>
+</span><span id="L-56"><a href="#L-56"><span class="linenos">56</span></a>        <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;calculation&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;show_calculations&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+</span><span id="L-57"><a href="#L-57"><span class="linenos">57</span></a>            <span class="k">for</span> <span class="n">help_line</span> <span class="ow">in</span> <span class="n">vcfdata_obj</span><span class="o">.</span><span class="n">get_operations_help</span><span class="p">(</span>
+</span><span id="L-58"><a href="#L-58"><span class="linenos">58</span></a>                <span class="n">operations_config_file</span><span class="o">=</span><span class="n">operations_config_file</span>
+</span><span id="L-59"><a href="#L-59"><span class="linenos">59</span></a>            <span class="p">):</span>
+</span><span id="L-60"><a href="#L-60"><span class="linenos">60</span></a>                <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">help_line</span><span class="p">)</span>
 </span><span id="L-61"><a href="#L-61"><span class="linenos">61</span></a>
-</span><span id="L-62"><a href="#L-62"><span class="linenos">62</span></a>    <span class="c1"># Export</span>
-</span><span id="L-63"><a href="#L-63"><span class="linenos">63</span></a>    <span class="n">vcfdata_obj</span><span class="o">.</span><span class="n">export_output</span><span class="p">()</span>
-</span><span id="L-64"><a href="#L-64"><span class="linenos">64</span></a>
-</span><span id="L-65"><a href="#L-65"><span class="linenos">65</span></a>    <span class="c1"># Log</span>
-</span><span id="L-66"><a href="#L-66"><span class="linenos">66</span></a>    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;End&quot;</span><span class="p">)</span>
-</span><span id="L-67"><a href="#L-67"><span class="linenos">67</span></a>
-</span><span id="L-68"><a href="#L-68"><span class="linenos">68</span></a>    <span class="c1"># Return Variants object</span>
-</span><span id="L-69"><a href="#L-69"><span class="linenos">69</span></a>    <span class="k">return</span> <span class="n">vcfdata_obj</span>
+</span><span id="L-62"><a href="#L-62"><span class="linenos">62</span></a>        <span class="c1"># Show calculation in markdown</span>
+</span><span id="L-63"><a href="#L-63"><span class="linenos">63</span></a>        <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;calculation&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;show_calculations_md&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+</span><span id="L-64"><a href="#L-64"><span class="linenos">64</span></a>            <span class="k">for</span> <span class="n">help_line</span> <span class="ow">in</span> <span class="n">vcfdata_obj</span><span class="o">.</span><span class="n">get_operations_help</span><span class="p">(</span>
+</span><span id="L-65"><a href="#L-65"><span class="linenos">65</span></a>                <span class="n">operations_config_file</span><span class="o">=</span><span class="n">operations_config_file</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;markdown&quot;</span>
+</span><span id="L-66"><a href="#L-66"><span class="linenos">66</span></a>            <span class="p">):</span>
+</span><span id="L-67"><a href="#L-67"><span class="linenos">67</span></a>                <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">help_line</span><span class="p">)</span>
+</span><span id="L-68"><a href="#L-68"><span class="linenos">68</span></a>
+</span><span id="L-69"><a href="#L-69"><span class="linenos">69</span></a>        <span class="n">exit</span><span class="p">()</span>
+</span><span id="L-70"><a href="#L-70"><span class="linenos">70</span></a>
+</span><span id="L-71"><a href="#L-71"><span class="linenos">71</span></a>    <span class="c1"># Calculation</span>
+</span><span id="L-72"><a href="#L-72"><span class="linenos">72</span></a>    <span class="n">vcfdata_obj</span><span class="o">.</span><span class="n">calculation</span><span class="p">(</span><span class="n">operations_config_file</span><span class="o">=</span><span class="n">operations_config_file</span><span class="p">)</span>
+</span><span id="L-73"><a href="#L-73"><span class="linenos">73</span></a>
+</span><span id="L-74"><a href="#L-74"><span class="linenos">74</span></a>    <span class="c1"># Export</span>
+</span><span id="L-75"><a href="#L-75"><span class="linenos">75</span></a>    <span class="n">vcfdata_obj</span><span class="o">.</span><span class="n">export_output</span><span class="p">()</span>
+</span><span id="L-76"><a href="#L-76"><span class="linenos">76</span></a>
+</span><span id="L-77"><a href="#L-77"><span class="linenos">77</span></a>    <span class="c1"># Log</span>
+</span><span id="L-78"><a href="#L-78"><span class="linenos">78</span></a>    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;End&quot;</span><span class="p">)</span>
+</span><span id="L-79"><a href="#L-79"><span class="linenos">79</span></a>
+</span><span id="L-80"><a href="#L-80"><span class="linenos">80</span></a>    <span class="c1"># Return Variants object</span>
+</span><span id="L-81"><a href="#L-81"><span class="linenos">81</span></a>    <span class="k">return</span> <span class="n">vcfdata_obj</span>
 </span></pre></div>
 
 
@@ -182,24 +194,36 @@
 </span><span id="calculation-50"><a href="#calculation-50"><span class="linenos">50</span></a>    <span class="n">operations_config_file</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;calculation&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;calculation_config&quot;</span><span class="p">)</span>
 </span><span id="calculation-51"><a href="#calculation-51"><span class="linenos">51</span></a>
 </span><span id="calculation-52"><a href="#calculation-52"><span class="linenos">52</span></a>    <span class="c1"># Show calculation</span>
-</span><span id="calculation-53"><a href="#calculation-53"><span class="linenos">53</span></a>    <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;calculation&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;show_calculations&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
-</span><span id="calculation-54"><a href="#calculation-54"><span class="linenos">54</span></a>        <span class="k">for</span> <span class="n">help_line</span> <span class="ow">in</span> <span class="n">vcfdata_obj</span><span class="o">.</span><span class="n">get_operations_help</span><span class="p">(</span>
-</span><span id="calculation-55"><a href="#calculation-55"><span class="linenos">55</span></a>            <span class="n">operations_config_file</span><span class="o">=</span><span class="n">operations_config_file</span>
-</span><span id="calculation-56"><a href="#calculation-56"><span class="linenos">56</span></a>        <span class="p">):</span>
-</span><span id="calculation-57"><a href="#calculation-57"><span class="linenos">57</span></a>            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">help_line</span><span class="p">)</span>
-</span><span id="calculation-58"><a href="#calculation-58"><span class="linenos">58</span></a>        <span class="n">exit</span><span class="p">()</span>
-</span><span id="calculation-59"><a href="#calculation-59"><span class="linenos">59</span></a>
-</span><span id="calculation-60"><a href="#calculation-60"><span class="linenos">60</span></a>    <span class="c1"># Calculation</span>
-</span><span id="calculation-61"><a href="#calculation-61"><span class="linenos">61</span></a>    <span class="n">vcfdata_obj</span><span class="o">.</span><span class="n">calculation</span><span class="p">(</span><span class="n">operations_config_file</span><span class="o">=</span><span class="n">operations_config_file</span><span class="p">)</span>
+</span><span id="calculation-53"><a href="#calculation-53"><span class="linenos">53</span></a>    <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;calculation&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;show_calculations&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span> <span class="ow">or</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+</span><span id="calculation-54"><a href="#calculation-54"><span class="linenos">54</span></a>        <span class="s2">&quot;calculation&quot;</span><span class="p">,</span> <span class="p">{}</span>
+</span><span id="calculation-55"><a href="#calculation-55"><span class="linenos">55</span></a>    <span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;show_calculations_md&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+</span><span id="calculation-56"><a href="#calculation-56"><span class="linenos">56</span></a>
+</span><span id="calculation-57"><a href="#calculation-57"><span class="linenos">57</span></a>        <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;calculation&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;show_calculations&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+</span><span id="calculation-58"><a href="#calculation-58"><span class="linenos">58</span></a>            <span class="k">for</span> <span class="n">help_line</span> <span class="ow">in</span> <span class="n">vcfdata_obj</span><span class="o">.</span><span class="n">get_operations_help</span><span class="p">(</span>
+</span><span id="calculation-59"><a href="#calculation-59"><span class="linenos">59</span></a>                <span class="n">operations_config_file</span><span class="o">=</span><span class="n">operations_config_file</span>
+</span><span id="calculation-60"><a href="#calculation-60"><span class="linenos">60</span></a>            <span class="p">):</span>
+</span><span id="calculation-61"><a href="#calculation-61"><span class="linenos">61</span></a>                <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">help_line</span><span class="p">)</span>
 </span><span id="calculation-62"><a href="#calculation-62"><span class="linenos">62</span></a>
-</span><span id="calculation-63"><a href="#calculation-63"><span class="linenos">63</span></a>    <span class="c1"># Export</span>
-</span><span id="calculation-64"><a href="#calculation-64"><span class="linenos">64</span></a>    <span class="n">vcfdata_obj</span><span class="o">.</span><span class="n">export_output</span><span class="p">()</span>
-</span><span id="calculation-65"><a href="#calculation-65"><span class="linenos">65</span></a>
-</span><span id="calculation-66"><a href="#calculation-66"><span class="linenos">66</span></a>    <span class="c1"># Log</span>
-</span><span id="calculation-67"><a href="#calculation-67"><span class="linenos">67</span></a>    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;End&quot;</span><span class="p">)</span>
-</span><span id="calculation-68"><a href="#calculation-68"><span class="linenos">68</span></a>
-</span><span id="calculation-69"><a href="#calculation-69"><span class="linenos">69</span></a>    <span class="c1"># Return Variants object</span>
-</span><span id="calculation-70"><a href="#calculation-70"><span class="linenos">70</span></a>    <span class="k">return</span> <span class="n">vcfdata_obj</span>
+</span><span id="calculation-63"><a href="#calculation-63"><span class="linenos">63</span></a>        <span class="c1"># Show calculation in markdown</span>
+</span><span id="calculation-64"><a href="#calculation-64"><span class="linenos">64</span></a>        <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;calculation&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;show_calculations_md&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+</span><span id="calculation-65"><a href="#calculation-65"><span class="linenos">65</span></a>            <span class="k">for</span> <span class="n">help_line</span> <span class="ow">in</span> <span class="n">vcfdata_obj</span><span class="o">.</span><span class="n">get_operations_help</span><span class="p">(</span>
+</span><span id="calculation-66"><a href="#calculation-66"><span class="linenos">66</span></a>                <span class="n">operations_config_file</span><span class="o">=</span><span class="n">operations_config_file</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;markdown&quot;</span>
+</span><span id="calculation-67"><a href="#calculation-67"><span class="linenos">67</span></a>            <span class="p">):</span>
+</span><span id="calculation-68"><a href="#calculation-68"><span class="linenos">68</span></a>                <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">help_line</span><span class="p">)</span>
+</span><span id="calculation-69"><a href="#calculation-69"><span class="linenos">69</span></a>
+</span><span id="calculation-70"><a href="#calculation-70"><span class="linenos">70</span></a>        <span class="n">exit</span><span class="p">()</span>
+</span><span id="calculation-71"><a href="#calculation-71"><span class="linenos">71</span></a>
+</span><span id="calculation-72"><a href="#calculation-72"><span class="linenos">72</span></a>    <span class="c1"># Calculation</span>
+</span><span id="calculation-73"><a href="#calculation-73"><span class="linenos">73</span></a>    <span class="n">vcfdata_obj</span><span class="o">.</span><span class="n">calculation</span><span class="p">(</span><span class="n">operations_config_file</span><span class="o">=</span><span class="n">operations_config_file</span><span class="p">)</span>
+</span><span id="calculation-74"><a href="#calculation-74"><span class="linenos">74</span></a>
+</span><span id="calculation-75"><a href="#calculation-75"><span class="linenos">75</span></a>    <span class="c1"># Export</span>
+</span><span id="calculation-76"><a href="#calculation-76"><span class="linenos">76</span></a>    <span class="n">vcfdata_obj</span><span class="o">.</span><span class="n">export_output</span><span class="p">()</span>
+</span><span id="calculation-77"><a href="#calculation-77"><span class="linenos">77</span></a>
+</span><span id="calculation-78"><a href="#calculation-78"><span class="linenos">78</span></a>    <span class="c1"># Log</span>
+</span><span id="calculation-79"><a href="#calculation-79"><span class="linenos">79</span></a>    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;End&quot;</span><span class="p">)</span>
+</span><span id="calculation-80"><a href="#calculation-80"><span class="linenos">80</span></a>
+</span><span id="calculation-81"><a href="#calculation-81"><span class="linenos">81</span></a>    <span class="c1"># Return Variants object</span>
+</span><span id="calculation-82"><a href="#calculation-82"><span class="linenos">82</span></a>    <span class="k">return</span> <span class="n">vcfdata_obj</span>
 </span></pre></div>
 
 
