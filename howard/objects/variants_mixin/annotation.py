@@ -3251,7 +3251,30 @@ class variants_annotation:
             )
 
             for annotation in annotations:
-                annotation_fields = annotations[annotation]
+
+                # Allow to add options for annotations
+                # annotation_fields = annotations[annotation]
+                if "annotation_fields" in annotations[annotation]:
+                    annotation_fields = annotations[annotation].get(
+                        "annotation_fields", {}
+                    )
+                else:
+                    annotation_fields = annotations[annotation]
+
+                # Options for annotations
+                annotation_options = annotations[annotation].get("options", {})
+
+                # Check options for annotation
+
+                # Operation option
+                operation = annotation_options.get("operation", None)
+                if operation and operation not in ["g", "f", "r"]:
+                    log.error(
+                        f"Annotation '{annotation}' - operation option '{operation}' not valid (should be 'g', 'f' or 'r')"
+                    )
+                    raise ValueError(
+                        f"Annotation '{annotation}' - operation option '{operation}' not valid (should be 'g', 'f' or 'r')"
+                    )
 
                 if not annotation_fields:
                     annotation_fields = {"INFO": None}
@@ -3326,15 +3349,51 @@ class variants_annotation:
                 argument = ""
 
                 # operation
-                operation = "f"
-                if annotation in ["refGene", "refGeneWithVer"] or annotation.startswith(
-                    "ensGene"
-                ):
-                    operation = "g"
-                    if options.get("genebase", None):
+                if operation is None:
+                    log.debug(
+                        f"Operation NOT found in options for annotation '{annotation}'"
+                    )
+                    # Operation for gene-based annotation, region-based for cytoBand, and filter-based for others (by default)
+                    if annotation.startswith(("refGene", "ensGene", "knownGene")):
+                        operation = "g"
+                    elif annotation in ["cytoBand"]:
+                        operation = "r"
+                    else:
+                        operation = "f"
+                    log.debug(
+                        f"Operation detected in for annotation '{annotation}': {operation}"
+                    )
+                else:
+                    log.debug(
+                        f"Operation found in options for annotation '{annotation}': {operation}"
+                    )
+
+                # argument for genebase
+                if operation == "g":
+                    if annotation_options.get("genebase", None):
+                        argument = f"""'{annotation_options.get("genebase","")}'"""
+                    elif options.get("genebase", None):
                         argument = f"""'{options.get("genebase","")}'"""
-                elif annotation in ["cytoBand"]:
-                    operation = "r"
+
+                # xref for cross information for "gx" operation
+                # Example: -xref ~/hpc/tools/annovar/humandb/gene_fullxref.txt
+                if operation in ["g", "gx"] and (
+                    annotation_options.get("xref", None) or options.get("xref", None)
+                ):
+                    operation = "gx"  # Change operation to "gx" if xref is provided
+                    if annotation_options.get("xref", None):
+                        argument += f""" --xref {annotation_options.get("xref","")}"""
+                    elif options.get("xref", None):
+                        argument += f""" --xref {options.get("xref","")}"""
+
+                # Additional argument
+                if annotation_options.get("arguments", None):
+                    if isinstance(annotation_options.get("arguments"), str):
+                        argument += f""" {annotation_options.get("arguments","")}"""
+                    elif isinstance(annotation_options.get("arguments"), list):
+                        argument += (
+                            f""" {" ".join(annotation_options.get("arguments",""))}"""
+                        )
 
                 # argument option
                 argument_option = ""
@@ -3630,6 +3689,7 @@ class variants_annotation:
                     "force_append_annotation", force_append_annotation
                 )
 
+                # Check annotation fields
                 if not annotation_fields:
                     annotation_fields = {"INFO": None}
 
