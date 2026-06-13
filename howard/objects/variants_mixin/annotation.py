@@ -3343,10 +3343,10 @@ class variants_annotation:
                 log.debug("annotation_list: " + str(annotation_list))
 
                 # protocol
-                protocol = annotation
-
-                # argument
-                argument = ""
+                if annotation_options.get("protocol", None):
+                    protocol = annotation_options.get("protocol", None)
+                else:
+                    protocol = annotation
 
                 # operation
                 if operation is None:
@@ -3368,48 +3368,76 @@ class variants_annotation:
                         f"Operation found in options for annotation '{annotation}': {operation}"
                     )
 
-                # argument for genebase
-                if operation == "g":
-                    if annotation_options.get("genebase", None):
-                        argument = f"""'{annotation_options.get("genebase","")}'"""
-                    elif options.get("genebase", None):
-                        argument = f"""'{options.get("genebase","")}'"""
+                ### Argument
+                annotation_argument = ""
 
-                # xref for cross information for "gx" operation
+                # GeneBase argument for gene-based annotation (refGene, ensGene, knownGene)
+                if operation in ["g", "gx"] and (
+                    annotation_options.get("genebase", None)
+                    or options.get("genebase", None)
+                ):
+                    if annotation_options.get("genebase", None):
+                        annotation_argument = (
+                            f""" {annotation_options.get("genebase","")} """
+                        )
+                    elif options.get("genebase", None):
+                        annotation_argument = f""" {options.get("genebase","")} """
+
+                # Additional argument
+                if annotation_options.get("arguments", None):
+                    if isinstance(annotation_options.get("arguments"), str):
+                        annotation_argument += (
+                            f""" {annotation_options.get("arguments","")}"""
+                        )
+                    elif isinstance(annotation_options.get("arguments"), list):
+                        annotation_argument += (
+                            f""" {" ".join(annotation_options.get("arguments",""))}"""
+                        )
+
+                #annotation_argument = f" '{annotation_argument.strip()}' "
+
+                # argument option
+                argument_options = ""
+                if annotation_argument != "":
+                    argument_options = f" --argument '{annotation_argument.strip()}' " #+ annotation_argument
+
+                ### Options
+                annotation_parameters = ""
+
+                # Xref options for cross information for "gx" operation
                 # Example: -xref ~/hpc/tools/annovar/humandb/gene_fullxref.txt
                 if operation in ["g", "gx"] and (
                     annotation_options.get("xref", None) or options.get("xref", None)
                 ):
                     operation = "gx"  # Change operation to "gx" if xref is provided
                     if annotation_options.get("xref", None):
-                        argument += f""" --xref {annotation_options.get("xref","")}"""
-                    elif options.get("xref", None):
-                        argument += f""" --xref {options.get("xref","")}"""
-
-                # Additional argument
-                if annotation_options.get("arguments", None):
-                    if isinstance(annotation_options.get("arguments"), str):
-                        argument += f""" {annotation_options.get("arguments","")}"""
-                    elif isinstance(annotation_options.get("arguments"), list):
-                        argument += (
-                            f""" {" ".join(annotation_options.get("arguments",""))}"""
+                        annotation_parameters += (
+                            f""" --xref {annotation_options.get("xref","")}"""
                         )
-
-                # argument option
-                argument_option = ""
-                if argument != "":
-                    argument_option = " --argument " + argument
+                    elif options.get("xref", None):
+                        annotation_parameters += f""" --xref {options.get("xref","")}"""
 
                 # command options
-                command_options = f""" --nastring . --vcfinput --polish --dot2underline --thread {threads} """  # --intronhgvs 10
-                for option in options:
-                    if option not in ["genebase"]:
-                        command_options += f""" --{option}={options[option]}"""
+                command_parameters = f""" --nastring . --vcfinput --polish --dot2underline --thread {threads} """  # --intronhgvs 10
+                command_parameters += f""" {annotation_parameters} """
+                command_parameters += f""" {annotation_options.get("options","")} """
+                for option in annotation_options:
+                    if option not in [
+                        "protocol",
+                        "genebase",
+                        "xref",
+                        "arguments",
+                        "operation",
+                        "options",
+                    ]:
+                        command_parameters += (
+                            f""" --{option}={annotation_options[option]}"""
+                        )
 
                 # Command
 
                 # Command - Annovar
-                command_annovar = f"""{annovar_bin_command} {tmp_vcf_name} {annovar_databases_assembly} --buildver {assembly} --outfile {tmp_annotate_vcf_prefix} --remove --protocol {protocol} --operation {operation} {argument_option} {command_options} 2>>{tmp_annotate_vcf_name_err} && mv {tmp_annotate_vcf_name_annovar} {tmp_annotate_vcf_name}.tmp.vcf """
+                command_annovar = f"""{annovar_bin_command} {tmp_vcf_name} {annovar_databases_assembly} --buildver {assembly} --outfile {tmp_annotate_vcf_prefix} --remove --protocol {protocol} --operation {operation} {argument_options} {command_parameters} 2>>{tmp_annotate_vcf_name_err} && mv {tmp_annotate_vcf_name_annovar} {tmp_annotate_vcf_name}.tmp.vcf """
                 tmp_files.append(f"{tmp_annotate_vcf_name}.tmp.vcf")
 
                 # Command - start pipe
