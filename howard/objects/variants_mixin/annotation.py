@@ -3081,6 +3081,40 @@ class variants_annotation:
         # DEBUG
         log.debug("Start annotation with Annovar databases")
 
+        def create_annovar_command(annotations_parameters, annovar_bin_command, tmp_vcf_name, annovar_databases_assembly, assembly, tmp_annotate_vcf_prefix, threads, tmp_annotate_vcf_name_err, annovar_fields_to_keep, tmp_rename_name):
+            """
+            Create the annovar command based on the provided parameters.
+            """
+            # Merged annovar command
+            log.debug(f"annotations_parameters: {annotations_parameters}")
+
+            # Create temporary folder
+            command_annovar = f"""mkdir -p {tmp_annotate_vcf_prefix} """
+
+            # Command - Annovar
+            command_annovar += f""" && {annovar_bin_command} {tmp_vcf_name} {annovar_databases_assembly} --buildver {assembly} --outfile {tmp_annotate_vcf_prefix} --remove --protocol {",".join(p.strip() for p in annotations_parameters.get("protocol",[]))} --operation {",".join(o.strip() for o in annotations_parameters.get("operation",[]))} --argument {",".join(f"' {a.strip()} '" for a in annotations_parameters.get("argument",[]))} {" ".join(list(set(o.strip() for o in annotations_parameters.get("options", []))))} --nastring . --vcfinput --polish --dot2underline --thread {threads}  2>>{tmp_annotate_vcf_name_err} && mv {tmp_annotate_vcf_name_annovar} {tmp_annotate_vcf_name}.tmp.vcf """
+
+            # Command - start pipe
+            command_annovar += f""" && {bcftools_bin_command} view --threads={threads} {tmp_annotate_vcf_name}.tmp.vcf 2>>{tmp_annotate_vcf_name_err} """
+
+            # Command - Clean INFO/ANNOVAR_DATE (due to Annovar issue with multiple TAGS!)
+            command_annovar += """ | sed "s/ANNOVAR_DATE=[^;\t]*;//gi" """
+
+            # Command - Special characters (refGene annotation)
+            command_annovar += """ | sed "s/\\\\\\x3b/,/gi" """
+
+            # Command - Clean empty fields (with value ".")
+            command_annovar += """ | awk -F'\\t' -v OFS='\\t' '{if ($0 ~ /^#/) print; else {split($8,a,";");for(i=1;i<=length(a);i++) {split(a[i],b,"=");if(b[2]!=".") {c[b[1]]=b[2]}}; split($8,d,";");for(i=1;i<=length(d);i++) {split(d[i],e,"=");if(c[e[1]]!="") {if(info!="") {info=info";"}; info=info""e[1]"="c[e[1]]}}; if(info!="") {$8=info} else {$8=""}; delete c; info=""; print}}' """
+
+            # Command - Keep only needed fields, and remove ANNOVAR fields, and compress and index final file
+            command_annovar += f""" | {bcftools_bin_command} annotate --pair-logic exact --threads={threads} -x {",".join(annovar_fields_to_keep)} --rename-annots={tmp_rename_name} -o {tmp_annotate_vcf_name} -Oz 2>>{tmp_annotate_vcf_name_err} """
+
+            # Command - indexing
+            command_annovar += f"""  && tabix {tmp_annotate_vcf_name} """
+
+            return command_annovar
+                
+
         # Threads
         if not threads:
             threads = self.get_threads()
@@ -3204,267 +3238,484 @@ class variants_annotation:
 
         if annotations:
 
-            commands = []
-            tmp_annotates_vcf_name_list = []
+            with TemporaryDirectory(
+                prefix=self.get_prefix(), dir=self.get_tmp_dir(), suffix=".annovar"
+            ) as tmp_annotate_vcf_directory:
 
-            # Export in VCF
-            log.debug("Create initial file to annotate")
-            tmp_vcf = NamedTemporaryFile(
-                prefix=self.get_prefix(),
-                dir=self.get_tmp_dir(),
-                suffix=".vcf.gz",
-                delete=False,
-            )
-            tmp_vcf_name = tmp_vcf.name
-            tmp_files.append(tmp_vcf_name)
-            tmp_files.append(tmp_vcf_name + ".tbi")
+                #commands = []
+                tmp_annotates_vcf_name_list = []
 
-            # Export VCF file
-            self.export_variant_vcf(
-                vcf_file=tmp_vcf_name,
-                remove_info=".",
-                add_samples=False,
-                index=True,
-            )
+                # Export in VCF
+                log.debug("Create initial file to annotate")
+                tmp_vcf_name = os.path.join(tmp_annotate_vcf_directory, get_random(10) + "annovar.vcf.gz")
 
-            # Create file for field rename
-            log.debug("Create file for field rename")
-            tmp_rename = NamedTemporaryFile(
-                prefix=self.get_prefix(),
-                dir=self.get_tmp_dir(),
-                suffix=".rename",
-                delete=False,
-            )
-            tmp_rename_name = tmp_rename.name
-            tmp_files.append(tmp_rename_name)
-
-            # Check Annovar database
-            log.debug(
-                f"Check Annovar databases {[assembly]}: {list(annotations.keys())}"
-            )
-            databases_download_annovar(
-                folder=annovar_databases,
-                files=list(annotations.keys()),
-                assemblies=[assembly],
-                force_check_dblist=False,
-                force_update=False,
-            )
-
-            for annotation in annotations:
-                annotation_fields = annotations[annotation]
-
-                if not annotation_fields:
-                    annotation_fields = {"INFO": None}
-
-                log.info(f"Annotations Annovar - database '{annotation}'")
-                log.debug(f"Annotation '{annotation}' - fields: {annotation_fields}")
-
-                # Tmp file for annovar
-                err_files = []
-                tmp_annotate_vcf_directory = TemporaryDirectory(
-                    prefix=self.get_prefix(), dir=self.get_tmp_dir(), suffix=".annovar"
+                # Export VCF file
+                self.export_variant_vcf(
+                    vcf_file=tmp_vcf_name,
+                    remove_info=".",
+                    add_samples=False,
+                    index=True,
                 )
-                tmp_annotate_vcf_prefix = tmp_annotate_vcf_directory.name + "/annovar"
-                tmp_annotate_vcf_name_annovar = (
-                    tmp_annotate_vcf_prefix + "." + assembly + "_multianno.vcf"
+
+                # Create file for field rename
+                log.debug("Create file for field rename")
+                tmp_rename_name = os.path.join(tmp_annotate_vcf_directory, get_random(10) + "annovar.rename")
+
+                # Check Annovar database
+                log.debug(
+                    f"Check Annovar databases {[assembly]}: {list(annotations.keys())}"
                 )
-                tmp_annotate_vcf_name_err = tmp_annotate_vcf_directory.name + "/.err"
-                err_files.append(tmp_annotate_vcf_name_err)
-                tmp_files.append(tmp_annotate_vcf_name_err)
-
-                # Tmp file final vcf annotated by annovar
-                tmp_annotate_vcf = NamedTemporaryFile(
-                    prefix=self.get_prefix(),
-                    dir=self.get_tmp_dir(),
-                    suffix=".vcf.gz",
-                    delete=False,
+                databases_download_annovar(
+                    folder=annovar_databases,
+                    files=list(annotations.keys()),
+                    assemblies=[assembly],
+                    force_check_dblist=False,
+                    force_update=False,
                 )
-                tmp_annotate_vcf_name = tmp_annotate_vcf.name
-                tmp_annotates_vcf_name_list.append(tmp_annotate_vcf_name)
-                tmp_files.append(tmp_annotate_vcf_name)
-                tmp_files.append(tmp_annotate_vcf_name + ".tbi")
 
-                # Number of fields
-                annotation_list = []
-                annotation_renamed_list = []
+                # Annotations parameters
+                annotations_parameters = {
+                    "protocol": [],
+                    "operation": [],
+                    "argument": [],
+                    "options": [],
+                }
 
-                for annotation_field in annotation_fields:
-
-                    # field new name, if parametered SKIPPED !!!!!! not managed actually TODO
-                    annotation_fields_new_name = annotation_fields.get(
-                        annotation_field, annotation_field
-                    )
-                    if not annotation_fields_new_name:
-                        annotation_fields_new_name = annotation_field
-
-                    if (
-                        force_update_annotation
-                        or annotation_fields_new_name not in self.get_header().infos
-                    ):
-                        annotation_list.append(annotation_field)
-                        annotation_renamed_list.append(annotation_fields_new_name)
-                    else:  # annotation_fields_new_name in self.get_header().infos and not force_update_annotation:
+                # parallelize annovar command
+                parallelize_annovar_command = options.get("parallelize", None)
+                if (
+                    parallelize_annovar_command is not None
+                    and parallelize_annovar_command not in ["multianno", "parallel"]
+                ):
+                    msg_warning = f"Annotation - annovar parallelize option '{parallelize_annovar_command}' not valid (should be 'multianno' or 'parallel')"
+                    #log.warning(msg_warning)
+                    if parallelize_annovar_command.startswith("multi"):
                         log.warning(
-                            f"Annotation '{annotation}' - '{annotation_fields_new_name}' - already exists (skipped)"
+                            f"{msg_warning} - '{parallelize_annovar_command}' is identified as 'multianno' and parallelization is enabled"
+                        )
+                        parallelize_annovar_command = "multianno"
+                    elif parallelize_annovar_command.startswith("paral"):
+                        log.warning(
+                            f"{msg_warning} - '{parallelize_annovar_command}' is identified as 'parallel' and parallelization is enabled"
+                        )
+                        parallelize_annovar_command = "parallel"
+                    else:
+                        log.warning(
+                            f"{msg_warning} - Parallelization is disabled"
+                        )
+                        parallelize_annovar_command = None
+
+                # command_annovar_list
+                command_annovar_list = []
+
+                for annotation in annotations:
+
+                    # Allow to add options for annotations
+                    if "annotation_fields" in annotations[annotation]:
+                        annotation_fields = annotations[annotation].get(
+                            "annotation_fields", {}
+                        )
+                    else:
+                        annotation_fields = annotations[annotation]
+
+                    # Options for annotations
+                    annotation_options = annotations[annotation].get("options", {})
+
+                    # Check options for annotation
+
+                    # Operation option
+                    operation = annotation_options.get("operation", None)
+                    if operation and operation not in ["g", "f", "r"]:
+                        log.error(
+                            f"Annotation '{annotation}' - operation option '{operation}' not valid (should be 'g', 'f' or 'r')"
+                        )
+                        raise ValueError(
+                            f"Annotation '{annotation}' - operation option '{operation}' not valid (should be 'g', 'f' or 'r')"
                         )
 
-                    # Add rename info
-                    run_parallel_commands(
-                        [
-                            f"echo 'INFO/{annotation_field} {annotation_fields_new_name}' >> {tmp_rename_name}"
-                        ],
-                        1,
+                    if not annotation_fields:
+                        annotation_fields = {"INFO": None}
+
+                    log.info(f"Annotations Annovar - database '{annotation}'")
+                    log.debug(f"Annotation '{annotation}' - fields: {annotation_fields}")
+
+                    # Generate tmp files for annovar
+
+                    # Tmp file for annovar
+                    err_files = []
+                    tmp_annotate_vcf_random = get_random(10)
+                    tmp_annotate_vcf_prefix = tmp_annotate_vcf_directory + "/" + tmp_annotate_vcf_random + "/annovar"
+                    tmp_annotate_vcf_name_annovar = (
+                        tmp_annotate_vcf_prefix + "." + assembly + "_multianno.vcf"
+                    )
+                    tmp_annotate_vcf_name_err = tmp_annotate_vcf_directory + "/" + tmp_annotate_vcf_random + "/.err"
+                    err_files.append(tmp_annotate_vcf_name_err)
+                    tmp_files.append(tmp_annotate_vcf_name_err)
+
+                    # Tmp file final vcf annotated by annovar
+                    tmp_annotate_vcf_name = os.path.join(tmp_annotate_vcf_directory, get_random(10) + "annovar.vcf.gz")
+                    tmp_annotates_vcf_name_list.append(tmp_annotate_vcf_name)
+                    tmp_files.append(tmp_annotate_vcf_name)
+                    tmp_files.append(tmp_annotate_vcf_name + ".tbi")
+
+                    # Number of fields
+                    annotation_list = []
+                    annotation_renamed_list = []
+
+                    for annotation_field in annotation_fields:
+
+                        # field new name, if parametered SKIPPED !!!!!! not managed actually TODO
+                        annotation_fields_new_name = annotation_fields.get(
+                            annotation_field, annotation_field
+                        )
+                        if not annotation_fields_new_name:
+                            annotation_fields_new_name = annotation_field
+
+                        if (
+                            force_update_annotation
+                            or annotation_fields_new_name not in self.get_header().infos
+                        ):
+                            annotation_list.append(annotation_field)
+                            annotation_renamed_list.append(annotation_fields_new_name)
+                        else:  # annotation_fields_new_name in self.get_header().infos and not force_update_annotation:
+                            log.warning(
+                                f"Annotation '{annotation}' - '{annotation_fields_new_name}' - already exists (skipped)"
+                            )
+
+                        # Add rename info to tmp_rename_name
+                        with open(tmp_rename_name, "a") as f:
+                            f.write(
+                                f"INFO/{annotation_field} {annotation_fields_new_name}\n"
+                            )
+
+                    # log.debug("fields_to_removed: " + str(fields_to_removed))
+                    log.debug("annotation_list: " + str(annotation_list))
+
+                    # protocol
+                    if annotation_options.get("protocol", None):
+                        protocol = annotation_options.get("protocol", None)
+                    else:
+                        protocol = annotation
+
+                    # operation
+                    if operation is None:
+                        log.debug(
+                            f"Operation NOT found in options for annotation '{annotation}'"
+                        )
+                        # Operation for gene-based annotation, region-based for cytoBand, and filter-based for others (by default)
+                        if annotation.startswith(("refGene", "ensGene", "knownGene")):
+                            operation = "g"
+                        elif annotation in ["cytoBand"]:
+                            operation = "r"
+                        else:
+                            operation = "f"
+                        log.debug(
+                            f"Operation detected in for annotation '{annotation}': {operation}"
+                        )
+                    else:
+                        log.debug(
+                            f"Operation found in options for annotation '{annotation}': {operation}"
+                        )
+
+                    ### Argument
+                    annotation_argument = ""
+
+                    # GeneBase argument for gene-based annotation (refGene, ensGene, knownGene)
+                    if operation in ["g", "gx"] and (
+                        annotation_options.get("genebase", None)
+                        or options.get("genebase", None)
+                    ):
+                        if annotation_options.get("genebase", None):
+                            annotation_argument = (
+                                f""" {annotation_options.get("genebase","")} """
+                            )
+                        elif options.get("genebase", None):
+                            annotation_argument = f""" {options.get("genebase","")} """
+
+                    # Additional argument
+                    if annotation_options.get("arguments", None):
+                        if isinstance(annotation_options.get("arguments"), str):
+                            annotation_argument += (
+                                f""" {annotation_options.get("arguments","")}"""
+                            )
+                        elif isinstance(annotation_options.get("arguments"), list):
+                            annotation_argument += (
+                                f""" {" ".join(annotation_options.get("arguments",""))}"""
+                            )
+
+                    # # argument option
+                    # argument_options = ""
+                    # if annotation_argument != "":
+                    #     argument_options = f" --argument '{annotation_argument.strip()}' "  # + annotation_argument
+
+                    ### Options
+                    annotation_parameters = ""
+                    command_options = []
+
+                    # Xref options for cross information for "gx" operation
+                    # Example: -xref ~/hpc/tools/annovar/humandb/gene_fullxref.txt
+                    if operation in ["g", "gx"] and (
+                        annotation_options.get("xref", None) or options.get("xref", None)
+                    ):
+                        operation = "gx"  # Change operation to "gx" if xref is provided
+                        if annotation_options.get("xref", None):
+                            annotation_parameters += (
+                                f""" --xref {annotation_options.get("xref","")}"""
+                            )
+                            command_options.append(
+                                f""" --xref {annotation_options.get("xref","")}"""
+                            )
+                        elif options.get("xref", None):
+                            annotation_parameters += f""" --xref {options.get("xref","")}"""
+                            command_options.append(f""" --xref {options.get("xref","")}""")
+
+                    # command options
+                    command_options.append(f""" {annotation_parameters} """)
+                    command_options.append(f""" {annotation_options.get("options","")} """)
+
+                    # merge dict of options and annotation_options
+                    merged_options = {**options, **annotation_options}
+
+                    for option in merged_options:
+                        if option in ["xref"]:
+                            if merged_options.get(option, None):
+                                command_options.append(
+                                    f""" --xref {merged_options[option]}"""
+                                )
+                        elif option in ["options"]:
+                            command_options.append(f""" {merged_options[option]}""")
+                        elif option not in [
+                            "protocol",
+                            "genebase",
+                            "xref",
+                            "arguments",
+                            "operation",
+                            "options",
+                            "parallelize",
+                        ]:
+                            command_options.append(
+                                f""" --{option}={merged_options[option]}"""
+                            )
+
+                    # Command parameters - merge and uniquify
+                    command_parameters = " ".join(
+                        list(set(o.strip() for o in command_options))
+                    )
+                    log.debug(
+                        f"Annotation '{annotation}' - command_parameters: {command_parameters}"
                     )
 
-                # log.debug("fields_to_removed: " + str(fields_to_removed))
-                log.debug("annotation_list: " + str(annotation_list))
+                    # Extract only needed fields, and remove ANNOVAR fields, and compress and index final file
+                    annovar_fields_to_keep = ["INFO/ANNOVAR_DATE", "INFO/ALLELE_END"]
+                    if "ALL" not in annotation_list and "INFO" not in annotation_list:
+                        # for ann in annotation_renamed_list:
+                        for ann in annotation_list:
+                            annovar_fields_to_keep.append(f"^INFO/{ann}")
 
-                # protocol
-                protocol = annotation
+                    # Parallelization of annovar command - multianno
+                    if parallelize_annovar_command == "multianno":
 
-                # argument
-                argument = ""
+                        # Add parameters for parallelization
+                        annotations_parameters["protocol"].append(protocol)
+                        annotations_parameters["operation"].append(operation)
+                        annotations_parameters["argument"].append(
+                            annotation_argument.strip()
+                        )
+                        # annotations_parameters["options"].append(command_parameters)
+                        annotations_parameters["options"] += command_options
 
-                # operation
-                operation = "f"
-                if annotation in ["refGene", "refGeneWithVer"] or annotation.startswith(
-                    "ensGene"
-                ):
-                    operation = "g"
-                    if options.get("genebase", None):
-                        argument = f"""'{options.get("genebase","")}'"""
-                elif annotation in ["cytoBand"]:
-                    operation = "r"
+                    # Either parallelize_annovar_command is "parallel" or None
+                    else:
 
-                # argument option
-                argument_option = ""
-                if argument != "":
-                    argument_option = " --argument " + argument
+                        # Threads by annotation
+                        if parallelize_annovar_command == "parallel":
+                            threads_by_annotation = int((threads / len(annotations)) + 1)
+                        else:
+                            threads_by_annotation = threads
 
-                # command options
-                command_options = f""" --nastring . --vcfinput --polish --dot2underline --thread {threads} """  # --intronhgvs 10
-                for option in options:
-                    if option not in ["genebase"]:
-                        command_options += f""" --{option}={options[option]}"""
+                        # Fixed parameters for Annovar
+                        command_parameters += f""" --nastring . --vcfinput --polish --dot2underline --thread {threads_by_annotation} """  # --intronhgvs 10
 
-                # Command
+                        # Command
 
-                # Command - Annovar
-                command_annovar = f"""{annovar_bin_command} {tmp_vcf_name} {annovar_databases_assembly} --buildver {assembly} --outfile {tmp_annotate_vcf_prefix} --remove --protocol {protocol} --operation {operation} {argument_option} {command_options} 2>>{tmp_annotate_vcf_name_err} && mv {tmp_annotate_vcf_name_annovar} {tmp_annotate_vcf_name}.tmp.vcf """
-                tmp_files.append(f"{tmp_annotate_vcf_name}.tmp.vcf")
+                        annotations_parameters = {
+                            "protocol": [protocol],
+                            "operation": [operation],
+                            "argument": [annotation_argument.strip()],
+                            "options": command_options,
+                        }
 
-                # Command - start pipe
-                command_annovar += f""" && {bcftools_bin_command} view --threads={threads} {tmp_annotate_vcf_name}.tmp.vcf 2>>{tmp_annotate_vcf_name_err} """
+                        # Create annovar command
+                        command_annovar = create_annovar_command(
+                            annotations_parameters=annotations_parameters,
+                            annovar_bin_command=annovar_bin_command,
+                            tmp_vcf_name=tmp_vcf_name,
+                            annovar_databases_assembly=annovar_databases_assembly,
+                            assembly=assembly,
+                            tmp_annotate_vcf_prefix=tmp_annotate_vcf_prefix,
+                            threads=threads,
+                            tmp_annotate_vcf_name_err=tmp_annotate_vcf_name_err,
+                            annovar_fields_to_keep=annovar_fields_to_keep,
+                            tmp_rename_name=tmp_rename_name
+                        )
 
-                # Command - Clean INFO/ANNOVAR_DATE (due to Annovar issue with multiple TAGS!)
-                command_annovar += """ | sed "s/ANNOVAR_DATE=[^;\t]*;//gi" """
+                        # Launch command
+                        log.debug(f"Annotation - Annovar command: {command_annovar}")
 
-                # Command - Special characters (refGene annotation)
-                command_annovar += """ | sed "s/\\\\\\x3b/,/gi" """
+                        # If parallelization of annovar command is "parallel", add command to list, else run command
+                        if parallelize_annovar_command == "parallel":
 
-                # Command - Clean empty fields (with value ".")
-                command_annovar += """ | awk -F'\\t' -v OFS='\\t' '{if ($0 ~ /^#/) print; else {split($8,a,";");for(i=1;i<=length(a);i++) {split(a[i],b,"=");if(b[2]!=".") {c[b[1]]=b[2]}}; split($8,d,";");for(i=1;i<=length(d);i++) {split(d[i],e,"=");if(c[e[1]]!="") {if(info!="") {info=info";"}; info=info""e[1]"="c[e[1]]}}; if(info!="") {$8=info} else {$8=""}; delete c; info=""; print}}' """
+                            # Append command to list
+                            command_annovar_list.append(command_annovar)
 
-                # Command - Extract only needed fields, and remove ANNOVAR fields, and compress and index final file
-                annovar_fields_to_keep = ["INFO/ANNOVAR_DATE", "INFO/ALLELE_END"]
-                if "ALL" not in annotation_list and "INFO" not in annotation_list:
-                    # for ann in annotation_renamed_list:
-                    for ann in annotation_list:
-                        annovar_fields_to_keep.append(f"^INFO/{ann}")
+                        else:
 
-                command_annovar += f""" | {bcftools_bin_command} annotate --pair-logic exact --threads={threads} -x {",".join(annovar_fields_to_keep)} --rename-annots={tmp_rename_name} -o {tmp_annotate_vcf_name} -Oz 2>>{tmp_annotate_vcf_name_err} """
+                            # Run command
+                            log.info(
+                                f"Annotations Annovar - database '{annotation}' - annotating..."
+                            )
+                            run_parallel_commands([command_annovar], 1)
 
-                # Command - indexing
-                command_annovar += f"""  && tabix {tmp_annotate_vcf_name} """
+                            # Error messages
+                            error_message_command_all = []
+                            error_message_command_warning = []
+                            error_message_command_err = []
+                            for err_file in err_files:
+                                with open(err_file, "r") as f:
+                                    for line in f:
+                                        message = line.strip()
+                                        error_message_command_all.append(message)
+                                        if line.startswith("[W::"):
+                                            error_message_command_warning.append(message)
+                                        if line.startswith("[E::"):
+                                            error_message_command_err.append(
+                                                f"{err_file}: " + message
+                                            )
 
-                log.debug(f"Annotation - Annovar command: {command_annovar}")
-                run_parallel_commands([command_annovar], 1)
+                            # Error/Warning messages
+                            if len(error_message_command_err):
+                                log.error(f"Error messages:")
+                                for message in list(set(error_message_command_err)):
+                                    log.error(f"   {message}")
+                            elif len(error_message_command_warning):
+                                log.warning(f"Warning messages:")
+                                for message in list(set(error_message_command_warning)):
+                                    log.warning(f"   {message}")
+                            # debug info
+                            log.debug(f"Warning/Error messages:")
+                            for message in list(set(error_message_command_all)):
+                                log.debug(f"   {message}")
+                            # failed
+                            if len(error_message_command_err):
+                                log.error("Annotation failed: Error in commands")
+                                raise ValueError("Annotation failed: Error in commands")
 
-                # Error messages
-                error_message_command_all = []
-                error_message_command_warning = []
-                error_message_command_err = []
-                for err_file in err_files:
-                    with open(err_file, "r") as f:
-                        for line in f:
-                            message = line.strip()
-                            error_message_command_all.append(message)
-                            if line.startswith("[W::"):
-                                error_message_command_warning.append(message)
-                            if line.startswith("[E::"):
-                                error_message_command_err.append(
-                                    f"{err_file}: " + message
-                                )
+                if parallelize_annovar_command == "multianno":
 
-                # Error/Warning messages
-                if len(error_message_command_err):
-                    log.error(f"Error messages:")
-                    for message in list(set(error_message_command_err)):
-                        log.error(f"   {message}")
-                elif len(error_message_command_warning):
-                    log.warning(f"Warning messages:")
-                    for message in list(set(error_message_command_warning)):
-                        log.warning(f"   {message}")
-                # debug info
-                log.debug(f"Warning/Error messages:")
-                for message in list(set(error_message_command_all)):
-                    log.debug(f"   {message}")
-                # failed
-                if len(error_message_command_err):
-                    log.error("Annotation failed: Error in commands")
-                    raise ValueError("Annotation failed: Error in commands")
+                    # Generate tmp files for annovar
+                    log.debug("Generate temporary files for annovar")
 
-            if tmp_annotates_vcf_name_list:
+                    # Tmp file for annovar
+                    err_files = []
+                    tmp_annotate_vcf_prefix = tmp_annotate_vcf_directory + "/annovar"
+                    tmp_annotate_vcf_name_annovar = (
+                        tmp_annotate_vcf_prefix + "." + assembly + "_multianno.vcf"
+                    )
+                    tmp_annotate_vcf_name_err = tmp_annotate_vcf_directory + "/.err"
+                    err_files.append(tmp_annotate_vcf_name_err)
+                    tmp_files.append(tmp_annotate_vcf_name_err)
 
-                # List of annotated files
-                tmp_annotates_vcf_name_to_merge = " ".join(tmp_annotates_vcf_name_list)
+                    # Tmp file final vcf annotated by annovar
+                    tmp_annotate_vcf_name = os.path.join(tmp_annotate_vcf_directory, get_random(10) + "annovar.vcf.gz")
+                    tmp_annotates_vcf_name_list.append(tmp_annotate_vcf_name)
+                    tmp_files.append(tmp_annotate_vcf_name)
+                    tmp_files.append(tmp_annotate_vcf_name + ".tbi")
 
-                # Tmp file
-                tmp_annotate_vcf = NamedTemporaryFile(
-                    prefix=self.get_prefix(),
-                    dir=self.get_tmp_dir(),
-                    suffix=".vcf.gz",
-                    delete=False,
-                )
-                tmp_annotate_vcf_name = tmp_annotate_vcf.name
-                tmp_files.append(tmp_annotate_vcf_name)
-                tmp_annotate_vcf_name_err = tmp_annotate_vcf_name + ".err"
-                err_files.append(tmp_annotate_vcf_name_err)
-                tmp_files.append(tmp_annotate_vcf_name_err)
+                    # Merged annovar command
+                    log.debug(f"annotations_parameters: {annotations_parameters}")
 
-                # Command merge
-                merge_command = f"{bcftools_bin_command} merge --force-samples --threads={threads} {tmp_vcf_name} {tmp_annotates_vcf_name_to_merge} -o {tmp_annotate_vcf_name} -Oz 2>>{tmp_annotate_vcf_name_err} "
-                log.info(
-                    f"Annotation Annovar - Annotation merging "
-                    + str(len(tmp_annotates_vcf_name_list))
-                    + " annotated files"
-                )
-                log.debug(f"Annotation - merge command: {merge_command}")
-                run_parallel_commands([merge_command], 1)
+                    # Create annovar command
+                    command_annovar = create_annovar_command(
+                        annotations_parameters=annotations_parameters,
+                        annovar_bin_command=annovar_bin_command,
+                        tmp_vcf_name=tmp_vcf_name,
+                        annovar_databases_assembly=annovar_databases_assembly,
+                        assembly=assembly,
+                        tmp_annotate_vcf_prefix=tmp_annotate_vcf_prefix,
+                        threads=threads,
+                        tmp_annotate_vcf_name_err=tmp_annotate_vcf_name_err,
+                        annovar_fields_to_keep=annovar_fields_to_keep,
+                        tmp_rename_name=tmp_rename_name
+                    )
 
-                # Find annotation in header
-                with bgzf.open(tmp_annotate_vcf_name, "rt") as f:
-                    header_list = self.read_vcf_header(f)
-                annovar_vcf_header = vcf.Reader(io.StringIO("\n".join(header_list)))
+                    # Launch command
+                    log.info(f"Annotations Annovar - annotating...")
+                    log.debug(f"Annotation - Annovar command: {command_annovar}")
+                    run_parallel_commands([command_annovar], 1)
+                    tmp_annotates_vcf_name_list = [tmp_annotate_vcf_name]
 
-                for ann in annovar_vcf_header.infos:
-                    if ann not in self.get_header().infos:
-                        vcf_reader.infos[ann] = annovar_vcf_header.infos.get(ann)
+                elif parallelize_annovar_command == "parallel" and command_annovar_list:
+                    log.info(
+                        f"Annotations Annovar - annotating..."
+                    )
+                    run_parallel_commands(command_annovar_list, threads)
 
-                # Update variants
-                log.info(f"Annotation Annovar - Updating...")
-                self.update_from_vcf(tmp_annotate_vcf_name)
-                remove_if_exists(
-                    [
-                        tmp_annotate_vcf_name,
-                        tmp_annotate_vcf_name_err,
-                        f"{tmp_annotate_vcf_name}.tbi",
-                    ]
-                )
+                if tmp_annotates_vcf_name_list:
 
-            # Clean files
-            # Tmp file remove command
-            remove_if_exists(tmp_files)
+                    # Tmp file
+                    tmp_annotate_vcf_name = os.path.join(tmp_annotate_vcf_directory, get_random(10) + "annovar.vcf.gz")
+                    tmp_files.append(tmp_annotate_vcf_name)
+                    tmp_annotate_vcf_name_err = tmp_annotate_vcf_name + ".err"
+                    err_files.append(tmp_annotate_vcf_name_err)
+                    tmp_files.append(tmp_annotate_vcf_name_err)
+
+                    if len(tmp_annotates_vcf_name_list) > 1:
+
+                        # List of annotated files
+                        tmp_annotates_vcf_name_to_merge = " ".join(
+                            tmp_annotates_vcf_name_list
+                        )
+
+                        # Command merge
+                        merge_command = f"{bcftools_bin_command} merge --force-samples --threads={threads} {tmp_vcf_name} {tmp_annotates_vcf_name_to_merge} -o {tmp_annotate_vcf_name} -Oz  "
+                        log.info(
+                            f"Annotations Annovar - Annotation merging "
+                            + str(len(tmp_annotates_vcf_name_list))
+                            + " annotated files"
+                        )
+                        log.debug(f"Annotations - merge command: {merge_command}")
+                        run_parallel_commands([merge_command], 1)
+
+                    else:
+
+                        # copy tmp_vcf_name to tmp_annotate_vcf_name
+                        import shutil
+
+                        shutil.copy(tmp_annotates_vcf_name_list[0], tmp_annotate_vcf_name)
+
+                    # Find annotation in header
+                    with bgzf.open(tmp_annotate_vcf_name, "rt") as f:
+                        header_list = self.read_vcf_header(f)
+                    annovar_vcf_header = vcf.Reader(io.StringIO("\n".join(header_list)))
+
+                    for ann in annovar_vcf_header.infos:
+                        if ann not in self.get_header().infos:
+                            vcf_reader.infos[ann] = annovar_vcf_header.infos.get(ann)
+
+                    # Update variants
+                    log.info(f"Annotations Annovar - Updating...")
+                    self.update_from_vcf(tmp_annotate_vcf_name)
+                    remove_if_exists(
+                        [
+                            tmp_annotate_vcf_name,
+                            tmp_annotate_vcf_name_err,
+                            f"{tmp_annotate_vcf_name}.tbi",
+                        ]
+                    )
+
+                # Clean files
+                # Tmp file remove command
+                remove_if_exists(tmp_files)
 
     # Parquet
     def annotation_parquet(self, threads: int = None) -> None:
@@ -3630,6 +3881,7 @@ class variants_annotation:
                     "force_append_annotation", force_append_annotation
                 )
 
+                # Check annotation fields
                 if not annotation_fields:
                     annotation_fields = {"INFO": None}
 

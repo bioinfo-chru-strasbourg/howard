@@ -583,7 +583,8 @@ def databases_download_annovar(
     folder = full_path(folder)
 
     # Minimum files to download
-    files_minimum = ["refGene*"]
+    # files_minimum = ["refGene*"]
+    files_minimum = ["refGene*", "ensGene*", "knownGene*", "kgXref*"]
 
     for assembly in assemblies:
 
