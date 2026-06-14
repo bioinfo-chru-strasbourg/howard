@@ -3107,6 +3107,7 @@ class variants_annotation:
             command_annovar += """ | awk -F'\\t' -v OFS='\\t' '{if ($0 ~ /^#/) print; else {split($8,a,";");for(i=1;i<=length(a);i++) {split(a[i],b,"=");if(b[2]!=".") {c[b[1]]=b[2]}}; split($8,d,";");for(i=1;i<=length(d);i++) {split(d[i],e,"=");if(c[e[1]]!="") {if(info!="") {info=info";"}; info=info""e[1]"="c[e[1]]}}; if(info!="") {$8=info} else {$8=""}; delete c; info=""; print}}' """
 
             # Command - Keep only needed fields, and remove ANNOVAR fields, and compress and index final file
+            annovar_fields_to_keep = set(annovar_fields_to_keep + annotations_parameters.get("annovar_fields_to_keep", []))
             command_annovar += f""" | {bcftools_bin_command} annotate --pair-logic exact --threads={threads} -x {",".join(annovar_fields_to_keep)} --rename-annots={tmp_rename_name} -o {tmp_annotate_vcf_name} -Oz 2>>{tmp_annotate_vcf_name_err} """
 
             # Command - indexing
@@ -3279,6 +3280,7 @@ class variants_annotation:
                     "operation": [],
                     "argument": [],
                     "options": [],
+                    "annovar_fields_to_keep": []
                 }
 
                 # parallelize annovar command
@@ -3325,12 +3327,12 @@ class variants_annotation:
 
                     # Operation option
                     operation = annotation_options.get("operation", None)
-                    if operation and operation not in ["g", "f", "r"]:
+                    if operation and operation not in ["gx", "g", "f", "r"]:
                         log.error(
-                            f"Annotation '{annotation}' - operation option '{operation}' not valid (should be 'g', 'f' or 'r')"
+                            f"Annotation '{annotation}' - operation option '{operation}' not valid (should be 'gx', 'g', 'f' or 'r')"
                         )
                         raise ValueError(
-                            f"Annotation '{annotation}' - operation option '{operation}' not valid (should be 'g', 'f' or 'r')"
+                            f"Annotation '{annotation}' - operation option '{operation}' not valid (should be 'gx', 'g', 'f' or 'r')"
                         )
 
                     if not annotation_fields:
@@ -3362,6 +3364,10 @@ class variants_annotation:
                     annotation_list = []
                     annotation_renamed_list = []
 
+                    # Create file for field rename
+                    log.debug("Create file for field rename")
+                    annotation_tmp_rename_name = os.path.join(tmp_annotate_vcf_directory, get_random(10) + "annovar.rename")
+
                     for annotation_field in annotation_fields:
 
                         # field new name, if parametered SKIPPED !!!!!! not managed actually TODO
@@ -3384,6 +3390,12 @@ class variants_annotation:
 
                         # Add rename info to tmp_rename_name
                         with open(tmp_rename_name, "a") as f:
+                            f.write(
+                                f"INFO/{annotation_field} {annotation_fields_new_name}\n"
+                            )
+
+                        # Add rename info to annotation_tmp_rename_name
+                        with open(annotation_tmp_rename_name, "a") as f:
                             f.write(
                                 f"INFO/{annotation_field} {annotation_fields_new_name}\n"
                             )
@@ -3454,10 +3466,11 @@ class variants_annotation:
 
                     # Xref options for cross information for "gx" operation
                     # Example: -xref ~/hpc/tools/annovar/humandb/gene_fullxref.txt
-                    if operation in ["g", "gx"] and (
+                    #if operation in ["g", "gx"] and (
+                    if operation in ["gx"] and (
                         annotation_options.get("xref", None) or options.get("xref", None)
                     ):
-                        operation = "gx"  # Change operation to "gx" if xref is provided
+                        #operation = "gx"  # Change operation to "gx" if xref is provided
                         if annotation_options.get("xref", None):
                             annotation_parameters += (
                                 f""" --xref {annotation_options.get("xref","")}"""
@@ -3523,6 +3536,8 @@ class variants_annotation:
                         )
                         # annotations_parameters["options"].append(command_parameters)
                         annotations_parameters["options"] += command_options
+                        annotations_parameters["annovar_fields_to_keep"] += annovar_fields_to_keep
+                        annotations_parameters["tmp_rename_name"] = tmp_rename_name
 
                     # Either parallelize_annovar_command is "parallel" or None
                     else:
@@ -3556,7 +3571,7 @@ class variants_annotation:
                             threads=threads,
                             tmp_annotate_vcf_name_err=tmp_annotate_vcf_name_err,
                             annovar_fields_to_keep=annovar_fields_to_keep,
-                            tmp_rename_name=tmp_rename_name
+                            tmp_rename_name=annotation_tmp_rename_name
                         )
 
                         # Launch command
@@ -3644,7 +3659,8 @@ class variants_annotation:
                         tmp_annotate_vcf_prefix=tmp_annotate_vcf_prefix,
                         threads=threads,
                         tmp_annotate_vcf_name_err=tmp_annotate_vcf_name_err,
-                        annovar_fields_to_keep=annovar_fields_to_keep,
+                        #annovar_fields_to_keep=annovar_fields_to_keep,
+                        annovar_fields_to_keep=[], # annovar_fields_to_keep in annotations_parameters
                         tmp_rename_name=tmp_rename_name
                     )
 
