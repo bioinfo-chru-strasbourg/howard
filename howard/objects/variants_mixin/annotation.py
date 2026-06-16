@@ -3085,6 +3085,12 @@ class variants_annotation:
             """
             Create the annovar command based on the provided parameters.
             """
+
+            char_code_map = {
+                "\\x3b": ",",
+                "\\x3d": ":"
+            }
+
             # Merged annovar command
             log.debug(f"annotations_parameters: {annotations_parameters}")
 
@@ -3101,7 +3107,8 @@ class variants_annotation:
             command_annovar += """ | sed "s/ANNOVAR_DATE=[^;\t]*;//gi" """
 
             # Command - Special characters (refGene annotation)
-            command_annovar += """ | sed "s/\\\\\\x3b/,/gi" """
+            for char, replacement in char_code_map.items():
+                command_annovar += f""" | sed "s/\\\\{char}/{replacement}/gi" """
 
             # Command - Clean empty fields (with value ".")
             command_annovar += """ | awk -F'\\t' -v OFS='\\t' '{if ($0 ~ /^#/) print; else {split($8,a,";");for(i=1;i<=length(a);i++) {split(a[i],b,"=");if(b[2]!=".") {c[b[1]]=b[2]}}; split($8,d,";");for(i=1;i<=length(d);i++) {split(d[i],e,"=");if(c[e[1]]!="") {if(info!="") {info=info";"}; info=info""e[1]"="c[e[1]]}}; if(info!="") {$8=info} else {$8=""}; delete c; info=""; print}}' """
@@ -3115,6 +3122,71 @@ class variants_annotation:
 
             return command_annovar
                 
+        def err_files_process(err_files, merge_msg:bool = False):
+            """
+            Process error files and log messages.
+            """
+            # Error messages
+            if merge_msg:
+                error_message_command_all = []
+                error_message_command_warning = []
+                error_message_command_err = []
+            for err_file in err_files:
+
+                log.debug(f"Process error file: {err_file}")
+
+                if not merge_msg:
+                    error_message_command_all = []
+                    error_message_command_warning = []
+                    error_message_command_err = []
+
+                with open(err_file, "r") as f:
+                    for line in f:
+                        message = line.strip()
+                        error_message_command_all.append(message)
+                        if line.startswith("[W::"):
+                            error_message_command_warning.append(message)
+                        if line.startswith("[E::"):
+                            error_message_command_err.append(f"{err_file}: " + message)
+
+                if not merge_msg:
+                    # Warning/Error messages
+                    if len(error_message_command_err):
+                        log.error("Error messages:")
+                        for message in error_message_command_err:
+                            log.error(f"   {message}")
+                    elif len(error_message_command_warning):
+                        log.warning("Warning messages:")
+                        for message in error_message_command_warning:
+                            log.warning(f"   {message}")
+                    # debug info
+                    log.debug("Warning/Error messages:")
+                    for message in error_message_command_all:
+                        log.debug(f"   {message}")
+                    # failed
+                    if len(error_message_command_err):
+                        log.error("Annotation failed: Error in commands")
+                        raise ValueError("Annotation failed: Error in commands")
+
+            if merge_msg:
+                if not merge_msg:
+                    # Warning/Error messages
+                    if len(error_message_command_err):
+                        log.error("Error messages:")
+                        for message in set(error_message_command_err):
+                            log.error(f"   {message}")
+                    elif len(error_message_command_warning):
+                        log.warning("Warning messages:")
+                        for message in set(error_message_command_warning):
+                            log.warning(f"   {message}")
+                    # debug info
+                    log.debug("Warning/Error messages:")
+                    for message in set(error_message_command_all):
+                        log.debug(f"   {message}")
+                    # failed
+                    if len(error_message_command_err):
+                        log.error("Annotation failed: Error in commands")
+                        raise ValueError("Annotation failed: Error in commands")
 
         # Threads
         if not threads:
@@ -3309,6 +3381,9 @@ class variants_annotation:
 
                 # command_annovar_list
                 command_annovar_list = []
+
+                # err files list
+                err_files_list = []
 
                 for annotation in annotations:
 
@@ -3583,6 +3658,8 @@ class variants_annotation:
                             # Append command to list
                             command_annovar_list.append(command_annovar)
 
+                            err_files_list += err_files
+
                         else:
 
                             # Run command
@@ -3670,11 +3747,15 @@ class variants_annotation:
                     run_parallel_commands([command_annovar], 1)
                     tmp_annotates_vcf_name_list = [tmp_annotate_vcf_name]
 
+                    err_files_process(err_files=err_files, merge_msg=False)
+
                 elif parallelize_annovar_command == "parallel" and command_annovar_list:
                     log.info(
                         f"Annotations Annovar - annotating..."
                     )
                     run_parallel_commands(command_annovar_list, threads)
+
+                    err_files_process(err_files=err_files_list)
 
                 if tmp_annotates_vcf_name_list:
 
