@@ -243,12 +243,33 @@ Examples:
 >       },
 >       "annovar": {
 >          "annotations": {
->             "annovar_keyword2": {
->                "field1": null,
->                "field2": "field2_renamed"
+>             "annovar_annotation1": {
+>                "annotation_fields": {
+>                   "field1": null,
+>                   "field2": "field2_renamed"
+>                },
+>                "options": {
+>                   "protocol": "annovar_keyword1",
+>                   "operation": "gx",
+>                   "genebase": "-splicing_threshold 3 -indel_splicing_threshold 3 -hgvs",
+>                   "arguments": "",
+>                   "xref": "/path/to/xref/file",
+>                   "options": ""
+>                }
 >             },
->             "annovar_keyword3": {
->                "INFO": null
+>             "annovar_annotation2": {
+>                "annotation_fields": {
+>                   "INFO": null,
+>                   "field2": "field2_renamed"
+>                }
+>                "options": {
+>                   "protocol": "annovar_keyword2",
+>                   "operation": "f",
+>                   "genebase": "",
+>                   "arguments": "",
+>                   "xref": "",
+>                   "options": ""
+>                }
 >             }
 >          }
 >       },
@@ -510,7 +531,7 @@ Examples:
 >             },
 >             "/path/to/database4.vcf.gz": {
 >                "INFO": null
->             }
+>             },
 >             "/path/to/database5.bed.gz": {
 >                "INFO": null
 >             }
@@ -529,15 +550,36 @@ Examples:
 >       }
 >       "annovar": {
 >          "annotations": {
->             "annovar_keyword2": {
->                "field1": null,
->                "field2": "field2_renamed"
+>             "annovar_annotation1": {
+>                "annotation_fields": {
+>                   "field1": null,
+>                   "field2": "field2_renamed"
+>                },
+>                "options": {
+>                   "protocol": "annovar_keyword1",
+>                   "operation": "gx",
+>                   "genebase": "-splicing_threshold 3 -indel_splicing_threshold 3 -hgvs",
+>                   "arguments": "",
+>                   "xref": "/path/to/xref/file",
+>                   "options": ""
+>                }
 >             },
->             "annovar_keyword3": {
->                "INFO": null
+>             "annovar_annotation2": {
+>                "annotation_fields": {
+>                   "INFO": null,
+>                   "field2": "field2_renamed"
+>                }
+>                "options": {
+>                   "protocol": "annovar_keyword2",
+>                   "operation": "f",
+>                   "genebase": "",
+>                   "arguments": "",
+>                   "xref": "",
+>                   "options": ""
+>                }
 >             }
 >          }
->       }
+>       },
 >       "snpeff": {
 >          "options": " -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr "
 >       }
@@ -822,6 +864,37 @@ Annotation process using Annovar tool. Provides a list of keywords to
 select Annovar databases, and defines Annovar options (see [Annovar
 documentation](https://annovar.openbioinformatics.org)).
 
+This parameter enables users to select specific database using Annovar
+keyword (e.g. 'refGene', 'clinvar', etc.).
+
+Section 'annotation_fields' allows to select specific database fields
+and optionally rename them (e.g. '"field": null' to keep field name,
+'"field": "new_name"' to rename field). Use 'INFO' or 'ALL' keyword to
+select all fields within the database INFO/Tags header (e.g. '"INFO":
+null', '"ALL": null').
+
+Section 'options' allows to define Annovar options (e.g. 'protocol',
+'operation', 'genebase', 'xref', etc.).
+
+- 'protocol' is the Annovar keyword for the database (e.g. 'refGene',
+  'clinvar', etc.)
+
+- 'operation' is the Annovar operation (e.g. 'gx', 'g', 'r', 'f').
+  Default 'f' or autodetected is specific keyword ('g' for 'refGene',
+  'ensGene' and 'knwonGene', 'r'for 'cytoBand')
+
+- 'genebase' is the Annovar genebase option, using with 'g' operation
+  (e.g. '-splicing_threshold 3 -indel_splicing_threshold 3 -hgvs')
+
+- 'xref' is the Annovar xref option, using with 'gx' operation (e.g.
+  '/path/to/xref/file')
+
+- 'options' is the Annovar additional options (e.g. '-other_options')
+
+If a full path is not provided, the system will automatically detect
+files within database folders (see Configuration doc) and assembly (see
+Parameter option).
+
 Examples:
 
 > Annotation with multiple Annovar databases, with fields selection, and
@@ -831,13 +904,41 @@ Examples:
 > {
 >    "annovar": {
 >       "annotations": {
->          "annovar_keyword2": {
->             "field1": null,
->             "field2": "field2_renamed",
+>          "annovar_annotation1": {
+>             "annotation_fields": {
+>                "field1": null,
+>                "field2": "field2_renamed"
+>             },
+>             "options": {
+>                "protocol": "annovar_keyword1",
+>                "operation": "gx",
+>                "genebase": "-splicing_threshold 3 -indel_splicing_threshold 3 -hgvs",
+>                "arguments": "",
+>                "xref": "/path/to/xref/file",
+>                "options": ""
+>             }
 >          },
->          "annovar_keyword3": {
->             "INFO": null
+>          "annovar_annotation2": {
+>             "annotation_fields": {
+>                "INFO": null,
+>                "field2": "field2_renamed"
+>             },
+>             "options": {
+>                "protocol": "annovar_keyword2",
+>                "operation": "f",
+>                "genebase": "",
+>                "arguments": "",
+>                "xref": "",
+>                "options": ""
+>             }
 >          }
+>       },
+>       "options": {
+>          "genebase": "",
+>          "arguments": "",
+>          "xref": "",
+>          "options": "",
+>          "parallelize": null
 >       }
 >    }
 > }
@@ -857,34 +958,62 @@ Examples:
 > ``` json
 > {
 >    "annotations": {
->       "clinvar_20221231": {
->          "CLNSIG": "ClinVar_class"
->          "CLNDN": "ClinVar_desease",
+>       "CLINVAR": {
+>          "annotation_fields": {
+>             "CLNSIG": "ClinVar_class",
+>             "CLNDN": "ClinVar_desease"
+>          },
+>          "options": {
+>             "protocol": "clinvar_20221231",
+>             "operation": "f"
+>          }
 >       },
 >       "cosmic70": {
->          "INFO": null
->       },
+>          "annotation_fields": {
+>             "INFO": null
+>          }
+>       }
 >    }
 > }
 > ```
 
 ### options
 
-List of options available with Annovar tool (see Annovar documentation).
-As example, these options allows to define splicing threshold or HGVS
-annotation with refGene database
+List of options available with Annovar tool (see Annovar documentation):
+
+- 'genebase' defines splicing threshold or HGVS annotation with refGene
+  database, which will be used if not defined in the 'annotations'
+  section for a specific database.
+
+- 'arguments' allows to define additional arguments for Annovar command
+  line (e.g. '-hgvs').
+
+- 'xref' allows to define a path to a xref file for Annovar (e.g.
+  '/path/to/xref/file'), if not defined in the 'annotations' section for
+  a specific database.
+
+- 'options' allows to define additional options for Annovar command line
+  (e.g. '-other_options'), for all database annotations.
+
+- 'parallelize' defines parallelization mode for Annovar command line
+  (e.g. 'parallel' to parallelize commands, 'multianno' to use multi
+  annotation Annovar process or null by default).
 
 Examples:
 
-> HGVS Annotation with refGene (add 'refGene' to 'annotations') and a
-> splicing threshold as 3
+> Common options for HGVS Annotation with 'gx' operation (like
+> 'refGene') with a splicing threshold as 3, an additional Gene
+> annotation using external file, and a paralelization mode for Annovar
+> commands
 
 > ``` json
 > {
 >    "options": {
->       "splicing_threshold": 3,
->       "argument": "'-hgvs'"
->       }
+>       "genebase": "-splicing_threshold 3 -indel_splicing_threshold 3",
+>       "arguments": "-hgvs",
+>       "xref": "/path/to/xref/file",
+>       "options": "",
+>       "parallelize": "parallel"
 >    }
 > }
 > ```

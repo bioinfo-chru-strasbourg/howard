@@ -1,0 +1,2 @@
+#Gene_name	pLi	Gene_Full_Name
+EGFR	9.0649236354772e-05	alpha-1-B glycoprotein

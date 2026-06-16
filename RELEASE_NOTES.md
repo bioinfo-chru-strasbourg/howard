@@ -17,6 +17,7 @@ This release introduces several significant new features and improvements, prima
 - Improve Parquet annotation (add options), resources dealing, fast parameter ([#466](https://github.com/bioinfo-chru-strasbourg/howard/issues/466))
 - Improve transcripts process (calculation), especially for transcript prioritization ([#475](https://github.com/bioinfo-chru-strasbourg/howard/issues/475), [#492](https://github.com/bioinfo-chru-strasbourg/howard/issues/492), [#495](https://github.com/bioinfo-chru-strasbourg/howard/issues/495))
 - Improve calculation tool by adding named parameters on section ([#503](https://github.com/bioinfo-chru-strasbourg/howard/issues/503), [#505](https://github.com/bioinfo-chru-strasbourg/howard/issues/505)), and add/improve some pertinent calculations ([#496](https://github.com/bioinfo-chru-strasbourg/howard/issues/496), [#501](https://github.com/bioinfo-chru-strasbourg/howard/issues/501))
+- Improve Annovar annotation by adding supplementary configuration sections, and a specific 'parallelize' option to speedup the annotation process ([#508](https://github.com/bioinfo-chru-strasbourg/howard/issues/508) and [#512](https://github.com/bioinfo-chru-strasbourg/howard/issues/512))
 
 ### Fixes
 
