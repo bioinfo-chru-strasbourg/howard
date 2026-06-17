@@ -285,6 +285,7 @@ RUN echo "#[INFO] TOOL installation '$TOOL_NAME:$TOOL_VERSION'" && \
     ln -s $TOOLS $HOWARD_HOME$TOOLS && \
     ln -s $DATABASES $HOWARD_HOME$DATABASES && \
     ln -s $DATA $HOWARD_HOME$DATA && \
+    howard query --input=/tool/tests/data/example.vcf --query="SELECT 1" && \
     python -m pip cache purge && \
     rm -rf $DEST/.git* && \
     howard --help
