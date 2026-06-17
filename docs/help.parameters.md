@@ -41,7 +41,8 @@ title: HOWARD Help Parameters
   - [<span class="toc-section-number">3.6</span> bigwig](#bigwig)
     - [<span class="toc-section-number">3.6.1</span>
       annotations](#annotations-4)
-    - [<span class="toc-section-number">3.6.2</span> param](#param)
+    - [<span class="toc-section-number">3.6.2</span>
+      options](#options-2)
   - [<span class="toc-section-number">3.7</span> exomiser](#exomiser)
     - [<span class="toc-section-number">3.7.1</span> release](#release)
     - [<span class="toc-section-number">3.7.2</span>
@@ -61,11 +62,6 @@ title: HOWARD Help Parameters
       rm_annot](#rm_annot)
     - [<span class="toc-section-number">3.8.7</span>
       whitespace](#whitespace)
-  - [<span class="toc-section-number">3.9</span> options](#options-2)
-    - [<span class="toc-section-number">3.9.1</span>
-      annotations_update](#annotations_update)
-    - [<span class="toc-section-number">3.9.2</span>
-      annotations_append](#annotations_append)
 - [<span class="toc-section-number">4</span> calculation](#calculation)
   - [<span class="toc-section-number">4.1</span>
     calculations](#calculations)
@@ -202,7 +198,7 @@ title: HOWARD Help Parameters
 # Introduction
 
 HOWARD Parameters JSON file defines parameters to process annotations,
-calculations, prioritizations, convertions and queries.
+calculations, prioritizations, conversions and queries.
 
 Examples:
 
@@ -219,25 +215,35 @@ Examples:
 >       "parquet": {
 >          "annotations": {
 >             "/path/to/database3.parquet": {
->                "field1": null,
->                "field2": "field2_renamed"
+>                "annotation_fields": {
+>                   "field1": null,
+>                   "field2": "field2_renamed"
+>                }
 >             },
 >             "/path/to/database4.vcf.gz": {
->                "INFO": null
+>                "annotation_fields": {
+>                   "INFO": null
+>                }
 >             },
 >             "/path/to/database5.bed.gz": {
->                "INFO": null
+>                "annotation_fields": {
+>                   "INFO": null
+>                }
 >             }
 >          }
 >       },
 >       "bcftools": {
 >          "annotations": {
 >             "/path/to/database6.vcf.gz": {
->                "field1": null,
->                "field2": "field2_renamed"
+>                "annotation_fields": {
+>                   "field1": null,
+>                   "field2": "field2_renamed"
+>                }
 >             },
 >             "/path/to/database7.bed": {
->                "INFO": null
+>                "annotation_fields": {
+>                   "INFO": null
+>                }
 >             }
 >          }
 >       },
@@ -261,7 +267,7 @@ Examples:
 >                "annotation_fields": {
 >                   "INFO": null,
 >                   "field2": "field2_renamed"
->                }
+>                },
 >                "options": {
 >                   "protocol": "annovar_keyword2",
 >                   "operation": "f",
@@ -526,25 +532,35 @@ Examples:
 >       "parquet": {
 >          "annotations": {
 >             "/path/to/database3.parquet": {
->                "field1": null,
->                "field2": "field2_renamed"
+>                "annotation_fields": {
+>                   "field1": null,
+>                   "field2": "field2_renamed"
+>                }
 >             },
 >             "/path/to/database4.vcf.gz": {
->                "INFO": null
+>                "annotation_fields": {
+>                   "INFO": null
+>                }
 >             },
 >             "/path/to/database5.bed.gz": {
->                "INFO": null
+>                "annotation_fields": {
+>                   "INFO": null
+>                }
 >             }
 >          }
 >       }
 >       "bcftools": {
 >          "annotations": {
 >             "/path/to/database6.vcf.gz": {
->                "field1": null,
->                "field2": "field2_renamed"
+>                "annotation_fields": {
+>                   "field1": null,
+>                   "field2": "field2_renamed"
+>                }
 >             },
 >             "/path/to/database7.bed": {
->                "INFO": null
+>                "annotation_fields": {
+>                   "INFO": null
+>                }
 >             }
 >          }
 >       }
@@ -609,21 +625,28 @@ Examples:
 >    "parquet": {
 >       "annotations": {
 >          "/path/to/database3.parquet": {
->             "field1": null,
->             "field2": "field2_renamed",
+>             "annotation_fields": {
+>                "field1": null,
+>                "field2": "field2_renamed"
+>             }
 >          },
 >          "/path/to/database4.vcf.gz": {
->             "INFO": null
->          }
+>             "annotation_fields": {
+>                "INFO": null
+>             }
+>          },
 >          "/path/to/database5.bed.gz": {
->             "INFO": null
+>             "annotation_fields": {
+>                "INFO": null
+>             }
 >          }
 >       }
 >    }
 > }
 > ```
 
-> Annotation with options for a specific database
+> Annotation with options for a specific database (uniquify values,
+> force append, not force update)
 
 > ``` json
 > {
@@ -634,7 +657,9 @@ Examples:
 >                "INFO": null
 >             },
 >             "options": {
->                "uniquify": true
+>                "uniquify": true,
+>                "annotations_update": false,
+>                "annotations_append": true
 >             }
 >          }
 >       }
@@ -645,24 +670,38 @@ Examples:
 ### annotations
 
 Specify a list of databases files available (formats such as Parquet,
-VCF, TSV, duckDB, JSON). This parameter enables users to select specific
+VCF, TSV, duckDB, JSON).
+
+The section 'annotations_fields' enables users to select specific
 database fields and optionally rename them (e.g. '"field": null' to keep
 field name, '"field": "new_name"' to rename field). Use 'INFO' keyword
 to select all fields within the database INFO/Tags header (e.g. '"INFO":
 null'). Use 'ALL' keyword to select all fields within the database
 regardless INFO/Tags header (e.g. '"ALL": null').
 
-For add all availalbe databases files, use 'ALL' keyword, with filters
-on type and release (e.g. 'ALL', 'ALL:format=parquet',
-'ALL:format=parquet:release=current',
-'ALL:format=parquet+vcf:release=current+devel').
-
 If a full path is not provided, the system will automatically detect
 files within database folders (see Configuration doc) and assembly (see
 Parameter option).
 
-Additionnal options can be added for each database (e.g. 'uniquify' to
-uniquify values or concatenate without aggregation, etc.)
+In addition to select specific fields and optionally rename them, more
+options are available in 'options' section:
+
+- 'uniquify': to uniquify values or concatenate without aggregation
+
+- 'annotations_update': Update option for annotation. If True,
+  annotation fields will be removed and re-annotated.
+
+- 'annotations_append': Append option for annotation. If True,
+  annotation fields will be annotated only if not annotation exists for
+  the variant.
+
+A keyword 'ALL' can be used to select all available databases, with
+optional filters on format and release: 'formats:[parquet](#parquet)'
+for all parquet databases, 'formats:[parquet](#parquet)' and
+'releases:\[current\]' for all parquet databases in 'current' release
+(subfolder), 'formats:\[parquet,vcf\]' and 'releases:\[current,devel\]'
+for databases in Parquet or VCF format in 'current' or 'devel'
+releases).
 
 Examples:
 
@@ -673,10 +712,14 @@ Examples:
 > {
 >    "annotations": {
 >       "tests/databases/annotations/current/hg19/avsnp150.parquet": {
->          "INFO": null
+>          "annotation_fields": {
+>             "INFO": null
+>          }
 >       }
 >       "tests/databases/annotations/current/hg19/dbnsfp42a.parquet": {
->          "ALL": null
+>          "annotation_fields": {
+>             "ALL": null
+>          }
 >       }
 >    }
 > }
@@ -689,9 +732,11 @@ Examples:
 > {
 >    "annotations": {
 >       "tests/databases/annotations/current/hg19/dbnsfp42a.parquet": {
->          "Polyphen2_HDIV_pred": "PolyPhen",
->          "ClinPred_pred": "ClinVar",
->          "REVEL_score": null
+>          "annotation_fields": {
+>             "Polyphen2_HDIV_pred": "PolyPhen",
+>             "ClinPred_pred": "ClinVar",
+>             "REVEL_score": null
+>          }
 >       }
 >    }
 >    
@@ -704,7 +749,9 @@ Examples:
 > {
 >    "annotations": {
 >       "tests/databases/annotations/current/hg19/refGene.bed": {
->          "INFO": null
+>          "annotation_fields": {
+>             "INFO": null
+>          }
 >       }
 >    }
 > }
@@ -719,27 +766,13 @@ Examples:
 > {
 >    "annotations": {
 >       "dbnsfp42a.REVEL.vcf.gz": {
->          "REVEL_score": null,
->          "REVEL_rankscore": null
->       }
->    }
->    
-> }
-> ```
-
-> Annotation with all available databases in Parquet for ''current
-> release
-
-> ``` json
-> {
->    "parquet": {
->       "annotations": {
->          "ALL": {
->             "formats": ["parquet"],
->             "releases": ["current"]
+>          "annotation_fields": {
+>             "REVEL_score": null,
+>             "REVEL_rankscore": null
 >          }
 >       }
 >    }
+>    
 > }
 > ```
 
@@ -761,6 +794,20 @@ Examples:
 > }
 > ```
 
+> Annotation with all available databases in Parquet for 'current'
+> release
+
+> ``` json
+> {
+>    "annotations": {
+>       "ALL": {
+>          "formats": ["parquet"],
+>          "releases": ["current"]
+>       }
+>    }
+> }
+> ```
+
 ## bcftools
 
 Annotation process using BCFTools. Provide a list of database files and
@@ -775,12 +822,16 @@ Examples:
 >    "parquet": {
 >       "bcftools": {
 >          "/path/to/database1.vcf.gz": {
->             "field1": null,
->             "field2": "field2_renamed"
+>             "annotation_fields": {
+>                "field1": null,
+>                "field2": "field2_renamed"
+>             }
 >          },
 >          "database2.bed.gz": {
->             "INFO": null
->          }
+>             "annotation_fields": {
+>                "INFO": null
+>             }
+>          },
 >       }
 >    }
 > }
@@ -791,8 +842,8 @@ Examples:
 Specify the list of database files in formats VCF or BED. Files need to
 be compressed and indexed.
 
-This parameter enables users to select specific database fields and
-optionally rename them (e.g. '"field": null' to keep field name,
+Section 'annotation_fields' allows to select specific database fields
+and optionally rename them (e.g. '"field": null' to keep field name,
 '"field": "new_name"' to rename field). Use 'INFO' or 'ALL' keyword to
 select all fields within the database INFO/Tags header (e.g. '"INFO":
 null', '"ALL": null').
@@ -809,7 +860,9 @@ Examples:
 > {
 >    "annotations": {
 >       "tests/databases/annotations/current/hg19/avsnp150.vcf.gz": {
->          "INFO": null
+>          "annotation_fields": {
+>             "INFO": null
+>          }
 >       }
 >    }
 > }
@@ -822,9 +875,11 @@ Examples:
 > {
 >    "annotations": {
 >       "tests/databases/annotations/current/hg19/dbnsfp42a.vcf.gz": {
->          "Polyphen2_HDIV_pred": "PolyPhen",
->          "ClinPred_pred": "ClinVar",
->          "REVEL_score": null
+>          "annotation_fields": {
+>             "Polyphen2_HDIV_pred": "PolyPhen",
+>             "ClinPred_pred": "ClinVar",
+>             "REVEL_score": null
+>          }
 >       }
 >    }
 > }
@@ -836,7 +891,9 @@ Examples:
 > {
 >    "annotations": {
 >       "tests/databases/annotations/current/hg19/refGene.bed": {
->          "INFO": null
+>          "annotation_fields": {
+>             "INFO": null
+>          }
 >       }
 >    }
 > }
@@ -851,8 +908,10 @@ Examples:
 > {
 >    "annotations": {
 >       "dbnsfp42a.REVEL.vcf.gz": {
->          "REVEL_score": null,
->          "REVEL_rankscore": null
+>          "annotation_fields": {
+>             "REVEL_score": null,
+>             "REVEL_rankscore": null
+>          }
 >       }
 >    }
 > }
@@ -1115,6 +1174,12 @@ Examples:
 Annotation process using snpSift. Provide a list of database files and
 annotation fields.
 
+Section 'annotation_fields' allows to select specific database fields
+and optionally rename them (e.g. '"field": null' to keep field name,
+'"field": "new_name"' to rename field). Use 'INFO' or 'ALL' keyword to
+select all fields within the database INFO/Tags header (e.g. '"INFO":
+null', '"ALL": null').
+
 Examples:
 
 > Annotation with multiple databases in multiple formats
@@ -1124,12 +1189,16 @@ Examples:
 >    "snpsift": {
 >       "annotations": {
 >          "/path/to/database1.vcf.gz": {
->             "field1": null,
->             "field2": null
+>             "annotation_fields": {
+>                "field1": null,
+>                "field2": null
+>             }
 >          },
 >          "/path/to/database2.vcf.gz": {
->             "field1": null,
->             "field2": null
+>             "annotation_fields": {
+>                "field1": null,
+>                "field2": null
+>             }
 >          }
 >       }
 >    }
@@ -1159,7 +1228,9 @@ Examples:
 > {
 >    "annotations": {
 >       "tests/databases/annotations/current/hg19/avsnp150.vcf.gz": {
->          "INFO": null
+>          "annotation_fields": {
+>             "INFO": null
+>          }
 >       }
 >    }
 > }
@@ -1171,10 +1242,11 @@ Examples:
 > {
 >    "annotations": {
 >       "tests/databases/annotations/current/hg19/dbnsfp42a.vcf.gz": {
->          "Polyphen2_HDIV_pred": "PolyPhen",
->          "ClinPred_pred": "ClinVar",
->          "REVEL_score": null
->       }
+>          "annotation_fields": {
+>             "Polyphen2_HDIV_pred": "PolyPhen",
+>             "ClinPred_pred": "ClinVar",
+>             "REVEL_score": null
+>          }
 >    }
 > }
 > ```
@@ -1188,8 +1260,10 @@ Examples:
 > {
 >    "annotations": {
 >       "dbnsfp42a.REVEL.vcf.gz": {
->          "REVEL_score": null,
->          "REVEL_rankscore": null
+>          "annotation_fields": {
+>             "REVEL_score": null,
+>             "REVEL_rankscore": null
+>          }
 >       }
 >    }
 > }
@@ -1198,15 +1272,17 @@ Examples:
 ## bigwig
 
 Annotation process using BigWig files. Provide a list of database files
-in BigWig format ('.bw') or BigBed format ('.bb') and annotation fields.
+in BigWig format ('.bw') or BigBed format ('.bb') and annotation fields
+('annotations_fields' section).
 
-Parameters can be provided to define the aggregation method (e.g. mean,
-max, min, sum, coverage join, uniq) to use when multiple values are
-found for a variant position (such as for indels).
+Options can be provided ('options' section) to define the aggregation
+method (e.g. mean, max, min, sum, coverage join, uniq) to use when
+multiple values are found for a variant position (such as for indels).
 
-Default methods can be defined for all databases (by annotation type),
-and specific methods can be defined for each database and field (default
-'mean' for Integer and Float, 'join' for String).
+Default methods (global 'options' section) can be defined for all
+databases (by annotation type), and specific methods can be defined for
+each database and field (default 'mean' for Integer and Float, 'join'
+for String).
 
 Examples:
 
@@ -1218,27 +1294,29 @@ Examples:
 >    "bigwig": {
 >       "annotations": {
 >          "/path/to/database1.bw": {
->             "field1": null,
->             "field2": "field2_renamed"
+>             "annotation_fields": {
+>                "field1": null,
+>                "field2": "field2_renamed"
+>             },
+>             "options": {
+>                "method": {
+>                   "field1": "max",
+>                   "field2_renamed": "min"
+>                }
+>             }
 >          },
 >          "/path/to/database2.bb": {
->             "field1": null,
->             "field2": null
->          }
+>             "annotation_fields": {
+>                "field1": null,
+>                "field2": null
+>             }
+>          },
 >       },
->      "param": {
->         "default": {
->            "method": {
->               "Integer": "mean",
->               "Float": "mean",
->               "String": "uniq"
->            }
->         },
->         "/path/to/database1.bw": {
->            "method": {
->               "field1": "max",
->               "field2_renamed": "min"
->            }
+>       "options": {
+>         "method": {
+>            "Integer": "mean",
+>            "Float": "mean",
+>            "String": "uniq"
 >         }
 >       }
 >    }
@@ -1250,11 +1328,11 @@ Examples:
 Specify the list of database files in BigWig or BigBed format (extension
 '.bw', '.bb', 'bigwig' or 'bigbed').
 
-This parameter enables users to select specific database fields and
-optionally rename them (e.g. '"field": null' to keep field name,
-'"field": "new_name"' to rename field). Use 'INFO' or 'ALL' keyword to
-select all fields within the database INFO/Tags header (e.g. '"INFO":
-null', '"ALL": null').
+The 'annotations_fields' section enables users to select specific
+database fields and optionally rename them (e.g. '"field": null' to keep
+field name, '"field": "new_name"' to rename field). Use 'INFO' or 'ALL'
+keyword to select all fields within the database INFO/Tags header (e.g.
+'"INFO": null', '"ALL": null').
 
 If a full path is not provided, the system will automatically detect
 files within database folders (see Configuration doc) and assembly (see
@@ -1273,19 +1351,29 @@ Examples:
 > {
 >    "annotations": {
 >       "tests/databases/annotations/current/hg19/gerp.bw": {
->          "INFO": null
+>          "annotation_fields": {
+>             "INFO": null
+>          }
 >       }
 >    }
 > }
 > ```
 
-> Annotation with GERP scores renamed
+> Annotation with GERP scores renamed and a specific aggregation method
+> 'max' for the 'GERP_score' field
 
 > ``` json
 > {
 >    "annotations": {
 >       "tests/databases/annotations/current/hg19/gerp.bw": {
->          "gerp": "GERP_score"
+>          "annotation_fields": {
+>             "gerp": "GERP_score"
+>          },
+>          "options": {
+>             "method": {
+>                "GERP_score": "max"
+>             }
+>          }
 >       }
 >    }
 > }
@@ -1297,13 +1385,15 @@ Examples:
 > {
 >    "annotations": {
 >       "https://hgdownload.soe.ucsc.edu/gbdb/hg19/bbi/All_hg19_RS.bw": {
->          "INFO": null
+>          "annotation_fields": {
+>             "INFO": null
+>          }
 >       }
 >    }
 > }
 > ```
 
-### param
+### options
 
 Parameters for BigWig/BigBed annotation, including default aggregation
 methods and specific aggregation methods for each database and field.
@@ -1323,28 +1413,11 @@ Examples:
 
 > ``` json
 > {
->    "param": {
->       "default": {
->          "method": {
->             "Integer": "mean",
->             "Float": "mean",
->             "String": "uniq"
->          }
->       }
->    }
-> }
-> ```
-
-> Parameters to define aggregation methods by annotations and fields
-
-> ``` json
-> {
->    "param": {
->       "/path/to/database1.bw": {
->          "method": {
->             "field1": "max",
->             "field2_renamed": "min"
->          }
+>    "options": {
+>       "method": {
+>          "Integer": "mean",
+>          "Float": "mean",
+>          "String": "uniq"
 >       }
 >    }
 > }
@@ -1548,59 +1621,6 @@ Examples:
 > ``` json
 > {
 >    "whitespace": "true"
-> }
-> ```
-
-## options
-
-Options for annotations, such as annotation strategy (skip if exists,
-update, append)
-
-Examples:
-
-> Annotation with Parquet databases, with update annotation strategy.
-
-> ``` json
-> {
->    "options": {
->       "annotations_update": true
->    }
-> }
-> ```
-
-### annotations_update
-
-Update option for annotation (only for Parquet annotation). If True,
-annotation fields will be removed and re-annotated. These options will
-be applied to all annotation databases.
-
-Default: `False`
-
-Examples:
-
-> Apply update on all annotation fields for all databases.
-
-> ``` json
-> {
->    "annotations_update": true
-> }
-> ```
-
-### annotations_append
-
-Append option for annotation (only for Parquet annotation). If True,
-annotation fields will be annotated only if not annotation exists for
-the variant. These options will be applied to all annotation databases.
-
-Default: `False`
-
-Examples:
-
-> Apply append on all annotation fields for all databases.
-
-> ``` json
-> {
->    "annotations_append": true
 > }
 > ```
 
