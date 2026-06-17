@@ -13,6 +13,7 @@ coverage report --include=howard/* -m
 import os
 from tempfile import TemporaryDirectory
 import vcf  # type: ignore
+import logging as log
 
 from howard.objects.variants import Variants
 from howard.functions.commons import remove_if_exists
@@ -23,6 +24,64 @@ from test_needed import (
     tests_annotations_folder,
     tests_config,
 )
+
+
+def test_annotation_snpsift_annotation_fields():
+    """
+    This function tests the annotation of a VCF file using snpsift annotations.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.vcf.gz"
+        annotation_parquet = os.path.join(tests_annotations_folder, "nci60.vcf.gz")
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+
+        # Copy config
+        tests_config_snpsift = tests_config.copy()
+
+        # Number of threads
+        tests_config_snpsift["threads"] = 2
+
+        # Memory
+        tests_config_snpsift["memory"] = "4G"
+
+        # Construct param dict
+        param = {
+            "annotation": {
+                "snpsift": {"annotations": {annotation_parquet: {"annotation_fields": {"INFO": None}}}}
+            }
+        }
+
+        # Create object
+        variants = Variants(
+            conn=None,
+            input=input_vcf,
+            output=output_vcf,
+            config=tests_config_snpsift,
+            param=param,
+            load=True,
+        )
+
+        # Remove if output file exists
+        remove_if_exists([output_vcf])
+
+        # Annotation
+        variants.annotation()
+
+        # query annotated variant
+        result = variants.get_query_to_df(
+            """SELECT 1 AS count FROM variants WHERE "#CHROM" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66'"""
+        )
+        assert len(result) == 1
+
+        # Check if VCF is in correct format with pyVCF
+        variants.export_output()
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
 
 
 def test_annotation_snpsift():
@@ -72,6 +131,64 @@ def test_annotation_snpsift():
         # query annotated variant
         result = variants.get_query_to_df(
             """SELECT 1 AS count FROM variants WHERE "#CHROM" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66'"""
+        )
+        assert len(result) == 1
+
+        # Check if VCF is in correct format with pyVCF
+        variants.export_output()
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
+
+
+def test_annotation_snpsift_rename_field_annotation_fields():
+    """
+    This function tests the annotation of a VCF file using snpsift annotations.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.vcf.gz"
+        annotation_parquet = os.path.join(tests_annotations_folder, "nci60.vcf.gz")
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+
+        # Copy config
+        tests_config_snpsift = tests_config.copy()
+
+        # Number of threads
+        tests_config_snpsift["threads"] = 2
+
+        # Memory
+        tests_config_snpsift["memory"] = "4G"
+
+        # Construct param dict
+        param = {
+            "annotation": {
+                "snpsift": {"annotations": {annotation_parquet: {"annotation_fields": {"nci60": "nci61"}}}}
+            }
+        }
+
+        # Create object
+        variants = Variants(
+            conn=None,
+            input=input_vcf,
+            output=output_vcf,
+            config=tests_config_snpsift,
+            param=param,
+            load=True,
+        )
+
+        # Remove if output file exists
+        remove_if_exists([output_vcf])
+
+        # Annotation
+        variants.annotation()
+
+        # query annotated variant
+        result = variants.get_query_to_df(
+            """SELECT 1 AS count FROM variants WHERE "#CHROM" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci61=0.66'"""
         )
         assert len(result) == 1
 

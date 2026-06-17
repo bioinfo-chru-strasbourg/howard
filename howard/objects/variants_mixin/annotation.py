@@ -536,6 +536,12 @@ class variants_annotation:
         )
         log.debug("Annotations param: " + str(annotations_param))
 
+        # Options
+        annotations_options = (
+            self.get_param().get("annotation", {}).get("bigwig", {}).get("options", {})
+        )
+        log.debug("Annotations options: " + str(annotations_options))
+
         # Chunk size
         chunk_size = self.get_config().get("chunk_size", DEFAULT_CHUNK_SIZE)
 
@@ -580,7 +586,22 @@ class variants_annotation:
                 annotation_bigwig_config_list = []
 
                 for annotation in annotations:
-                    annotation_fields = annotations[annotation]
+
+                    # Annotation Name
+                    annotation_name = os.path.basename(annotation)
+
+                    # Annotation fields
+                    # Add backward compatibility if "annotation_fields" is in annotation dict (instead of directly in annotation value)
+                    # Allow to add options for annotations
+                    if "annotation_fields" in annotations[annotation]:
+                        annotation_fields = annotations[annotation].get(
+                            "annotation_fields", {}
+                        )
+                    else:
+                        annotation_fields = annotations[annotation]
+
+                    # Options for annotations
+                    annotation_options = annotations[annotation].get("options", {})
 
                     # Annotation Name
                     annotation_name = os.path.basename(annotation)
@@ -785,14 +806,13 @@ class variants_annotation:
                             raise ValueError(msg_err)
 
                         # Annotation param method
-                        # Get default and update with annotation specific
+                        # Get default method and update with annotation specific method
                         annotations_param_annotation_method = (
-                            annotations_param.get("default", {})
-                            .get("method", {})
+                            annotations_options.get("method", {})
                             .copy()
                         )
                         annotations_param_annotation_method.update(
-                            annotations_param.get(annotation, {}).get("method", {})
+                            annotation_options.get("method", {})
                         )
 
                         # For each field, determine method by type if not defined
@@ -1086,15 +1106,6 @@ class variants_annotation:
                                                     cyvcf2_header_index
                                                 ]
                                             )
-                                        # elif annotation_method == "uniq":
-                                        #     # Join unique values
-                                        #     value_norm = ",".join(
-                                        #         set(
-                                        #             cyvcf2_header_values[
-                                        #                 cyvcf2_header_index
-                                        #             ]
-                                        #         )
-                                        #     )
                                         else:
                                             # Default to "join"
                                             value_norm = ",".join(
@@ -1281,7 +1292,17 @@ class variants_annotation:
                 commands = {}
 
                 for annotation in annotations:
-                    annotation_fields = annotations[annotation]
+
+                    # Allow to add options for annotations
+                    if "annotation_fields" in annotations[annotation]:
+                        annotation_fields = annotations[annotation].get(
+                            "annotation_fields", {}
+                        )
+                    else:
+                        annotation_fields = annotations[annotation]
+
+                    # Options for annotations (disabled for now, not used)
+                    # annotation_options = annotations[annotation].get("options", {})
 
                     # Annotation Name
                     annotation_name = os.path.basename(annotation)
@@ -1651,7 +1672,17 @@ class variants_annotation:
             err_files = []
 
             for annotation in annotations:
-                annotation_fields = annotations[annotation]
+                
+                # Allow to add options for annotations
+                if "annotation_fields" in annotations[annotation]:
+                    annotation_fields = annotations[annotation].get(
+                        "annotation_fields", {}
+                    )
+                else:
+                    annotation_fields = annotations[annotation]
+
+                # Options for annotations (disabled for now, not used)
+                # annotation_options = annotations[annotation].get("options", {})
 
                 # Annotation Name
                 annotation_name = os.path.basename(annotation)
@@ -3972,10 +4003,10 @@ class variants_annotation:
                 # Check options
                 annotation_option_uniquify = annotation_options.get("uniquify", False)
                 annotation_option_force_update_annotation = annotation_options.get(
-                    "force_update_annotation", force_update_annotation
+                    "annotations_update", force_update_annotation
                 )
                 annotation_option_force_append_annotation = annotation_options.get(
-                    "force_append_annotation", force_append_annotation
+                    "annotations_append", force_append_annotation
                 )
 
                 # Check annotation fields
