@@ -2525,6 +2525,17 @@ def concat_into_infile(
                         compressed_file.write(str(infile.read(), "utf-8"))
                     else:
                         shutil.copyfileobj(infile, compressed_file)
+            # # Alternative with pysam
+            # with pysam.BGZFile(input_file, "rb") as infile:
+            #     if open_type == "t":
+            #         # evite de charger tout le fichier en memoire
+            #         while True:
+            #             chunk = infile.read(block)
+            #             if not chunk:
+            #                 break
+            #             compressed_file.write(chunk.decode("utf-8"))
+            #     else:
+            #         shutil.copyfileobj(infile, compressed_file)
         elif input_compression_type in ["gzip"]:
             # See https://pypi.org/project/mgzip/
             # log.debug(f"Reading gzip file '{input_file}' with mgzip...")
@@ -2665,6 +2676,15 @@ def concat_and_compress_files(
                     threads=threads,
                     block=block,
                 )
+        # # Alternative with pysam
+        # with pysam.BGZFile(output_file_tmp, "wb") as compressed_file:
+        #     concat_into_infile(
+        #         input_files,
+        #         compressed_file,
+        #         compression_type=compression_type,
+        #         threads=threads,
+        #         block=block,
+        #     )
 
     # Concat and compress files in none
     elif compression_type in ["none"]:
@@ -4145,6 +4165,78 @@ def load_config_args(args):
     param = load_param(args)
 
     return arguments_dict, setup_cfg, config, param
+
+
+def setup_variants(
+    args: argparse,
+    command: str,
+    access: str = None,
+    access_default: str = None,
+    load_data: bool = False,
+) -> tuple:
+    """
+    Common factory for creating and initialising a Variants object from CLI args.
+
+    Encapsulates the repeated setup pattern found in every tool script:
+    load_config_args → Variants(input, output, config, param) → get_config/get_param
+    → load_args → (optional access) → set_param/set_config.
+
+    Does NOT call load_data() so that callers can still adjust config (e.g. access
+    mode derived from input format) before data is loaded.
+
+    :param args: Parsed CLI arguments (argparse.Namespace).
+    :param command: Command name used by load_args to resolve param sections
+        (e.g. "annotation", "process", "query").
+    :param access: If provided, force config["access"] to this value regardless of
+        any pre-existing value (e.g. "RO" for stats).
+    :param access_default: If provided, set config["access"] to this value only when
+        no access has been set yet (e.g. "RO" for convert).
+    :param load_data: If True, call vcfdata_obj.load_data() before returning.
+    :return: Tuple (vcfdata_obj, config, param, arguments_dict).
+    """
+
+    # Deferred import to avoid circular dependency (variants.py imports commons.py)
+    from howard.objects.variants import Variants
+
+    # Load config and raw param from args
+    arguments_dict, _, config, param = load_config_args(args)
+
+    # Create Variants object (output is optional, e.g. absent for stats)
+    output = getattr(args, "output", None)
+    vcfdata_obj = Variants(
+        input=args.input, output=output, config=config, param=param
+    )
+
+    # Retrieve normalised config and param from the object
+    config = vcfdata_obj.get_config()
+    param = vcfdata_obj.get_param()
+
+    # Overlay CLI arguments onto param according to the command's argument groups
+    param = load_args(
+        param=param,
+        args=args,
+        arguments_dict=arguments_dict,
+        command=command,
+        strict=False,
+    )
+
+    # Apply access mode:
+    #   - access          : forced unconditionally (overrides any existing value)
+    #   - access_default  : applied only when config["access"] is not yet set
+    if access is not None:
+        config["access"] = access
+    elif access_default is not None:
+        config["access"] = config.get("access", access_default)
+
+    # Push updated param and config back into the object
+    vcfdata_obj.set_param(param)
+    vcfdata_obj.set_config(config)
+
+    # Load data
+    if load_data:
+        vcfdata_obj.load_data()
+
+    return vcfdata_obj, config, param, arguments_dict
 
 
 def load_args(
