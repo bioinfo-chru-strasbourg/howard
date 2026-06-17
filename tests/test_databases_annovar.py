@@ -86,6 +86,8 @@ def test_databases_download_annovar_mandatory_refgene():
     mandatory file `refGene` from the ANNOVAR databases.
     """
 
+    files_minimum = ["refGene", "ensGene", "knownGene", "kgXref"]
+
     # Test downloading mandatory file refGene (no file list in input)
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
@@ -114,7 +116,12 @@ def test_databases_download_annovar_mandatory_refgene():
         for assembly in assemblies:
             assert assembly in downloaded_files
             downloaded_files_assembly = os.listdir(f"{tmp_dir}/{assembly}")
-            assert f"{assembly}_refGene.txt" in downloaded_files_assembly
+            for file in files_minimum:
+                downloaded_file = f"{assembly}_{file}.txt"
+                assert downloaded_file in downloaded_files_assembly
+                if file not in ["kgXref"]:
+                    assert f"{assembly}_{file}Mrna.fa" in downloaded_files_assembly
+            #assert f"{assembly}_refGene.txt" in downloaded_files_assembly
 
 
 def test_databases_download_annovar_mandatory_refgene_for_update():
