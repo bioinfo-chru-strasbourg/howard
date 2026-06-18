@@ -53,7 +53,8 @@ from howard.functions.commons import (
     remove_if_exists,
     run_parallel_commands,
     folder_config,
-    code_type_map
+    code_type_map,
+    get_random
 )
 
 from howard.functions.databases import (
@@ -5385,7 +5386,7 @@ class variants_annotation:
         added_columns = []
 
         # Add hgvs column in variants table
-        hgvs_column_name = "hgvs_" + str(random.randrange(1000000))
+        hgvs_column_name = "hgvs_" + str(get_random())
         added_column = self.add_column(
             table_variants, hgvs_column_name, "STRING", default_value=None
         )
@@ -5497,6 +5498,7 @@ class variants_annotation:
                 )
             WHERE "{hgvs_column_name}" NOT IN ('') AND "{hgvs_column_name}" NOT NULL
             """
+        log.debug(f"Update INFO column with HGVS: {sql_query_update}")
         self.execute_query(sql_query_update)
 
         # Add header

@@ -2628,7 +2628,7 @@ def concat_and_compress_files(
     output_file = full_path(output_file)
 
     # Tmp file
-    output_file_tmp = output_file + "." + str(random.randrange(1000000)) + ".tmp"
+    output_file_tmp = output_file + "." + str(get_random()) + ".tmp"
 
     # Compression type for first input file
     compression_type_input0 = get_compression_type(input_files[0])
@@ -5445,7 +5445,7 @@ def estimate_update_ratio_fast(con, dest_table, sources, join_keys, samples=1000
     log.debug(f"Estimating update ratio for {dest_table} with join keys: {join_cols}")
 
     # Create temporary table
-    sample_dest_temporary_name = "dest_sample_" + str(random.randrange(1000000))
+    sample_dest_temporary_name = "dest_sample_" + str(get_random())
     con.execute(
         f"""
         CREATE TEMP TABLE {sample_dest_temporary_name} AS
@@ -5474,7 +5474,7 @@ def estimate_update_ratio_fast(con, dest_table, sources, join_keys, samples=1000
         src_table = src["table"]
 
         # Sample source table (same sample size)
-        src_view_name = "src_sample_" + str(random.randrange(1000000))
+        src_view_name = "src_sample_" + str(get_random())
         log.debug(
             f"Created temporary view {src_view_name} for source table {src_table}"
         )

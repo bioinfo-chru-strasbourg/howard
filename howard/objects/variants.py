@@ -5468,7 +5468,7 @@ class Variants(
 
             # Create view
             annotation_view_name = "annotation_view_for_recreate_infos_" + str(
-                random.randrange(1000000)
+                get_random()
             )
 
             # Header

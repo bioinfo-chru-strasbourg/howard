@@ -20,6 +20,7 @@ from howard.functions.commons import (
     trio,
     vaf_normalization,
     code_type_map_to_vcf,
+    get_random,
 )
 
 
@@ -705,7 +706,7 @@ class variants_calculation:
                 )
 
                 # Create view
-                table_view_name = "calculation_view_" + str(random.randrange(1000000))
+                table_view_name = "calculation_view_" + str(get_random())
                 table_view_name = self.create_annotations_view(
                     table=operation_table_source,
                     view=table_view_name,
@@ -727,26 +728,42 @@ class variants_calculation:
 
                 # Create table with calculation
                 calculation_view_name = "calculation_view_" + str(
-                    random.randrange(1000000)
+                    get_random()
                 )
 
                 try:
+                    # # OLD Query
+                    # query_create_view = f"""
+                    #     CREATE TABLE {calculation_view_name} AS
+                    #     SELECT * FROM (
+                    #         SELECT {", ".join([f'"{k}"' for k in operation_table_key])},
+                    #             CASE
+                    #                 WHEN TRY_CAST(({operation_query}) AS VARCHAR) IS NOT NULL
+                    #                 THEN
+                    #                     concat(
+                    #                             '{output_column_name}=',
+                    #                             TRY_CAST(({operation_query}) AS VARCHAR)
+                    #                         )
+                    #                 ELSE NULL 
+                    #                 END AS INFO
+                    #         FROM {table_view_name} AS v
+                    #         )
+                    #     WHERE INFO IS NOT NULL
+                    # """
+                    # NEW Query
                     query_create_view = f"""
                         CREATE TABLE {calculation_view_name} AS
-                        SELECT * FROM (
-                            SELECT {", ".join([f'"{k}"' for k in operation_table_key])},
-                                CASE
-                                    WHEN TRY_CAST(({operation_query}) AS VARCHAR) IS NOT NULL
-                                    THEN
-                                        concat(
-                                                '{output_column_name}=',
-                                                TRY_CAST(({operation_query}) AS VARCHAR)
-                                            )
-                                    ELSE NULL 
-                                    END AS INFO
-                            FROM {table_view_name}
-                            )
-                        WHERE INFO IS NOT NULL
+                        WITH base AS (
+                            SELECT
+                                {", ".join([f'"{k}"' for k in operation_table_key])},
+                                TRY_CAST(({operation_query}) AS VARCHAR) AS operation_value
+                            FROM {table_view_name} v
+                        )
+                        SELECT
+                            {", ".join([f'"{k}"' for k in operation_table_key])},
+                            concat('{output_column_name}=', operation_value) AS INFO
+                        FROM base
+                        WHERE operation_value IS NOT NULL;
                     """
                     # log.debug(f"query_create_view={query_create_view}")
                     log.debug("Create calculation view...")
@@ -1516,7 +1533,7 @@ class variants_calculation:
 
         # Create annotation view
         annotations_view = "annotations_view_for_extract_nomen_" + str(
-            random.randrange(1000000)
+            get_random()
         )
         if transcripts_column is None:
             transcripts_column = "transcript"
@@ -1639,7 +1656,7 @@ class variants_calculation:
 
             # Construct transcripts pond table
             transcripts_pond_table = "transcripts_pond_" + str(
-                random.randrange(1000000)
+                get_random()
             )
             transcripts_pond_df = pd.DataFrame(
                 list(transcripts_pond.items()), columns=["transcript", "rank"]
@@ -1862,7 +1879,7 @@ class variants_calculation:
                 WHERE rn = 1
         """
         nomen_annotations_view = "annotations_vies_for_extract_nomen_" + str(
-            random.randrange(1000000)
+            get_random()
         )
         query_find_nomen_create = f"""
         CREATE TABLE {nomen_annotations_view} AS (

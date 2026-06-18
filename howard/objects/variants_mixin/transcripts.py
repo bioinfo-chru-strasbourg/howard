@@ -4,7 +4,7 @@ import string
 import os
 import vcf  # type: ignore
 
-from howard.functions.commons import (transcripts_file_to_df, clean_annotation_field, get_file_format, code_type_map, full_path)
+from howard.functions.commons import (transcripts_file_to_df, clean_annotation_field, get_file_format, code_type_map, full_path, get_random)
 
 class variants_transcripts:
 
@@ -1233,7 +1233,7 @@ class variants_transcripts:
 
         # Create view as table
         annotation_view_name = "annotation_view_for_transcripts_prioritization_" + str(
-            random.randrange(1000000)
+            get_random()
         )
         annotation_view_name = self.create_annotations_view(
             table=transcripts_table,
