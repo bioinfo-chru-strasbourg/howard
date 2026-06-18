@@ -7,7 +7,8 @@ import logging as log
 from howard.functions.commons import (
     full_path,
     code_type_map,
-    comparison_map
+    comparison_map,
+    get_random
 )
 
 
@@ -487,7 +488,7 @@ class variants_prioritization:
                         criterion_fields_profile = []
                         annotation_view_name = (
                             "annotation_view_for_prioritization_"
-                            + str(random.randrange(1000000))
+                            + str(get_random())
                         )
                         annotations_view_prefix = ""
                         annotations_view_struct = "INFOS"
