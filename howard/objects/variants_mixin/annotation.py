@@ -3477,6 +3477,12 @@ class variants_annotation:
 
                     for annotation_field in annotation_fields:
 
+                        # Check if field contains space
+                        if " " in annotation_field:
+                            msg_err = f"Annotation '{annotation}' - field '{annotation_field}' contains space (not valid)"
+                            log.error(msg_err)
+                            raise ValueError(msg_err)
+
                         # field new name, if parametered SKIPPED !!!!!! not managed actually TODO
                         annotation_fields_new_name = annotation_fields.get(
                             annotation_field, annotation_field
@@ -3561,11 +3567,6 @@ class variants_annotation:
                             annotation_argument += (
                                 f""" {" ".join(annotation_options.get("arguments",""))}"""
                             )
-
-                    # # argument option
-                    # argument_options = ""
-                    # if annotation_argument != "":
-                    #     argument_options = f" --argument '{annotation_argument.strip()}' "  # + annotation_argument
 
                     ### Options
                     annotation_parameters = ""
@@ -3798,6 +3799,20 @@ class variants_annotation:
                     err_files.append(tmp_annotate_vcf_name_err)
                     tmp_files.append(tmp_annotate_vcf_name_err)
 
+                    # Check if field in vcf header contains space, if yes, raise error (not valid)
+                    log.debug("Check if field in vcf header contains space...")
+                    for tmp_annotates_vcf_name in tmp_annotates_vcf_name_list:
+                        log.debug(f"Check vcf header in file: {tmp_annotates_vcf_name}")
+                        with bgzf.open(tmp_annotates_vcf_name, "rt") as f:
+                            header_list = self.read_vcf_header(f)
+                        annovar_vcf_header = vcf.Reader(io.StringIO("\n".join(header_list)))
+                        for ann in annovar_vcf_header.infos:
+                            if " " in ann:
+                                msg_err = f"Annotations Annovar - field '{ann}' contains space (not valid)"
+                                log.error(msg_err)
+                                raise ValueError(msg_err)
+                    log.debug("Check if field in vcf header contains space - done")
+
                     if len(tmp_annotates_vcf_name_list) > 1:
 
                         # List of annotated files
@@ -3812,7 +3827,7 @@ class variants_annotation:
                             + str(len(tmp_annotates_vcf_name_list))
                             + " annotated files"
                         )
-                        log.debug(f"Annotations - merge command: {merge_command}")
+                        log.debug(f"Annotations Annovar - merge command: {merge_command}")
                         run_parallel_commands([merge_command], 1)
 
                     else:
