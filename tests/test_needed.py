@@ -40,7 +40,7 @@ setup_cfg = f"{main_folder}/../setup.cfg"
 
 # Test config
 tests_config = {
-    "threads": 2,
+    "threads": 4,
     "memory": None,
     "folders": {
         "databases": {

@@ -1661,10 +1661,11 @@ JSON file](help.calculation.md) help).
 Examples:
 
 > Calculation with operations for generate variant_id and variant type,
-> extract HGVS from snpEff annotation, select NOMEN from snpEff HGVS
-> with a prioritized transcript (from prioritization transcript
-> calculation) and list of transcripts of preference, a list of NOMEN
-> fields, with two specific NOMEN patterns
+> extract HGVS from snpEff annotation, calculate number of samples and
+> list of samples for each variant, select NOMEN from snpEff HGVS with a
+> prioritized transcript (from prioritization transcript calculation)
+> and list of transcripts of preference, a list of NOMEN fields, with
+> two specific NOMEN patterns
 
 > ``` json
 > {
@@ -1672,6 +1673,12 @@ Examples:
 >      "variant_id": null,
 >      "vartype": null,
 >      "snpeff_hgvs": null,
+>      "find_samples": {
+>        "tags": {
+>          "count_samples": "count",
+>          "list_samples": "list"
+>        }
+>      },
 >      "NOMEN": {
 >        "options": {
 >          "hgvs_field": "snpeff_hgvs",

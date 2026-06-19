@@ -1139,7 +1139,7 @@ Usage examples:
 >     as a list of operations (e.g. 'VARTYPE,variant_id').
 >     List of available calculations by default
 >      (unsensitive case, see doc for more information):
->      VARTYPE  snpeff_hgvs  FINDBYPIPELINE  GENOTYPECONCORDANCE  BARCODE  TRIO  VAF  VAF_STATS  DP_STATS
+>      VARTYPE  snpeff_hgvs  FIND_SAMPLES  GENOTYPECONCORDANCE  BARCODE  TRIO  VAF  VAF_STATS  DP_STATS
 
 </small>
 
@@ -1445,7 +1445,7 @@ Usage examples:
 >     as a list of operations (e.g. 'VARTYPE,variant_id').
 >     List of available calculations by default
 >      (unsensitive case, see doc for more information):
->      VARTYPE  snpeff_hgvs  FINDBYPIPELINE  GENOTYPECONCORDANCE  BARCODE  TRIO  VAF  VAF_STATS  DP_STATS
+>      VARTYPE  snpeff_hgvs  FIND_SAMPLES  GENOTYPECONCORDANCE  BARCODE  TRIO  VAF  VAF_STATS  DP_STATS
 
 </small>
 

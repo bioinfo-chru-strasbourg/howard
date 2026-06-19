@@ -14,23 +14,35 @@ BARCODEFAMILY as VaRank tool
 
 BARCODEFAMILY as VaRank tool. This calculation generates a BARCODE for each family based on sample genotype (0 for reference, 1 for heterozygous, 2 for homozygous alternate) and family relationships.
 
+## COUNT_SAMPLES
+
+Number of sample that have a genotype for the variant (for multi sample VCF)
+
+Number of sample that have a genotype for the variant (for multi sample VCF). This calculation counts the number of samples (fixed 'count_samples' field) that have a genotype for a given variant in a multi-sample VCF file. It helps in assessing the presence of the variant across different samples.
+
 ## DP_STATS
 
 Depth (DP) statistics
 
 Depth (DP) statistics. This calculation provides statistical measures for the sequencing depth (DP) across different samples. It helps in understanding the coverage and reliability of variant calls.
 
-## FINDBYPIPELINE
-
-Number of pipeline that identify the variant (for multi pipeline VCF)
-
-Number of pipeline that identify the variant (for multi pipeline VCF). This calculation counts the number of pipelines that identify a given variant in a multi-pipeline VCF file. It helps in assessing the confidence of variant calls by determining how many different pipelines support the presence of the variant.
-
-## FINDBYSAMPLE
+## FIND_SAMPLES
 
 Number of sample that have a genotype for the variant (for multi sample VCF)
 
-Number of sample that have a genotype for the variant (for multi sample VCF). This calculation counts the number of samples that have a genotype for a given variant in a multi-sample VCF file. It helps in assessing the presence of the variant across different samples.
+This calculation counts the number of samples that have a genotype for a given variant in a multi-sample VCF file. It helps in assessing the presence of the variant across different samples.
+
+Options for this calculation can be specified in the JSON parameter file, directly in the calculation parameters (see help.parameters.md). The parameter 'tags' allows for the specification of the INFO tags to be created, with the key being the tag name and the value being either 'count' or 'list' to indicate whether to count the samples or list them. For example, to create an INFO tag 'count_samples' that counts the number of samples and an INFO tag 'list_samples' that lists the samples, you can specify:
+
+```json
+{ "tags": {"count_samples": "count", "list_samples": "list"} }
+```
+
+Otherwise, change the default tags in the parameter file, like in this example:
+
+```json
+{ "tags": {"count_samples_for_variants": "count", "list_samples_for_variants": "list", "another_list_samples_tag": "list"} }
+```
 
 ## GENOTYPECONCORDANCE
 
@@ -38,17 +50,11 @@ Concordance of genotype for multi caller VCF
 
 Concordance of genotype for multi caller VCF. This calculation assesses the concordance of genotypes for a given variant across multiple callers in a multi-caller VCF file. It helps in evaluating the consistency of genotype calls and can be used to identify variants with high confidence based on agreement among different callers.
 
-## LISTBYPIPELINE
-
-List of pipelines that identify the variant (for multi pipeline VCF)
-
-List of pipelines that identify the variant (for multi pipeline VCF). This calculation provides a list of pipelines that identify a given variant in a multi-pipeline VCF file. It helps in understanding which pipelines support the presence of the variant.
-
-## LISTBYSAMPLE
+## LIST_SAMPLES
 
 List of samples that have a genotype for the variant (for multi sample VCF)
 
-List of samples that have a genotype for the variant (for multi sample VCF). This calculation provides a list of samples that have a genotype for a given variant in a multi-sample VCF file. It helps in understanding which samples support the presence of the variant.
+List of samples that have a genotype for the variant (for multi sample VCF). This calculation provides a list of samples (fixed 'list_samples' field) that have a genotype for a given variant in a multi-sample VCF file. It helps in understanding which samples support the presence of the variant.
 
 ## MERGED_HGVS
 
@@ -82,7 +88,9 @@ Rename or remove INFO/tags. This calculation allows for the renaming of existing
 
 This example will rename INFO field 'ENOMEN' to 'exon' and remove INFO fields 'SPiP', 'SPiP_Alt' and 'SPiP_distSS' from the 'variants' table:
 
+```json
 {"fields_to_rename": {"ENOMEN": "exon", "SPiP": null, "SPiP_Alt": null, "SPiP_distSS": null }, "table": "variants"}
+```
 
 ## SNPEFF_ANN_EXPLODE
 
@@ -154,7 +162,18 @@ Prioritize transcripts with a prioritization profile, ensuring that all needed a
 
 Inheritance for a trio family
 
-Inheritance for a trio family. This calculation assesses the inheritance pattern of a variant within a trio family (father, mother, and child). It helps in understanding the transmission of genetic variants and identifying potential de novo mutations.
+Inheritance for a trio family. This calculation assesses the inheritance pattern of a variant within a trio family pedigree (father, mother, and child). It helps in understanding the transmission of genetic variants and identifying potential de novo mutations.
+Options for this calculation can be specified in the JSON parameter file, directly in the calculation parameters (see help.parameters.md). The parameter 'trio_samples' allows for the specification of the sample names for father, mother, and child:
+
+```json
+{"father": "sample_father", "mother": "sample_mother", "child": "sample_child"}
+```
+This parameter can also be specified in a JSON file (containing the trio sample names):
+
+```bash
+ "/path/to/trio_samples.json" 
+```
+If no pedigree information is provided, the calculation will use the first 3 samples in the VCF file.
 
 ## VAF
 
@@ -177,6 +196,24 @@ This calculation generates a variant ID with chromosome, position, alt and ref, 
 ## VARIANT_ID
 
 Variant ID generated from variant position and type
+
+Variant ID generated from variant position and variation (ref and alt) and type (SVTYPE). This calculation creates a unique identifier for each variant, facilitating variant tracking and comparison across datasets.
+Options for this calculation can be specified in the JSON parameter file, directly in the calculation parameters (see help.parameters.md). The parameter 'variant_id_tag' allows for the specification of the INFO tag to be used for the variant ID. By default, it uses 'variant_id', but it can be changed to any other INFO tag name as needed. For example, to use 'varid' as the INFO tag for the variant ID, you can specify:
+
+```json
+{ "variant_id_tag": "varid" }
+```
+Other options as 'variant_id_tag_info' allows for the specification of the description in the VCF header, and 'keep_variant_id_tag_column' allows for keeping the variant ID tag column in the 'variants' table for further analysis.
+
+As an axample of the JSON parameter file, you can specify:
+
+```json
+{ "variant_id_tag": "varid", "variant_id_tag_info": "Variant ID generated from variant position and type", "keep_variant_id_tag_column": true }
+```
+
+## VARIANT_ID_VARID
+
+Variant ID generated from variant position and type, using 'varid' as INFO tag
 
 Variant ID generated from variant position and variation (ref and alt) and type (SVTYPE). This calculation creates a unique identifier for each variant, facilitating variant tracking and comparison across datasets.
 

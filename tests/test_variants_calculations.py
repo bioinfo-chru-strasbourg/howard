@@ -1377,75 +1377,9 @@ def test_calculation_nomen_snpeff_hgvs_notranscripts():
     assert str(e.value) == f"Transcript file '{transcripts_file}' does NOT exist"
 
 
-def test_calculation_find_and_list_bypipeline():
+def test_calculation_find_samples():
     """
-    This is a test function for the "FINDBYPIPELINE" calculation in the Variants class, which checks if
-    the calculation is performed correctly and the output VCF file is in the correct format.
-    """
-
-    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
-
-        # Init files
-        input_vcf = tests_data_folder + "/example.full.vcf.gz"
-        output_vcf = f"{tmp_dir}/output.vcf.gz"
-
-        # Construct param dict
-        param = {
-            "calculation": {
-                "calculations": {"FINDBYPIPELINE": None, "LISTBYPIPELINE": None}
-            }
-        }
-
-        # Create object
-        variants = Variants(
-            conn=None, input=input_vcf, output=output_vcf, param=param, load=True
-        )
-
-        # Calculation
-        variants.calculation()
-
-        result = variants.get_query_to_df(
-            """ SELECT INFO FROM variants WHERE INFO LIKE '%findbypipeline%' """
-        )
-        assert len(result) == 42
-
-        result = variants.get_query_to_df(
-            """ SELECT INFO FROM variants WHERE INFO LIKE '%listbypipeline%' """
-        )
-        assert len(result) == 42
-
-        result = variants.get_query_to_df(
-            """ SELECT * FROM variants WHERE INFO LIKE '%findbypipeline=4/4%' """
-        )
-        assert len(result) == 7
-
-        result = variants.get_query_to_df(
-            """ SELECT * FROM variants WHERE INFO LIKE '%listbypipeline=sample1,sample2,sample3,sample4%' """
-        )
-        assert len(result) == 7
-
-        result = variants.get_query_to_df(
-            """ SELECT * FROM variants WHERE INFO LIKE '%findbypipeline=3/4%' """
-        )
-        assert len(result) == 7
-
-        result = variants.get_query_to_df(
-            """ SELECT * FROM variants WHERE INFO LIKE '%findbypipeline=1/4;listbypipeline=sample1' """
-        )
-        assert len(result) == 1
-
-        # Check if VCF is in correct format with pyVCF
-        remove_if_exists([output_vcf])
-        variants.export_output()
-        try:
-            vcf.Reader(filename=output_vcf)
-        except:
-            assert False
-
-
-def test_calculation_listbypipeline():
-    """
-    This is a test function for the "LISTBYPIPELINE" calculation in the Variants class, which checks if
+    This is a test function for the "FIND_SAMPLES" calculation in the Variants class, which checks if
     the calculation is performed correctly and the output VCF file is in the correct format.
     """
 
@@ -1456,7 +1390,7 @@ def test_calculation_listbypipeline():
         output_vcf = f"{tmp_dir}/output.vcf.gz"
 
         # Construct param dict
-        param = {"calculation": {"calculations": {"LISTBYPIPELINE": None}}}
+        param = {"calculation": {"calculations": {"FIND_SAMPLES": None}}}
 
         # Create object
         variants = Variants(
@@ -1467,69 +1401,17 @@ def test_calculation_listbypipeline():
         variants.calculation()
 
         result = variants.get_query_to_df(
-            """ SELECT INFO FROM variants WHERE INFO LIKE '%listbypipeline%' """
+            """ SELECT INFO FROM variants WHERE INFO LIKE '%count_samples%' AND INFO LIKE '%list_samples%' """
         )
         assert len(result) == 7
 
         result = variants.get_query_to_df(
-            """ SELECT * FROM variants WHERE INFO LIKE '%listbypipeline=sample1,sample2,sample3,sample4%' """
+            """ SELECT * FROM variants WHERE INFO LIKE '%count_samples=4/4%'  """
         )
         assert len(result) == 1
 
         result = variants.get_query_to_df(
-            """ SELECT * FROM variants WHERE INFO LIKE '%listbypipeline=sample1,sample2,sample3%' """
-        )
-        assert len(result) == 1
-
-        result = variants.get_query_to_df(
-            """ SELECT * FROM variants WHERE INFO LIKE '%listbypipeline=sample1' """
-        )
-        assert len(result) == 0
-
-        # Check if VCF is in correct format with pyVCF
-        remove_if_exists([output_vcf])
-        variants.export_output()
-        try:
-            vcf.Reader(filename=output_vcf)
-        except:
-            assert False
-
-
-def test_calculation_findbypipeline():
-    """
-    This is a test function for the "FINDBYPIPELINE" calculation in the Variants class, which checks if
-    the calculation is performed correctly and the output VCF file is in the correct format.
-    """
-
-    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
-
-        # Init files
-        input_vcf = tests_data_folder + "/example.vcf.gz"
-        output_vcf = f"{tmp_dir}/output.vcf.gz"
-
-        # Construct param dict
-        param = {"calculation": {"calculations": {"FINDBYPIPELINE": None}}}
-
-        # Create object
-        variants = Variants(
-            conn=None, input=input_vcf, output=output_vcf, param=param, load=True
-        )
-
-        # Calculation
-        variants.calculation()
-
-        result = variants.get_query_to_df(
-            """ SELECT INFO FROM variants WHERE INFO LIKE '%findbypipeline%' """
-        )
-        assert len(result) == 7
-
-        result = variants.get_query_to_df(
-            """ SELECT * FROM variants WHERE INFO LIKE '%findbypipeline=4/4%' """
-        )
-        assert len(result) == 1
-
-        result = variants.get_query_to_df(
-            """ SELECT * FROM variants WHERE INFO LIKE '%findbypipeline=3/4%' """
+            """ SELECT * FROM variants WHERE INFO LIKE '%count_samples=3/4%' """
         )
         assert len(result) == 6
 
@@ -1542,9 +1424,9 @@ def test_calculation_findbypipeline():
             assert False
 
 
-def test_calculation_findbysample():
+def test_calculation_find_samples_options_in_calculation():
     """
-    This is a test function for the "FINDBYSAMPLE" calculation in the Variants class, which checks if
+    This is a test function for the "FIND_SAMPLES" calculation in the Variants class, which checks if
     the calculation is performed correctly and the output VCF file is in the correct format.
     """
 
@@ -1555,7 +1437,7 @@ def test_calculation_findbysample():
         output_vcf = f"{tmp_dir}/output.vcf.gz"
 
         # Construct param dict
-        param = {"calculation": {"calculations": {"FINDBYSAMPLE": None}}}
+        param = {"calculation": {"calculations": {"FIND_SAMPLES": {"tags": {"count_samples_for_variant": "count", "list_samples_for_variant": "list"}}}}}
 
         # Create object
         variants = Variants(
@@ -1566,19 +1448,272 @@ def test_calculation_findbysample():
         variants.calculation()
 
         result = variants.get_query_to_df(
-            """ SELECT INFO FROM variants WHERE INFO LIKE '%findbysample%' """
+            """ SELECT INFO FROM variants WHERE INFO LIKE '%count_samples_for_variant%' AND INFO LIKE '%list_samples_for_variant%' """
         )
         assert len(result) == 7
 
         result = variants.get_query_to_df(
-            """ SELECT * FROM variants WHERE INFO LIKE '%findbysample=4/4%' """
+            """ SELECT * FROM variants WHERE INFO LIKE '%count_samples_for_variant=4/4%' """
         )
         assert len(result) == 1
 
         result = variants.get_query_to_df(
-            """ SELECT * FROM variants WHERE INFO LIKE '%findbysample=3/4%' """
+            """ SELECT * FROM variants WHERE INFO LIKE '%count_samples_for_variant=3/4%' """
         )
         assert len(result) == 6
+
+        # Check if VCF is in correct format with pyVCF
+        remove_if_exists([output_vcf])
+        variants.export_output()
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
+
+
+def test_calculation_find_samples_options_in_calculation_only_count_samples():
+    """
+    This is a test function for the "FIND_SAMPLES" calculation in the Variants class, which checks if
+    the calculation is performed correctly and the output VCF file is in the correct format.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.vcf.gz"
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+
+        # Construct param dict
+        param = {"calculation": {"calculations": {"FIND_SAMPLES": {"tags": {"count_samples_for_variant": "count"}}}}}
+
+        # Create object
+        variants = Variants(
+            conn=None, input=input_vcf, output=output_vcf, param=param, load=True
+        )
+
+        # Calculation
+        variants.calculation()
+
+        result = variants.get_query_to_df(
+            """ SELECT INFO FROM variants WHERE INFO LIKE '%count_samples_for_variant%' AND INFO NOT LIKE '%list_samples_for_variant%' """
+        )
+        assert len(result) == 7
+
+        result = variants.get_query_to_df(
+            """ SELECT * FROM variants WHERE INFO LIKE '%count_samples_for_variant=4/4%' """
+        )
+        assert len(result) == 1
+
+        result = variants.get_query_to_df(
+            """ SELECT * FROM variants WHERE INFO LIKE '%count_samples_for_variant=3/4%' """
+        )
+        assert len(result) == 6
+
+        # Check if VCF is in correct format with pyVCF
+        remove_if_exists([output_vcf])
+        variants.export_output()
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
+
+
+def test_calculation_find_samples_options_in_calculation_only_list_samples():
+    """
+    This is a test function for the "FIND_SAMPLES" calculation in the Variants class, which checks if
+    the calculation is performed correctly and the output VCF file is in the correct format.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.vcf.gz"
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+
+        # Construct param dict
+        param = {"calculation": {"calculations": {"FIND_SAMPLES": {"tags": {"list_samples_for_variant": "list"}}}}}
+
+        # Create object
+        variants = Variants(
+            conn=None, input=input_vcf, output=output_vcf, param=param, load=True
+        )
+
+        # Calculation
+        variants.calculation()
+
+        result = variants.get_query_to_df(
+            """ SELECT INFO FROM variants WHERE INFO NOT LIKE '%count_samples%' AND INFO LIKE '%list_samples_for_variant%' """
+        )
+        assert len(result) == 7
+
+        # Check if VCF is in correct format with pyVCF
+        remove_if_exists([output_vcf])
+        variants.export_output()
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
+
+
+def test_calculation_find_samples_options_in_calculation_two_list_samples():
+    """
+    This is a test function for the "FIND_SAMPLES" calculation in the Variants class, which checks if
+    the calculation is performed correctly and the output VCF file is in the correct format.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.vcf.gz"
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+
+        # Construct param dict
+        param = {"calculation": {"calculations": {"FIND_SAMPLES": {"tags": {"list_samples_for_variant": "list", "list_samples_for_variant_bis": "list"}}}}}
+
+        # Create object
+        variants = Variants(
+            conn=None, input=input_vcf, output=output_vcf, param=param, load=True
+        )
+
+        # Calculation
+        variants.calculation()
+
+        result = variants.get_query_to_df(
+            """ SELECT INFO FROM variants WHERE INFO NOT LIKE '%count_samples%' AND INFO LIKE '%list_samples_for_variant%' AND INFO LIKE '%list_samples_for_variant_bis%' """
+        )
+        assert len(result) == 7
+
+        # Check if VCF is in correct format with pyVCF
+        remove_if_exists([output_vcf])
+        variants.export_output()
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
+
+
+
+def test_calculation_find_samples_count_samples():
+    """
+    This is a test function for the "FIND_SAMPLES" calculation in the Variants class, which checks if
+    the calculation is performed correctly and the output VCF file is in the correct format.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.vcf.gz"
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+
+        # Construct param dict
+        param = {"calculation": {"calculations": {"COUNT_SAMPLES": None}}}
+
+        # Create object
+        variants = Variants(
+            conn=None, input=input_vcf, output=output_vcf, param=param, load=True
+        )
+
+        # Calculation
+        variants.calculation()
+
+        result = variants.get_query_to_df(
+            """ SELECT INFO FROM variants WHERE INFO LIKE '%count_samples%' AND INFO NOT LIKE '%list_samples%' """
+        )
+        assert len(result) == 7
+
+        result = variants.get_query_to_df(
+            """ SELECT * FROM variants WHERE INFO LIKE '%count_samples=4/4%'  """
+        )
+        assert len(result) == 1
+
+        result = variants.get_query_to_df(
+            """ SELECT * FROM variants WHERE INFO LIKE '%count_samples=3/4%' """
+        )
+        assert len(result) == 6
+
+        # Check if VCF is in correct format with pyVCF
+        remove_if_exists([output_vcf])
+        variants.export_output()
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
+
+
+def test_calculation_find_samples_count_samples_options_in_calculation():
+    """
+    This is a test function for the "FIND_SAMPLES" calculation in the Variants class, which checks if
+    the calculation is performed correctly and the output VCF file is in the correct format.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.vcf.gz"
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+
+        # Construct param dict
+        param = {"calculation": {"calculations": {"COUNT_SAMPLES": {"tags": {"count_samples_for_variant": "count"}}}}}
+
+        # Create object
+        variants = Variants(
+            conn=None, input=input_vcf, output=output_vcf, param=param, load=True
+        )
+
+        # Calculation
+        variants.calculation()
+
+        result = variants.get_query_to_df(
+            """ SELECT INFO FROM variants WHERE INFO LIKE '%count_samples%' AND INFO NOT LIKE '%list_samples%' """
+        )
+        assert len(result) == 7
+
+        result = variants.get_query_to_df(
+            """ SELECT * FROM variants WHERE INFO LIKE '%count_samples=4/4%'  """
+        )
+        assert len(result) == 1
+
+        result = variants.get_query_to_df(
+            """ SELECT * FROM variants WHERE INFO LIKE '%count_samples=3/4%' """
+        )
+        assert len(result) == 6
+
+        # Check if VCF is in correct format with pyVCF
+        remove_if_exists([output_vcf])
+        variants.export_output()
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
+
+
+def test_calculation_find_samples_list_samples():
+    """
+    This is a test function for the "FIND_SAMPLES" calculation in the Variants class, which checks if
+    the calculation is performed correctly and the output VCF file is in the correct format.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.vcf.gz"
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+
+        # Construct param dict
+        param = {"calculation": {"calculations": {"LIST_SAMPLES": None}}}
+
+        # Create object
+        variants = Variants(
+            conn=None, input=input_vcf, output=output_vcf, param=param, load=True
+        )
+
+        # Calculation
+        variants.calculation()
+
+        result = variants.get_query_to_df(
+            """ SELECT INFO FROM variants WHERE INFO NOT LIKE '%count_samples%' AND INFO LIKE '%list_samples%' """
+        )
+        assert len(result) == 7
 
         # Check if VCF is in correct format with pyVCF
         remove_if_exists([output_vcf])

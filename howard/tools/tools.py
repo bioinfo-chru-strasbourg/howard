@@ -501,7 +501,7 @@ arguments = {
         """ (unsensitive case, see doc for more information):\n"""
         """ VARTYPE """
         """ snpeff_hgvs """
-        """ FINDBYPIPELINE """
+        """ FIND_SAMPLES """
         """ GENOTYPECONCORDANCE """
         """ BARCODE """
         """ TRIO """

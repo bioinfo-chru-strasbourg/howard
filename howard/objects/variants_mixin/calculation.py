@@ -193,47 +193,51 @@ class variants_calculation:
                     "",
                     "This example will rename INFO field 'ENOMEN' to 'exon' and remove INFO fields 'SPiP', 'SPiP_Alt' and 'SPiP_distSS' from the 'variants' table:",
                     "",
+                    "```json",
                     """{"fields_to_rename": {"ENOMEN": "exon", "SPiP": null, "SPiP_Alt": null, "SPiP_distSS": null }, "table": "variants"}""",
+                    "```",
                 ],
                 "available": True,
                 "function_name": "calculation_rename_info_fields",
                 "function_params": [],
             },
-            "FINDBYPIPELINE": {
+            "FIND_SAMPLES": {
                 "type": "python",
-                "name": "FINDBYPIPELINE",
-                "description": "Number of pipeline that identify the variant (for multi pipeline VCF)",
-                "comment": "Number of pipeline that identify the variant (for multi pipeline VCF). This calculation counts the number of pipelines that identify a given variant in a multi-pipeline VCF file. It helps in assessing the confidence of variant calls by determining how many different pipelines support the presence of the variant.",
-                "available": True,
-                "function_name": "calculation_find_by_pipeline",
-                "function_params": ["findbypipeline", "count"],
-            },
-            "LISTBYPIPELINE": {
-                "type": "python",
-                "name": "LISTBYPIPELINE",
-                "description": "List of pipelines that identify the variant (for multi pipeline VCF)",
-                "comment": "List of pipelines that identify the variant (for multi pipeline VCF). This calculation provides a list of pipelines that identify a given variant in a multi-pipeline VCF file. It helps in understanding which pipelines support the presence of the variant.",
-                "available": True,
-                "function_name": "calculation_find_by_pipeline",
-                "function_params": ["listbypipeline", "list"],
-            },
-            "FINDBYSAMPLE": {
-                "type": "python",
-                "name": "FINDBYSAMPLE",
+                "name": "FIND_SAMPLES",
                 "description": "Number of sample that have a genotype for the variant (for multi sample VCF)",
-                "comment": "Number of sample that have a genotype for the variant (for multi sample VCF). This calculation counts the number of samples that have a genotype for a given variant in a multi-sample VCF file. It helps in assessing the presence of the variant across different samples.",
+                "comment": [
+                    "This calculation counts the number of samples that have a genotype for a given variant in a multi-sample VCF file. It helps in assessing the presence of the variant across different samples.\n",
+                    "Options for this calculation can be specified in the JSON parameter file, directly in the calculation parameters (see help.parameters.md). The parameter 'tags' allows for the specification of the INFO tags to be created, with the key being the tag name and the value being either 'count' or 'list' to indicate whether to count the samples or list them. For example, to create an INFO tag 'count_samples' that counts the number of samples and an INFO tag 'list_samples' that lists the samples, you can specify:\n",
+                    "```json",
+                    """{ "tags": {"count_samples": "count", "list_samples": "list"} }""",
+                    "```\n",
+                    "Otherwise, change the default tags in the parameter file, like in this example:\n", 
+                    "```json",
+                    """{ "tags": {"count_samples_for_variants": "count", "list_samples_for_variants": "list", "another_list_samples_tag": "list"} }""",
+                    "```",
+                ],
                 "available": True,
-                "function_name": "calculation_find_by_pipeline",
-                "function_params": ["findbysample", "count"],
+                "function_name": "calculation_find_samples",
+                "function_params": {},
             },
-            "LISTBYSAMPLE": {
+            
+            "COUNT_SAMPLES": {
                 "type": "python",
-                "name": "LISTBYSAMPLE",
-                "description": "List of samples that have a genotype for the variant (for multi sample VCF)",
-                "comment": "List of samples that have a genotype for the variant (for multi sample VCF). This calculation provides a list of samples that have a genotype for a given variant in a multi-sample VCF file. It helps in understanding which samples support the presence of the variant.",
+                "name": "COUNT_SAMPLES",
+                "description": "Number of sample that have a genotype for the variant (for multi sample VCF)",
+                "comment": "Number of sample that have a genotype for the variant (for multi sample VCF). This calculation counts the number of samples (fixed 'count_samples' field) that have a genotype for a given variant in a multi-sample VCF file. It helps in assessing the presence of the variant across different samples.",
                 "available": True,
-                "function_name": "calculation_find_by_pipeline",
-                "function_params": ["listbysample", "list"],
+                "function_name": "calculation_find_samples",
+                "function_params": {"tags": {"count_samples": "count"}},
+            },
+            "LIST_SAMPLES": {
+                "type": "python",
+                "name": "LIST_SAMPLES",
+                "description": "List of samples that have a genotype for the variant (for multi sample VCF)",
+                "comment": "List of samples that have a genotype for the variant (for multi sample VCF). This calculation provides a list of samples (fixed 'list_samples' field) that have a genotype for a given variant in a multi-sample VCF file. It helps in understanding which samples support the presence of the variant.",
+                "available": True,
+                "function_name": "calculation_find_samples",
+                "function_params": {"tags": {"list_samples": "list"}},
             },
             "GENOTYPECONCORDANCE": {
                 "type": "python",
@@ -268,7 +272,18 @@ class variants_calculation:
                 "type": "python",
                 "name": "TRIO",
                 "description": "Inheritance for a trio family",
-                "comment": "Inheritance for a trio family. This calculation assesses the inheritance pattern of a variant within a trio family (father, mother, and child). It helps in understanding the transmission of genetic variants and identifying potential de novo mutations.",
+                "comment": [
+                    "Inheritance for a trio family. This calculation assesses the inheritance pattern of a variant within a trio family pedigree (father, mother, and child). It helps in understanding the transmission of genetic variants and identifying potential de novo mutations.",
+                    "Options for this calculation can be specified in the JSON parameter file, directly in the calculation parameters (see help.parameters.md). The parameter 'trio_samples' allows for the specification of the sample names for father, mother, and child:\n",
+                    "```json",
+                    """{"father": "sample_father", "mother": "sample_mother", "child": "sample_child"}""",
+                    "```",
+                    "This parameter can also be specified in a JSON file (containing the trio sample names):\n",
+                    "```bash",
+                    """ "/path/to/trio_samples.json" """,
+                    "```",
+                    "If no pedigree information is provided, the calculation will use the first 3 samples in the VCF file."
+                ],
                 "available": True,
                 "function_name": "calculation_trio",
                 "function_params": [],
@@ -304,7 +319,18 @@ class variants_calculation:
                 "type": "python",
                 "name": "variant_id",
                 "description": "Variant ID generated from variant position and type",
-                "comment": "Variant ID generated from variant position and variation (ref and alt) and type (SVTYPE). This calculation creates a unique identifier for each variant, facilitating variant tracking and comparison across datasets.",
+                "comment": [
+                    "Variant ID generated from variant position and variation (ref and alt) and type (SVTYPE). This calculation creates a unique identifier for each variant, facilitating variant tracking and comparison across datasets.",
+                    "Options for this calculation can be specified in the JSON parameter file, directly in the calculation parameters (see help.parameters.md). The parameter 'variant_id_tag' allows for the specification of the INFO tag to be used for the variant ID. By default, it uses 'variant_id', but it can be changed to any other INFO tag name as needed. For example, to use 'varid' as the INFO tag for the variant ID, you can specify:\n",
+                    "```json",
+                    """{ "variant_id_tag": "varid" }""",
+                    "```",
+                    "Other options as 'variant_id_tag_info' allows for the specification of the description in the VCF header, and 'keep_variant_id_tag_column' allows for keeping the variant ID tag column in the 'variants' table for further analysis.\n",
+                    "As an axample of the JSON parameter file, you can specify:\n",
+                    "```json",
+                    """{ "variant_id_tag": "varid", "variant_id_tag_info": "Variant ID generated from variant position and type", "keep_variant_id_tag_column": true }""",
+                    "```",
+                ],
                 "available": True,
                 "function_name": "calculation_variant_id",
                 "function_params": {},
@@ -533,9 +559,13 @@ class variants_calculation:
             log.info(f"Calculations...")
 
         # Count number of variants
-        nb_variants = self.get_query_to_df(
-            f"SELECT count(1) AS count FROM (SELECT 1 FROM {self.get_table_variants()} LIMIT 1)"
-        )["count"].tolist()[0]
+        try:
+            nb_variants = self.get_query_to_df(
+                f"SELECT count(1) AS count FROM (SELECT 1 FROM {self.get_table_variants()} LIMIT 1)"
+            )["count"].tolist()[0]
+        except Exception as e:
+            log.debug(f"Error counting variants: {e}")
+            return None
 
         # Init
         # To store operation params for each dest table for update merge
@@ -1959,116 +1989,137 @@ class variants_calculation:
         # Remove tables and view
         self.remove_tables_or_views(tables=[annotations_view, nomen_annotations_view])
 
-    def calculation_find_by_pipeline(
-        self, tag: str = "findbypipeline", method: str = "count"
+    def calculation_find_samples(
+        self, tags: dict = None, **kwargs
     ) -> None:
         """
-        The function `calculation_find_by_pipeline` performs a calculation to find the number of
-        pipeline/sample for a variant and updates the variant information in a VCF file. It checks if the VCF file contains the "FORMAT" column and sample information, then it creates a new annotation field in the VCF header for the "findbypipeline" information. The function retrieves the variant information from the variants table, applies a calculation to determine the number of pipelines/samples for each variant, and updates the "INFO" field in the variants table with this information. Finally, it cleans up any temporary columns and dataframes used during the calculation.
+        The function `calculation_find_samples` performs a calculation to find samples in a VCF file and update the variant information in the database.
+        It calculates the number of samples and the list of samples for each variant, and updates the corresponding fields in the variants table.
 
-        :param tag: The `tag` parameter is a string that represents the annotation field for the
-        "findbypipeline" information in the VCF file. It is used to create the annotation field in the
-        VCF header and to update the corresponding field in the variants table, defaults to
-        findbypipeline
-        :type tag: str (optional)
-        :param method: The `method` parameter is a string that specifies the method to be used for
-        calculating the "findbypipeline" information. It determines how the number of pipelines/samples for a variant will be counted. The default value is "count", which means that the function will count the number of pipelines/samples for each variant. Other possible values for this parameter could be "list", which would mean that the function will create a list of pipelines/samples for each variant instead of counting them. The specific implementation of the "findbypipeline" calculation will depend on the chosen method and how the data is structured in the variants table and the VCF file.
-        :type method: str (optional)
+        :param tags: The `tags` parameter is a dictionary that represents the annotation fields in the VCF file.
+        It is used to create the annotation fields in the VCF header and to update the corresponding fields in the variants table, defaults to
+        {"count_samples": "count", "list_samples": "list"}
+        :type tags: dict (optional)
+
+        :param kwargs: The `kwargs` parameter is a dictionary that allows you to pass additional
+
         """
 
-        # if FORMAT and samples
-        if (
-            "FORMAT" in self.get_header_columns_as_list()
-            and self.get_header_sample_list()
-        ):
+        log.debug(f"Start find samples calculation...")
 
-            # findbypipeline annotation field
-            findbypipeline_tag = tag
+        # Get operation parameters
+        operation_params, _ = self.get_operation_params(
+            operation_params=kwargs, operation_name="find_samples"
+        )
 
-            # VCF infos tags
-            vcf_infos_tags = {
-                findbypipeline_tag: f"Samples of a variant ({method})",
-            }
+        ### Parameters for find samples calculation
 
-            # Prefix
-            prefix = self.get_explode_infos_prefix()
-
-            # Field
-            findbypipeline_infos = prefix + findbypipeline_tag
-
-            # Variants table
-            table_variants = self.get_table_variants()
-
-            # Header
-            vcf_reader = self.get_header()
-
-            # Create variant id
-            variant_id_column = self.get_variant_id_column()
-            added_columns = [variant_id_column]
-
-            # variant_id, FORMAT and samples
-            samples_fields = f" {variant_id_column}, FORMAT , " + " , ".join(
-                [f""" "{sample}" """ for sample in self.get_header_sample_list()]
+        # find samples tags config
+        if tags is None or tags == {}:
+            tags = (
+                operation_params.get("tags", None)
+                or {"count_samples": "count", "list_samples": "list"}
             )
 
-            # Create dataframe
-            dataframe_findbypipeline = self.get_query_to_df(
-                f""" SELECT {samples_fields} FROM {table_variants} """
-            )
+        # Process each tag in the find_samples_tags_config
+        for tag in tags:
 
-            # Create findbypipeline column
-            dataframe_findbypipeline[findbypipeline_infos] = (
-                dataframe_findbypipeline.apply(
-                    lambda row: findbypipeline(
-                        row, samples=self.get_header_sample_list(), method=method
-                    ),
-                    axis=1,
+            # Method
+            method = tags.get(tag, "count")
+
+            # if FORMAT and samples
+            if (
+                "FORMAT" in self.get_header_columns_as_list()
+                and self.get_header_sample_list()
+            ):
+
+                # findbypipeline annotation field
+                findbypipeline_tag = tag
+
+                # VCF infos tags
+                vcf_infos_tags = {
+                    findbypipeline_tag: f"Samples of a variant ({method})",
+                }
+
+                # Prefix
+                prefix = self.get_explode_infos_prefix()
+
+                # Field
+                findbypipeline_infos = prefix + findbypipeline_tag
+
+                # Variants table
+                table_variants = self.get_table_variants()
+
+                # Header
+                vcf_reader = self.get_header()
+
+                # Create variant id
+                variant_id_column = self.get_variant_id_column()
+                added_columns = [variant_id_column]
+
+                # variant_id, FORMAT and samples
+                samples_fields = f" {variant_id_column}, FORMAT , " + " , ".join(
+                    [f""" "{sample}" """ for sample in self.get_header_sample_list()]
                 )
-            )
 
-            # Add snpeff_hgvs to header
-            vcf_reader.infos[findbypipeline_tag] = vcf.parser._Info(
-                findbypipeline_tag,
-                ".",
-                "String",
-                vcf_infos_tags.get(findbypipeline_tag, "Find in pipeline/sample"),
-                "howard calculation",
-                "0",
-                self.code_type_map.get("String"),
-            )
+                # Create dataframe
+                dataframe_findbypipeline = self.get_query_to_df(
+                    f""" SELECT {samples_fields} FROM {table_variants} """
+                )
 
-            # Update
-            sql_update = f"""
-                UPDATE variants
-                SET "INFO" = 
-                    concat(
-                        CASE
-                            WHEN "INFO" IS NULL OR "INFO" IN ('','.')
-                            THEN ''
-                            ELSE concat("INFO", ';')
-                        END,
-                        CASE 
-                            WHEN dataframe_findbypipeline."{findbypipeline_infos}" NOT IN ('','.')
-                                AND dataframe_findbypipeline."{findbypipeline_infos}" NOT NULL
-                            THEN concat(
-                                    '{findbypipeline_tag}=',
-                                    dataframe_findbypipeline."{findbypipeline_infos}"
-                                )
-                            ELSE ''
-                        END
+                # Create findbypipeline column
+                dataframe_findbypipeline[findbypipeline_infos] = (
+                    dataframe_findbypipeline.apply(
+                        lambda row: findbypipeline(
+                            row, samples=self.get_header_sample_list(), method=method
+                        ),
+                        axis=1,
                     )
-                FROM dataframe_findbypipeline
-                WHERE variants."{variant_id_column}" = dataframe_findbypipeline."{variant_id_column}"
-            """
-            self.conn.execute(sql_update)
+                )
 
-            # Remove added columns
-            for added_column in added_columns:
-                self.drop_column(column=added_column)
+                # Add snpeff_hgvs to header
+                vcf_reader.infos[findbypipeline_tag] = vcf.parser._Info(
+                    findbypipeline_tag,
+                    ".",
+                    "String",
+                    vcf_infos_tags.get(findbypipeline_tag, "Find in pipeline/sample"),
+                    "howard calculation",
+                    "0",
+                    self.code_type_map.get("String"),
+                )
 
-            # Delete dataframe
-            del dataframe_findbypipeline
-            gc.collect()
+                # Update
+                sql_update = f"""
+                    UPDATE variants
+                    SET "INFO" = 
+                        concat(
+                            CASE
+                                WHEN "INFO" IS NULL OR "INFO" IN ('','.')
+                                THEN ''
+                                ELSE concat("INFO", ';')
+                            END,
+                            CASE 
+                                WHEN dataframe_findbypipeline."{findbypipeline_infos}" NOT IN ('','.')
+                                    AND dataframe_findbypipeline."{findbypipeline_infos}" NOT NULL
+                                THEN concat(
+                                        '{findbypipeline_tag}=',
+                                        dataframe_findbypipeline."{findbypipeline_infos}"
+                                    )
+                                ELSE ''
+                            END
+                        )
+                    FROM dataframe_findbypipeline
+                    WHERE variants."{variant_id_column}" = dataframe_findbypipeline."{variant_id_column}"
+                """
+                self.conn.execute(sql_update)
+
+                # Remove added columns
+                for added_column in added_columns:
+                    self.drop_column(column=added_column)
+
+                # Delete dataframe
+                del dataframe_findbypipeline
+                gc.collect()
 
     def calculation_genotype_concordance(self) -> None:
         """
