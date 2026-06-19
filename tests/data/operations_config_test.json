@@ -79,21 +79,29 @@
     "function_name": "calculation_extract_nomen",
     "function_params": []
   },
-  "FINDBYPIPELINE": {
+  "FIND_SAMPLES": {
     "type": "python",
-    "name": "FINDBYPIPELINE",
-    "description": "Number of pipeline that identify the variant (for multi pipeline VCF)",
+    "name": "FIND_SAMPLES",
+    "description": "Number and list of sample that have a genotype for the variant (for multi sample VCF)",
     "available": true,
-    "function_name": "calculation_find_by_pipeline",
-    "function_params": ["findbypipeline"]
+    "function_name": "calculation_find_samples",
+    "function_params": {}
   },
-  "FINDBYSAMPLE": {
+  "COUNT_SAMPLES": {
     "type": "python",
-    "name": "FINDBYSAMPLE",
+    "name": "COUNT_SAMPLES",
     "description": "Number of sample that have a genotype for the variant (for multi sample VCF)",
     "available": true,
-    "function_name": "calculation_find_by_pipeline",
-    "function_params": ["findbysample"]
+    "function_name": "calculation_find_samples",
+    "function_params": {"tags": {"count_samples": "count"}}
+  },
+  "LIST_SAMPLES": {
+    "type": "python",
+    "name": "LIST_SAMPLES",
+    "description": "List of samples that have a genotype for the variant (for multi sample VCF)",
+    "available": true,
+    "function_name": "calculation_find_samples",
+    "function_params": {"tags": {"list_samples": "list"}}
   },
   "GENOTYPECONCORDANCE": {
     "type": "python",
