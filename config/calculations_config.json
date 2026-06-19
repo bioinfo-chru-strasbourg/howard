@@ -132,21 +132,13 @@
       "function_name": "calculation_rename_info_fields",
       "function_params": []
     },
-    "FINDBYPIPELINE": {
+    "FIND_SAMPLES": {
       "type": "python",
-      "name": "FINDBYPIPELINE",
-      "description": "Number of pipeline that identify the variant (for multi pipeline VCF)",
+      "name": "FIND_SAMPLES",
+      "description": "Number and list of sample that have a genotype for the variant (for multi sample VCF)",
       "available": true,
-      "function_name": "calculation_find_by_pipeline",
-      "function_params": ["findbypipeline"]
-    },
-    "FINDBYSAMPLE": {
-      "type": "python",
-      "name": "FINDBYSAMPLE",
-      "description": "Number of sample that have a genotype for the variant (for multi sample VCF)",
-      "available": true,
-      "function_name": "calculation_find_by_pipeline",
-      "function_params": ["findbysample"]
+      "function_name": "calculation_find_samples",
+      "function_params": {}
     },
     "GENOTYPECONCORDANCE": {
       "type": "python",

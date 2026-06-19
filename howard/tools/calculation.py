@@ -72,7 +72,8 @@ def calculation(args: argparse) -> None:
     vcfdata_obj.calculation(operations_config_file=operations_config_file)
 
     # Export
-    vcfdata_obj.export_output()
+    if vcfdata_obj.get_input() or vcfdata_obj.get_output():
+        vcfdata_obj.export_output()
 
     # Log
     log.info("End")
