@@ -315,6 +315,33 @@ class variants_calculation:
                 "function_name": "calculation_genotype_stats",
                 "function_params": ["DP"],
             },
+            "INFO_TO_FORMAT": {
+                "type": "python",
+                "name": "INFO_TO_FORMAT",
+                "description": "INFO to FORMAT conversion",
+                "comment": [
+                    "INFO to FORMAT conversion. This calculation converts INFO fields to FORMAT fields in the VCF file.\n",
+                    "Options for this calculation can be specified in the JSON parameter file, directly in the calculation parameters (see help.parameters.md):\n",
+                    "- 'annotation_fields': allows for the specification of the INFO fields to be converted to FORMAT fields, with the key being the INFO field name and the value being the FORMAT field name. For example, to convert INFO field 'count_samples' to FORMAT field 'CS', INFO field 'list_samples' to FORMAT field 'LS', and INFO field 'calling_quality' to FORMAT field 'CQ', you can specify:\n",
+                    "- 'samples': allows for the specification of the samples to be included in the conversion. If not specified, all samples will be included.\n",
+                    "- 'remove_info_fields': allows for the removal of the original INFO fields after conversion to FORMAT fields. If set to true, the original INFO fields will be removed from the VCF file.\n",
+                    "Options example: \n",
+                    "```json",
+                    "{",
+                    "    \"annotation_fields\": {",
+                    "        \"count_samples\": null,",
+                    "        \"list_samples\": \"LS\",",
+                    "        \"calling_quality\": \"CQ\"",
+                    "    },",
+                    "    \"samples\": [\"sample1\", \"sample2\"],",
+                    "    \"remove_info_fields\": true",
+                    "}",
+                    "```"
+                    ],
+                "available": True,
+                "function_name": "calculation_info_to_format",
+                "function_params": {},
+            },
             "variant_id": {
                 "type": "python",
                 "name": "variant_id",
@@ -895,12 +922,17 @@ class variants_calculation:
         # Param from JSON parameters file
         param = self.get_param()
 
+        # Param calculations with lower keys for case-insensitive access
+        param_calculations = {
+            key.lower(): value
+            for key, value in param.get("calculation", {}).get("calculations", {}).items()
+        }
+
         # Param from operation name
         try:
             param_operation = (
-                param.get("calculation", {})
-                .get("calculations", {})
-                .get(operation_name, {})
+                param_calculations
+                .get(operation_name.lower(), {})
             )
         except Exception as e:
             # log.error(f"Error retrieving operation parameters for {operation_name}: {e}")
@@ -2855,6 +2887,163 @@ class variants_calculation:
             # Delete dataframe
             del dataframe_vaf_normalization
             gc.collect()
+
+
+    def calculation_info_to_format(self, annotation_fields: dict = None, samples:list = None, remove_info_fields: bool = None, **kwargs) -> None:
+        """
+        The `calculation_info_to_format` function converts INFO fields to FORMAT fields in a VCF file.
+        :return: The function does not return anything.
+
+        Example kwargs:
+
+        {
+            "annotation_fields": {
+                "count_samples": None,
+                "list_samples": "LS",
+                "calling_quality": "CQ"
+            },
+            "samples": ["sample1", "sample2"],
+            "remove_info_fields": True
+        }
+    
+
+        """
+
+        # if FORMAT and samples
+        if (
+            "FORMAT" in self.get_header_columns_as_list()
+            and self.get_header_sample_list()
+        ):
+
+            log.debug("Calculation INFO to FORMAT...")
+
+            operation_params, _ = self.get_operation_params(
+                operation_params=kwargs, operation_name="info_to_format"
+            )
+
+            ### Parameters for variant ID calculation
+
+            # variant_id annotation field
+            if annotation_fields is None:
+                annotation_fields = (
+                    operation_params.get("annotation_fields")
+                    or annotation_fields
+                    or {}
+                )
+
+            # variant_id_tag_info
+            if samples is None:
+                samples = (
+                    operation_params.get("samples")
+                    or samples
+                    or self.get_header_sample_list()
+                )
+
+            # keep_variant_id_tag_column
+            if remove_info_fields is None: 
+                remove_info_fields = (
+                    operation_params.get("remove_info_fields")
+                    or remove_info_fields
+                    or False
+                )
+
+            # Variants table
+            table_variants = self.get_table_variants()
+
+            # Check info and format fiel to determine which are in info and not in format
+            header = self.get_header()
+            header_infos = header.infos
+            header_formats = header.formats
+            annotation_fields_filtered = {}
+            for info_field, format_field in annotation_fields.items():
+                if format_field in header_formats:
+                    msg_error = f"FORMAT field '{format_field}' already in VCF header format"
+                    log.error(msg_error)
+                    raise ValueError(msg_error)
+                elif info_field not in header_infos:
+                    msg_error = f"INFO field '{info_field}' not found in VCF header"
+                    log.error(msg_error)
+                    raise ValueError(msg_error)
+                else:
+                    format_field = format_field or info_field
+                    annotation_fields_filtered[info_field] = format_field
+                    # Add format field to header
+                    header.formats[format_field] = vcf.parser._Format(
+                        id=format_field,
+                        num=header_infos[info_field].num,
+                        type=header_infos[info_field].type,
+                        desc=header_infos[info_field].desc,
+                        type_code=header_infos[info_field].type_code,
+                    )
+
+            # Create view from table_variants
+            annotation_view_name = f"variants_view_{str(get_random())}"
+            annotation_view_name = self.create_annotations_view(
+                table=table_variants,
+                view=annotation_view_name,
+                view_type="view",
+                view_mode="explore",
+                info_prefix_column="",
+                detect_type_list=False,
+                fields=annotation_fields_filtered.keys(),
+                fields_not_exists=True,
+                fields_forced_as_varchar=True,
+                fields_needed_all=False,
+                fields_to_rename=None,
+                drop_view=True,
+            )
+
+            # Prepare set clause for samples
+            set_clause = []
+            for sample in self.get_header_sample_list():
+
+                # For each sample, prepare the set clause to add the INFO fields values to the FORMAT fields values
+                sample_set = []
+                for info_field, format_field in annotation_fields_filtered.items():
+                    if header_infos.get(info_field).type != "Flag":
+                        if sample in samples:
+                            sample_set.append(
+                                f"""
+                                    CASE
+                                        WHEN src."{info_field}" IS NOT NULL OR src."{info_field}"::STRING NOT IN ('','.')
+                                        THEN replace(src."{info_field}"::STRING, ':', '=')
+                                        ELSE '.'
+                                    END
+                                """
+                                )
+                        else:
+                            sample_set.append(" '.' ")
+                    else:
+                        raise NotImplementedError(f"Flag type for INFO field '{info_field}' not implemented yet for INFO to FORMAT calculation")
+                
+                # If there are INFO fields to add to FORMAT for this sample, prepare the set clause to add them to the sample FORMAT field
+                if len(sample_set):
+                    set_clause.append(f""" "{sample}" = concat("{sample}", ':', {", ':', ".join(sample_set)}) """)
+
+            # Prepare set clause for FORMAT
+            if len(annotation_fields_filtered):
+                set_clause.append(f""" "FORMAT" = concat("FORMAT", ':', {", ':', ".join([f"'{format_field}'" if format_field is not None else f"'{info_field}'" for info_field, format_field in annotation_fields_filtered.items() ])}) """)
+
+            # Update
+            if len(set_clause):
+                sql_update = f"""
+                    UPDATE {table_variants} v
+                    SET {', '.join(set_clause)}
+                    FROM {annotation_view_name} src
+                    WHERE v."#CHROM" = src."#CHROM"
+                    AND v."POS"    = src."POS"
+                    AND v."REF"    = src."REF"
+                    AND v."ALT"    = src."ALT"
+
+                """
+                # log.debug(f"sql_update={sql_update}")
+                self.get_connexion().execute(sql_update)
+
+                if remove_info_fields:
+                    self.rename_info_fields(
+                        fields_to_rename=dict.fromkeys(annotation_fields_filtered.keys(), None), table=table_variants
+                    )
+
 
     def calculation_genotype_stats(self, info: str = "VAF") -> None:
         """

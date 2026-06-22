@@ -2394,6 +2394,475 @@ def test_calculation_dp_stats():
 
 
 @pytest.mark.parametrize(
+    "options, expect_in_info_fields, expect_not_in_info_fields, expected_in_format_fields, expected_not_in_format_fields, pattern_format_column, pattern_samples_column_variant1, pattern_samples_column_variant2, pattern_samples_column_variant3, pattern_samples_column_variant4",
+    [
+        (
+            None,
+            ["CLNSIG", "DP"],
+            [],
+            ["DP"],
+            ["CLNSIG"],
+            "GT:AD:DP:GQ",
+            {
+                "sample1": "0/1:525,204:729:99",
+                "sample2": "0/1:12659,4994:17664:99",
+                "sample3": "1/1:12658,4995:17663:99",
+                "sample4": "1/1:401,175:576:99"
+            },
+            {
+                "sample1": "./.:.:.:.",
+                "sample2": "0/1:12659,4994:17664:99",
+                "sample3": "0/1:12658,4995:17663:99",
+                "sample4": "0/1:401,175:576:99"
+            },
+            {
+                "sample1": "0/1:525,204:729:99",
+                "sample2": "./.:.:.:.",
+                "sample3": "0/1:12658,4995:17663:99",
+                "sample4": "0/1:401,175:576:99"
+            },
+            {
+                "sample1": "0/1:525,204:729:99",
+                "sample2": "0/1:12659,4994:17664:99",
+                "sample3": "./.:.:.:.",
+                "sample4": "0/1:401,175:576:99"
+            }
+        ),
+        (
+            {},
+            ["CLNSIG", "DP"],
+            [],
+            ["DP"],
+            ["CLNSIG"],
+            "GT:AD:DP:GQ",
+            {
+                "sample1": "0/1:525,204:729:99",
+                "sample2": "0/1:12659,4994:17664:99",
+                "sample3": "1/1:12658,4995:17663:99",
+                "sample4": "1/1:401,175:576:99"
+            },
+            {
+                "sample1": "./.:.:.:.",
+                "sample2": "0/1:12659,4994:17664:99",
+                "sample3": "0/1:12658,4995:17663:99",
+                "sample4": "0/1:401,175:576:99"
+            },
+            {
+                "sample1": "0/1:525,204:729:99",
+                "sample2": "./.:.:.:.",
+                "sample3": "0/1:12658,4995:17663:99",
+                "sample4": "0/1:401,175:576:99"
+            },
+            {
+                "sample1": "0/1:525,204:729:99",
+                "sample2": "0/1:12659,4994:17664:99",
+                "sample3": "./.:.:.:.",
+                "sample4": "0/1:401,175:576:99"
+            }
+        ),
+        (
+            {
+                "annotation_fields": {},
+                "samples": [],
+                "remove_info_fields": False
+            },
+            ["CLNSIG", "DP"],
+            [],
+            ["DP"],
+            ["CLNSIG"],
+            "GT:AD:DP:GQ",
+            {
+                "sample1": "0/1:525,204:729:99",
+                "sample2": "0/1:12659,4994:17664:99",
+                "sample3": "1/1:12658,4995:17663:99",
+                "sample4": "1/1:401,175:576:99"
+            },
+            {
+                "sample1": "./.:.:.:.",
+                "sample2": "0/1:12659,4994:17664:99",
+                "sample3": "0/1:12658,4995:17663:99",
+                "sample4": "0/1:401,175:576:99"
+            },
+            {
+                "sample1": "0/1:525,204:729:99",
+                "sample2": "./.:.:.:.",
+                "sample3": "0/1:12658,4995:17663:99",
+                "sample4": "0/1:401,175:576:99"
+            },
+            {
+                "sample1": "0/1:525,204:729:99",
+                "sample2": "0/1:12659,4994:17664:99",
+                "sample3": "./.:.:.:.",
+                "sample4": "0/1:401,175:576:99"
+            }
+        ),
+        (
+            {
+                "samples": ["sample5"],
+            },
+            ["CLNSIG", "DP"],
+            [],
+            ["DP"],
+            ["CLNSIG"],
+            "GT:AD:DP:GQ",
+            {
+                "sample1": "0/1:525,204:729:99",
+                "sample2": "0/1:12659,4994:17664:99",
+                "sample3": "1/1:12658,4995:17663:99",
+                "sample4": "1/1:401,175:576:99"
+            },
+            {
+                "sample1": "./.:.:.:.",
+                "sample2": "0/1:12659,4994:17664:99",
+                "sample3": "0/1:12658,4995:17663:99",
+                "sample4": "0/1:401,175:576:99"
+            },
+            {
+                "sample1": "0/1:525,204:729:99",
+                "sample2": "./.:.:.:.",
+                "sample3": "0/1:12658,4995:17663:99",
+                "sample4": "0/1:401,175:576:99"
+            },
+            {
+                "sample1": "0/1:525,204:729:99",
+                "sample2": "0/1:12659,4994:17664:99",
+                "sample3": "./.:.:.:.",
+                "sample4": "0/1:401,175:576:99"
+            }
+        ),
+        (
+            {
+                "annotation_fields": {
+                    "CLNSIG": "CLINVAR",
+                },
+                "samples": [],
+                "remove_info_fields": False
+            },
+            ["CLNSIG", "DP"],
+            ["CLINVAR"],
+            ["CLINVAR", "DP"],
+            ["CLNSIG"],
+            "GT:AD:DP:GQ:CLINVAR",
+            {
+                "sample1": "0/1:525,204:729:99:pathogenic",
+                "sample2": "0/1:12659,4994:17664:99:pathogenic",
+                "sample3": "1/1:12658,4995:17663:99:pathogenic",
+                "sample4": "1/1:401,175:576:99:pathogenic"
+            },
+            {
+                "sample1": "./.:.:.:.:non-pathogenic",
+                "sample2": "0/1:12659,4994:17664:99:non-pathogenic",
+                "sample3": "0/1:12658,4995:17663:99:non-pathogenic",
+                "sample4": "0/1:401,175:576:99:non-pathogenic"
+            },
+            {
+                "sample1": "0/1:525,204:729:99:.",
+                "sample2": "./.:.:.:.:.",
+                "sample3": "0/1:12658,4995:17663:99:.",
+                "sample4": "0/1:401,175:576:99:."
+            },
+            {
+                "sample1": "0/1:525,204:729:99:.",
+                "sample2": "0/1:12659,4994:17664:99:.",
+                "sample3": "./.:.:.:.:.",
+                "sample4": "0/1:401,175:576:99:."
+            }
+        ),
+        (
+            {
+                "annotation_fields": {
+                    "CLNSIG": "CLINVAR",
+                },
+                "samples": ["sample1", "sample2", "sample3", "sample4", "sample5"],
+                "remove_info_fields": False
+            },
+            ["CLNSIG", "DP"],
+            ["CLINVAR"],
+            ["CLINVAR", "DP"],
+            ["CLNSIG"],
+            "GT:AD:DP:GQ:CLINVAR",
+            {
+                "sample1": "0/1:525,204:729:99:pathogenic",
+                "sample2": "0/1:12659,4994:17664:99:pathogenic",
+                "sample3": "1/1:12658,4995:17663:99:pathogenic",
+                "sample4": "1/1:401,175:576:99:pathogenic"
+            },
+            {
+                "sample1": "./.:.:.:.:non-pathogenic",
+                "sample2": "0/1:12659,4994:17664:99:non-pathogenic",
+                "sample3": "0/1:12658,4995:17663:99:non-pathogenic",
+                "sample4": "0/1:401,175:576:99:non-pathogenic"
+            },
+            {
+                "sample1": "0/1:525,204:729:99:.",
+                "sample2": "./.:.:.:.:.",
+                "sample3": "0/1:12658,4995:17663:99:.",
+                "sample4": "0/1:401,175:576:99:."
+            },
+            {
+                "sample1": "0/1:525,204:729:99:.",
+                "sample2": "0/1:12659,4994:17664:99:.",
+                "sample3": "./.:.:.:.:.",
+                "sample4": "0/1:401,175:576:99:."
+            }
+        ),
+        (
+            {
+                "annotation_fields": {},
+                "samples": ["sample1", "sample2"],
+                "remove_info_fields": False
+            },
+            ["CLNSIG", "DP"],
+            ["CLINVAR"],
+            ["DP"],
+            ["CLNSIG"],
+            "GT:AD:DP:GQ",
+            {
+                "sample1": "0/1:525,204:729:99",
+                "sample2": "0/1:12659,4994:17664:99",
+                "sample3": "1/1:12658,4995:17663:99",
+                "sample4": "1/1:401,175:576:99"
+            },
+            {
+                "sample1": "./.:.:.:.",
+                "sample2": "0/1:12659,4994:17664:99",
+                "sample3": "0/1:12658,4995:17663:99",
+                "sample4": "0/1:401,175:576:99"
+            },
+            {
+                "sample1": "0/1:525,204:729:99",
+                "sample2": "./.:.:.:.",
+                "sample3": "0/1:12658,4995:17663:99",
+                "sample4": "0/1:401,175:576:99"
+            },
+            {
+                "sample1": "0/1:525,204:729:99",
+                "sample2": "0/1:12659,4994:17664:99",
+                "sample3": "./.:.:.:.",
+                "sample4": "0/1:401,175:576:99"
+            }
+        ),
+        (
+            {
+                "annotation_fields": {},
+                "samples": ["sample1", "sample2"],
+                "remove_info_fields": True
+            },
+            ["CLNSIG", "DP"],
+            ["CLINVAR"],
+            ["DP"],
+            ["CLNSIG"],
+            "GT:AD:DP:GQ",
+            {
+                "sample1": "0/1:525,204:729:99",
+                "sample2": "0/1:12659,4994:17664:99",
+                "sample3": "1/1:12658,4995:17663:99",
+                "sample4": "1/1:401,175:576:99"
+            },
+            {
+                "sample1": "./.:.:.:.",
+                "sample2": "0/1:12659,4994:17664:99",
+                "sample3": "0/1:12658,4995:17663:99",
+                "sample4": "0/1:401,175:576:99"
+            },
+            {
+                "sample1": "0/1:525,204:729:99",
+                "sample2": "./.:.:.:.",
+                "sample3": "0/1:12658,4995:17663:99",
+                "sample4": "0/1:401,175:576:99"
+            },
+            {
+                "sample1": "0/1:525,204:729:99",
+                "sample2": "0/1:12659,4994:17664:99",
+                "sample3": "./.:.:.:.",
+                "sample4": "0/1:401,175:576:99"
+            }
+        ),
+        (
+            {
+                "annotation_fields": {
+                    "CLNSIG": None,
+                    "DP": "DP2"
+                },
+                "samples": ["sample1", "sample2"],
+                "remove_info_fields": True
+            },
+            [],
+            ["CLNSIG", "DP"],
+            ["CLNSIG", "DP", "DP2"],
+            [],
+            "GT:AD:DP:GQ:CLNSIG:DP2",
+            {
+                "sample1": "0/1:525,204:729:99:pathogenic:.",
+                "sample2": "0/1:12659,4994:17664:99:pathogenic:.",
+                "sample3": "1/1:12658,4995:17663:99:.:.",
+                "sample4": "1/1:401,175:576:99:.:."
+            },
+            {
+                "sample1": "./.:.:.:.:non-pathogenic:.",
+                "sample2": "0/1:12659,4994:17664:99:non-pathogenic:.",
+                "sample3": "0/1:12658,4995:17663:99:.:.",
+                "sample4": "0/1:401,175:576:99:.:."
+            },
+            {
+                "sample1": "0/1:525,204:729:99:.:.",
+                "sample2": "./.:.:.:.:.:.",
+                "sample3": "0/1:12658,4995:17663:99:.:.",
+                "sample4": "0/1:401,175:576:99:.:."
+            },
+            {
+                "sample1": "0/1:525,204:729:99:.:125",
+                "sample2": "0/1:12659,4994:17664:99:.:125",
+                "sample3": "./.:.:.:.:.:.",
+                "sample4": "0/1:401,175:576:99:.:."
+            }
+        )
+    ],
+)
+def test_calculation_info_to_format(options, expect_in_info_fields, expect_not_in_info_fields, expected_in_format_fields, expected_not_in_format_fields, pattern_format_column, pattern_samples_column_variant1, pattern_samples_column_variant2, pattern_samples_column_variant3, pattern_samples_column_variant4):
+    """
+    This is a test function for the calculation of INFO to FORMAT conversion in a VCF file.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.vcf.gz"
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+
+        # Construct param dict
+        param = {
+            "calculation": {
+                "calculations": {
+                    "INFO_TO_FORMAT": options
+                }
+            }
+        }
+
+        # Create object
+        variants = Variants(
+            conn=None, input=input_vcf, output=output_vcf, param=param, load=True
+        )
+
+        # Calculation
+        variants.calculation()
+
+        # Test if INFO fields are present or not in header of variants
+        for field in expect_in_info_fields:
+            assert field in variants.get_header().infos, f"Field {field} should be present in INFO header"
+        for field in expect_not_in_info_fields:
+            assert field not in variants.get_header().infos, f"Field {field} should not be present in INFO header"
+        
+        # Test if FORMAT fields are present or not in header of variants
+        for field in expected_in_format_fields:
+            assert field in variants.get_header().formats, f"Field {field} should be present in FORMAT header"
+        for field in expected_not_in_format_fields:
+            assert field not in variants.get_header().formats, f"Field {field} should not be present in FORMAT header"
+
+        # Test if FORMAT column is correct for all variants
+        result = variants.get_query_to_df(
+            """ SELECT FORMAT FROM variants """
+        )
+        assert len(result) == 7
+        for _, row in result.iterrows():
+            assert row["FORMAT"] == pattern_format_column, f"FORMAT column value {row['FORMAT']} does not match expected {pattern_format_column}"
+
+        # Test if sample columns are correct for variant 1
+        log.debug(f"Testing sample columns for variant 1 at chr1:28736")
+        result = variants.get_query_to_df(
+            """ SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 """
+        )
+        assert len(result) == 1
+        for _, row in result.iterrows():
+            for sample in pattern_samples_column_variant1:
+                assert row[sample] == pattern_samples_column_variant1[sample], f"Sample {sample} value {row[sample]} does not match expected {pattern_samples_column_variant1[sample]}"
+
+        # Test if sample columns are correct for variant 2
+        log.debug(f"Testing sample columns for variant 2 at chr1:35144")
+        result = variants.get_query_to_df(
+            """ SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 35144 """
+        )
+        assert len(result) == 1
+        for _, row in result.iterrows():
+            for sample in pattern_samples_column_variant2:
+                assert row[sample] == pattern_samples_column_variant2[sample], f"Sample {sample} value {row[sample]} does not match expected {pattern_samples_column_variant2[sample]}"
+
+        # Test if sample columns are correct for variant 3
+        log.debug(f"Testing sample columns for variant 3 at chr1:768251")
+        result = variants.get_query_to_df(
+            """ SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 768251 """
+        )
+        assert len(result) == 1
+        for _, row in result.iterrows():
+            for sample in pattern_samples_column_variant3:
+                assert row[sample] == pattern_samples_column_variant3[sample], f"Sample {sample} value {row[sample]} does not match expected {pattern_samples_column_variant3[sample]}"
+
+        # Test if sample columns are correct for variant 4
+        log.debug(f"Testing sample columns for variant 4 at chr7:55249063")
+        result = variants.get_query_to_df(
+            """ SELECT * FROM variants WHERE "#CHROM" = 'chr7' AND POS = 55249063 """
+        )
+        assert len(result) == 1
+        for _, row in result.iterrows():
+            for sample in pattern_samples_column_variant4:
+                assert row[sample] == pattern_samples_column_variant4[sample], f"Sample {sample} value {row[sample]} does not match expected {pattern_samples_column_variant4[sample]}"
+
+        # Check if VCF is in correct format with pyVCF
+        remove_if_exists([output_vcf])
+        variants.export_output()
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
+
+        # Print content of vcf file
+        import gzip
+        with gzip.open(output_vcf, "rt") as f:
+            for line in f:
+                log.debug(line.strip())
+
+
+def test_calculation_info_to_format_flag_info_field():
+    """
+    This is a test function for the calculation of INFO to FORMAT conversion in a VCF file.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.flag.vcf"
+        output_vcf = f"{tmp_dir}/output.vcf"
+
+        # Construct param dict
+        param = {
+            "calculation": {
+                "calculations": {
+                    "INFO_TO_FORMAT": {
+                        "annotation_fields": {
+                            "FLAG": None
+                        },
+                        "samples": [],
+                        "remove_info_fields": False
+                    }
+                }
+            }
+        }
+
+        # Create object
+        variants = Variants(
+            conn=None, input=input_vcf, output=output_vcf, param=param, load=True
+        )
+
+        # Calculation
+        try:
+            variants.calculation()
+            assert False, "Expected NotImplementedError for flag INFO field conversion to FORMAT"
+        except NotImplementedError as e:
+            log.debug(f"Calculation not implemented: {e}")
+            assert True, "Expected NotImplementedError for flag INFO field conversion to FORMAT"
+
+
+@pytest.mark.parametrize(
     "calculation_name, variant_id_tag, variant_id_tag_info, keep_variant_id_tag_column",
     [
         (
