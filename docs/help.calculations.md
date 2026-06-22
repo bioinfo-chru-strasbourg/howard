@@ -50,6 +50,34 @@ Concordance of genotype for multi caller VCF
 
 Concordance of genotype for multi caller VCF. This calculation assesses the concordance of genotypes for a given variant across multiple callers in a multi-caller VCF file. It helps in evaluating the consistency of genotype calls and can be used to identify variants with high confidence based on agreement among different callers.
 
+## INFO_TO_FORMAT
+
+INFO to FORMAT conversion
+
+INFO to FORMAT conversion. This calculation converts INFO fields to FORMAT fields in the VCF file.
+
+Options for this calculation can be specified in the JSON parameter file, directly in the calculation parameters (see help.parameters.md):
+
+- 'annotation_fields': allows for the specification of the INFO fields to be converted to FORMAT fields, with the key being the INFO field name and the value being the FORMAT field name. For example, to convert INFO field 'count_samples' to FORMAT field 'CS', INFO field 'list_samples' to FORMAT field 'LS', and INFO field 'calling_quality' to FORMAT field 'CQ', you can specify:
+
+- 'samples': allows for the specification of the samples to be included in the conversion. If not specified, all samples will be included.
+
+- 'remove_info_fields': allows for the removal of the original INFO fields after conversion to FORMAT fields. If set to true, the original INFO fields will be removed from the VCF file.
+
+Options example: 
+
+```json
+{
+    "annotation_fields": {
+        "count_samples": null,
+        "list_samples": "LS",
+        "calling_quality": "CQ"
+    },
+    "samples": ["sample1", "sample2"],
+    "remove_info_fields": true
+}
+```
+
 ## LIST_SAMPLES
 
 List of samples that have a genotype for the variant (for multi sample VCF)
