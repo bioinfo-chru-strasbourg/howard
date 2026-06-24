@@ -41,7 +41,8 @@ def test_annotation_hgvs():
         download_needed_databases()
 
         # Construct param dict
-        param = {"hgvs": {"use_exon": True, "use_version": True}}
+        #param = {"hgvs": {"use_exon": True, "use_version": True}}
+        param = {"annotation": {"hgvs": {"use_exon": True, "use_version": True}}}
 
         # Create object
         variants = Variants(
@@ -57,7 +58,8 @@ def test_annotation_hgvs():
         remove_if_exists([output_vcf])
 
         # Annotation
-        variants.annotation_hgvs()
+        #variants.annotation_hgvs()
+        variants.annotation()
 
         # Check
         result = variants.get_query_to_df(
@@ -72,7 +74,7 @@ def test_annotation_hgvs():
         # Gene Protein
 
         # Construct param dict
-        param = {"hgvs": {"add_protein": True, "use_gene": True}}
+        param = {"annotation": {"hgvs": {"add_protein": True, "use_gene": True}}}
 
         # Create object
         variants = Variants(
@@ -88,7 +90,7 @@ def test_annotation_hgvs():
         remove_if_exists([output_vcf])
 
         # Annotation
-        variants.annotation_hgvs()
+        variants.annotation()
 
         #  Check
         result = variants.get_query_to_df(
@@ -119,7 +121,7 @@ def test_annotation_hgvs_empty():
         download_needed_databases()
 
         # Construct param dict
-        param = {"hgvs": {"use_exon": True, "use_version": True}}
+        param = {"annotation": {"hgvs": {"use_exon": True, "use_version": True}}}
 
         # Create object
         variants = Variants(
@@ -135,7 +137,7 @@ def test_annotation_hgvs_empty():
         remove_if_exists([output_vcf])
 
         # Annotation
-        variants.annotation_hgvs()
+        variants.annotation()
 
         # Check
         result = variants.get_query_to_df(
@@ -146,7 +148,7 @@ def test_annotation_hgvs_empty():
         # Gene Protein
 
         # Construct param dict
-        param = {"hgvs": {"add_protein": True, "use_gene": True}}
+        param = {"annotation": {"hgvs": {"add_protein": True, "use_gene": True}}}
 
         # Create object
         variants = Variants(
@@ -162,7 +164,7 @@ def test_annotation_hgvs_empty():
         remove_if_exists([output_vcf])
 
         # Annotation
-        variants.annotation_hgvs()
+        variants.annotation()
 
         #  Check
         result = variants.get_query_to_df(

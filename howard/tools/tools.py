@@ -995,12 +995,14 @@ arguments = {
         "required": False,
         "default": None,
         "type": str,
+        "extra": {"param_section": "annotation:hgvs"},
     },
     "use_gene": {
         "help": """Use Gene information to generate HGVS annotation\n"""
         """(e.g. 'NM_152232(TAS1R2):c.231T>C')""",
         "action": "store_true",
         "default": False,
+        "extra": {"param_section": "annotation:hgvs"},
     },
     "use_exon": {
         "help": """Use Exon information to generate HGVS annotation\n"""
@@ -1008,6 +1010,7 @@ arguments = {
         """Only if 'use_gene' is not enabled.\n""",
         "action": "store_true",
         "default": False,
+        "extra": {"param_section": "annotation:hgvs"},
     },
     "use_protein": {
         "help": """Use Protein level to generate HGVS annotation\n"""
@@ -1015,12 +1018,14 @@ arguments = {
         """Can be used with 'use_exon' or 'use_gene'.\n""",
         "action": "store_true",
         "default": False,
+        "extra": {"param_section": "annotation:hgvs"},
     },
     "add_protein": {
         "help": """Add Protein level to DNA HGVS annotation """
         """(e.g 'NM_152232:c.231T>C,NP_689418:p.Cys77Arg').\n""",
         "action": "store_true",
         "default": False,
+        "extra": {"param_section": "annotation:hgvs"},
     },
     "full_format": {
         "help": """Generates HGVS annotation in a full format\n"""
@@ -1030,12 +1035,14 @@ arguments = {
         """(e.g 'TAS1R2:NM_152232:NP_689418:exon2:c.231T>C:p.Cys77Arg').\n""",
         "action": "store_true",
         "default": False,
+        "extra": {"param_section": "annotation:hgvs"},
     },
     "use_version": {
         "help": """Generates HGVS annotation with transcript version\n"""
         """(e.g. 'NM_152232.1:c.231T>C').\n""",
         "action": "store_true",
         "default": False,
+        "extra": {"param_section": "annotation:hgvs"},
     },
     "codon_type": {
         "metavar": "Codon type",
@@ -1049,6 +1056,7 @@ arguments = {
         "type": str,
         "choices": ["1", "3", "FULL"],
         "gooey": {"widget": "Dropdown", "options": {}},
+        "extra": {"param_section": "annotation:hgvs"},
     },
     "refgene": {
         "metavar": "refGene",
@@ -1065,6 +1073,7 @@ arguments = {
                 "message": "Path to refGene annotation file",
             },
         },
+        "extra": {"param_section": "annotation:hgvs"},
     },
     "refseqlink": {
         "metavar": "refSeqLink",
@@ -1082,6 +1091,7 @@ arguments = {
             },
         },
     },
+    "extra": {"param_section": "annotation:hgvs"},
     "refseq-folder": {
         "metavar": "refseq folder",
         "help": """Folder containing refSeq files.\n""",
