@@ -86,6 +86,14 @@ vcf_required_columns = ["#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "
 
 vcf_required = [vcf_required_release, "\t".join(vcf_required_columns)]
 
+default_pipeline = {
+    "steps": [
+        {"annotation": "annotation"},
+        {"calculation": "calculation"},
+        {"prioritization": "prioritization"},
+    ]
+}
+
 # Tools
 DEFAULT_TOOLS_FOLDER = os.path.join(folder_howard_home, "tools")
 
@@ -325,6 +333,99 @@ default_latex_style = r"""
     % Define a new column type for wrapping text
     \newcolumntype{Y}{>{\raggedright\arraybackslash}X}
 """
+
+
+def load_param_and_config(args: argparse, command: str, strict: bool = False, load_data: bool = False) -> tuple:
+    """
+    The `load_param_and_config` function loads configuration and parameter settings for a given set of arguments.
+
+    :param args: The `args` parameter is an instance of the `argparse.Namespace` class, which contains the command-line
+    arguments passed to the script. It is used to access the values of the arguments and options specified by the user
+    when running the script
+    :type args: argparse.Namespace
+    :return: a tuple containing four elements: `arguments_dict`, `config`, `param`, and `vcfdata_obj`.
+    """
+
+    from howard.objects.variants import Variants
+
+    # Load config args
+    arguments_dict, _, config, param = load_config_args(args)
+
+    # Create variants object
+    vcfdata_obj = Variants(
+        input=args.input, output=args.output, config=config, param=param
+    )
+
+    # Get Config and Params
+    config = vcfdata_obj.get_config()
+    param = vcfdata_obj.get_param()
+
+    # Load args into param
+    param = load_args(
+        param=param,
+        args=args,
+        arguments_dict=arguments_dict,
+        command=command,
+        strict=strict,
+    )
+
+    # Re-Load Config and Params
+    vcfdata_obj.set_param(param)
+    vcfdata_obj.set_config(config)
+
+    # Load data
+    if load_data and vcfdata_obj.get_input():
+        vcfdata_obj.load_data()
+
+    return arguments_dict, config, param, vcfdata_obj
+
+
+def launch_pipeline(vcfdata_obj, param, allowed_tools=None):
+    """
+    The `launch_pipeline` function executes a series of steps defined in a pipeline, logging the
+    progress and handling exceptions for each step.
+    """
+
+    # Pipeline
+    pipeline = param.get("pipeline", default_pipeline)
+    steps = pipeline.get("steps", [])
+    log.debug(f"{param=}")
+
+    # filter steps by allowed tools, and remove completly empty dictionaries
+    if allowed_tools is not None:
+        steps = [
+            step
+            for step in steps
+            if any(
+                step.get(step_name, "annotation") in allowed_tools
+                for step_name in step
+            )
+        ]
+
+    # Start pipeline
+    log.debug("START pipeline")
+    step_i = 0
+    for step in steps:
+        step_i += 1
+        log.debug(f"Processing step: {step} [{step_i}/{len(steps)}]")
+        for step_name in step:
+            step_tool = step.get(step_name, "annotation")
+            if allowed_tools is None or step_tool in allowed_tools:
+                log.info(f"Processing pipeline [{step_i}/{len(steps)}] - '{step_name}' [{step_tool}]...")
+                if step_name not in param :
+                    log.warning(f"Processing pipeline [{step_i}/{len(steps)}] - '{step_name}' [{step_tool}] - Not found in JSON parameters. Try without...")
+                try:
+                    eval(f"vcfdata_obj.{step_tool}(section='{step_name}')")
+                    log.debug(f"Processing pipeline [{step_i}/{len(steps)}] - '{step_name}' [{step_tool}] completed successfully.")
+                except Exception as e:
+                    msg_err = f"Error processing step '{step_name}' with tool '{step_tool}': {str(e)}"
+                    log.error(msg_err)
+                    raise ValueError(msg_err)
+            else:
+                log.warning(f"Processing pipeline [{step_i}/{len(steps)}] - '{step_name}' [{step_tool}] not in {allowed_tools}, skipping.")
+
+    log.debug("END pipeline")
+
 
 def remove_if_exists(filepaths: list) -> None:
     """

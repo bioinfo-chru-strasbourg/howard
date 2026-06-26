@@ -1,4 +1,5 @@
 import logging as log
+import re
 
 from howard.functions.commons import (code_type_map_to_sql)
 
@@ -120,9 +121,12 @@ class variants_view:
         # Get header
         header = self.get_header()
 
+        # Get fields in header
+        fields_in_header = list(header.infos.keys())
+
         # Get fields
         if fields is None:
-            fields = list(header.infos.keys())
+            fields = fields_in_header
 
         # # Get format fields
         # if formats is None:
@@ -206,8 +210,50 @@ class variants_view:
         else:
             info_column = "''"
 
-        # Each field
-        for field in set(fields):
+
+        # Map fields patterns (regexp with stars like "freq*") with fields in header.infos
+        
+        # New list
+        fields_scanned = []
+
+        # For each field in fields
+        for field in fields:
+
+            # Strip field
+            field = field.strip()
+
+            # format keyword * in regex
+            if field.upper() in ["*"]:
+                field = ".*"
+
+            # Check if field is in header (to prevent special caracters in field such as '+', e.g. 'GERP++_RS')
+            if field in fields_in_header:
+                fields_scanned.append(field)
+            
+            # Check if field is a regex pattern or is not in header (new field)
+            else:
+                try:
+                    # Create regex pattern to match the field exactly (with start and end anchors)
+                    r = re.compile(rf"^{field}$")
+                    fields_search = sorted(filter(r.match, fields_in_header))
+
+                    # If no field found with regex, add the field as is (to add it as NULL in the view, for future use)
+                    if len(fields_search) == 0:
+                        fields_scanned.append(field)
+                    else:
+                        # Add all fields found with regex, but not duplicated
+                        for field_search in fields_search:
+                            if field_search not in fields + fields_scanned:
+                                fields_scanned.append(field_search)
+
+                except re.error as e:
+                    log.warning(f"Error compiling regex for field '{field}': {e}")
+
+        # Replace fields with scanned fields (with regex)
+        fields = fields_scanned
+
+        # Each field (with order and not duplicated)
+        for field in dict.fromkeys(fields):
 
             # Rename field
             field_to_rename = fields_to_rename.get(field, field)
@@ -245,7 +291,7 @@ class variants_view:
                 field_sql_type_list = False
 
             # Needed fields, not in other annotation fields (useful for DB with fields in column)
-            if field in fields_needed and not field in list(
+            if field in fields_needed and field not in list(
                 table_describe.get("column_name")
             ):
                 continue

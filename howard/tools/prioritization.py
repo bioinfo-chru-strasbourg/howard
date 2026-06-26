@@ -3,6 +3,7 @@ import logging as log
 
 from howard.functions.commons import load_args, load_config_args
 from howard.objects.variants import Variants
+from howard.tools.process import process
 
 
 def prioritization(args: argparse) -> None:
@@ -16,7 +17,12 @@ def prioritization(args: argparse) -> None:
     :type args: argparse
     """
 
-    log.info("Start")
+    # Load args, param, config and vcfdata_obj
+    #arguments_dict, config, param, vcfdata_obj = load_param_and_config(args=args, command="annotation", strict=False, load_data=False)
+
+    vcfdata_obj = process(args=args, tools=["prioritization"])
+
+    return vcfdata_obj
 
     # Load config args
     arguments_dict, _, config, param = load_config_args(args)

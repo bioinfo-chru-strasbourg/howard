@@ -2797,6 +2797,12 @@ class Database:
                         FROM {self.get_sql_database_link(database=database)}
                         {order_by_sql}
                     """
+                elif order_by != "" and order_by_sql != "":
+                    query = f"""
+                        SELECT {query_export_columns}
+                        FROM ({query}) AS subquery
+                        {order_by_sql}
+                    """
 
                 # Cast query column to be able to export into a flat file
                 if output_type not in ["parquet"] or force_cast_as_flat:
