@@ -4,80 +4,84 @@ title: HOWARD Help Parameters
 
 - [<span class="toc-section-number">1</span>
   Introduction](#introduction)
-- [<span class="toc-section-number">2</span> hgvs](#hgvs)
-  - [<span class="toc-section-number">2.1</span> use_gene](#use_gene)
-  - [<span class="toc-section-number">2.2</span> use_exon](#use_exon)
-  - [<span class="toc-section-number">2.3</span>
-    use_protein](#use_protein)
-  - [<span class="toc-section-number">2.4</span>
-    add_protein](#add_protein)
-  - [<span class="toc-section-number">2.5</span>
-    full_format](#full_format)
-  - [<span class="toc-section-number">2.6</span>
-    codon_type](#codon_type)
-  - [<span class="toc-section-number">2.7</span> refgene](#refgene)
-  - [<span class="toc-section-number">2.8</span>
-    refseqlink](#refseqlink)
-- [<span class="toc-section-number">3</span> annotation](#annotation)
-  - [<span class="toc-section-number">3.1</span> parquet](#parquet)
-    - [<span class="toc-section-number">3.1.1</span>
+- [<span class="toc-section-number">2</span> annotation](#annotation)
+  - [<span class="toc-section-number">2.1</span> parquet](#parquet)
+    - [<span class="toc-section-number">2.1.1</span>
       annotations](#annotations)
-  - [<span class="toc-section-number">3.2</span> bcftools](#bcftools)
-    - [<span class="toc-section-number">3.2.1</span>
+  - [<span class="toc-section-number">2.2</span> bcftools](#bcftools)
+    - [<span class="toc-section-number">2.2.1</span>
       annotations](#annotations-1)
-  - [<span class="toc-section-number">3.3</span> annovar](#annovar)
-    - [<span class="toc-section-number">3.3.1</span>
+  - [<span class="toc-section-number">2.3</span> annovar](#annovar)
+    - [<span class="toc-section-number">2.3.1</span>
       annotations](#annotations-2)
-    - [<span class="toc-section-number">3.3.2</span> options](#options)
-  - [<span class="toc-section-number">3.4</span> snpeff](#snpeff)
-    - [<span class="toc-section-number">3.4.1</span>
+    - [<span class="toc-section-number">2.3.2</span> options](#options)
+  - [<span class="toc-section-number">2.4</span> snpeff](#snpeff)
+    - [<span class="toc-section-number">2.4.1</span>
       options](#options-1)
-    - [<span class="toc-section-number">3.4.2</span> stats](#stats)
-    - [<span class="toc-section-number">3.4.3</span>
+    - [<span class="toc-section-number">2.4.2</span> stats](#stats)
+    - [<span class="toc-section-number">2.4.3</span>
       csvStats](#csvstats)
-  - [<span class="toc-section-number">3.5</span> snpsift](#snpsift)
-    - [<span class="toc-section-number">3.5.1</span>
+  - [<span class="toc-section-number">2.5</span> snpsift](#snpsift)
+    - [<span class="toc-section-number">2.5.1</span>
       annotations](#annotations-3)
-  - [<span class="toc-section-number">3.6</span> bigwig](#bigwig)
-    - [<span class="toc-section-number">3.6.1</span>
+  - [<span class="toc-section-number">2.6</span> bigwig](#bigwig)
+    - [<span class="toc-section-number">2.6.1</span>
       annotations](#annotations-4)
-    - [<span class="toc-section-number">3.6.2</span>
+    - [<span class="toc-section-number">2.6.2</span>
       options](#options-2)
-  - [<span class="toc-section-number">3.7</span> exomiser](#exomiser)
-    - [<span class="toc-section-number">3.7.1</span> release](#release)
-    - [<span class="toc-section-number">3.7.2</span>
+  - [<span class="toc-section-number">2.7</span> exomiser](#exomiser)
+    - [<span class="toc-section-number">2.7.1</span> release](#release)
+    - [<span class="toc-section-number">2.7.2</span>
       transcript_source](#transcript_source)
-    - [<span class="toc-section-number">3.7.3</span> hpo](#hpo)
-  - [<span class="toc-section-number">3.8</span> splice](#splice)
-    - [<span class="toc-section-number">3.8.1</span>
+    - [<span class="toc-section-number">2.7.3</span> hpo](#hpo)
+  - [<span class="toc-section-number">2.8</span> splice](#splice)
+    - [<span class="toc-section-number">2.8.1</span>
       split_mode](#split_mode)
-    - [<span class="toc-section-number">3.8.2</span>
+    - [<span class="toc-section-number">2.8.2</span>
       spliceai_distance](#spliceai_distance)
-    - [<span class="toc-section-number">3.8.3</span>
+    - [<span class="toc-section-number">2.8.3</span>
       spliceai_mask](#spliceai_mask)
-    - [<span class="toc-section-number">3.8.4</span>
+    - [<span class="toc-section-number">2.8.4</span>
       transcript](#transcript)
-    - [<span class="toc-section-number">3.8.5</span> rm_snps](#rm_snps)
-    - [<span class="toc-section-number">3.8.6</span>
+    - [<span class="toc-section-number">2.8.5</span> rm_snps](#rm_snps)
+    - [<span class="toc-section-number">2.8.6</span>
       rm_annot](#rm_annot)
-    - [<span class="toc-section-number">3.8.7</span>
+    - [<span class="toc-section-number">2.8.7</span>
       whitespace](#whitespace)
-- [<span class="toc-section-number">4</span> calculation](#calculation)
-  - [<span class="toc-section-number">4.1</span>
+  - [<span class="toc-section-number">2.9</span> hgvs](#hgvs)
+    - [<span class="toc-section-number">2.9.1</span>
+      use_gene](#use_gene)
+    - [<span class="toc-section-number">2.9.2</span>
+      use_exon](#use_exon)
+    - [<span class="toc-section-number">2.9.3</span>
+      use_protein](#use_protein)
+    - [<span class="toc-section-number">2.9.4</span>
+      add_protein](#add_protein)
+    - [<span class="toc-section-number">2.9.5</span>
+      full_format](#full_format)
+    - [<span class="toc-section-number">2.9.6</span>
+      codon_type](#codon_type)
+    - [<span class="toc-section-number">2.9.7</span> refgene](#refgene)
+    - [<span class="toc-section-number">2.9.8</span>
+      refseqlink](#refseqlink)
+- [<span class="toc-section-number">3</span> calculation](#calculation)
+  - [<span class="toc-section-number">3.1</span>
     calculations](#calculations)
-  - [<span class="toc-section-number">4.2</span>
+  - [<span class="toc-section-number">3.2</span>
     calculation_config](#calculation_config)
-- [<span class="toc-section-number">5</span>
+- [<span class="toc-section-number">4</span>
   prioritization](#prioritization)
-  - [<span class="toc-section-number">5.1</span>
+  - [<span class="toc-section-number">4.1</span>
     prioritizations](#prioritizations)
-  - [<span class="toc-section-number">5.2</span> profiles](#profiles)
-  - [<span class="toc-section-number">5.3</span>
+  - [<span class="toc-section-number">4.2</span> profiles](#profiles)
+  - [<span class="toc-section-number">4.3</span>
     default_profile](#default_profile)
-  - [<span class="toc-section-number">5.4</span> pzfields](#pzfields)
-  - [<span class="toc-section-number">5.5</span>
+  - [<span class="toc-section-number">4.4</span> pzfields](#pzfields)
+  - [<span class="toc-section-number">4.5</span>
     prioritization_score_mode](#prioritization_score_mode)
-  - [<span class="toc-section-number">5.6</span> pzprefix](#pzprefix)
+  - [<span class="toc-section-number">4.6</span> pzprefix](#pzprefix)
+- [<span class="toc-section-number">5</span> pipeline](#pipeline)
+  - [<span class="toc-section-number">5.1</span> steps](#steps)
 - [<span class="toc-section-number">6</span> stats](#stats-1)
   - [<span class="toc-section-number">6.1</span> stats_md](#stats_md)
   - [<span class="toc-section-number">6.2</span>
@@ -207,10 +211,6 @@ Examples:
 
 > ``` json
 > {
->    "hgvs": {
->       "full_format": true,
->       "use_exon": true
->    }
 >    "annotation": {
 >       "parquet": {
 >          "annotations": {
@@ -287,6 +287,10 @@ Examples:
 >          "transcript_source": "refseq",
 >          "hpo": ["HP:0001156", "HP:0001363", "HP:0011304", "HP:0010055"]
 >       },
+>       "hgvs": {
+>          "full_format": true,
+>          "use_exon": true
+>       }
 >       "options": {
 >          "append": true
 >       }
@@ -310,200 +314,6 @@ Examples:
 >    "export": {
 >       "include_header": true
 >    }
-> }
-> ```
-
-# hgvs
-
-HOWARD annotates variants with HGVS annotation using HUGO HGVS
-internation Sequence Variant Nomenclature (http://varnomen.hgvs.org/).
-Annotation refere to refGene and genome to generate HGVS nomenclature
-for all available transcripts. This annotation add 'hgvs' field into VCF
-INFO column of a VCF file. Several options are available, to add gene,
-exon and protein information, to generate a 'full format' detailed
-annotation, to choose codon format.
-
-Examples:
-
-> HGVS annotation with operations for generate variant_id and variant
-> type, extract HGVS from snpEff annotation, select NOMEN from snpEff
-> HGVS with a list of transcripts of preference
-
-> ``` json
-> {
->    "hgvs": {
->      "full_format": true,
->      "use_exon": true
->    }
-> }
-> ```
-
-## use_gene
-
-Add Gene information to generate HGVS annotation (e.g.
-'NM_152232**(TAS1R2)**:c.231T\>C').
-
-Default: `False`
-
-Examples:
-
-> Use Gene in HGVS annotation
-
-> ``` json
-> {
->    "use_gene": true
-> }
-> ```
-
-## use_exon
-
-Add Exon information to generate HGVS annotation (e.g.
-'NM_152232(exon2):c.231T\>C'). Only if 'use_gene' is not enabled.
-
-Default: `False`
-
-Examples:
-
-> Use Exon in HGVS annotation
-
-> ``` json
-> {
->    "use_exon": true
-> }
-> ```
-
-## use_protein
-
-Use Protein level to generate HGVS annotation (e.g.
-'NP_689418:p.Cys77Arg'). Can be used with 'use_exon' or 'use_gene'.
-
-Default: `False`
-
-Examples:
-
-> Use Protein in HGVS annotation
-
-> ``` json
-> {
->    "use_protein": true
-> }
-> ```
-
-## add_protein
-
-Add Protein level to DNA HGVS annotation (e.g.
-'NM_152232:c.231T\>C,NP_689418:p.Cys77Arg').
-
-Default: `False`
-
-Examples:
-
-> Add Protein level to DNA HGVS annotation
-
-> ``` json
-> {
->    "add_protein": true
-> }
-> ```
-
-## full_format
-
-Generates HGVS annotation in a full format (non-standard, e.g.
-'TAS1R2:NM_152232:NP_689418:c.231T\>C:p.Cys77Arg',
-'TAS1R2:NM_152232:NP_689418:exon2:c.231T\>C:p.Cys77Arg'). Full format
-use all information to generates an exhaustive annotation. Use
-specifically 'use_exon' to add exon information.
-
-Default: `False`
-
-Examples:
-
-> Use full format for HGVS annotation
-
-> ``` json
-> {
->    "full_format": true
-> }
-> ```
-
-## codon_type
-
-Amino Acide Codon format type to use to generate HGVS annotation
-(default '3'):
-
-- '1': codon in 1 character (e.g. 'C', 'R')
-
-- '3': codon in 3 character (e.g. 'Cys', 'Arg')
-
-- 'FULL': codon in full name (e.g. 'Cysteine', 'Arginine')
-
-Type: `str`
-
-Choices: `['1', '3', 'FULL']`
-
-Default: `3`
-
-Examples:
-
-> Amino Acide Codon format with 1 character
-
-> ``` json
-> {
->    "codon_type": "1"
-> }
-> ```
-
-> Amino Acide Codon format with 3 character
-
-> ``` json
-> {
->    "codon_type": "3"
-> }
-> ```
-
-> Amino Acide Codon format with full name
-
-> ``` json
-> {
->    "codon_type": "FULL"
-> }
-> ```
-
-## refgene
-
-Path to refGene annotation file (see [HOWARD User
-Guide](user_guide.md#databases-tool)).
-
-Type: `Path`
-
-Default: `None`
-
-Examples:
-
-> Path to refSeq file
-
-> ``` json
-> {
->    "refgene": "~/howard/databases/refseq/current/hg19/ncbiRefSeq.txt"
-> }
-> ```
-
-## refseqlink
-
-Path to refGeneLink annotation file (see [HOWARD User
-Guide](user_guide.md#databases-tool)).
-
-Type: `Path`
-
-Default: `None`
-
-Examples:
-
-> Path to refSeq file
-
-> ``` json
-> {
->    "refseqlink": "~/howard/databases/refseq/current/hg19/ncbiRefSeqLink.txt"
 > }
 > ```
 
@@ -603,6 +413,10 @@ Examples:
 >          "release": "2109",
 >          "transcript_source": "refseq",
 >          "hpo": ["HP:0001156", "HP:0001363", "HP:0011304", "HP:0010055"]
+>       }
+>       "hgvs": {
+>          "full_format": true,
+>          "use_exon": true
 >       }
 >       "options": {
 >          "append": true
@@ -1624,6 +1438,200 @@ Examples:
 > }
 > ```
 
+## hgvs
+
+HOWARD annotates variants with HGVS annotation using HUGO HGVS
+internation Sequence Variant Nomenclature (http://varnomen.hgvs.org/).
+Annotation refere to refGene and genome to generate HGVS nomenclature
+for all available transcripts. This annotation add 'hgvs' field into VCF
+INFO column of a VCF file. Several options are available, to add gene,
+exon and protein information, to generate a 'full format' detailed
+annotation, to choose codon format.
+
+Examples:
+
+> HGVS annotation with operations for generate variant_id and variant
+> type, extract HGVS from snpEff annotation, select NOMEN from snpEff
+> HGVS with a list of transcripts of preference
+
+> ``` json
+> {
+>    "hgvs": {
+>      "full_format": true,
+>      "use_exon": true
+>    }
+> }
+> ```
+
+### use_gene
+
+Add Gene information to generate HGVS annotation (e.g.
+'NM_152232**(TAS1R2)**:c.231T\>C').
+
+Default: `False`
+
+Examples:
+
+> Use Gene in HGVS annotation
+
+> ``` json
+> {
+>    "use_gene": true
+> }
+> ```
+
+### use_exon
+
+Add Exon information to generate HGVS annotation (e.g.
+'NM_152232(exon2):c.231T\>C'). Only if 'use_gene' is not enabled.
+
+Default: `False`
+
+Examples:
+
+> Use Exon in HGVS annotation
+
+> ``` json
+> {
+>    "use_exon": true
+> }
+> ```
+
+### use_protein
+
+Use Protein level to generate HGVS annotation (e.g.
+'NP_689418:p.Cys77Arg'). Can be used with 'use_exon' or 'use_gene'.
+
+Default: `False`
+
+Examples:
+
+> Use Protein in HGVS annotation
+
+> ``` json
+> {
+>    "use_protein": true
+> }
+> ```
+
+### add_protein
+
+Add Protein level to DNA HGVS annotation (e.g.
+'NM_152232:c.231T\>C,NP_689418:p.Cys77Arg').
+
+Default: `False`
+
+Examples:
+
+> Add Protein level to DNA HGVS annotation
+
+> ``` json
+> {
+>    "add_protein": true
+> }
+> ```
+
+### full_format
+
+Generates HGVS annotation in a full format (non-standard, e.g.
+'TAS1R2:NM_152232:NP_689418:c.231T\>C:p.Cys77Arg',
+'TAS1R2:NM_152232:NP_689418:exon2:c.231T\>C:p.Cys77Arg'). Full format
+use all information to generates an exhaustive annotation. Use
+specifically 'use_exon' to add exon information.
+
+Default: `False`
+
+Examples:
+
+> Use full format for HGVS annotation
+
+> ``` json
+> {
+>    "full_format": true
+> }
+> ```
+
+### codon_type
+
+Amino Acide Codon format type to use to generate HGVS annotation
+(default '3'):
+
+- '1': codon in 1 character (e.g. 'C', 'R')
+
+- '3': codon in 3 character (e.g. 'Cys', 'Arg')
+
+- 'FULL': codon in full name (e.g. 'Cysteine', 'Arginine')
+
+Type: `str`
+
+Choices: `['1', '3', 'FULL']`
+
+Default: `3`
+
+Examples:
+
+> Amino Acide Codon format with 1 character
+
+> ``` json
+> {
+>    "codon_type": "1"
+> }
+> ```
+
+> Amino Acide Codon format with 3 character
+
+> ``` json
+> {
+>    "codon_type": "3"
+> }
+> ```
+
+> Amino Acide Codon format with full name
+
+> ``` json
+> {
+>    "codon_type": "FULL"
+> }
+> ```
+
+### refgene
+
+Path to refGene annotation file (see [HOWARD User
+Guide](user_guide.md#databases-tool)).
+
+Type: `Path`
+
+Default: `None`
+
+Examples:
+
+> Path to refSeq file
+
+> ``` json
+> {
+>    "refgene": "~/howard/databases/refseq/current/hg19/ncbiRefSeq.txt"
+> }
+> ```
+
+### refseqlink
+
+Path to refGeneLink annotation file (see [HOWARD User
+Guide](user_guide.md#databases-tool)).
+
+Type: `Path`
+
+Default: `None`
+
+Examples:
+
+> Path to refSeq file
+
+> ``` json
+> {
+>    "refseqlink": "~/howard/databases/refseq/current/hg19/ncbiRefSeqLink.txt"
+> }
+> ```
+
 # calculation
 
 Calculation process operations that are defiend in a Calculation
@@ -1916,6 +1924,144 @@ Examples:
 > ``` json
 > {
 >    "pzprefix": "PZT"
+> }
+> ```
+
+# pipeline
+
+Pipeline options to define the order of operations to process as a list
+of steps. By default, all steps are processed in the order: annotation,
+calculation, prioritization, with corresponding section in parameter
+JSON file. Sections can be added in the parameter JSON file (e.g.
+"annotation_frequency", "calculation_final"), and steps added in the
+pipeline parameter with its corresponding type of operation (e.g.
+'annotation', 'calculation', respectively).
+
+Examples:
+
+> Pipeline with all steps by default with corresponding parameters for
+> each step
+
+> ``` json
+> {
+>    "pipeline": {
+>      "steps": [
+>        {"annotation": "annotation"},
+>        {"calculation": "calculation"},
+>        {"prioritization": "prioritization"}
+>      ]
+>    },
+>    "annotation": {
+>      "parquet": {
+>        "annotations": {
+>          "/path/to/database.parquet": {
+>            "annotation_fields": {
+>              "INFO": null
+>            }
+>          }
+>        }
+>      }
+>    },
+>    "calculation": {
+>      "calculations": {
+>        "operation1": null,
+>        "operation2": {
+>          "options": {
+>            "option1": "value1",
+>            "option2": "value2"
+>          }
+>        }
+>      },
+>      "calculation_config": "calculation_config.json"
+>    },
+>    "prioritization": {
+>      "prioritizations": "config/prioritization_profiles.json",
+>      "profiles": ["GENOME", "GERMLINE"],
+>      "default_profile": "GERMLINE",
+>      "pzfields": ["PZScore", "PZFlag", "PZComment"],
+>      "prioritization_score_mode": "VaRank"
+>    }
+> }
+> ```
+
+## steps
+
+List of steps to process in the pipeline.
+
+A step is defined as a dict of operation section name as key (e.g.
+"annotation", "calculation", "prioritization", "annotation_core",
+"annotation_frequency", "annotation_scores", "calculation_frequency",
+"calculation_final") that is mapped to corresponding parameters JSON
+file, associated with a step type that correspond to a tool (only
+"annotation", "calculation", "prioritization" available).
+
+By default, all steps are processed in the order: "annotation",
+"calculation", "prioritization".
+
+Beware that some steps can be skipped if no parameters are provided in
+the paramter JSON file (e.g. '{"annotation_frequency": "annotation"}'
+needs "annotation_frequency" in paramter JSON file).
+
+Type: `list`
+
+Default:
+`[ {"annotation": "annotation"}, {"calculation": "calculation"}, {"prioritization": "prioritization"} ]`
+
+Examples:
+
+> Pipeline with all steps by default
+
+> ``` json
+> {
+>    "steps": [
+>      {"annotation": "annotation"},
+>      {"calculation": "calculation"},
+>      {"prioritization": "prioritization"}
+>    ]
+> }
+> ```
+
+> Pipeline with mult7iple steps of operations as annotation, calculation
+> and prioritization
+
+> ``` json
+> {
+>    "steps": [
+>      {"annotation_core": "annotation"},
+>      {"calculation": "calculation"},
+>      {"annotation_frequency": "annotation"},
+>      {"annotation_scores": "annotation"},
+>      {"calculation_frequency": "calculation"},
+>      {"prioritization": "prioritization"},
+>      {"calculation_final": "calculation"}
+>    ]
+> }
+> ```
+
+> Pipeline with 3 steps that merge multiple operations
+
+> ``` json
+> {
+>    "steps": [
+>      {"annotation_core": "annotation", "calculation": "calculation"},
+>      {"annotation_frequency": "annotation", "calculation_frequency": "calculation"},
+>      {"annotation_scores": "annotation", "calculation_final": "calculation"}
+>    ]
+> }
+> ```
+
+> With corresponding parameters in the parameter JSON file for each step
+> (see above examples)
+
+> ``` json
+> {
+>    "annotation_core": {...},
+>    "annotation_frequency": {...},
+>    "annotation_scores": {...},
+>    "calculation": {...},
+>    "calculation_frequency": {...},
+>    "calculation_final": {...},
+>    "prioritization": {}
 > }
 > ```
 
