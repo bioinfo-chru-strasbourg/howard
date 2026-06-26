@@ -351,9 +351,21 @@ def load_param_and_config(args: argparse, command: str, strict: bool = False, lo
     # Load config args
     arguments_dict, _, config, param = load_config_args(args)
 
+    # Input
+    if "input" in args:
+        input_file = args.input
+    else:
+        input_file = None
+
+    # Output
+    if "output" in args:
+        output_file = args.output
+    else:
+        output_file = None
+
     # Create variants object
     vcfdata_obj = Variants(
-        input=args.input, output=args.output, config=config, param=param
+        input=input_file, output=output_file, config=config, param=param
     )
 
     # Get Config and Params

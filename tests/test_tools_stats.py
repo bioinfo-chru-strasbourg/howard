@@ -29,7 +29,8 @@ def test_stats():
         input=input_vcf, config=config, arguments_dict=arguments_dict
     )
 
-    # Query
+    # Stats
+    stats(args)
     try:
         stats(args)
         assert True

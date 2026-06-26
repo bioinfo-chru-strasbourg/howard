@@ -1,8 +1,7 @@
 import argparse
 import logging as log
 
-from howard.functions.commons import load_args, load_config_args, load_param_and_config
-from howard.objects.variants import Variants
+from howard.functions.commons import load_param_and_config
 
 
 def convert(args: argparse) -> None:
@@ -16,39 +15,14 @@ def convert(args: argparse) -> None:
     :type args: argparse
     """
 
+    # Log
+    log.info("Start")
+
     # Load args, param, config and vcfdata_obj
-    arguments_dict, config, param, vcfdata_obj = load_param_and_config(args=args, command="convert", strict=False, load_data=False)
-
-    # # Load config args
-    # arguments_dict, _, config, param = load_config_args(args)
-
-    # # Create variants object
-    # vcfdata_obj = Variants(
-    #     input=args.input, output=args.output, config=config, param=param
-    # )
-
-    # # Get Config and Params
-    # config = vcfdata_obj.get_config()
-    # param = vcfdata_obj.get_param()
-
-    # # Load args into param
-    # param = load_args(
-    #     param=param,
-    #     args=args,
-    #     arguments_dict=arguments_dict,
-    #     command="convert",
-    #     strict=False,
-    # )
+    _, config, param, vcfdata_obj = load_param_and_config(args=args, command="convert", strict=False, load_data=False)
 
     # Access
     config["access"] = config.get("access", "RO") or "RO"
-
-    # Init
-    #param["explode"] = param.get("explode", {}) or {}
-
-    # # Re-Load Config and Params
-    # vcfdata_obj.set_param(param)
-    # vcfdata_obj.set_config(config)
 
     # Determine view type and mode (either "table" or "view", either "explore" or "full")
     view_type = "view"
