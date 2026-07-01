@@ -20,7 +20,6 @@ import logging as log
 import cyvcf2  # type: ignore
 import pyBigWig  # type: ignore
 
-
 from howard.functions.commons import (
     CODE_TYPE_MAP,
     DEFAULT_ANNOTATIONS_FOLDER,
@@ -128,6 +127,79 @@ class variants_annotation:
         )
 
         return databases_infos_dict
+
+    def get_annotation_header_fields_override(self) -> dict:
+        """
+        Return global header fields override dict (Number/Type/Description),
+        used to force VCF header definition for any annotation field,
+        whatever the annotation tool used (parquet, bcftools, snpsift, annovar...).
+
+        Config location: annotation.options.header_fields
+        Example:
+            "annotation": {
+                "options": {
+                    "header_fields": {
+                        "my_field": {
+                            "number": ".",
+                            "type": "Float",
+                            "description": "my field description"
+                        }
+                    }
+                }
+            }
+
+        :return: dict field_name -> {"number": ..., "type": ..., "description": ...}
+        """
+        return (
+            self.get_param()
+            .get("annotation", {})
+            .get("options", {})
+            .get("header_fields", {})
+        )
+
+    def build_info_with_header_override(
+        self,
+        field_name: str,
+        field_number,
+        field_type: str,
+        field_description: str,
+        field_source: str,
+        field_version: str,
+        header_fields_override: dict = None,
+    ):
+        """
+        Build a vcf.parser._Info object for INFO field 'field_name', applying
+        Number/Type/Description override if defined in header_fields_override
+        (see get_annotation_header_fields_override).
+
+        :return: vcf.parser._Info object
+        """
+        if header_fields_override is None:
+            header_fields_override = {}
+
+        field_override = header_fields_override.get(field_name, {})
+        if field_override:
+            override_type = field_override.get("type")
+            if override_type and override_type not in CODE_TYPE_MAP:
+                msg_err = (
+                    f"Header field '{field_name}' override - type '{override_type}' "
+                    f"not valid (should be one of {list(CODE_TYPE_MAP.keys())})"
+                )
+                log.error(msg_err)
+                raise ValueError(msg_err)
+            field_number = field_override.get("number", field_number)
+            field_type = override_type or field_type
+            field_description = field_override.get("description", field_description)
+
+        return vcf.parser._Info(
+            field_name,
+            field_number,
+            field_type,
+            field_description,
+            field_source,
+            field_version,
+            self.code_type_map[field_type],
+        )
 
     def annotation(self) -> None:
         """
@@ -543,6 +615,12 @@ class variants_annotation:
         )
         log.debug("Annotations options: " + str(annotations_options))
 
+        # Header fields override (Number/Type/Description), global config
+        annotation_header_fields_override = self.get_annotation_header_fields_override()
+        log.debug(
+            f"annotation_header_fields_override={annotation_header_fields_override}"
+        )
+
         # Chunk size
         chunk_size = self.get_config().get("chunk_size", DEFAULT_CHUNK_SIZE)
 
@@ -767,30 +845,33 @@ class variants_annotation:
                                 annotation_field_num = db_hdr_vcf_header_infos[
                                     annotation_field
                                 ].num
+
+                            annotation_field_info = self.build_info_with_header_override(
+                                field_name=annotation_field_new,
+                                field_number=annotation_field_num,
+                                field_type=db_hdr_vcf_header_infos[
+                                    annotation_field
+                                ].type,
+                                field_description=db_hdr_vcf_header_infos[
+                                    annotation_field
+                                ].desc,
+                                field_source="HOWARD BigWig annotation",
+                                field_version="unknown",
+                                header_fields_override=annotation_header_fields_override,
+                            )
+
                             cyvcf2_header_list.append(
                                 {
                                     "ID": annotation_field_new,
-                                    "Number": annotation_field_num,
-                                    "Type": db_hdr_vcf_header_infos[
-                                        annotation_field
-                                    ].type,
-                                    "Description": db_hdr_vcf_header_infos[
-                                        annotation_field
-                                    ].desc,
+                                    "Number": annotation_field_info.num,
+                                    "Type": annotation_field_info.type,
+                                    "Description": annotation_field_info.desc,
                                 }
                             )
 
                             # Add header on VCF
-                            vcf_reader.infos[annotation_field_new] = vcf.parser._Info(
-                                annotation_field_new,
-                                db_hdr_vcf_header_infos[annotation_field].num,
-                                db_hdr_vcf_header_infos[annotation_field].type,
-                                db_hdr_vcf_header_infos[annotation_field].desc,
-                                "HOWARD BigWig annotation",
-                                "unknown",
-                                self.code_type_map[
-                                    db_hdr_vcf_header_infos[annotation_field].type
-                                ],
+                            vcf_reader.infos[annotation_field_new] = (
+                                annotation_field_info
                             )
 
                         # Load bigwig database
@@ -1252,6 +1333,12 @@ class variants_annotation:
         )
         log.debug("Annotations: " + str(annotations))
 
+        # Header fields override (Number/Type/Description), global config
+        annotation_header_fields_override = self.get_annotation_header_fields_override()
+        log.debug(
+            f"annotation_header_fields_override={annotation_header_fields_override}"
+        )
+        
         # Assembly
         assembly = self.get_param().get(
             "assembly", self.get_config().get("assembly", DEFAULT_ASSEMBLY)
@@ -1452,16 +1539,14 @@ class variants_annotation:
                                 )
 
                                 vcf_reader.infos[annotation_fields_new_name] = (
-                                    vcf.parser._Info(
-                                        annotation_fields_new_name,
-                                        db_hdr_vcf_header_infos_number,
-                                        db_hdr_vcf_header_infos_type,
-                                        db_hdr_vcf_header_infos_description,
-                                        db_hdr_vcf_header_infos_source,
-                                        db_hdr_vcf_header_infos_version,
-                                        self.code_type_map[
-                                            db_hdr_vcf_header_infos_type
-                                        ],
+                                    self.build_info_with_header_override(
+                                        field_name=annotation_fields_new_name,
+                                        field_number=db_hdr_vcf_header_infos_number,
+                                        field_type=db_hdr_vcf_header_infos_type,
+                                        field_description=db_hdr_vcf_header_infos_description,
+                                        field_source=db_hdr_vcf_header_infos_source,
+                                        field_version=db_hdr_vcf_header_infos_version,
+                                        header_fields_override=annotation_header_fields_override,
                                     )
                                 )
 
@@ -1618,6 +1703,12 @@ class variants_annotation:
             .get("annotations", None)
         )
         log.debug("Annotations: " + str(annotations))
+
+        # Header fields override (Number/Type/Description), global config
+        annotation_header_fields_override = self.get_annotation_header_fields_override()
+        log.debug(
+            f"annotation_header_fields_override={annotation_header_fields_override}"
+        )
 
         # Assembly
         assembly = self.get_param().get(
@@ -1811,14 +1902,14 @@ class variants_annotation:
                             )
 
                             vcf_reader.infos[annotation_fields_new_name] = (
-                                vcf.parser._Info(
-                                    annotation_fields_new_name,
-                                    db_hdr_vcf_header_infos_number,
-                                    db_hdr_vcf_header_infos_type,
-                                    db_hdr_vcf_header_infos_description,
-                                    db_hdr_vcf_header_infos_source,
-                                    db_hdr_vcf_header_infos_version,
-                                    self.code_type_map[db_hdr_vcf_header_infos_type],
+                                self.build_info_with_header_override(
+                                    field_name=annotation_fields_new_name,
+                                    field_number=db_hdr_vcf_header_infos_number,
+                                    field_type=db_hdr_vcf_header_infos_type,
+                                    field_description=db_hdr_vcf_header_infos_description,
+                                    field_source=db_hdr_vcf_header_infos_source,
+                                    field_version=db_hdr_vcf_header_infos_version,
+                                    header_fields_override=annotation_header_fields_override,
                                 )
                             )
 
@@ -3304,6 +3395,11 @@ class variants_annotation:
         )
         log.debug("Annotations: " + str(annotations))
 
+        annotation_header_fields_override = self.get_annotation_header_fields_override()
+        log.debug(
+            f"annotation_header_fields_override={annotation_header_fields_override}"
+        )
+
         # Param - Assembly
         assembly = param.get("assembly", config.get("assembly", DEFAULT_ASSEMBLY))
 
@@ -3734,7 +3830,6 @@ class variants_annotation:
                             if len(error_message_command_err):
                                 log.error("Annotation failed: Error in commands")
                                 raise ValueError("Annotation failed: Error in commands")
-
                 if parallelize_annovar_command == "multianno":
 
                     # Generate tmp files for annovar
@@ -3779,7 +3874,6 @@ class variants_annotation:
                     log.debug(f"Annotation - Annovar command: {command_annovar}")
                     run_parallel_commands([command_annovar], 1)
                     tmp_annotates_vcf_name_list = [tmp_annotate_vcf_name]
-
                     err_files_process(err_files=err_files, merge_msg=False)
 
                 elif parallelize_annovar_command == "parallel" and command_annovar_list:
@@ -3819,7 +3913,7 @@ class variants_annotation:
                         tmp_annotates_vcf_name_to_merge = " ".join(
                             tmp_annotates_vcf_name_list
                         )
-
+                        
                         # Command merge
                         merge_command = f"{bcftools_bin_command} merge --force-samples --threads={threads} {tmp_vcf_name} {tmp_annotates_vcf_name_to_merge} -o {tmp_annotate_vcf_name} -Oz  "
                         log.info(
@@ -3844,7 +3938,16 @@ class variants_annotation:
 
                     for ann in annovar_vcf_header.infos:
                         if ann not in self.get_header().infos:
-                            vcf_reader.infos[ann] = annovar_vcf_header.infos.get(ann)
+                            ann_info = annovar_vcf_header.infos.get(ann)
+                            vcf_reader.infos[ann] = self.build_info_with_header_override(
+                                field_name=ann,
+                                field_number=ann_info.num,
+                                field_type=ann_info.type,
+                                field_description=ann_info.desc,
+                                field_source=ann_info.source,
+                                field_version=ann_info.version,
+                                header_fields_override=annotation_header_fields_override,
+                            )
 
                     # Update variants
                     log.info(f"Annotations Annovar - Updating...")
@@ -3931,6 +4034,12 @@ class variants_annotation:
             .get("annotations_append", False)
         )
         log.debug(f"force_append_annotation={force_append_annotation}")
+
+        # Header fields override (Number/Type/Description), global config
+        annotation_header_fields_override = self.get_annotation_header_fields_override()
+        log.debug(
+            f"annotation_header_fields_override={annotation_header_fields_override}"
+        )
 
         # Data
         table_variants = self.get_table_variants()
@@ -4254,16 +4363,14 @@ class variants_annotation:
                             )
 
                             vcf_reader.infos[annotation_fields_new_name] = (
-                                vcf.parser._Info(
-                                    annotation_fields_new_name,
-                                    parquet_hdr_vcf_header_infos_number,
-                                    parquet_hdr_vcf_header_infos_type,
-                                    parquet_hdr_vcf_header_infos_description,
-                                    parquet_hdr_vcf_header_infos_source,
-                                    parquet_hdr_vcf_header_infos_version,
-                                    self.code_type_map[
-                                        parquet_hdr_vcf_header_infos_type
-                                    ],
+                                self.build_info_with_header_override(
+                                    field_name=annotation_fields_new_name,
+                                    field_number=parquet_hdr_vcf_header_infos_number,
+                                    field_type=parquet_hdr_vcf_header_infos_type,
+                                    field_description=parquet_hdr_vcf_header_infos_description,
+                                    field_source=parquet_hdr_vcf_header_infos_source,
+                                    field_version=parquet_hdr_vcf_header_infos_version,
+                                    header_fields_override=annotation_header_fields_override,
                                 )
                             )
 
