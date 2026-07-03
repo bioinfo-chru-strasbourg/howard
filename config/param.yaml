@@ -20,7 +20,7 @@ annotation:
         INFO: null
   snpeff:
     csvStats: OUTPUT.csv
-    options: '-lof -hgvs -oicr -noShiftHgvs -spliceSiteSize 3 '
+    options: '-lof -hgvs -oicr -spliceSiteSize 3 '
     stats: OUTPUT.html
 calculation:
   calculation_config: config/calculations_config.json

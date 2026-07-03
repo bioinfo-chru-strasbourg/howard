@@ -280,7 +280,7 @@ Examples:
 >          }
 >       },
 >       "snpeff": {
->          "options": " -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr "
+>          "options": " -hgvs -spliceSiteSize 3 -lof -oicr "
 >       },
 >       "exomiser": {
 >          "release": "2109",
@@ -407,7 +407,7 @@ Examples:
 >          }
 >       },
 >       "snpeff": {
->          "options": " -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr "
+>          "options": " -hgvs -spliceSiteSize 3 -lof -oicr "
 >       }
 >       "exomiser": {
 >          "release": "2109",
@@ -639,6 +639,15 @@ Examples:
 >             "annotation_fields": {
 >                "field1": null,
 >                "field2": "field2_renamed"
+>             },
+>             "options": {
+>                "header_fields": {
+>                   "field1": {
+>                      "Number": ".",
+>                      "Type": "String",
+>                      "Description": "field1 as String"
+>                   }
+>                }
 >             }
 >          },
 >          "database2.bed.gz": {
@@ -666,6 +675,17 @@ If a full path is not provided, the system will automatically detect
 files within database folders (see Configuration doc) and assembly (see
 Parameter option).
 
+The option section provides:
+
+- 'header_fields' allows to override specific fields in the annotation
+  header when updating the database from a VCF file. The keys of the
+  dictionary represent the field names in the annotation header, and the
+  values represent the new values that you want to assign to those
+  fields. This parameter is optional and can be used to customize the
+  annotation header during the update process. If not provided, the
+  default values from the VCF file will be used for the annotation
+  header fields.
+
 Examples:
 
 > Annotation with dbSNP database with all fields
@@ -683,7 +703,7 @@ Examples:
 > ```
 
 > Annotation with dbNSFP (only PolyPhen, ClinVar and REVEL score), and
-> rename fields
+> rename fields and header
 
 > ``` json
 > {
@@ -693,6 +713,13 @@ Examples:
 >             "Polyphen2_HDIV_pred": "PolyPhen",
 >             "ClinPred_pred": "ClinVar",
 >             "REVEL_score": null
+>          },
+>          "options": {
+>             "Polyphen2_HDIV_pred": {
+>                "Number": ".",
+>                "Type": "String",
+>                "Description": "PolyPhen prediction for Human"
+>             }
 >          }
 >       }
 >    }
@@ -764,6 +791,15 @@ Section 'options' allows to define Annovar options (e.g. 'protocol',
 
 - 'options' is the Annovar additional options (e.g. '-other_options')
 
+- 'header_fields' allows to override specific fields in the annotation
+  header when updating the database from a VCF file. The keys of the
+  dictionary represent the field names in the annotation header, and the
+  values represent the new values that you want to assign to those
+  fields. This parameter is optional and can be used to customize the
+  annotation header during the update process. If not provided, the
+  default values from the VCF file will be used for the annotation
+  header fields.
+
 If a full path is not provided, the system will automatically detect
 files within database folders (see Configuration doc) and assembly (see
 Parameter option).
@@ -788,7 +824,19 @@ Examples:
 >                "genebase": "-splicing_threshold 3 -indel_splicing_threshold 3 -hgvs",
 >                "arguments": "",
 >                "xref": "/path/to/xref/file",
->                "options": ""
+>                "options": "",
+>                "header_fields": {
+>                   "field1": {
+>                      "Number": ".",
+>                      "Type": "String",
+>                      "Description": "field1 as String"
+>                   },
+>                   "field2_renamed": {
+>                      "Number": ".",
+>                      "Type": "String",
+>                      "Description": "Renamed field2 as String"
+>                   }
+>                }
 >             }
 >          },
 >          "annovar_annotation2": {
@@ -826,7 +874,7 @@ with a list of selected fields for each of them (rename available)
 Examples:
 
 > Annotation with ClinVar (fields CLNSIG and CLNDN renamed) and Cosmic
-> (all fields)
+> (all fields) and header override for ClinVar fields
 
 > ``` json
 > {
@@ -839,6 +887,18 @@ Examples:
 >          "options": {
 >             "protocol": "clinvar_20221231",
 >             "operation": "f"
+>             "header_fields": {
+>                "ClinVar_class": {
+>                   "Number": ".",
+>                   "Type": "String",
+>                   "Description": "ClinVar classification"
+>                },
+>                "ClinVar_desease": {
+>                   "Number": ".",
+>                   "Type": "String",
+>                   "Description": "ClinVar disease name"
+>                }
+>             }
 >          }
 >       },
 >       "cosmic70": {
@@ -904,7 +964,7 @@ Examples:
 > ``` json
 > {
 >    "snpeff": {
->       "options": " -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr "
+>       "options": " -hgvs -spliceSiteSize 3 -lof -oicr "
 >    }
 > }
 > ```
@@ -929,7 +989,7 @@ Examples:
 
 > ``` json
 > {
->    "options": " -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr "
+>    "options": " -hgvs -spliceSiteSize 3 -lof -oicr "
 > }
 > ```
 
@@ -1007,6 +1067,15 @@ Examples:
 >                "field1": null,
 >                "field2": null
 >             }
+>             "options": {
+>                "header_fields": {
+>                   "field1": {
+>                      "Number": ".",
+>                      "Type": "String",
+>                      "Description": "field1 as String"
+>                   }
+>                }
+>             }
 >          },
 >          "/path/to/database2.vcf.gz": {
 >             "annotation_fields": {
@@ -1034,6 +1103,17 @@ If a full path is not provided, the system will automatically detect
 files within database folders (see Configuration doc) and assembly (see
 Parameter option).
 
+The option section provides:
+
+- 'header_fields' allows to override specific fields in the annotation
+  header when updating the database from a VCF file. The keys of the
+  dictionary represent the field names in the annotation header, and the
+  values represent the new values that you want to assign to those
+  fields. This parameter is optional and can be used to customize the
+  annotation header during the update process. If not provided, the
+  default values from the VCF file will be used for the annotation
+  header fields.
+
 Examples:
 
 > Annotation with dbSNP database with all fields
@@ -1060,6 +1140,15 @@ Examples:
 >             "Polyphen2_HDIV_pred": "PolyPhen",
 >             "ClinPred_pred": "ClinVar",
 >             "REVEL_score": null
+>          },
+>          "options": {
+>             "header_fields": {
+>                "Polyphen2_HDIV_pred": {
+>                   "Number": ".",
+>                   "Type": "String",
+>                   "Description": "PolyPhen prediction for Human"
+>                }
+>             }
 >          }
 >    }
 > }
@@ -1098,6 +1187,15 @@ databases (by annotation type), and specific methods can be defined for
 each database and field (default 'mean' for Integer and Float, 'join'
 for String).
 
+The option section also provides 'header_fields' option, that allows to
+override specific fields in the annotation header when updating the
+database from a VCF file. The keys of the dictionary represent the field
+names in the annotation header, and the values represent the new values
+that you want to assign to those fields. This parameter is optional and
+can be used to customize the annotation header during the update
+process. If not provided, the default values from the VCF file will be
+used for the annotation header fields.
+
 Examples:
 
 > Annotation with multiple databases in BigWig and BigBed formats, with
@@ -1116,6 +1214,13 @@ Examples:
 >                "method": {
 >                   "field1": "max",
 >                   "field2_renamed": "min"
+>                },
+>                "header_fields": {
+>                   "field1": {
+>                      "Number": ".",
+>                      "Type": "String",
+>                      "Description": "field1 as String"
+>                   }
 >                }
 >             }
 >          },
@@ -1186,6 +1291,13 @@ Examples:
 >          "options": {
 >             "method": {
 >                "GERP_score": "max"
+>             },
+>             "header_fields": {
+>                "GERP_score": {
+>                   "Number": ".",
+>                   "Type": "Float",
+>                   "Description": "GERP_score as Float"
+>                }
 >             }
 >          }
 >       }

@@ -510,7 +510,7 @@ See [HOWARD Parameters JSON](help.parameters.md) for more information.
 >       }
 >     },
 >     "snpeff": {
->       "options": "-lof -hgvs -oicr -noShiftHgvs -spliceSiteSize 3 "
+>       "options": "-lof -hgvs -oicr -spliceSiteSize 3 "
 >     },
 >     "snpsift": {
 >       "annotations": {

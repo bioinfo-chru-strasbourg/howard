@@ -534,6 +534,16 @@ class variants_annotation:
         )
         log.debug("Annotations: " + str(annotations))
 
+        # Header fields override (Number/Type/Description), collected from each
+        # annotation's own options block
+        # (annotation.annovar.annotations.<name>.options.header_fields)
+        annotation_header_fields_override = self.get_annotation_header_fields_override(
+            annotations=annotations
+        )
+        log.debug(
+            f"annotation_header_fields_override={annotation_header_fields_override}"
+        )
+
         # Param
         annotations_param = (
             self.get_param().get(section, {}).get("bigwig", {}).get("param", {})
@@ -699,7 +709,8 @@ class variants_annotation:
 
                         # Load header as VCF object
                         db_hdr_vcf = Variants(input=db_hdr_file)
-                        db_hdr_vcf_header_infos = db_hdr_vcf.get_header().infos
+                        db_hdr_vcf_header = db_hdr_vcf.get_header()
+                        db_hdr_vcf_header_infos = db_hdr_vcf_header.infos
                         log.debug(
                             "Annotation database header: "
                             + str(db_hdr_vcf_header_infos)
@@ -784,17 +795,7 @@ class variants_annotation:
                             )
 
                             # Add header on VCF
-                            vcf_reader.infos[annotation_field_new] = vcf.parser._Info(
-                                annotation_field_new,
-                                db_hdr_vcf_header_infos[annotation_field].num,
-                                db_hdr_vcf_header_infos[annotation_field].type,
-                                db_hdr_vcf_header_infos[annotation_field].desc,
-                                "HOWARD BigWig annotation",
-                                "unknown",
-                                self.code_type_map[
-                                    db_hdr_vcf_header_infos[annotation_field].type
-                                ],
-                            )
+                            db_hdr_vcf_header.infos[annotation_field_new] = db_hdr_vcf_header.infos[annotation_field]
 
                         # Load bigwig database
                         bw_db = pyBigWig.open(db_file, "r")
@@ -854,7 +855,7 @@ class variants_annotation:
                                 "bw_db": bw_db,
                                 "bw_type": "bw" if bw_db.isBigWig() else "bb",
                                 "bw_format": "BigWig" if bw_db.isBigWig() else "BigBed",
-                                "vcf_reader": vcf_reader,
+                                "vcf_reader": db_hdr_vcf_header, # VCF header with new annotation fields
                                 "cyvcf2_header_rename_dict": cyvcf2_header_rename_dict,
                                 "cyvcf2_header_list": cyvcf2_header_list,
                                 "cyvcf2_header_indexes": cyvcf2_header_indexes,
@@ -1170,18 +1171,18 @@ class variants_annotation:
                             )
 
                     # Log
-                    log.debug(f"Annotations done.")
+                    log.debug("Annotations done.")
 
                     # Close and write file
-                    log.info(f"Annotations write...")
+                    log.info("Annotations write...")
                     output_vcf.close()
-                    log.debug(f"Annotations write done.")
+                    log.debug("Annotations write done.")
 
                     # Update variants
-                    log.info(f"Annotations update...")
-                    self.update_from_vcf(output_vcf_file)
+                    log.info("Annotations update...")
+                    self.update_from_vcf(output_vcf_file, update_header=True, annotation_header_fields_override=annotation_header_fields_override)
                     remove_if_exists([output_vcf_file])
-                    log.debug(f"Annotations update done.")
+                    log.debug("Annotations update done.")
 
         return True
 
@@ -1254,6 +1255,16 @@ class variants_annotation:
             .get("annotations", None)
         )
         log.debug("Annotations: " + str(annotations))
+
+        # Header fields override (Number/Type/Description), collected from each
+        # annotation's own options block
+        # (annotation.annovar.annotations.<name>.options.header_fields)
+        annotation_header_fields_override = self.get_annotation_header_fields_override(
+            annotations=annotations
+        )
+        log.debug(
+            f"annotation_header_fields_override={annotation_header_fields_override}"
+        )
 
         # Assembly
         assembly = self.get_param().get(
@@ -1433,41 +1444,6 @@ class variants_annotation:
                                         f"{annotation_fields_new_name}:=INFO/{annotation_field}"
                                     )
 
-                                # Add INFO field to header
-                                db_hdr_vcf_header_infos_number = (
-                                    db_hdr_vcf_header_infos[annotation_field].num or "."
-                                )
-                                db_hdr_vcf_header_infos_type = (
-                                    db_hdr_vcf_header_infos[annotation_field].type
-                                    or "String"
-                                )
-                                db_hdr_vcf_header_infos_description = (
-                                    db_hdr_vcf_header_infos[annotation_field].desc
-                                    or f"{annotation_field} description"
-                                )
-                                db_hdr_vcf_header_infos_source = (
-                                    db_hdr_vcf_header_infos[annotation_field].source
-                                    or "unknown"
-                                )
-                                db_hdr_vcf_header_infos_version = (
-                                    db_hdr_vcf_header_infos[annotation_field].version
-                                    or "unknown"
-                                )
-
-                                vcf_reader.infos[annotation_fields_new_name] = (
-                                    vcf.parser._Info(
-                                        annotation_fields_new_name,
-                                        db_hdr_vcf_header_infos_number,
-                                        db_hdr_vcf_header_infos_type,
-                                        db_hdr_vcf_header_infos_description,
-                                        db_hdr_vcf_header_infos_source,
-                                        db_hdr_vcf_header_infos_version,
-                                        self.code_type_map[
-                                            db_hdr_vcf_header_infos_type
-                                        ],
-                                    )
-                                )
-
                                 annotation_list.append(annotation_field)
 
                                 nb_annotation_field += 1
@@ -1551,7 +1527,7 @@ class variants_annotation:
                         log.info(
                             f"Annotation - Updating [{nb_command}/{len(commands)}]..."
                         )
-                        self.update_from_vcf(commands[command_annotate])
+                        self.update_from_vcf(commands[command_annotate], update_header=True, annotation_header_fields_override=annotation_header_fields_override)
                         remove_if_exists(
                             [
                                 commands[command_annotate],
@@ -1621,6 +1597,16 @@ class variants_annotation:
             .get("annotations", None)
         )
         log.debug("Annotations: " + str(annotations))
+
+        # Header fields override (Number/Type/Description), collected from each
+        # annotation's own options block
+        # (annotation.annovar.annotations.<name>.options.header_fields)
+        annotation_header_fields_override = self.get_annotation_header_fields_override(
+            annotations=annotations
+        )
+        log.debug(
+            f"annotation_header_fields_override={annotation_header_fields_override}"
+        )
 
         # Assembly
         assembly = self.get_param().get(
@@ -1769,6 +1755,7 @@ class variants_annotation:
                     # Number of fields
                     nb_annotation_field = 0
                     annotation_list = []
+                    annotation_list_to_remove = []
 
                     annotation_name_map = {}
 
@@ -1833,6 +1820,7 @@ class variants_annotation:
                                 annotation_name_map[annotation_field] = (
                                     f"{annotation_fields_new_name}:=INFO/{annotation_field}"
                                 )
+                                annotation_list_to_remove.append(f"INFO/{annotation_field}")
                             else:
                                 annotation_list.append(annotation_field)
                                 annotation_name_map[annotation_field] = annotation_field
@@ -1867,6 +1855,7 @@ class variants_annotation:
                         annotation_list = annotation_list_bed
 
                     annotation_infos = ",".join(annotation_list)
+                    annotation_infos_to_remove = ",".join(annotation_list_to_remove)
 
                     if annotation_infos != "":
 
@@ -1972,8 +1961,14 @@ class variants_annotation:
                                 f"Annotation '{annotation}' - add bcftools command"
                             )
 
+                            # Remove INFO fields command
+                            if annotation_infos_to_remove:
+                                command_remove_infos_fields = f" | {bcftools_bin_command} annotate -x {annotation_infos_to_remove} "
+                            else:
+                                command_remove_infos_fields = ""
+
                             # Command
-                            command_annotate = f"{bcftools_bin_command} annotate --pair-logic exact --regions-file={tmp_bed_name} -a {db_file} -h {tmp_header_vcf_name} -c {annotation_infos} {tmp_vcf_name} -o {tmp_annotation_vcf_name} -Oz1 2>>{tmp_annotation_vcf_name_err} && tabix {tmp_annotation_vcf_name} 2>>{tmp_annotation_vcf_name_err} "
+                            command_annotate = f"{bcftools_bin_command} annotate --pair-logic exact --regions-file={tmp_bed_name} -a {db_file} -h {tmp_header_vcf_name} -c {annotation_infos} {tmp_vcf_name} {command_remove_infos_fields} -o {tmp_annotation_vcf_name} -Oz1 2>>{tmp_annotation_vcf_name_err} && tabix {tmp_annotation_vcf_name} 2>>{tmp_annotation_vcf_name_err} "
 
                             # Add command
                             commands.append(command_annotate)
@@ -2095,7 +2090,7 @@ class variants_annotation:
 
                     # Update variants
                     log.info("Annotation - Updating...")
-                    self.update_from_vcf(tmp_annotate_vcf_name, remove_vcf_file=False)
+                    self.update_from_vcf(tmp_annotate_vcf_name, remove_vcf_file=False, update_header=True, annotation_header_fields_override=annotation_header_fields_override)
 
         # Remove files
         remove_if_exists(remove_files)
@@ -2861,18 +2856,8 @@ class variants_annotation:
                     # Log
                     log.debug("Exomiser result VCF update variants")
 
-                    # Find Exomiser INFO field annotation in header
-                    with gzip.open(output_results_vcf, "rt") as f:
-                        header_list = self.read_vcf_header(f)
-                    exomiser_vcf_header = vcf.Reader(
-                        io.StringIO("\n".join(header_list))
-                    )
-
-                    # Add annotation INFO field to header
-                    vcf_reader.infos["Exomiser"] = exomiser_vcf_header.infos["Exomiser"]
-
                     # Update variants with VCF
-                    self.update_from_vcf(output_results_vcf)
+                    self.update_from_vcf(output_results_vcf, update_header=True)
 
         return True
 
@@ -3077,18 +3062,9 @@ class variants_annotation:
                 log.error("Annotation failed: Error in commands")
                 raise ValueError("Annotation failed: Error in commands")
 
-            # Find annotation in header
-            with open(tmp_annotate_vcf_name, "rt") as f:
-                header_list = self.read_vcf_header(f)
-            annovar_vcf_header = vcf.Reader(io.StringIO("\n".join(header_list)))
-
-            for ann in annovar_vcf_header.infos:
-                if ann not in self.get_header().infos:
-                    vcf_reader.infos[ann] = annovar_vcf_header.infos.get(ann)
-
             # Update variants
             log.info(f"Annotation - Updating...")
-            self.update_from_vcf(tmp_annotate_vcf_name)
+            self.update_from_vcf(tmp_annotate_vcf_name, update_header=True)
             list_to_remove = [
                 tmp_annotate_vcf_name,
                 tmp_annotate_vcf_name_err,
@@ -3306,6 +3282,16 @@ class variants_annotation:
             param.get(section, {}).get("annovar", {}).get("annotations", {})
         )
         log.debug("Annotations: " + str(annotations))
+
+        # Header fields override (Number/Type/Description), collected from each
+        # annotation's own options block
+        # (annotation.annovar.annotations.<name>.options.header_fields)
+        annotation_header_fields_override = self.get_annotation_header_fields_override(
+            annotations=annotations
+        )
+        log.debug(
+            f"annotation_header_fields_override={annotation_header_fields_override}"
+        )
 
         # Param - Assembly
         assembly = param.get("assembly", config.get("assembly", DEFAULT_ASSEMBLY))
@@ -3616,6 +3602,7 @@ class variants_annotation:
                             "operation",
                             "options",
                             "parallelize",
+                            "header_fields"
                         ]:
                             command_options.append(
                                 f""" --{option}={merged_options[option]}"""
@@ -3840,18 +3827,9 @@ class variants_annotation:
 
                         shutil.copy(tmp_annotates_vcf_name_list[0], tmp_annotate_vcf_name)
 
-                    # Find annotation in header
-                    with bgzf.open(tmp_annotate_vcf_name, "rt") as f:
-                        header_list = self.read_vcf_header(f)
-                    annovar_vcf_header = vcf.Reader(io.StringIO("\n".join(header_list)))
-
-                    for ann in annovar_vcf_header.infos:
-                        if ann not in self.get_header().infos:
-                            vcf_reader.infos[ann] = annovar_vcf_header.infos.get(ann)
-
                     # Update variants
                     log.info(f"Annotations Annovar - Updating...")
-                    self.update_from_vcf(tmp_annotate_vcf_name)
+                    self.update_from_vcf(tmp_annotate_vcf_name, update_header=True, annotation_header_fields_override=annotation_header_fields_override)
                     remove_if_exists(
                         [
                             tmp_annotate_vcf_name,
@@ -5145,17 +5123,8 @@ class variants_annotation:
                 f"Splice output was not generated {os.path.basename(tmp_vcf_name)}*.spip.spliceai.sorted.vcf.gz"
             )
         else:
-            # Get new header from annotated vcf
-            log.debug(f"Initial header: {len(header.infos)} fields")
-            # Create new header with splice infos
-            new_vcf = Variants(input=output_vcf[0])
-            new_vcf_header = new_vcf.get_header().infos
-            for keys, infos in new_vcf_header.items():
-                if keys not in header.infos.keys():
-                    header.infos[keys] = infos
-            log.debug(f"New header: {len(header.infos)} fields")
-            log.debug(f"Splice tmp output: {output_vcf[0]}")
-            self.update_from_vcf(output_vcf[0])
+
+            self.update_from_vcf(output_vcf[0], update_header=True)
 
         # Remove file
         remove_if_exists(output_vcf)

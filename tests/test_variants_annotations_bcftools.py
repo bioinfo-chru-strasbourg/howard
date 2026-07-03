@@ -178,7 +178,24 @@ def test_annotation_bcftools_rename_field():
         # Construct param dict
         param = {
             "annotation": {
-                "bcftools": {"annotations": {annotation_parquet: {"nci60": "nci61"}}}
+                "bcftools": {
+                    "annotations": {
+                        annotation_parquet: {
+                            "annotation_fields": {
+                                "nci60": "nci61"
+                            },
+                            "options": {
+                                "header_fields": {
+                                    "nci61": {
+                                        "Number": "1",
+                                        "Type": "String",
+                                        "Description": "NCI60 renamed field"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
 

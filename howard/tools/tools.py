@@ -310,7 +310,7 @@ arguments = {
         """- For Annovar annotation, use keyword 'annovar' with annovar code\n"""
         """ (e.g. 'annovar:refGene', 'annovar:refGene:cosmic70').\n"""
         """- For snpeff annotation, use keyword 'snpeff' with options\n"""
-        """ (e.g. 'snpeff', 'snpeff:-hgvs -noShiftHgvs -spliceSiteSize 3').\n"""
+        """ (e.g. 'snpeff', 'snpeff:-hgvs -spliceSiteSize 3').\n"""
         """- For snpSift annotation, use keyword 'snpsift' with file paths\n"""
         """ (e.g. 'snpsift:file.vcf.gz:file.bed.gz').\n"""
         """- For Exomiser annotation, use keyword 'exomiser' with options as key=value\n"""
@@ -330,7 +330,7 @@ arguments = {
                 "Annotation with BCFTools": '"annotations": "bcftools:/path/to/database2.vcf.gz:/path/to/database2.bed.gz"',
                 "Annotation with Annovar (refGene with hgvs and Cosmic)": '"annotations": "annovar:refGene:cosmic70"',
                 "Annotation with snpEff (default options)": '"annotations": "snpeff"',
-                "Annotation with snpEff (with options)": '"annotations": "snpeff:-hgvs -noShiftHgvs -spliceSiteSize 3"',
+                "Annotation with snpEff (with options)": '"annotations": "snpeff:-hgvs -spliceSiteSize 3"',
                 "Annotation with snpSift": '"annotations": "snpsift:/path/to/database2.vcf.gz:/path/to/database2.bed.gz"',
                 "Annotation with Exomiser with options": '"annotations": "exomiser:preset=exome:hpo=0001156+0001363+0011304+0010055:transcript_source=refseq:release=2109"',
                 "Multiple tools annotations (Parquet method, BCFTools, Annovar, snpEff and Exomiser)": '"annotations": "/path/to/database1.parquet,bcftools:/path/to/database2.vcf.gz,annovar:refGene:cosmic70,snpeff,exomiser:preset=exome:transcript_source=refseq"',
@@ -391,14 +391,14 @@ arguments = {
     "annotation_snpeff": {
         "metavar": "annotation snpEff",
         "help": """Annotation with snpEff, with options\n"""
-        """ (e.g. '', '-hgvs -noShiftHgvs -spliceSiteSize 3').\n""",
+        """ (e.g. '', '-hgvs -spliceSiteSize 3').\n""",
         "default": None,
         "type": str,
         "extra": {
             "format": "options",
             "examples": {
                 "Annotation with snpEff (default options)": '"annotation_snpeff": ""',
-                "Annotation with snpEff (with options)": '"annotation_snpeff": "-hgvs -noShiftHgvs -spliceSiteSize 3"',
+                "Annotation with snpEff (with options)": '"annotation_snpeff": "-hgvs -spliceSiteSize 3"',
             },
         },
     },
