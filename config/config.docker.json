@@ -1,5 +1,5 @@
 {
-    "threads": 4,
+    "threads": null,
     "memory": null,
     "verbosity": "WARNING",
     "docker": {
@@ -55,7 +55,7 @@
         "vep": {
             "docker": {
                 "image": "ensemblorg/ensembl-vep",
-                "entrypoint": null,
+                "entrypoint": "vep",
                 "options": null,
                 "command": null,
                 "config": {

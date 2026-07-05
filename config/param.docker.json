@@ -4,7 +4,7 @@
       "entries": {
         "vep": {
           "tool": "vep",
-          "command": "vep",
+          "command": null,
           "primary": {
             "input": "--input_file",
             "output": "--output_file",
@@ -21,6 +21,53 @@
                 "mode": "ro"
             }
           ],
+          "mounts": [],
+          "path": [],
+          "paths": [],
+          "options": [],
+          "parameters": [
+            "--vcf",
+            "--cache",
+            "--offline",
+            {
+              "key": "--assembly",
+              "value": "GRCh37"
+            },
+            {
+              "key": "--compress_output",
+              "value": "bgzip"
+            },
+            "--force_overwrite"
+          ],
+          "output_pattern": "*.vcf.gz",
+          "remove_info": true,
+          "add_samples": true,
+          "update_header": true,
+          "where_clause": " WHERE \"#CHROM\" = 'chr2' "
+        },
+        "vep_chr7": {
+          "tool": "vep",
+          "command": null,
+          "primary": {
+            "input": "--input_file",
+            "output": "--output_file",
+            "threads": "--fork"
+          },
+          "resources": {
+            "threads": 4,
+            "memory": null
+          },
+          "databases": [
+            {
+                "name": "vep",
+                "container_path": "/opt/vep/.vep",
+                "mode": "ro"
+            }
+          ],
+          "mounts": [],
+          "path": [],
+          "paths": [],
+          "options": [],
           "parameters": [
             "--vcf",
             "--cache",
@@ -43,6 +90,5 @@
         }
       }
     }
-  },
-  "threads": 8
+  }
 }
