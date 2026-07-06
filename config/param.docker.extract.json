@@ -34,5 +34,15 @@
         }
       }
     }
+  },
+  "calculation": {
+    "calculations": {
+      "vep_extract": null,
+      "NOMEN": {
+        "options": {
+          "hgvs_field": "vep_hgvs"
+        }
+      }
+    }
   }
 }
