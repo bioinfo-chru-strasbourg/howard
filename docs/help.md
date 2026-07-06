@@ -943,7 +943,7 @@ Usage examples:
 >     - For Annovar annotation, use keyword 'annovar' with annovar code
 >      (e.g. 'annovar:refGene', 'annovar:refGene:cosmic70').
 >     - For snpeff annotation, use keyword 'snpeff' with options
->      (e.g. 'snpeff', 'snpeff:-hgvs -noShiftHgvs -spliceSiteSize 3').
+>      (e.g. 'snpeff', 'snpeff:-hgvs -spliceSiteSize 3').
 >     - For snpSift annotation, use keyword 'snpsift' with file paths
 >      (e.g. 'snpsift:file.vcf.gz:file.bed.gz').
 >     - For Exomiser annotation, use keyword 'exomiser' with options as key=value
@@ -989,7 +989,7 @@ Usage examples:
 >     --annotation_snpeff=<annotation snpEff>
 >
 >     Annotation with snpEff, with options
->      (e.g. '', '-hgvs -noShiftHgvs -spliceSiteSize 3').
+>      (e.g. '', '-hgvs -spliceSiteSize 3').
 
 </small>
 
@@ -1426,7 +1426,7 @@ Usage examples:
 >     - For Annovar annotation, use keyword 'annovar' with annovar code
 >      (e.g. 'annovar:refGene', 'annovar:refGene:cosmic70').
 >     - For snpeff annotation, use keyword 'snpeff' with options
->      (e.g. 'snpeff', 'snpeff:-hgvs -noShiftHgvs -spliceSiteSize 3').
+>      (e.g. 'snpeff', 'snpeff:-hgvs -spliceSiteSize 3').
 >     - For snpSift annotation, use keyword 'snpsift' with file paths
 >      (e.g. 'snpsift:file.vcf.gz:file.bed.gz').
 >     - For Exomiser annotation, use keyword 'exomiser' with options as key=value
