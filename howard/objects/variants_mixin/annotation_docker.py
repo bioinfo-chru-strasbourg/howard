@@ -550,7 +550,7 @@ def _resolve_entry_spec(
 	)
 
 	remove_info = vcf_update_cfg.get("remove_info", annotation_cfg.get("remove_info", True))
-	add_samples = vcf_update_cfg.get("add_samples", annotation_cfg.get("add_samples", True))
+	add_samples = vcf_update_cfg.get("add_samples", annotation_cfg.get("add_samples", False))
 	update_header = vcf_update_cfg.get("update_header", annotation_cfg.get("update_header", True))
 	update_existing_fields = vcf_update_cfg.get(
 		"update_existing_fields",
