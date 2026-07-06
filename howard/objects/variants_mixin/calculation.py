@@ -1165,7 +1165,7 @@ class variants_calculation:
         self,
         section: str = "calculation",
         snpeff_field: str = "ANN",
-        snpeff_hgvs: str = None, #"snpeff_hgvs",
+        snpeff_hgvs: str = "snpeff_hgvs",
         snpeff_explode: str = "snpeff_",
         snpeff_json: str = None, #"snpeff_json",
         uniquify: bool = True,
@@ -1177,7 +1177,7 @@ class variants_calculation:
 
         return self.calculation_annotation_with_format_extract(
             section=section,
-            annotation_field="ANN",
+            annotation_field=snpeff_field,
             annotation_hgvs=snpeff_hgvs,
             annotation_explode=snpeff_explode,
             annotation_json=snpeff_json,
