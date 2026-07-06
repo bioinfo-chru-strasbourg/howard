@@ -1,0 +1,38 @@
+{
+  "annotation": {
+    "docker": {
+      "entries": {
+        "vep": {
+          "tool": "vep",
+          "update_existing_fields": false,
+          "parameters": [
+            "--everything",
+            "--xref_refseq",
+            {
+              "key": "--max_sv_size",
+              "value": "1000000"
+            },
+            {
+              "key": "--fasta",
+              "value": "/opt/vep/.genomes/hg19.fa"
+            }
+          ]
+        }
+      },
+      "entries_examples": {
+        "vep": {
+          "tool": "vep",
+          "update_existing_fields": true,
+          "where_clause": " WHERE \"#CHROM\" != 'chr7' "
+        },
+        "vep_chr7": {
+          "tool": "vep",
+          "parameters": [
+          ],
+          "output_pattern": "*.vcf.gz",
+          "where_clause": " WHERE \"#CHROM\" = 'chr7' "
+        }
+      }
+    }
+  }
+}

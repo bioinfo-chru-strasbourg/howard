@@ -118,24 +118,45 @@ class variants_calculation:
                     "snpeff_hgvs": "snpeff_hgvs",
                     "snpeff_explode": "snpeff_",
                     "snpeff_json": "snpeff_json",
-                    "uniquify": False,
+                    "uniquify": False
                 },
             },
-            # "vep_extract": {
-            #     "type": "python",
-            #     "name": "vep_extract",
-            #     "description": "HGVS nomenclatures from VEP annotation",
-            #     "comment": "Extract HGVS nomenclatures from VEP annotation (field CSQ) and create new INFO fields with prefix 'vep_' (e.g. vep_hgvs, vep_impact, vep_gene_name...). This calculation parses the CSQ field from VEP annotations, extracting relevant information such as HGVS nomenclatures, impact, gene name, etc., and creates new INFO fields with a 'vep_' prefix for easier access and downstream analysis.",
-            #     "available": True,
-            #     "function_name": "calculation_snpeff_extract",
-            #     "function_params": {
-            #         "snpeff_field": "CSQ",
-            #         "snpeff_hgvs": "vep_hgvs",
-            #         "snpeff_explode": "vep_",
-            #         "snpeff_json": "vep_json",
-            #         "uniquify": False,
-            #     },
-            # },
+            "vep_extract": {
+                "type": "python",
+                "name": "vep_extract",
+                "description": "HGVS nomenclatures from VEP annotation",
+                "comment": "Extract HGVS nomenclatures from VEP annotation (field CSQ) and create new INFO fields with prefix 'vep_' (e.g. vep_hgvs, vep_impact, vep_gene_name...). This calculation parses the CSQ field from VEP annotations, extracting relevant information such as HGVS nomenclatures, impact, gene name, etc., and creates new INFO fields with a 'vep_' prefix for easier access and downstream analysis.",
+                "available": True,
+                "function_name": "calculation_annotation_with_format_extract",
+                "function_params": {
+                    "annotation_field": "CSQ",
+                    "annotation_hgvs": "vep_hgvs",
+                    "annotation_explode": "vep_",
+                    "annotation_json": "vep_json",
+                    "uniquify": False,
+                    "annotation_id": "Feature",
+                    "hgvs_columns": {"gene": "Gene", "transcript": "Feature", "rank": "EXON", "HGVSc": "HGVSc", "HGVSp": "HGVSp"}, # RefSeq
+                    "hgvs_columns_contain_transcript_id": True,
+                },
+            },
+            "vep_extract_refseq": {
+                "type": "python",
+                "name": "vep_extract",
+                "description": "HGVS nomenclatures from VEP annotation",
+                "comment": "Extract HGVS nomenclatures from VEP annotation (field CSQ) and create new INFO fields with prefix 'vep_' (e.g. vep_hgvs, vep_impact, vep_gene_name...). This calculation parses the CSQ field from VEP annotations, extracting relevant information such as HGVS nomenclatures (with refSeq), impact, gene name, etc., and creates new INFO fields with a 'vep_' prefix for easier access and downstream analysis.",
+                "available": True,
+                "function_name": "calculation_annotation_with_format_extract",
+                "function_params": {
+                    "annotation_field": "CSQ",
+                    "annotation_hgvs": "vep_hgvs",
+                    "annotation_explode": "vep_",
+                    "annotation_json": "vep_json",
+                    "uniquify": False,
+                    "annotation_id": "Feature",
+                    "hgvs_columns": {"gene": "SYMBOL", "transcript": "RefSeq", "rank": "EXON", "HGVSc": "HGVSc", "HGVSp": "HGVSp"}, # RefSeq
+                    "hgvs_columns_contain_transcript_id": True,
+                },
+            },
             "snpeff_hgvs": {
                 "type": "python",
                 "name": "snpeff_hgvs",
@@ -1139,65 +1160,94 @@ class variants_calculation:
             for added_column in added_columns:
                 self.drop_column(column=added_column)
 
+
     def calculation_snpeff_extract(
         self,
         section: str = "calculation",
         snpeff_field: str = "ANN",
-        snpeff_hgvs: str = "snpeff_hgvs",
+        snpeff_hgvs: str = None, #"snpeff_hgvs",
         snpeff_explode: str = "snpeff_",
-        snpeff_json: str = "snpeff_json",
+        snpeff_json: str = None, #"snpeff_json",
+        uniquify: bool = True,
+        **kwargs
+        ) -> None:
+        """
+
+        """
+
+        return self.calculation_annotation_with_format_extract(
+            section=section,
+            annotation_field="ANN",
+            annotation_hgvs=snpeff_hgvs,
+            annotation_explode=snpeff_explode,
+            annotation_json=snpeff_json,
+            uniquify=uniquify,
+            **kwargs
+        )
+
+
+    def calculation_annotation_with_format_extract(
+        self,
+        section: str = "calculation",
+        annotation_field: str = "ANN",
+        annotation_hgvs: str = None,
+        annotation_explode: str = "snpeff_",
+        annotation_json: str = None,
         uniquify: bool = True,
         **kwargs
     ) -> None:
         """
-        This function extracts SnpEff annotations from the specified field in the VCF file and processes them according to the provided parameters. The annotations can be exploded into separate rows, converted into JSON format, and/or ensured to be unique. The processed annotations are then added to the VCF file with the specified prefixes.
+        This function extracts annotations from the specified field in the VCF file and processes them according to the provided parameters. The annotations can be exploded into separate rows, converted into JSON format, and/or ensured to be unique. The processed annotations are then added to the VCF file with the specified prefixes.
 
         Args:
-            snpeff_field (str): The annotation field in the VCF file to extract SnpEff annotations from. Default is "ANN".
-            snpeff_hgvs (str): The prefix for the HGVS annotations extracted from SnpEff. Default is "snpeff_hgvs".
-            snpeff_explode (str): The prefix for the exploded annotations. Default is "snpeff_".
-            snpeff_json (str): The prefix for the JSON annotations. Default is "snpeff_json".
+            annotation_field (str): The annotation field in the VCF file to extract annotations from. Default is "ANN".
+            annotation_hgvs (str): The prefix for the HGVS annotations extracted from SnpEff. Default is None.
+            annotation_explode (str): The prefix for the exploded annotations. Default is "snpeff_".
+            annotation_json (str): The prefix for the JSON annotations. Default is None.
             uniquify (bool): Whether to ensure unique annotations. Default is True.
+            annotation_id (str): The identifier for the annotation. Default is "Feature_ID".
+            hgvs_columns (dict): A dictionary mapping the HGVS columns to their corresponding names. By default it mapssnpEff columns: "gene" to "Gene_ID", "transcript" to "Feature_ID", "rank" to "Rank", "HGVSc" to "HGVS.c", and "HGVSp" to "HGVS.p" with dict {"gene": "Gene_ID", "transcript": "Feature_ID", "rank": "Rank", "HGVSc": "HGVS.c", "HGVSp": "HGVS.p"}.
+            hgvs_columns_contain_transcript_id (bool): Whether the HGVS columns contain transcript IDs (e.g. "ENST00000275493.2:c.2361G>A" or "ENSP00000395243.2:p.Gln734="). Default is False.
 
         Returns:
             None
 
         """
 
-        log.debug(f"Calculation snpEff extract...")
+        log.debug(f"Calculation annotations extract...")
 
         operation_params, _ = self.get_operation_params(
-            section=section, operation_params=kwargs, operation_name="snpeff_extract"
+            section=section, operation_params=kwargs, operation_name="annotations_extract"
         )
 
-        ### Parameters for snpEff extraction
+        ### Parameters for annotations extraction
 
-        # snpeff field
-        snpeff_field = (
-            operation_params.get("snpeff_field")
-            or snpeff_field
+        # annotation field
+        annotation_field = (
+            operation_params.get("annotation_field")
+            or annotation_field
             or "ANN"
         )
 
-        # snpeff_hgvs
-        snpeff_hgvs = (
-            operation_params.get("snpeff_hgvs")
-            or snpeff_hgvs
-            or "snpeff_hgvs"
+        # annotation_hgvs
+        annotation_hgvs = (
+            operation_params.get("annotation_hgvs")
+            or annotation_hgvs
+            or None
         )
 
-        # snpeff_explode
-        snpeff_explode = (
-            operation_params.get("snpeff_explode")
-            or snpeff_explode
-            or "snpeff_"
+        # annotation_explode
+        annotation_explode = (
+            operation_params.get("annotation_explode")
+            or annotation_explode
+            or None
         )
 
-        # snpeff_json
-        snpeff_json = (
-            operation_params.get("snpeff_json")
-            or snpeff_json
-            or "snpeff_json"
+        # annotation_json
+        annotation_json = (
+            operation_params.get("annotation_json")
+            or annotation_json
+            or None
         )
 
         # uniquify
@@ -1207,6 +1257,28 @@ class variants_calculation:
             or True
         )
 
+        # annotation_id
+        annotation_id = (
+            operation_params.get("annotation_id")
+            or "Feature_ID"
+        )
+
+        # hgvs_columns
+        
+        hgvs_columns = (
+            operation_params.get("hgvs_columns")
+            or {"gene": "Gene_ID", "transcript": "Feature_ID", "rank": "Rank", "HGVSc": "HGVS.c", "HGVSp": "HGVS.p"}
+        )
+
+        # hgvs_columns_contain_transcript_id
+        hgvs_columns_contain_transcript_id = (
+            operation_params.get("hgvs_columns_contain_transcript_id")
+            or False
+        )
+
+        # Log 
+        log.debug(f"annotation_field={annotation_field}, annotation_hgvs={annotation_hgvs}, annotation_explode={annotation_explode}, annotation_json={annotation_json}, uniquify={uniquify}, annotation_id={annotation_id}, hgvs_columns={hgvs_columns}, hgvs_columns_contain_transcript_id={hgvs_columns_contain_transcript_id}")
+
         # Variants table
         table_variants = self.get_table_variants()
 
@@ -1214,25 +1286,26 @@ class variants_calculation:
         vcf_reader = self.get_header()
 
         # Log
-        log.info(f"Extract snpEff annotations")
+        log.info(f"Extract Annotations")
 
-        # If snpeff_field exists
-        if snpeff_field in vcf_reader.infos:
+        # If annotation_field exists
+        if annotation_field in vcf_reader.infos:
 
             # Log
-            log.info(f"Extract snpEff annotations - from INFO/Tag '{snpeff_field}'")
+            log.info(f"Extract annotations - from INFO/Tag '{annotation_field}'")
 
             # Create view
-            view_name = "snpeff_hgvs_" + str(random.randint(1000, 9999))
+            view_name = "annotations_hgvs_" + get_random()
             view_infos = self.annotation_format_to_table(
-                annotation_field=snpeff_field,
-                annotation_id="Feature_ID",
+                annotation_field=annotation_field,
+                annotation_id=annotation_id,
                 view_name=view_name,
                 column_rename={},
                 column_clean=False,
                 column_case=None,
             )
             view_name = view_infos[0]
+
 
             # Describe
             sql_describe = f"""
@@ -1244,7 +1317,7 @@ class variants_calculation:
             """
             sql_describe_result = self.get_query_to_df(sql_describe)
 
-            # Create dict of snpEff annotations
+            # Create dict of annotations
             annotation_dict = {}
             for _, annotation in sql_describe_result.iterrows():
 
@@ -1268,7 +1341,7 @@ class variants_calculation:
                     annotation_column = f"""string_split(CAST("{annotation_name}" AS VARCHAR), '.')[1]"""
 
                     annotation_number = 1
-                annotation_desc = f"snpEff annotation '{annotation_name}'"
+                annotation_desc = f"Annotation '{annotation_name}'"
 
                 # Create dict
                 annotation_dict[annotation_name] = {
@@ -1284,19 +1357,19 @@ class variants_calculation:
             sql_clauses = []
 
             # Prepare sql update
-            if snpeff_json is not None:
+            if annotation_json is not None:
 
                 # Log
                 log.info(
-                    f"Extract snpEff annotations - into INFO/tag '{snpeff_json}' in JSON format"
+                    f"Extract annotations - into INFO/tag '{annotation_json}' in JSON format"
                 )
 
-                # Add snpeff_hgvs to header
-                vcf_reader.infos[snpeff_json] = vcf.parser._Info(
-                    snpeff_json,
+                # Add annotation_hgvs to header
+                vcf_reader.infos[annotation_json] = vcf.parser._Info(
+                    annotation_json,
                     1,
                     "String",
-                    "snpEff annotation in JSON format",
+                    "Annotation in JSON format",
                     "howard calculation",
                     "0",
                     self.code_type_map.get("String"),
@@ -1309,12 +1382,12 @@ class variants_calculation:
                         f""" '{annotation.get("id")}', {annotation.get("column")} """
                     )
 
-                # Add snpeff JSON to header
-                vcf_reader.infos[snpeff_hgvs] = vcf.parser._Info(
-                    snpeff_hgvs,
+                # Add annotation HGVS to header
+                vcf_reader.infos[annotation_hgvs] = vcf.parser._Info(
+                    annotation_hgvs,
                     ".",
                     "String",
-                    "HGVS nomenclatures from snpEff annotation",
+                    "HGVS nomenclatures from annotation",
                     "howard calculation",
                     "0",
                     self.code_type_map.get("String"),
@@ -1324,16 +1397,16 @@ class variants_calculation:
                 sql_info_concat = f"""
                     CASE
                         WHEN (INFO IS NULL OR INFO IN ('', '.')) OR (
-                            SNPEFF_HGVS.json_data IS NULL
+                            ANNOTATION_HGVS.json_data IS NULL
                         )
                         THEN INFO
                         ELSE concat(INFO, ';')
                     END,
                     CASE
-                        WHEN SNPEFF_HGVS.json_data IS NOT NULL
+                        WHEN ANNOTATION_HGVS.json_data IS NOT NULL
                         THEN concat(
-                            '{snpeff_json}=',
-                            SNPEFF_HGVS.json_data
+                            '{annotation_json}=',
+                            ANNOTATION_HGVS.json_data
                         )
                     END
                     
@@ -1365,11 +1438,11 @@ class variants_calculation:
                     }
                 )
 
-            if snpeff_explode is not None:
+            if annotation_explode is not None:
 
                 # Log
                 log.info(
-                    f"Extract snpEff annotations - into INFO/Tags separately with '{snpeff_explode}' prefix"
+                    f"Extract annotation annotations - into INFO/Tags separately with '{annotation_explode}' prefix"
                 )
 
                 # Prepare annotations
@@ -1377,8 +1450,8 @@ class variants_calculation:
                 sql_from_select_annotation_list = []
                 for annotation in annotation_dict.values():
 
-                    # Add snpeff_hgvs to header
-                    annotation_id = f'{snpeff_explode}{annotation.get("id")}'
+                    # Add annotation_hgvs to header
+                    annotation_id = f'{annotation_explode}{annotation.get("id")}'
                     vcf_reader.infos[annotation_id] = vcf.parser._Info(
                         annotation_id,
                         annotation.get("number"),
@@ -1391,15 +1464,15 @@ class variants_calculation:
 
                     # Log
                     log.info(
-                        f"Extract snpEff annotations - into INFO/Tags separately with '{snpeff_explode}' prefix - '{annotation_id}'"
+                        f"Extract annotation annotations - into INFO/Tags separately with '{annotation_explode}' prefix - '{annotation_id}'"
                     )
 
                     # Clause for INFO concat for each annotation
                     sql_info_concat_annotation_list.append(
                         f""" 
                             CASE
-                                WHEN SNPEFF_HGVS.{annotation.get("id")} IS NOT NULL AND CAST(SNPEFF_HGVS.{annotation.get("id")} AS STRING) NOT IN ('','.')
-                                THEN concat('{snpeff_explode}{annotation.get("id")}=', CAST(SNPEFF_HGVS.{annotation.get("id")} AS STRING))
+                                WHEN ANNOTATION_HGVS.{annotation.get("id")} IS NOT NULL AND CAST(ANNOTATION_HGVS.{annotation.get("id")} AS STRING) NOT IN ('','.')
+                                THEN concat('{annotation_explode}{annotation.get("id")}=', CAST(ANNOTATION_HGVS.{annotation.get("id")} AS STRING))
                             END
                         """
                     )
@@ -1440,18 +1513,18 @@ class variants_calculation:
                     }
                 )
 
-            if snpeff_hgvs is not None:
+            if annotation_hgvs is not None:
 
                 log.info(
-                    f"Extract snpEff annotations - into INFO/Tags '{snpeff_hgvs}' with list of HGVS nomenclature"
+                    f"Extract annotation annotations - into INFO/Tags '{annotation_hgvs}' with list of HGVS nomenclature"
                 )
 
-                # Add snpeff_hgvs to header
-                vcf_reader.infos[snpeff_hgvs] = vcf.parser._Info(
-                    snpeff_hgvs,
+                # Add annotation_hgvs to header
+                vcf_reader.infos[annotation_hgvs] = vcf.parser._Info(
+                    annotation_hgvs,
                     ".",
                     "String",
-                    "HGVS nomenclatures from snpEff annotation",
+                    "HGVS nomenclatures from annotation",
                     "howard calculation",
                     "0",
                     self.code_type_map.get("String"),
@@ -1460,33 +1533,71 @@ class variants_calculation:
                 # Clause for INFO concat
                 sql_info_concat = f"""
                     CASE
-                        WHEN (INFO IS NULL OR INFO IN ('', '.')) OR (SNPEFF_HGVS.hgvs IS NULL OR SNPEFF_HGVS.hgvs IN (''))
+                        WHEN (INFO IS NULL OR INFO IN ('', '.')) OR (ANNOTATION_HGVS.hgvs IS NULL OR ANNOTATION_HGVS.hgvs IN (''))
                         THEN INFO
                         ELSE concat(INFO, ';')
                     END,
                     CASE
-                        WHEN SNPEFF_HGVS.hgvs IS NOT NULL AND SNPEFF_HGVS.hgvs NOT IN ('')
-                        THEN concat('{snpeff_hgvs}=', SNPEFF_HGVS.hgvs)
+                        WHEN ANNOTATION_HGVS.hgvs IS NOT NULL AND ANNOTATION_HGVS.hgvs NOT IN ('')
+                        THEN concat('{annotation_hgvs}=', ANNOTATION_HGVS.hgvs)
                     END
                 """
 
                 # Clause for subquery
-                sql_from_select = f"""
-                    string_agg(
-                        concat_ws(
-                            ':',
-                            "Gene_ID",
-                            "Feature_ID",
-                            CASE 
-                                WHEN "Rank" IS NOT NULL
-                                THEN concat('exon', split(CAST("Rank" AS VARCHAR), '/')[1])
-                                ELSE NULL
-                            END,
-                            "HGVS.c",
-                            "HGVS.p"
-                        ),
-                    ',') AS hgvs
-                """
+                # use hgvs_columns
+                if annotation_hgvs is not None and hgvs_columns is not None:
+
+                    # list of HGVS nomenclature
+                    hgvs_item_list = []
+                    for hgvs_item in hgvs_columns:
+
+                        # Check if hgvs_item is None or empty or not in annotation_dict (mandatory fields)
+                        if hgvs_item is None or hgvs_item.strip() == "" or hgvs_columns.get(hgvs_item) not in annotation_dict:
+                            msg_err = f"HGVS item '{hgvs_item}' ('{hgvs_columns.get(hgvs_item)}') is not None or empty or not in annotation '{annotation_field}', please check the hgvs_columns parameter and pick up from the following list: {list(annotation_dict.keys())}"
+                            log.error(msg_err)
+                            raise ValueError(msg_err)
+                        else:
+                            # Specific case for rank and HGVSc/HGVSp with transcript_id
+                            # Rank is a special case because it needs to be transformed into exon number (format X/Y)
+                            if hgvs_item == "rank":
+                                hgvs_item_column = f"""
+                                    CASE 
+                                        WHEN "{hgvs_columns.get(hgvs_item)}" IS NOT NULL
+                                        THEN concat('exon', split(CAST("{hgvs_columns.get(hgvs_item)}" AS VARCHAR), '/')[1])
+                                        ELSE NULL
+                                    END
+                                """
+                            # HGVSc/HGVSp may contain transcript_id (format ENST00000275493.2:c.2361G>A or ENSP00000395243.2:p.Gln734=)
+                            elif hgvs_item in ["HGVSc", "HGVSp"] and hgvs_columns_contain_transcript_id:
+                                hgvs_item_column = f"""
+                                    split("{hgvs_columns.get(hgvs_item)}", ':')[2]
+                                """
+                            else:
+                                hgvs_item_column = f"""
+                                    "{hgvs_columns.get(hgvs_item)}"
+                                """
+                            hgvs_item_list.append(hgvs_item_column)
+
+                    # If no valid HGVS items found, log a warning
+                    if len(hgvs_item_list) == 0:
+                        log.warning(
+                            f"No valid HGVS items found in hgvs_columns parameter, please check the hgvs_columns parameter"
+                        )
+                    else:
+                        sql_from_select = f"""
+                            string_agg(
+                                concat_ws(
+                                    ':',
+                                    {','.join(hgvs_item_list)}
+                                ),
+                            ',') AS hgvs
+                        """
+
+                else:
+                    sql_from_select = f"""
+                        'hgvs' AS hgvs
+                    """
+                    #sql_from_select = ""
 
                 # Append clauses
                 sql_clauses.append(
@@ -1514,16 +1625,16 @@ class variants_calculation:
                             {sql_clause_item.get("sql_from_select")}
                         FROM {view_name}
                         GROUP BY "#CHROM", "POS", "REF", "ALT"
-                        ) AS SNPEFF_HGVS
-                    WHERE {table_variants}."#CHROM" = SNPEFF_HGVS."#CHROM"
-                    AND {table_variants}."POS" = SNPEFF_HGVS."POS"
-                    AND {table_variants}."REF" = SNPEFF_HGVS."REF"
-                    AND {table_variants}."ALT" = SNPEFF_HGVS."ALT"
+                        ) AS ANNOTATION_HGVS
+                    WHERE {table_variants}."#CHROM" = ANNOTATION_HGVS."#CHROM"
+                    AND {table_variants}."POS" = ANNOTATION_HGVS."POS"
+                    AND {table_variants}."REF" = ANNOTATION_HGVS."REF"
+                    AND {table_variants}."ALT" = ANNOTATION_HGVS."ALT"
                 """
 
                 # Log
                 log.info(
-                    f"Extract snpEff annotations - Process [{nb_update}/{len(sql_clauses)}]"
+                    f"Extract annotation - Process [{nb_update}/{len(sql_clauses)}]"
                 )
 
                 # Process query
@@ -1538,8 +1649,9 @@ class variants_calculation:
         else:
 
             log.warning(
-                f"Extract snpEff annotations - No snpEff annotation '{snpeff_field}'. Please Anotate with snpEff before use this calculation option"
+                f"Extract annotation - No annotation '{annotation_field}'. Please annotate with the appropriate tool before using this calculation option"
             )
+
 
     def calculation_extract_nomen(
         self,
@@ -1876,8 +1988,10 @@ class variants_calculation:
             transcripts_pond_score_sql = ""
 
         # NOMEN Patterns
-        pattern_tvnomen = r".*[:]*([NX][MR]_[^:]*).*"
-        pattern_tpvnomen = r".*[:]*([NX]P_[^:]*).*"
+        #pattern_tvnomen = r".*[:]*([NX][MR]_[^:]*).*"
+        pattern_tvnomen = r".*:?((?:[NX][MR]_[^:]+|ENST\d+(?:\.\d+)?)).*"
+        #pattern_tpvnomen = r".*[:]*([NX]P_[^:]*).*"
+        pattern_tpvnomen = r".*:?((?:[NX]P_[^:]+|ENSP\d+(?:\.\d+)?)).*"
         pattern_cnomen = r".*[:]*([cgm]\.[^:]*).*"
         pattern_pnomen = r".*[:]*([p]\.[^:]*).*"
         pattern_nnomen = r".*[:]*([n]\.[^:]*).*"
@@ -2021,6 +2135,7 @@ class variants_calculation:
                     + CASE WHEN TPVNOMEN IS NOT NULL THEN 1 ELSE 0 END
                     + CASE WHEN regexp_matches(TVNOMEN, '^NM_.*') THEN 2 ELSE 0 END
                     + CASE WHEN regexp_matches(TVNOMEN, '^NR_.*') THEN 1 ELSE 0 END
+                    + CASE WHEN regexp_matches(TVNOMEN, '^ENST_.*') THEN 1 ELSE 0 END
                     -- Selected transcript
                     + CASE WHEN transcript IS NOT NULL AND (TVNOMEN == transcript OR TNOMEN == transcript) THEN {index_transcript_selected} ELSE 0 END
                     -- Preferend transcripts

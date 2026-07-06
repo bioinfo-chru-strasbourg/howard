@@ -28,6 +28,7 @@
             "varank": "~/howard/databases/varank/current",
             "spliceai": "~/howard/databases/spliceai/current",
             "spip": "~/howard/databases/spip/current",
+            "refseq": "~/howard/databases/refseq/current",
             "vep": "~/howard/databases/vep/current"
         }
     },
@@ -92,6 +93,16 @@
                         {
                             "name": "vep",
                             "container_path": "/opt/vep/.vep",
+                            "mode": "ro"
+                        },
+                        {
+                            "name": "genomes",
+                            "container_path": "/opt/vep/.genomes",
+                            "mode": "ro"
+                        },
+                        {
+                            "name": "refseq",
+                            "container_path": "/opt/vep/.refseq",
                             "mode": "ro"
                         }
                     ],

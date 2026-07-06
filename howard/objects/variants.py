@@ -5105,7 +5105,8 @@ class Variants(
             ann_description = vcf_reader.infos[annotation_field].desc
             # pattern = r"'(.+?)'"
             # pattern = r"Format: (.+?)$"
-            pattern = r"'(.+?)'|Format:\s*(.+?)$"
+            # pattern = r"'(.+?)'|Format: (.+?)"
+            pattern = r"(?:'|Format:\s*)(.+?)(?:'|$)"
             match = re.search(pattern, ann_description)
             if match:
                 ann_header_match = match.group(1).split("|")
