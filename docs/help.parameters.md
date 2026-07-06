@@ -48,21 +48,23 @@ title: HOWARD Help Parameters
       rm_annot](#rm_annot)
     - [<span class="toc-section-number">2.8.7</span>
       whitespace](#whitespace)
-  - [<span class="toc-section-number">2.9</span> hgvs](#hgvs)
-    - [<span class="toc-section-number">2.9.1</span>
+  - [<span class="toc-section-number">2.9</span> docker](#docker)
+    - [<span class="toc-section-number">2.9.1</span> entries](#entries)
+  - [<span class="toc-section-number">2.10</span> hgvs](#hgvs)
+    - [<span class="toc-section-number">2.10.1</span>
       use_gene](#use_gene)
-    - [<span class="toc-section-number">2.9.2</span>
+    - [<span class="toc-section-number">2.10.2</span>
       use_exon](#use_exon)
-    - [<span class="toc-section-number">2.9.3</span>
+    - [<span class="toc-section-number">2.10.3</span>
       use_protein](#use_protein)
-    - [<span class="toc-section-number">2.9.4</span>
+    - [<span class="toc-section-number">2.10.4</span>
       add_protein](#add_protein)
-    - [<span class="toc-section-number">2.9.5</span>
+    - [<span class="toc-section-number">2.10.5</span>
       full_format](#full_format)
-    - [<span class="toc-section-number">2.9.6</span>
+    - [<span class="toc-section-number">2.10.6</span>
       codon_type](#codon_type)
-    - [<span class="toc-section-number">2.9.7</span> refgene](#refgene)
-    - [<span class="toc-section-number">2.9.8</span>
+    - [<span class="toc-section-number">2.10.7</span> refgene](#refgene)
+    - [<span class="toc-section-number">2.10.8</span>
       refseqlink](#refseqlink)
 - [<span class="toc-section-number">3</span> calculation](#calculation)
   - [<span class="toc-section-number">3.1</span>
@@ -196,7 +198,7 @@ title: HOWARD Help Parameters
     chunking_partitions](#chunking_partitions)
   - [<span class="toc-section-number">13.4</span>
     chunking_sort](#chunking_sort)
-- [<span class="toc-section-number">14</span> threads](#threads)
+- [<span class="toc-section-number">14</span> threads](#threads-1)
 - [<span class="toc-section-number">15</span> fast](#fast)
 
 # Introduction
@@ -326,10 +328,10 @@ available (formats such as Parquet, VCF, TSV, duckDB, JSON) and select
 fields (rename possible, 'INFO' keyword for all fields), or use 'ALL'
 keyword to detect available databases.
 
-For external tools, such as Annovar, snpEff and Exomiser, specify
-parameters such as annotation keywords (Annovar) and options (depending
-on the tool), and select fields (BCFtools and Annovar, field rename
-available).
+For external tools, such as Annovar, snpEff, Exomiser and Docker-based
+annotation tools, specify parameters such as annotation keywords
+(Annovar), options (depending on the tool), and selected fields
+(BCFtools and Annovar, field rename available).
 
 Examples:
 
@@ -1547,6 +1549,263 @@ Examples:
 > ``` json
 > {
 >    "whitespace": "true"
+> }
+> ```
+
+## docker
+
+Annotation process using Docker containers. This section defines one or
+multiple Docker entries to run annotation tools in containers.
+
+This parameter file is dedicated to run-specific settings. Structural
+Docker settings are configured in the configuration file under
+config.tools.<tool>.docker (annotation/runtime).
+
+Each entry exports variants to an input VCF, runs a container command
+with mounted resources, and imports output VCF annotations into the
+variants table.
+
+Examples:
+
+> Docker-based annotation with one VEP entry (run-specific parameters)
+
+> ``` json
+> {
+>    "docker": {
+>      "entries": {
+>        "vep": {
+>          "tool": "vep",
+>          "resources": {
+>            "threads": 4,
+>            "memory": "8G"
+>          },
+>          "parameters": [
+>            "--everything",
+>            "--cache",
+>            { "key": "--assembly", "value": "GRCh37" }
+>          ],
+>          "options": [
+>            { "key": "--compress_output", "value": "vcf" }
+>          ],
+>          "update_existing_fields": true,
+>          "output_pattern": "*.vcf.gz"
+>          "where_clause": " WHERE \"#CHROM\" = 'chr7' "
+>        }
+>      }
+>    }
+> }
+> ```
+
+### entries
+
+Dictionary of Docker annotation entries. Each key is an entry name and
+each value is an entry definition.
+
+Examples:
+
+> Two Docker annotation entries
+
+> ``` json
+> {
+>    "entries": {
+>      "vep": { "tool": "vep" },
+>      "custom": { "tool": "mytool" }
+>    }
+> }
+> ```
+
+#### entry_name
+
+Docker entry identifier (JSON object key).
+
+One entry generally maps to one containerized annotation command.
+
+Examples:
+
+> Entry named 'vep'
+
+> ``` json
+> {
+>    "vep": {
+>      "tool": "vep"
+>    }
+> }
+> ```
+
+##### tool
+
+Name of the tool configuration to use from configuration section 'tools'
+(e.g. tools.<tool>.docker.image).
+
+Examples:
+
+> Use tool definition 'vep' from configuration
+
+> ``` json
+> {
+>    "tool": "vep"
+> }
+> ```
+
+##### resources
+
+Optional entry-level resources override for this run.
+
+Threads and memory are automatically capped to available resources (run
+limits and system availability) to avoid invalid container commands.
+
+Examples:
+
+> Resource override values
+
+> ``` json
+> {
+>    "resources": {
+>      "threads": 4,
+>      "memory": "8G"
+>    }
+> }
+> ```
+
+###### threads
+
+Threads value for this entry.
+
+Type: `int`
+
+Default: `-1`
+
+Examples:
+
+> 
+
+> ``` json
+> {
+>    "threads": 4
+> }
+> ```
+
+###### memory
+
+Memory value for this entry (string or number, depending on tool
+syntax).
+
+Type: `str`
+
+Format: `FLOAT[kMG]`
+
+Default: `None`
+
+Examples:
+
+> 
+
+> ``` json
+> {
+>    "memory": "8G"
+> }
+> ```
+
+##### parameters
+
+List of run-specific command parameters appended to the executable.
+
+Supported formats include string flags, token arrays, or key/value
+objects.
+
+These values are merged with default parameters configured in
+config.tools.<tool>.docker.annotation.defaults.parameters.
+
+Examples:
+
+> 
+
+> ``` json
+> {
+>    "parameters": [
+>      "--cache",
+>      ["--species", "homo_sapiens"],
+>      { "key": "--assembly", "value": "GRCh37" }
+>    ]
+> }
+> ```
+
+##### options
+
+Additional run-specific command options merged with 'parameters'.
+
+Both defaults and entry values are merged; if the same CLI key appears
+multiple times (e.g. --compress_output), entry value overrides default
+value.
+
+Examples:
+
+> 
+
+> ``` json
+> {
+>    "options": [
+>      "--flag"
+>    ]
+> }
+> ```
+
+##### where_clause
+
+Optional SQL WHERE clause to select variants before export for this
+entry.
+
+A pre-check query with LIMIT 1 is executed; when no variant matches,
+entry execution is skipped.
+
+Examples:
+
+> 
+
+> ``` json
+> {
+>    "where_clause": "#CHROM = '1' AND POS >= 100000"
+> }
+> ```
+
+##### output_pattern
+
+Optional glob pattern override used to locate output VCF when output
+path does not directly exist.
+
+If omitted, default value from
+config.tools.<tool>.docker.annotation.defaults.output_pattern is used
+when defined.
+
+Examples:
+
+> 
+
+> ``` json
+> {
+>    "output_pattern": "*.vcf.gz"
+> }
+> ```
+
+##### update_existing_fields
+
+Optional boolean override to update existing INFO fields when importing
+annotations from output VCF.
+
+If omitted, default value from
+config.tools.<tool>.docker.annotation.vcf_update.update_existing_fields
+is used.
+
+This option is intended for run-specific behavior and overrides the
+configuration value for this entry only.
+
+Examples:
+
+> 
+
+> ``` json
+> {
+>    "update_existing_fields": true
 > }
 > ```
 

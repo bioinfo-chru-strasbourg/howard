@@ -10,6 +10,7 @@ This release introduces several significant new features and improvements, prima
 - Add fast strategy for Parquet annotation ([#466](https://github.com/bioinfo-chru-strasbourg/howard/issues/466))
 - Add chunking process for huge input files ([#442](https://github.com/bioinfo-chru-strasbourg/howard/issues/442))
 - Add pipeline parameter to define the order of operations to process as a list of steps (between "annotation", "calculation" and "prioritization" operation types) ([#522](https://github.com/bioinfo-chru-strasbourg/howard/issues/522))
+- Add docker tools to extend annotation with external tools (such as VEP) ([#527](https://github.com/bioinfo-chru-strasbourg/howard/issues/527))
 
 ### Updates
 

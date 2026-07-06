@@ -72,9 +72,11 @@ from howard.functions.utils import (
 )
 
 from howard.objects.database import Database
+from howard.objects.variants_mixin.annotation_docker import variants_annotation_docker
 # from howard.objects.variants import Variants
 
-class variants_annotation:
+
+class variants_annotation(variants_annotation_docker):
 
     ##############
     # Annotation #
@@ -480,6 +482,9 @@ class variants_annotation:
                 if param.get(section, {}).get("splice", None) is not None:
                     log.info("Annotations 'splice' ...")
                     self.annotation_splice(section=section)
+                if param.get(section, {}).get("docker", None) is not None:
+                    log.info("Annotations 'docker' ...")
+                    self.annotation_docker(section=section)
                 if param.get(section, {}).get("hgvs", None) is not None:
                     log.info("Annotations 'hgvs' ...")
                     self.annotation_hgvs(section=section)

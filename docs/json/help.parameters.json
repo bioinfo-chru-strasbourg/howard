@@ -119,7 +119,7 @@
     "__help": [
       "Annotation process using HOWARD algorithms or external tools.\n",
       "For HOWARD Parquet algorithm, provide the list of database files available (formats such as Parquet, VCF, TSV, duckDB, JSON) and select fields (rename possible, 'INFO' keyword for all fields), or use 'ALL' keyword to detect available databases.\n",
-      "For external tools, such as Annovar, snpEff and Exomiser, specify parameters such as annotation keywords (Annovar) and options (depending on the tool), and select fields (BCFtools and Annovar, field rename available)."
+      "For external tools, such as Annovar, snpEff, Exomiser and Docker-based annotation tools, specify parameters such as annotation keywords (Annovar), options (depending on the tool), and selected fields (BCFtools and Annovar, field rename available)."
     ],
     "__examples_code": [
       "# Annotation with multiple tools in multiple formats with multiple options",
@@ -904,6 +904,158 @@
           "# Remove spaces in INFO field.",
           "\"whitespace\": \"true\""
         ]
+      }
+    },
+    "docker": {
+      "__help": [
+        "Annotation process using Docker containers. This section defines one or multiple Docker entries to run annotation tools in containers.",
+        "This parameter file is dedicated to run-specific settings. Structural Docker settings are configured in the configuration file under config.tools.<tool>.docker (annotation/runtime).",
+        "Each entry exports variants to an input VCF, runs a container command with mounted resources, and imports output VCF annotations into the variants table."
+      ],
+      "__code_type": "json",
+      "__examples_code": [
+        "# Docker-based annotation with one VEP entry (run-specific parameters)",
+        "\"docker\": {",
+        "  \"entries\": {",
+        "    \"vep\": {",
+        "      \"tool\": \"vep\",",
+        "      \"resources\": {",
+        "        \"threads\": 4,",
+        "        \"memory\": \"8G\"",
+        "      },",
+        "      \"parameters\": [",
+        "        \"--everything\",",
+        "        \"--cache\",",
+        "        { \"key\": \"--assembly\", \"value\": \"GRCh37\" }",
+        "      ],",
+        "      \"options\": [",
+        "        { \"key\": \"--compress_output\", \"value\": \"vcf\" }",
+        "      ],",
+        "      \"update_existing_fields\": true,",
+        "      \"output_pattern\": \"*.vcf.gz\"",
+        "      \"where_clause\": \" WHERE \\\"#CHROM\\\" = 'chr7' \"",
+        "    }",
+        "  }",
+        "}"
+      ],
+      "entries": {
+        "__auto": false,
+        "__help": [
+          "Dictionary of Docker annotation entries. Each key is an entry name and each value is an entry definition."
+        ],
+        "__code_type": "json",
+        "__examples_code": [
+          "# Two Docker annotation entries",
+          "\"entries\": {",
+          "  \"vep\": { \"tool\": \"vep\" },",
+          "  \"custom\": { \"tool\": \"mytool\" }",
+          "}"
+        ],
+        "entry_name": {
+          "__help": [
+            "Docker entry identifier (JSON object key).",
+            "One entry generally maps to one containerized annotation command."
+          ],
+          "__code_type": "json",
+          "__examples_code": [
+            "# Entry named 'vep'",
+            "\"vep\": {",
+            "  \"tool\": \"vep\"",
+            "}"
+          ],
+          "tool": {
+            "__help": [
+              "Name of the tool configuration to use from configuration section 'tools' (e.g. tools.<tool>.docker.image)."
+            ],
+            "__examples_code": [
+              "# Use tool definition 'vep' from configuration",
+              "\"tool\": \"vep\""
+            ]
+          },
+          "resources": {
+            "__help": [
+              "Optional entry-level resources override for this run.",
+              "Threads and memory are automatically capped to available resources (run limits and system availability) to avoid invalid container commands."
+            ],
+            "__code_type": "json",
+            "__examples_code": [
+              "# Resource override values",
+              "\"resources\": {",
+              "  \"threads\": 4,",
+              "  \"memory\": \"8G\"",
+              "}"
+            ],
+            "threads": {
+              "__help": [
+                "Threads value for this entry."
+              ],
+              "__examples_code": [
+                "\"threads\": 4"
+              ]
+            },
+            "memory": {
+              "__help": [
+                "Memory value for this entry (string or number, depending on tool syntax)."
+              ],
+              "__examples_code": [
+                "\"memory\": \"8G\""
+              ]
+            }
+          },
+          "parameters": {
+            "__help": [
+              "List of run-specific command parameters appended to the executable.",
+              "Supported formats include string flags, token arrays, or key/value objects.",
+              "These values are merged with default parameters configured in config.tools.<tool>.docker.annotation.defaults.parameters."
+            ],
+            "__examples_code": [
+              "\"parameters\": [",
+              "  \"--cache\",",
+              "  [\"--species\", \"homo_sapiens\"],",
+              "  { \"key\": \"--assembly\", \"value\": \"GRCh37\" }",
+              "]"
+            ]
+          },
+          "options": {
+            "__help": [
+              "Additional run-specific command options merged with 'parameters'.",
+              "Both defaults and entry values are merged; if the same CLI key appears multiple times (e.g. --compress_output), entry value overrides default value."
+            ],
+            "__examples_code": [
+              "\"options\": [",
+              "  \"--flag\"",
+              "]"
+            ]
+          },
+          "where_clause": {
+            "__help": [
+              "Optional SQL WHERE clause to select variants before export for this entry.",
+              "A pre-check query with LIMIT 1 is executed; when no variant matches, entry execution is skipped."
+            ],
+            "__examples_code": [
+              "\"where_clause\": \"#CHROM = '1' AND POS >= 100000\""
+            ]
+          },
+          "output_pattern": {
+            "__help": [
+              "Optional glob pattern override used to locate output VCF when output path does not directly exist.",
+              "If omitted, default value from config.tools.<tool>.docker.annotation.defaults.output_pattern is used when defined."
+            ],
+            "__examples_code": [
+              "\"output_pattern\": \"*.vcf.gz\""
+            ]
+          },
+          "update_existing_fields": {
+            "__help": [
+              "Optional boolean override to update existing INFO fields when importing annotations from output VCF.",
+              "If omitted, default value from config.tools.<tool>.docker.annotation.vcf_update.update_existing_fields is used.",
+              "This option is intended for run-specific behavior and overrides the configuration value for this entry only."
+            ],
+            "__examples_code": [
+              "\"update_existing_fields\": true"
+            ]
+          }
+        }
       }
     },
     "hgvs": {
