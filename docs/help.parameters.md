@@ -1584,11 +1584,6 @@ Examples:
 >            "--cache",
 >            { "key": "--assembly", "value": "GRCh37" }
 >          ],
->          "options": [
->            { "key": "--compress_output", "value": "vcf" }
->          ],
->          "update_existing_fields": true,
->          "output_pattern": "*.vcf.gz"
 >          "where_clause": " WHERE \"#CHROM\" = 'chr7' "
 >        }
 >      }
@@ -1784,28 +1779,6 @@ Examples:
 > ``` json
 > {
 >    "output_pattern": "*.vcf.gz"
-> }
-> ```
-
-##### update_existing_fields
-
-Optional boolean override to update existing INFO fields when importing
-annotations from output VCF.
-
-If omitted, default value from
-config.tools.<tool>.docker.annotation.vcf_update.update_existing_fields
-is used.
-
-This option is intended for run-specific behavior and overrides the
-configuration value for this entry only.
-
-Examples:
-
-> 
-
-> ``` json
-> {
->    "update_existing_fields": true
 > }
 > ```
 
