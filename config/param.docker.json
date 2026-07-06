@@ -4,88 +4,32 @@
       "entries": {
         "vep": {
           "tool": "vep",
-          "command": null,
-          "primary": {
-            "input": "--input_file",
-            "output": "--output_file",
-            "threads": "--fork"
-          },
-          "resources": {
-            "threads": 4,
-            "memory": null
-          },
-          "databases": [
-            {
-                "name": "vep",
-                "container_path": "/opt/vep/.vep",
-                "mode": "ro"
-            }
-          ],
-          "mounts": [],
-          "path": [],
-          "paths": [],
-          "options": [],
+          "update_existing_fields": false,
           "parameters": [
-            "--vcf",
-            "--cache",
-            "--offline",
+            "--everything",
             {
-              "key": "--assembly",
-              "value": "GRCh37"
-            },
-            {
-              "key": "--compress_output",
-              "value": "bgzip"
-            },
-            "--force_overwrite"
-          ],
-          "output_pattern": "*.vcf.gz",
-          "remove_info": true,
-          "add_samples": true,
-          "update_header": true,
-          "where_clause": " WHERE \"#CHROM\" = 'chr2' "
+              "key": "--max_sv_size",
+              "value": "1000000"
+            }
+          ]
+        }
+      },
+      "entries_examples": {
+        "vep": {
+          "tool": "vep",
+          "update_existing_fields": true,
+          "where_clause": " WHERE \"#CHROM\" != 'chr7' "
         },
         "vep_chr7": {
           "tool": "vep",
-          "command": null,
-          "primary": {
-            "input": "--input_file",
-            "output": "--output_file",
-            "threads": "--fork"
-          },
-          "resources": {
-            "threads": 4,
-            "memory": null
-          },
-          "databases": [
+          "parameters": [
+            "--everything",
             {
-                "name": "vep",
-                "container_path": "/opt/vep/.vep",
-                "mode": "ro"
+              "key": "--max_sv_size",
+              "value": "1000000"
             }
           ],
-          "mounts": [],
-          "path": [],
-          "paths": [],
-          "options": [],
-          "parameters": [
-            "--vcf",
-            "--cache",
-            "--offline",
-            {
-              "key": "--assembly",
-              "value": "GRCh37"
-            },
-            {
-              "key": "--compress_output",
-              "value": "bgzip"
-            },
-            "--force_overwrite"
-          ],
           "output_pattern": "*.vcf.gz",
-          "remove_info": true,
-          "add_samples": true,
-          "update_header": true,
           "where_clause": " WHERE \"#CHROM\" = 'chr7' "
         }
       }

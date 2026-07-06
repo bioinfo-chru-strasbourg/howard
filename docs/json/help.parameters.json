@@ -909,37 +909,31 @@
     "docker": {
       "__help": [
         "Annotation process using Docker containers. This section defines one or multiple Docker entries to run annotation tools in containers.",
+        "This parameter file is dedicated to run-specific settings. Structural Docker settings are configured in the configuration file under config.tools.<tool>.docker (annotation/runtime).",
         "Each entry exports variants to an input VCF, runs a container command with mounted resources, and imports output VCF annotations into the variants table."
       ],
       "__code_type": "json",
       "__examples_code": [
-        "# Docker-based annotation with one VEP entry",
+        "# Docker-based annotation with one VEP entry (run-specific parameters)",
         "\"docker\": {",
         "  \"entries\": {",
         "    \"vep\": {",
         "      \"tool\": \"vep\",",
-        "      \"command\": \"vep\",",
-        "      \"primary\": {",
-        "        \"input\": \"--input_file\",",
-        "        \"output\": \"--output_file\",",
-        "        \"threads\": \"--fork\"",
-        "      },",
         "      \"resources\": {",
-        "        \"threads\": 4",
+        "        \"threads\": 4,",
+        "        \"memory\": \"8G\"",
         "      },",
-        "      \"databases\": [",
-        "        {",
-        "          \"name\": \"vep\",",
-        "          \"container_path\": \"/opt/vep/.vep\",",
-        "          \"mode\": \"ro\"",
-        "        }",
-        "      ],",
         "      \"parameters\": [",
+        "        \"--everything\",",
         "        \"--cache\",",
-        "        \"--offline\",",
         "        { \"key\": \"--assembly\", \"value\": \"GRCh37\" }",
         "      ],",
+        "      \"options\": [",
+        "        { \"key\": \"--compress_output\", \"value\": \"vcf\" }",
+        "      ],",
+        "      \"update_existing_fields\": true,",
         "      \"output_pattern\": \"*.vcf.gz\"",
+        "      \"where_clause\": \" WHERE \\\"#CHROM\\\" = 'chr7' \"",
         "    }",
         "  }",
         "}"
@@ -978,73 +972,14 @@
               "\"tool\": \"vep\""
             ]
           },
-          "command": {
-            "__help": [
-              "Executable path or binary name to run in the container.",
-              "If null, command is resolved from 'config.tools.<tool>.docker.command'.",
-              "If command is missing, container entrypoint can be used if defined in tool configuration."
-            ],
-            "__examples_code": [
-              "# Run executable 'vep' inside container",
-              "\"command\": \"vep\"",
-              "# Use configured command or entrypoint",
-              "\"command\": null"
-            ]
-          },
-          "primary": {
-            "__help": [
-              "Primary command-line keys for input/output and optional resources flags."
-            ],
-            "__code_type": "json",
-            "__examples_code": [
-              "# Primary argument keys",
-              "\"primary\": {",
-              "  \"input\": \"--input_file\",",
-              "  \"output\": \"--output_file\",",
-              "  \"threads\": \"--fork\",",
-              "  \"memory\": \"--memory\"",
-              "}"
-            ],
-            "input": {
-              "__help": [
-                "Input VCF argument key for the container command (required)."
-              ],
-              "__examples_code": [
-                "\"input\": \"--input_file\""
-              ]
-            },
-            "output": {
-              "__help": [
-                "Output VCF argument key for the container command (required)."
-              ],
-              "__examples_code": [
-                "\"output\": \"--output_file\""
-              ]
-            },
-            "threads": {
-              "__help": [
-                "Optional threads argument key. If provided, resources.threads value can be appended."
-              ],
-              "__examples_code": [
-                "\"threads\": \"--fork\""
-              ]
-            },
-            "memory": {
-              "__help": [
-                "Optional memory argument key. If provided, resources.memory value can be appended."
-              ],
-              "__examples_code": [
-                "\"memory\": \"--memory\""
-              ]
-            }
-          },
           "resources": {
             "__help": [
-              "Entry-level resources values used with primary.threads and primary.memory if these keys are configured."
+              "Optional entry-level resources override for this run.",
+              "Threads and memory are automatically capped to available resources (run limits and system availability) to avoid invalid container commands."
             ],
             "__code_type": "json",
             "__examples_code": [
-              "# Resource values",
+              "# Resource override values",
               "\"resources\": {",
               "  \"threads\": 4,",
               "  \"memory\": \"8G\"",
@@ -1069,8 +1004,9 @@
           },
           "parameters": {
             "__help": [
-              "List of main command parameters appended to the executable.",
-              "Supported formats include string flags, token arrays, or key/value objects."
+              "List of run-specific command parameters appended to the executable.",
+              "Supported formats include string flags, token arrays, or key/value objects.",
+              "These values are merged with default parameters configured in config.tools.<tool>.docker.annotation.defaults.parameters."
             ],
             "__examples_code": [
               "\"parameters\": [",
@@ -1082,48 +1018,12 @@
           },
           "options": {
             "__help": [
-              "Additional list of command options merged with 'parameters'."
+              "Additional run-specific command options merged with 'parameters'.",
+              "Both defaults and entry values are merged; if the same CLI key appears multiple times (e.g. --compress_output), entry value overrides default value."
             ],
             "__examples_code": [
               "\"options\": [",
               "  \"--flag\"",
-              "]"
-            ]
-          },
-          "databases": {
-            "__help": [
-              "List of databases to mount for this entry.",
-              "Each item can be a configured database key, a direct path, or an object with mount options.",
-              "Assembly-aware path checks are performed for mounted database paths."
-            ],
-            "__examples_code": [
-              "\"databases\": [",
-              "  \"vep\",",
-              "  { \"name\": \"vep\", \"container_path\": \"/opt/vep/.vep\", \"mode\": \"ro\" }",
-              "]"
-            ]
-          },
-          "mounts": {
-            "__help": [
-              "Additional custom mounts.",
-              "String and object mount formats are accepted."
-            ],
-            "__examples_code": [
-              "\"mounts\": [",
-              "  \"-v /host/path:/container/path:ro\",",
-              "  { \"host_path\": \"/host/tmp\", \"container_path\": \"/work/tmp\", \"mode\": \"rw\" }",
-              "]"
-            ]
-          },
-          "paths": {
-            "__help": [
-              "Additional host paths to mount for this entry.",
-              "Can be used for files or directories not listed under databases."
-            ],
-            "__examples_code": [
-              "\"paths\": [",
-              "  \"/path/to/resource\",",
-              "  { \"path\": \"/path/to/cache\", \"container_path\": \"/cache\", \"mode\": \"ro\" }",
               "]"
             ]
           },
@@ -1136,36 +1036,23 @@
               "\"where_clause\": \"#CHROM = '1' AND POS >= 100000\""
             ]
           },
-          "remove_info": {
-            "__help": [
-              "If true, removes INFO annotations from exported input VCF before container annotation (default true)."
-            ],
-            "__examples_code": [
-              "\"remove_info\": true"
-            ]
-          },
-          "add_samples": {
-            "__help": [
-              "If true, keeps sample columns in exported input VCF (default true)."
-            ],
-            "__examples_code": [
-              "\"add_samples\": true"
-            ]
-          },
           "output_pattern": {
             "__help": [
-              "Glob pattern used to locate output VCF when output path does not directly exist."
+              "Optional glob pattern override used to locate output VCF when output path does not directly exist.",
+              "If omitted, default value from config.tools.<tool>.docker.annotation.defaults.output_pattern is used when defined."
             ],
             "__examples_code": [
               "\"output_pattern\": \"*.vcf.gz\""
             ]
           },
-          "update_header": {
+          "update_existing_fields": {
             "__help": [
-              "If true, updates output INFO header definitions when importing annotations (default true)."
+              "Optional boolean override to update existing INFO fields when importing annotations from output VCF.",
+              "If omitted, default value from config.tools.<tool>.docker.annotation.vcf_update.update_existing_fields is used.",
+              "This option is intended for run-specific behavior and overrides the configuration value for this entry only."
             ],
             "__examples_code": [
-              "\"update_header\": true"
+              "\"update_existing_fields\": true"
             ]
           }
         }

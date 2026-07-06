@@ -1,5 +1,6 @@
 import copy
 import glob
+import json
 import os
 import shlex
 import subprocess
@@ -12,6 +13,7 @@ from howard.functions.commons import (
 	DEFAULT_TOOLS_FOLDER,
 	check_docker_image_exists,
 	command,
+	extract_memory_in_go,
 	get_bin_command,
 	get_random,
 )
@@ -68,6 +70,79 @@ def _collect_cli_params(parameters: Any) -> list[str]:
 	for parameter in _as_list(parameters):
 		cli_tokens.extend(_format_cli_param(parameter))
 	return cli_tokens
+
+
+def _cli_block_override_key(block: Any) -> str | None:
+	"""
+	Return an override key for one CLI block when possible.
+
+	Examples:
+	- "--cache" -> "--cache"
+	- ["--compress_output", "bgzip"] -> "--compress_output"
+	- {"key": "--compress_output", "value": "bgzip"} -> "--compress_output"
+	"""
+
+	if isinstance(block, dict):
+		key = block.get("key", None)
+		return str(key) if key else None
+
+	if isinstance(block, list) and len(block) > 0:
+		first = str(block[0])
+		if first.startswith("-"):
+			return first
+		return None
+
+	if isinstance(block, str):
+		first = block.strip().split()[0] if block.strip() else ""
+		if first.startswith("-"):
+			return first
+		return None
+
+	return None
+
+
+def _merge_cli_param_blocks(
+	default_parameters: Any,
+	default_options: Any,
+	entry_parameters: Any,
+	entry_options: Any,
+) -> list:
+	"""
+	Merge parameter blocks from defaults and entry values.
+	
+	Order and precedence:
+	- defaults first (parameters + options)
+	- entry values next (parameters + options)
+
+	If a later block has the same CLI key (e.g. --compress_output), it overrides
+	the previous one. Non-keyed blocks are de-duplicated by exact representation.
+	"""
+	merged: list[Any] = []
+	seen_nonkey: set[str] = set()
+	index_by_key: dict[str, int] = {}
+
+	for block in (
+		_as_list(default_parameters)
+		+ _as_list(default_options)
+		+ _as_list(entry_parameters)
+		+ _as_list(entry_options)
+	):
+		override_key = _cli_block_override_key(block)
+		if override_key:
+			if override_key in index_by_key:
+				merged[index_by_key[override_key]] = block
+			else:
+				index_by_key[override_key] = len(merged)
+				merged.append(block)
+			continue
+
+		block_repr = json.dumps(block, sort_keys=True, ensure_ascii=True, default=str)
+		if block_repr in seen_nonkey:
+			continue
+		seen_nonkey.add(block_repr)
+		merged.append(block)
+
+	return merged
 
 
 def _expand_path(path: str) -> str:
@@ -213,57 +288,277 @@ def _format_mount(path_item: Any, default_mode: str = "ro") -> str | None:
 	return f"-v {host_path}:{host_path}:{default_mode}"
 
 
-def _resolve_entry_spec(entry_name: str, entry: dict, default_threads: int, default_memory: str) -> dict:
+def _warn_entry_forbidden_overrides(entry_name: str, entry: dict, tool: str) -> None:
+	location_map = {
+		"primary": f"config.tools.{tool}.docker.annotation.primary",
+		"databases": f"config.tools.{tool}.docker.runtime.databases",
+		"mounts": f"config.tools.{tool}.docker.runtime.mounts",
+		"mount": f"config.tools.{tool}.docker.runtime.mounts",
+		"paths": f"config.tools.{tool}.docker.runtime.paths",
+		"path": f"config.tools.{tool}.docker.runtime.paths",
+		"remove_info": f"config.tools.{tool}.docker.annotation.vcf_update.remove_info",
+		"add_samples": f"config.tools.{tool}.docker.annotation.vcf_update.add_samples",
+		"update_header": f"config.tools.{tool}.docker.annotation.vcf_update.update_header",
+		"command": f"config.tools.{tool}.docker.command",
+	}
+
+	for forbidden_key in [
+		"primary",
+		"databases",
+		"mounts",
+		"mount",
+		"paths",
+		"path",
+		"remove_info",
+		"add_samples",
+		"update_header",
+		"command",
+	]:
+		if forbidden_key not in entry:
+			continue
+		location = location_map.get(forbidden_key, f"config.tools.{tool}.docker")
+
+		log.warning(
+			f"annotation_docker entry '{entry_name}': key '{forbidden_key}' should be configured in {location} (entry value ignored)"
+		)
+
+
+def _normalize_runtime_mount_settings(runtime_cfg: dict, annotation_cfg: dict) -> tuple[list, list, list]:
+	"""
+	Resolve runtime mount settings with backward compatibility and aliases.
+
+	Preferred location:
+	- docker.runtime.databases/mounts/paths
+
+	Backward-compatible fallbacks:
+	- docker.annotation.databases/mounts/paths
+	- docker.runtime.mount (alias mounts)
+	- docker.runtime.path (alias paths)
+	"""
+
+	databases = _as_list(
+		runtime_cfg.get("databases", annotation_cfg.get("databases", []))
+	)
+
+	runtime_mounts = runtime_cfg.get("mounts", None)
+	if runtime_mounts is None:
+		runtime_mounts = runtime_cfg.get("mount", None)
+	if runtime_mounts is None:
+		runtime_mounts = annotation_cfg.get("mounts", [])
+	mounts = _as_list(runtime_mounts)
+
+	runtime_paths = runtime_cfg.get("paths", None)
+	if runtime_paths is None:
+		runtime_paths = runtime_cfg.get("path", None)
+	if runtime_paths is None:
+		runtime_paths = annotation_cfg.get("paths", annotation_cfg.get("path", []))
+	paths = _as_list(runtime_paths)
+
+	return databases, mounts, paths
+
+
+def _get_effective_threads_limit(default_threads: int | None) -> int:
+	"""Compute the effective thread limit for one entry."""
+
+	system_threads = os.cpu_count() or 1
+	if not default_threads or int(default_threads) <= 0:
+		return int(system_threads)
+
+	return int(min(int(default_threads), int(system_threads)))
+
+
+def _get_effective_memory_limit_gb(default_memory: Any) -> int:
+	"""Compute the effective memory limit (GB) for one entry."""
+
+	default_memory_gb = extract_memory_in_go(default_memory)
+	if default_memory_gb < 1:
+		default_memory_gb = 1
+
+	try:
+		import psutil  # type: ignore
+
+		available_memory_gb = int(psutil.virtual_memory().available / 1024 / 1024 / 1024)
+		if available_memory_gb < 1:
+			available_memory_gb = 1
+		return int(min(default_memory_gb, available_memory_gb))
+	except Exception:
+		return int(default_memory_gb)
+
+
+def _normalize_entry_resources(
+	entry_name: str,
+	entry_threads: Any,
+	entry_memory: Any,
+	default_memory: Any,
+	threads_limit: int,
+	memory_limit_gb: int,
+) -> tuple[int, str]:
+	"""Normalize and cap entry resources to effective limits."""
+
+	resolved_threads = int(entry_threads) if entry_threads is not None else int(threads_limit)
+	if resolved_threads <= 0:
+		resolved_threads = int(threads_limit)
+	if resolved_threads > threads_limit:
+		log.warning(
+			f"annotation_docker entry '{entry_name}': requested threads={resolved_threads} exceeds available threads={threads_limit}, using {threads_limit}"
+		)
+		resolved_threads = int(threads_limit)
+
+	if entry_memory is None:
+		entry_memory = default_memory
+	requested_memory_gb = extract_memory_in_go(entry_memory)
+	if requested_memory_gb < 1:
+		requested_memory_gb = 1
+	if requested_memory_gb > memory_limit_gb:
+		log.warning(
+			f"annotation_docker entry '{entry_name}': requested memory={requested_memory_gb}G exceeds available memory={memory_limit_gb}G, using {memory_limit_gb}G"
+		)
+		requested_memory_gb = int(memory_limit_gb)
+
+	return int(resolved_threads), f"{int(requested_memory_gb)}G"
+
+
+def _resolve_entry_spec(
+	entry_name: str,
+	entry: dict,
+	config: dict,
+	default_threads: int,
+	default_memory: str,
+) -> dict:
 	"""
 	Normalize one annotation_docker entry.
 
 	Expected minimal fields:
 	- tool: tool name in config.tools
-	- command: main command in container
-	- primary.input: input flag (e.g. --input)
-	- primary.output: output flag (e.g. --output)
+
+	Configuration-centric behavior:
+	- Structural runtime settings are read from config.tools.<tool>.docker.annotation
+	  (primary, databases, mounts, paths, remove_info, add_samples, update_header).
+	- Param entry keeps user-specific run settings (parameters, options, where_clause),
+	  with allowed overrides for resources and output_pattern.
 	"""
 
 	tool = entry.get("tool", None)
-	command_name = entry.get("command", None)
-
 	if not tool:
 		raise ValueError(f"annotation_docker entry '{entry_name}': missing 'tool'")
+
+	tool_config = config.get("tools", {}).get(tool, {})
+	if not tool_config:
+		raise ValueError(
+			f"annotation_docker entry '{entry_name}': tool '{tool}' not configured in config.tools"
+		)
+
+	docker_cfg = tool_config.get("docker", {})
+	annotation_cfg = docker_cfg.get("annotation", {})
+	runtime_cfg = docker_cfg.get("runtime", {})
+	vcf_update_cfg = annotation_cfg.get("vcf_update", {})
+	defaults_cfg = annotation_cfg.get("defaults", {})
+
+	if not isinstance(runtime_cfg, dict):
+		runtime_cfg = {}
+	if not isinstance(vcf_update_cfg, dict):
+		vcf_update_cfg = {}
+	if not isinstance(defaults_cfg, dict):
+		defaults_cfg = {}
+
+	_warn_entry_forbidden_overrides(entry_name=entry_name, entry=entry, tool=tool)
+
+	command_name = docker_cfg.get("command", None)
+
 	if not command_name:
 		log.warning(
-			f"annotation_docker entry '{entry_name}': empty 'command' (will rely on docker entrypoint if configured)"
+			f"annotation_docker entry '{entry_name}': empty tool docker command (will rely on docker entrypoint if configured)"
 		)
 
-	primary = entry.get("primary", {})
+	primary = annotation_cfg.get("primary", {})
 	if not isinstance(primary, dict):
 		raise ValueError(
-			f"annotation_docker entry '{entry_name}': 'primary' must be a dict"
+			f"annotation_docker entry '{entry_name}': config.tools.{tool}.docker.annotation.primary must be a dict"
 		)
 
-	input_flag = primary.get("input", entry.get("input", None))
-	output_flag = primary.get("output", entry.get("output", None))
-	threads_flag = primary.get("threads", entry.get("threads", None))
-	memory_flag = primary.get("memory", entry.get("memory", None))
+	input_flag = primary.get("input", None)
+	output_flag = primary.get("output", None)
+	threads_flag = primary.get("threads", None)
+	memory_flag = primary.get("memory", None)
 
 	if not input_flag:
 		raise ValueError(
-			f"annotation_docker entry '{entry_name}': missing input flag (primary.input)"
+			f"annotation_docker entry '{entry_name}': missing input flag in config.tools.{tool}.docker.annotation.primary.input"
 		)
 	if not output_flag:
 		raise ValueError(
-			f"annotation_docker entry '{entry_name}': missing output flag (primary.output)"
+			f"annotation_docker entry '{entry_name}': missing output flag in config.tools.{tool}.docker.annotation.primary.output"
 		)
 
-	entry_threads = entry.get("resources", {}).get("threads", default_threads)
-	entry_memory = entry.get("resources", {}).get("memory", default_memory)
+	cfg_resources = defaults_cfg.get("resources", annotation_cfg.get("resources", {}))
+	entry_resources = entry.get("resources", {})
+	if not isinstance(cfg_resources, dict):
+		cfg_resources = {}
+	if not isinstance(entry_resources, dict):
+		entry_resources = {}
+
+	entry_threads = entry_resources.get(
+		"threads",
+		cfg_resources.get("threads", default_threads),
+	)
+	entry_memory = entry_resources.get(
+		"memory",
+		cfg_resources.get("memory", default_memory),
+	)
 
 	if entry_threads is None:
 		entry_threads = default_threads
 	if entry_memory is None:
 		entry_memory = default_memory
 
-	options = entry.get("options", [])
-	parameters = entry.get("parameters", [])
+	threads_limit = _get_effective_threads_limit(default_threads=default_threads)
+	memory_limit_gb = _get_effective_memory_limit_gb(default_memory=default_memory)
+	entry_threads, entry_memory = _normalize_entry_resources(
+		entry_name=entry_name,
+		entry_threads=entry_threads,
+		entry_memory=entry_memory,
+		default_memory=default_memory,
+		threads_limit=threads_limit,
+		memory_limit_gb=memory_limit_gb,
+	)
+
+	default_parameters = defaults_cfg.get(
+		"parameters",
+		annotation_cfg.get("parameters", []),
+	)
+	default_options = defaults_cfg.get(
+		"options",
+		annotation_cfg.get("options", []),
+	)
+	entry_options = entry.get("options", [])
+	entry_parameters = entry.get("parameters", [])
+
+	if entry_parameters and entry_options:
+		log.warning(
+			f"annotation_docker entry '{entry_name}': both 'parameters' and 'options' are provided; values are merged and exact duplicates are removed"
+		)
+
+	merged_param_blocks = _merge_cli_param_blocks(
+		default_parameters=default_parameters,
+		default_options=default_options,
+		entry_parameters=entry_parameters,
+		entry_options=entry_options,
+	)
+	databases, mounts, paths = _normalize_runtime_mount_settings(
+		runtime_cfg=runtime_cfg,
+		annotation_cfg=annotation_cfg,
+	)
+
+	remove_info = vcf_update_cfg.get("remove_info", annotation_cfg.get("remove_info", True))
+	add_samples = vcf_update_cfg.get("add_samples", annotation_cfg.get("add_samples", True))
+	update_header = vcf_update_cfg.get("update_header", annotation_cfg.get("update_header", True))
+	update_existing_fields = vcf_update_cfg.get(
+		"update_existing_fields",
+		annotation_cfg.get("update_existing_fields", False),
+	)
+	update_existing_fields = bool(
+		entry.get("update_existing_fields", update_existing_fields)
+	)
 
 	return {
 		"tool": tool,
@@ -274,15 +569,19 @@ def _resolve_entry_spec(entry_name: str, entry: dict, default_threads: int, defa
 		"memory_flag": memory_flag,
 		"threads": entry_threads,
 		"memory": entry_memory,
-		"parameters": _collect_cli_params(parameters) + _collect_cli_params(options),
+		"parameters": _collect_cli_params(merged_param_blocks),
 		"where_clause": entry.get("where_clause", None),
-		"remove_info": entry.get("remove_info", True),
-		"add_samples": entry.get("add_samples", True),
-		"update_header": entry.get("update_header", True),
-		"output_pattern": entry.get("output_pattern", None),
-		"mounts": _as_list(entry.get("mounts", [])),
-		"databases": _as_list(entry.get("databases", [])),
-		"paths": _as_list(entry.get("paths", [])),
+		"remove_info": remove_info,
+		"add_samples": add_samples,
+		"update_header": update_header,
+		"update_existing_fields": update_existing_fields,
+		"output_pattern": entry.get(
+			"output_pattern",
+			defaults_cfg.get("output_pattern", annotation_cfg.get("output_pattern", None)),
+		),
+		"mounts": mounts,
+		"databases": databases,
+		"paths": paths,
 	}
 
 
@@ -450,9 +749,8 @@ class variants_annotation_docker:
 		docker_image = docker_cfg.get("image", None)
 		docker_entrypoint = docker_cfg.get("entrypoint", None)
 		docker_config_command = docker_cfg.get("command", None)
-		entry_command = spec.get("command", None)
 		# command is treated as an executable path (entrypoint-like), not as a full command line.
-		effective_command = entry_command if entry_command else docker_config_command
+		effective_command = docker_config_command
 		if not docker_image:
 			raise ValueError(
 				f"annotation_docker entry '{entry_name}': missing docker image in config.tools.{tool}.docker.image"
@@ -492,7 +790,7 @@ class variants_annotation_docker:
 			command_in_container = None
 			cmd_tokens = []
 
-			# Build command from executable path + generated args.
+			# Build command from configured executable path + generated args.
 			# If executable is missing but docker entrypoint exists, pass only args.
 			if effective_command:
 				cmd_tokens.append(str(effective_command))
@@ -544,7 +842,11 @@ class variants_annotation_docker:
 					f"annotation_docker entry '{entry_name}': output VCF not found in '{run_dir}'"
 				)
 
-			self.update_from_vcf(output_vcf, update_header=spec["update_header"])
+			self.update_from_vcf(
+				output_vcf,
+				update_header=spec["update_header"],
+				update_existing_fields=spec["update_existing_fields"],
+			)
 
 	def annotation_docker(self, section: str = "annotation", threads: int = None) -> None:
 		"""
@@ -583,6 +885,7 @@ class variants_annotation_docker:
 			spec = _resolve_entry_spec(
 				entry_name=entry_name,
 				entry=entry,
+				config=config,
 				default_threads=threads,
 				default_memory=default_memory,
 			)

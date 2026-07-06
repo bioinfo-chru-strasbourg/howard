@@ -171,8 +171,7 @@ title: HOWARD Help Parameters
     - [<span class="toc-section-number">10.11.11</span>
       prioritization_transcripts_version_force](#prioritization_transcripts_version_force)
   - [<span class="toc-section-number">10.12</span> export](#export-1)
-    - [<span class="toc-section-number">10.12.1</span>
-      output](#output-1)
+    - [<span class="toc-section-number">10.12.1</span> output](#output)
     - [<span class="toc-section-number">10.12.2</span>
       export_header](#export_header)
     - [<span class="toc-section-number">10.12.3</span>
@@ -189,7 +188,7 @@ title: HOWARD Help Parameters
 - [<span class="toc-section-number">11</span> samples](#samples)
   - [<span class="toc-section-number">11.1</span> list](#list)
   - [<span class="toc-section-number">11.2</span> check](#check)
-- [<span class="toc-section-number">12</span> databases](#databases-1)
+- [<span class="toc-section-number">12</span> databases](#databases)
 - [<span class="toc-section-number">13</span> chunking](#chunking)
   - [<span class="toc-section-number">13.1</span>
     chunking_enable](#chunking_enable)
@@ -199,7 +198,7 @@ title: HOWARD Help Parameters
     chunking_partitions](#chunking_partitions)
   - [<span class="toc-section-number">13.4</span>
     chunking_sort](#chunking_sort)
-- [<span class="toc-section-number">14</span> threads](#threads-2)
+- [<span class="toc-section-number">14</span> threads](#threads-1)
 - [<span class="toc-section-number">15</span> fast](#fast)
 
 # Introduction
@@ -1558,13 +1557,17 @@ Examples:
 Annotation process using Docker containers. This section defines one or
 multiple Docker entries to run annotation tools in containers.
 
+This parameter file is dedicated to run-specific settings. Structural
+Docker settings are configured in the configuration file under
+config.tools.<tool>.docker (annotation/runtime).
+
 Each entry exports variants to an input VCF, runs a container command
 with mounted resources, and imports output VCF annotations into the
 variants table.
 
 Examples:
 
-> Docker-based annotation with one VEP entry
+> Docker-based annotation with one VEP entry (run-specific parameters)
 
 > ``` json
 > {
@@ -1572,28 +1575,21 @@ Examples:
 >      "entries": {
 >        "vep": {
 >          "tool": "vep",
->          "command": "vep",
->          "primary": {
->            "input": "--input_file",
->            "output": "--output_file",
->            "threads": "--fork"
->          },
 >          "resources": {
->            "threads": 4
+>            "threads": 4,
+>            "memory": "8G"
 >          },
->          "databases": [
->            {
->              "name": "vep",
->              "container_path": "/opt/vep/.vep",
->              "mode": "ro"
->            }
->          ],
 >          "parameters": [
+>            "--everything",
 >            "--cache",
->            "--offline",
 >            { "key": "--assembly", "value": "GRCh37" }
 >          ],
+>          "options": [
+>            { "key": "--compress_output", "value": "vcf" }
+>          ],
+>          "update_existing_fields": true,
 >          "output_pattern": "*.vcf.gz"
+>          "where_clause": " WHERE \"#CHROM\" = 'chr7' "
 >        }
 >      }
 >    }
@@ -1651,136 +1647,16 @@ Examples:
 > }
 > ```
 
-##### command
-
-Executable path or binary name to run in the container.
-
-If null, command is resolved from 'config.tools.<tool>.docker.command'.
-
-If command is missing, container entrypoint can be used if defined in
-tool configuration.
-
-Examples:
-
-> Run executable 'vep' inside container
-
-> ``` json
-> {
->    "command": "vep"
-> }
-> ```
-
-> Use configured command or entrypoint
-
-> ``` json
-> {
->    "command": null
-> }
-> ```
-
-##### primary
-
-Primary command-line keys for input/output and optional resources flags.
-
-Examples:
-
-> Primary argument keys
-
-> ``` json
-> {
->    "primary": {
->      "input": "--input_file",
->      "output": "--output_file",
->      "threads": "--fork",
->      "memory": "--memory"
->    }
-> }
-> ```
-
-###### input
-
-Input VCF argument key for the container command (required).
-
-Type: `Path`
-
-Default: `None`
-
-Examples:
-
-> 
-
-> ``` json
-> {
->    "input": "--input_file"
-> }
-> ```
-
-###### output
-
-Output VCF argument key for the container command (required).
-
-Type: `Path`
-
-Default: `None`
-
-Examples:
-
-> 
-
-> ``` json
-> {
->    "output": "--output_file"
-> }
-> ```
-
-###### threads
-
-Optional threads argument key. If provided, resources.threads value can
-be appended.
-
-Type: `int`
-
-Default: `-1`
-
-Examples:
-
-> 
-
-> ``` json
-> {
->    "threads": "--fork"
-> }
-> ```
-
-###### memory
-
-Optional memory argument key. If provided, resources.memory value can be
-appended.
-
-Type: `str`
-
-Format: `FLOAT[kMG]`
-
-Default: `None`
-
-Examples:
-
-> 
-
-> ``` json
-> {
->    "memory": "--memory"
-> }
-> ```
-
 ##### resources
 
-Entry-level resources values used with primary.threads and
-primary.memory if these keys are configured.
+Optional entry-level resources override for this run.
+
+Threads and memory are automatically capped to available resources (run
+limits and system availability) to avoid invalid container commands.
 
 Examples:
 
-> Resource values
+> Resource override values
 
 > ``` json
 > {
@@ -1832,10 +1708,13 @@ Examples:
 
 ##### parameters
 
-List of main command parameters appended to the executable.
+List of run-specific command parameters appended to the executable.
 
 Supported formats include string flags, token arrays, or key/value
 objects.
+
+These values are merged with default parameters configured in
+config.tools.<tool>.docker.annotation.defaults.parameters.
 
 Examples:
 
@@ -1853,7 +1732,11 @@ Examples:
 
 ##### options
 
-Additional list of command options merged with 'parameters'.
+Additional run-specific command options merged with 'parameters'.
+
+Both defaults and entry values are merged; if the same CLI key appears
+multiple times (e.g. --compress_output), entry value overrides default
+value.
 
 Examples:
 
@@ -1863,66 +1746,6 @@ Examples:
 > {
 >    "options": [
 >      "--flag"
->    ]
-> }
-> ```
-
-##### databases
-
-List of databases to mount for this entry.
-
-Each item can be a configured database key, a direct path, or an object
-with mount options.
-
-Assembly-aware path checks are performed for mounted database paths.
-
-Examples:
-
-> 
-
-> ``` json
-> {
->    "databases": [
->      "vep",
->      { "name": "vep", "container_path": "/opt/vep/.vep", "mode": "ro" }
->    ]
-> }
-> ```
-
-##### mounts
-
-Additional custom mounts.
-
-String and object mount formats are accepted.
-
-Examples:
-
-> 
-
-> ``` json
-> {
->    "mounts": [
->      "-v /host/path:/container/path:ro",
->      { "host_path": "/host/tmp", "container_path": "/work/tmp", "mode": "rw" }
->    ]
-> }
-> ```
-
-##### paths
-
-Additional host paths to mount for this entry.
-
-Can be used for files or directories not listed under databases.
-
-Examples:
-
-> 
-
-> ``` json
-> {
->    "paths": [
->      "/path/to/resource",
->      { "path": "/path/to/cache", "container_path": "/cache", "mode": "ro" }
 >    ]
 > }
 > ```
@@ -1945,39 +1768,14 @@ Examples:
 > }
 > ```
 
-##### remove_info
-
-If true, removes INFO annotations from exported input VCF before
-container annotation (default true).
-
-Examples:
-
-> 
-
-> ``` json
-> {
->    "remove_info": true
-> }
-> ```
-
-##### add_samples
-
-If true, keeps sample columns in exported input VCF (default true).
-
-Examples:
-
-> 
-
-> ``` json
-> {
->    "add_samples": true
-> }
-> ```
-
 ##### output_pattern
 
-Glob pattern used to locate output VCF when output path does not
-directly exist.
+Optional glob pattern override used to locate output VCF when output
+path does not directly exist.
+
+If omitted, default value from
+config.tools.<tool>.docker.annotation.defaults.output_pattern is used
+when defined.
 
 Examples:
 
@@ -1989,10 +1787,17 @@ Examples:
 > }
 > ```
 
-##### update_header
+##### update_existing_fields
 
-If true, updates output INFO header definitions when importing
-annotations (default true).
+Optional boolean override to update existing INFO fields when importing
+annotations from output VCF.
+
+If omitted, default value from
+config.tools.<tool>.docker.annotation.vcf_update.update_existing_fields
+is used.
+
+This option is intended for run-specific behavior and overrides the
+configuration value for this entry only.
 
 Examples:
 
@@ -2000,7 +1805,7 @@ Examples:
 
 > ``` json
 > {
->    "update_header": true
+>    "update_existing_fields": true
 > }
 > ```
 

@@ -121,6 +121,21 @@ class variants_calculation:
                     "uniquify": False,
                 },
             },
+            # "vep_extract": {
+            #     "type": "python",
+            #     "name": "vep_extract",
+            #     "description": "HGVS nomenclatures from VEP annotation",
+            #     "comment": "Extract HGVS nomenclatures from VEP annotation (field CSQ) and create new INFO fields with prefix 'vep_' (e.g. vep_hgvs, vep_impact, vep_gene_name...). This calculation parses the CSQ field from VEP annotations, extracting relevant information such as HGVS nomenclatures, impact, gene name, etc., and creates new INFO fields with a 'vep_' prefix for easier access and downstream analysis.",
+            #     "available": True,
+            #     "function_name": "calculation_snpeff_extract",
+            #     "function_params": {
+            #         "snpeff_field": "CSQ",
+            #         "snpeff_hgvs": "vep_hgvs",
+            #         "snpeff_explode": "vep_",
+            #         "snpeff_json": "vep_json",
+            #         "uniquify": False,
+            #     },
+            # },
             "snpeff_hgvs": {
                 "type": "python",
                 "name": "snpeff_hgvs",

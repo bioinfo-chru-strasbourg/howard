@@ -5103,13 +5103,16 @@ class Variants(
 
             # Extract ANN header
             ann_description = vcf_reader.infos[annotation_field].desc
-            pattern = r"'(.+?)'"
+            # pattern = r"'(.+?)'"
+            # pattern = r"Format: (.+?)$"
+            pattern = r"'(.+?)'|Format:\s*(.+?)$"
             match = re.search(pattern, ann_description)
             if match:
-                ann_header_match = match.group(1).split(" | ")
+                ann_header_match = match.group(1).split("|")
                 ann_header = []
                 ann_header_desc = {}
                 for i in range(len(ann_header_match)):
+                    ann_header_match[i] = ann_header_match[i].strip()
                     ann_header_info = "".join(
                         char for char in ann_header_match[i] if char.isalnum()
                     )
