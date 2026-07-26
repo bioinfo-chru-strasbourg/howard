@@ -173,7 +173,7 @@ class variants_annotation(variants_annotation_docker):
         if param.get("annotation_parquet", None) != None:
             if isinstance(param.get("annotation_parquet", None), list):
                 param_annotation_list.append(",".join(param.get("annotation_parquet")))
-            else:
+            elif isinstance(param.get("annotation_parquet", None), str):
                 param_annotation_list.append(param.get("annotation_parquet"))
         if param.get("annotation_snpsift", None) != None:
             if isinstance(param.get("annotation_snpsift", None), list):
@@ -181,11 +181,11 @@ class variants_annotation(variants_annotation_docker):
                     "snpsift:"
                     + "+".join(param.get("annotation_snpsift")).replace(",", "+")
                 )
-            else:
+            elif isinstance(param.get("annotation_snpsift", None), str):
                 param_annotation_list.append(
                     "snpsift:" + param.get("annotation_snpsift").replace(",", "+")
                 )
-        if param.get("annotation_snpeff", None) != None:
+        if param.get("annotation_snpeff", None) != None and isinstance(param.get("annotation_snpeff", None), str):
             param_annotation_list.append("snpeff:" + param.get("annotation_snpeff"))
         if param.get("annotation_bcftools", None) != None:
             if isinstance(param.get("annotation_bcftools", None), list):
@@ -193,15 +193,15 @@ class variants_annotation(variants_annotation_docker):
                     "bcftools:"
                     + "+".join(param.get("annotation_bcftools")).replace(",", "+")
                 )
-            else:
+            elif isinstance(param.get("annotation_bcftools", None), str):
                 param_annotation_list.append(
                     "bcftools:" + param.get("annotation_bcftools").replace(",", "+")
                 )
-        if param.get("annotation_annovar", None) != None:
+        if param.get("annotation_annovar", None) != None and isinstance(param.get("annotation_annovar", None), str):
             param_annotation_list.append("annovar:" + param.get("annotation_annovar"))
-        if param.get("annotation_exomiser", None) != None:
+        if param.get("annotation_exomiser", None) != None and isinstance(param.get("annotation_exomiser", None), str):
             param_annotation_list.append("exomiser:" + param.get("annotation_exomiser"))
-        if param.get("annotation_splice", None) != None:
+        if param.get("annotation_splice", None) != None and isinstance(param.get("annotation_splice", None), str):
             param_annotation_list.append("splice:" + param.get("annotation_splice"))
 
         # Merge param annotations list
@@ -3119,8 +3119,9 @@ class variants_annotation(variants_annotation_docker):
             # Command - start pipe
             command_annovar += f""" && {bcftools_bin_command} view --threads={threads} {tmp_annotate_vcf_name}.tmp.vcf 2>>{tmp_annotate_vcf_name_err} """
 
-            # Command - Clean INFO/ANNOVAR_DATE (due to Annovar issue with multiple TAGS!)
+            # Command - Clean INFO/ANNOVAR_DATE and INFO/ALLELE_END (due to Annovar issue with multiple TAGS!)
             command_annovar += """ | sed "s/ANNOVAR_DATE=[^;\t]*;//gi" """
+            command_annovar += """ | sed "s/ALLELE_END=[^;\t]*;//gi" """
 
             # Command - Special characters (refGene annotation)
             for char, replacement in char_code_map.items():
@@ -3131,7 +3132,13 @@ class variants_annotation(variants_annotation_docker):
 
             # Command - Keep only needed fields, and remove ANNOVAR fields, and compress and index final file
             annovar_fields_to_keep = set(annovar_fields_to_keep + annotations_parameters.get("annovar_fields_to_keep", []))
-            command_annovar += f""" | {bcftools_bin_command} annotate --pair-logic exact --threads={threads} -x {",".join(annovar_fields_to_keep)} --rename-annots={tmp_rename_name} -o {tmp_annotate_vcf_name} -Oz 2>>{tmp_annotate_vcf_name_err} """
+            if len(annovar_fields_to_keep):
+                annovar_fields_to_keep_option = "-x " + ",".join(annovar_fields_to_keep)
+            else:
+                annovar_fields_to_keep_option = ""
+
+            # Command - Annotate with bcftools annotate
+            command_annovar += f""" | {bcftools_bin_command} annotate --pair-logic exact --threads={threads} {annovar_fields_to_keep_option} --rename-annots={tmp_rename_name} -o {tmp_annotate_vcf_name} -Oz 2>>{tmp_annotate_vcf_name_err} """
 
             # Command - indexing
             command_annovar += f"""  && tabix {tmp_annotate_vcf_name} """
@@ -3622,7 +3629,8 @@ class variants_annotation(variants_annotation_docker):
                     )
 
                     # Extract only needed fields, and remove ANNOVAR fields, and compress and index final file
-                    annovar_fields_to_keep = ["INFO/ANNOVAR_DATE", "INFO/ALLELE_END"]
+                    #annovar_fields_to_keep = ["INFO/ANNOVAR_DATE", "INFO/ALLELE_END"]
+                    annovar_fields_to_keep = []
                     if "ALL" not in annotation_list and "INFO" not in annotation_list:
                         # for ann in annotation_renamed_list:
                         for ann in annotation_list:
