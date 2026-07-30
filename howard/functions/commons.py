@@ -94,6 +94,14 @@ default_pipeline = {
     ]
 }
 
+list_pipeline_tool = [
+    step_tool
+    for step in default_pipeline["steps"]
+    for step_name in step
+    for step_tool in [step[step_name]]
+    if step_tool is not None
+]
+
 # Tools
 DEFAULT_TOOLS_FOLDER = os.path.join(folder_howard_home, "tools")
 
@@ -398,9 +406,6 @@ def launch_pipeline(vcfdata_obj, param, allowed_tools=None):
     progress and handling exceptions for each step.
     """
 
-    # # Param
-    # param_original = param.copy()
-
     # Pipeline
     pipeline = param.get("pipeline", default_pipeline)
     steps = pipeline.get("steps", [])
@@ -433,30 +438,31 @@ def launch_pipeline(vcfdata_obj, param, allowed_tools=None):
         for step_name in step:
 
             # Get step tool
-            step_tool = get_step_tool(param, step_name, default_tool="annotation")
+            step_tool = get_step_tool(param, step, step_name, default_tool="annotation")
             
             
             if allowed_tools is None or step_tool in allowed_tools:
 
                 # Get step param
-                step_param = get_step_param(param, step_name)
+                step_param = get_step_param(param, step, step_name)
                 
                 # Update param for this step: include the step param in the main param, and set it to the vcfdata_obj
                 param_for_step = param.copy()
-                param_for_step[step_name] = step_param
+                step_name_for_step = f"{step_name}_{get_random()}"
+                param_for_step[step_name_for_step] = step_param
                 vcfdata_obj.set_param(param_for_step)
 
                 # Get step description
-                step_description = get_step_description(param_for_step, step_name, default_description="Unknown description")
+                step_description = get_step_description(param_for_step, step, step_name, default_description="Unknown description")
 
                 # Log
                 log.info(f"Processing pipeline [{step_i}/{len(steps)}] - '{step_name}' [{step_tool}]: {step_description}")
-                if step_name not in param_for_step:
+                if step_name_for_step not in param_for_step:
                     log.warning(f"Processing pipeline [{step_i}/{len(steps)}] - '{step_name}' [{step_tool}] - Not found in JSON parameters. Try without...")
 
                 # Run step: eval the function with the step name and tool
                 try:
-                    eval(f"vcfdata_obj.{step_tool}(section='{step_name}')")
+                    eval(f"vcfdata_obj.{step_tool}(section='{step_name_for_step}')")
                     log.debug(f"Processing pipeline [{step_i}/{len(steps)}] - '{step_name}' [{step_tool}] completed successfully.")
                 except Exception as e:
                     msg_err = f"Error processing step '{step_name}' with tool '{step_tool}': {str(e)}"
@@ -471,62 +477,82 @@ def launch_pipeline(vcfdata_obj, param, allowed_tools=None):
 
     log.debug("END pipeline")
 
-def get_step_param(param, step_name) -> dict:
+def get_step_param(param, step, step_name) -> dict:
     """
     The `get_step_param` function retrieves the parameters associated with a specific step name from a given parameter dictionary.
 
     :param param: A dictionary containing parameters for various steps in a pipeline
     :type param: dict
+    :param step: The step dictionary containing the step name and its parameters
+    :type step: dict
     :param step_name: The name of the step for which you want to retrieve the associated parameters
     :type step_name: str
-    :return: The parameters associated with the specified step name, or None if the step name is not found in the parameters.
+    :return: The parameters associated with the specified step name, or an empty dictionary if the step name is not found in the parameters.
     """
-
+    
     # Get pipeline steps
-    pipeline = param.get("pipeline", default_pipeline)
-    steps = pipeline.get("steps", [])
-    
-    # Iterate through the steps and return the parameters for the specified step name
-    for step in steps:
-        if step_name in step:
-            step_param = param.get(step_name, {}) or step.get(step_name, {})
-            if isinstance(step_param, dict):
-                return step_param
-    
+    if step_name in step:
+        
+        # Check first in step param, then in main param, otherwise return None
+        if isinstance(step.get(step_name, {}), dict):
+            step_param = step.get(step_name, {})
+        elif isinstance(param.get(step_name, {}), dict):
+            step_param = param.get(step_name, {})
+        else:
+            step_param = None
+
+        # Check if the step_param is a dictionary and return it, otherwise return an empty dictionary
+        if step_param is not None and isinstance(step_param, dict):
+            return step_param
+
     return {}
 
-def get_step_tool(param, step_name, default_tool="") -> str:
+def get_step_tool(param, step, step_name, default_tool="") -> str:
     """
     The `get_step_tool` function retrieves the tool associated with a specific step name from a given parameter dictionary.
 
     :param param: A dictionary containing parameters for various steps in a pipeline
     :type param: dict
+    :param step: The step dictionary containing the step name and its parameters
+    :type step: dict
     :param step_name: The name of the step for which you want to retrieve the associated tool
     :type step_name: str
-    :return: The tool associated with the specified step name, or None if the step name is not found in the parameters.
+    :return: The tool associated with the specified step name, or the default tool if the step name is not found in the parameters.
     """
 
     # Get pipeline steps
-    pipeline = param.get("pipeline", default_pipeline)
-    steps = pipeline.get("steps", [])
-    
-    # Iterate through the steps and return the tool for the specified step name
-    for step in steps:
-        if step_name in step:
-            # If the step is a string (but not None), return it directly
-            if isinstance(step.get(step_name), str) and step.get(step_name) is not None:
-                #log.debug(f"get_step_tool: returning step.get(step_name)={step.get(step_name)}")
-                return step.get(step_name, default_tool)
-            # If the step is a dictionary, return the "_tool" value if it exists, otherwise return the default tool
-            elif isinstance(step.get(step_name), dict):
-                return step.get(step_name).get("_tool", default_tool)
-            # If the step is not a string or dictionary (especially if it is None), check if the "_tool" key exists in the parameters for that step
-            elif param.get(step_name, {}).get("_tool", None):
-                return param.get(step_name, {}).get("_tool", default_tool)
+    if step_name in step:
+        
+        # Check if the step name is in the list of pipeline tools
+        step_name_as_tool = step_name if step_name in list_pipeline_tool else None
+
+        # algorithm:
+        # 1. If the step is a string (but not None), return it directly.
+        # 2. If the step is a dictionary, return the "_tool" value if it exists, otherwise return the default tool.
+        # 3. If the step is not a string or dictionary (especially if it is None), check if the "_tool" key exists in the parameters for that step.
+        # 4. If the "_tool" key exists in the parameters for that step, return its value; otherwise, return the default tool.
+        # Note that if the step is a string corresponding to a tool name, it will be returned as default tool
+
+        # If the step is a string (but not None), return it directly
+        if isinstance(step.get(step_name), str) and step.get(step_name) is not None:
+            return step.get(step_name, step_name_as_tool) or default_tool
+        
+        # If the step is a dictionary, return the "_tool" value if it exists, otherwise return the default tool
+        elif isinstance(step.get(step_name), dict):
+            return step.get(step_name).get("_tool", step_name_as_tool) or default_tool
+        
+        # If the step is not a string or dictionary (especially if it is None), check if the "_tool" key exists in the parameters for that step
+        elif param.get(step_name, {}).get("_tool", None):
+            return param.get(step_name, {}).get("_tool", step_name_as_tool) or default_tool
+        
+        # If the step is not a string or dictionary (especially if it is None), check if the "_tool" key exists in the parameters for that step
+        elif step_name_as_tool is not None:
+            log.warning(f"get_step_tool: step '{step_name}' is not a string or dictionary, returning step_name_as_tool '{step_name_as_tool}'")
+            return step_name_as_tool
     
     return default_tool
 
-def get_step_description(param, step_name, default_description="unknown") -> str:
+def get_step_description(param, step, step_name, default_description="unknown") -> str:
     """
     The `get_step_description` function retrieves the description associated with a specific step name from a given parameter dictionary.
 
@@ -534,24 +560,20 @@ def get_step_description(param, step_name, default_description="unknown") -> str
     :type param: dict
     :param step_name: The name of the step for which you want to retrieve the associated description
     :type step_name: str
-    :return: The description associated with the specified step name, or None if the step name is not found in the parameters.
+    :return: The description associated with the specified step name, or the default description if the step name is not found in the parameters.
     """
 
     # Try to get the description directly from the step parameters
     if param.get(step_name, {}).get("_description"):
         return param.get(step_name, {}).get("_description", default_description)
 
-    # Get pipeline steps
-    pipeline = param.get("pipeline", default_pipeline)
-    steps = pipeline.get("steps", [])
+    # Get description from the step dictionary if it exists
+    elif step_name in step and isinstance(step.get(step_name), dict):
+        return step.get(step_name).get("_description", default_description)
     
-    # Iterate through the steps and return the description for the specified step name
-    for step in steps:
-        if step_name in step:
-            if isinstance(step.get(step_name), dict):
-                return step.get(step_name).get("_description", default_description)
-    
-    return default_description
+    # Default description if not found
+    else:
+        return default_description
 
 def remove_if_exists(filepaths: list) -> None:
     """
@@ -589,6 +611,8 @@ def set_log_level(verbosity: str, log_file: str = None) -> str:
     It sets the log level of the Python logging module
 
     :param verbosity: The level of verbosity
+    :param log_file: The file to which logs should be written (optional)
+    :type log_file: str, optional
     """
 
     import coloredlogs  # type: ignore

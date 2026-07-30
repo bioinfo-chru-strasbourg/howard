@@ -115,6 +115,185 @@
       ]
     }
   },
+  "pipeline": {
+    "__help": [
+      "Pipeline options to define the order of operations to process as a list of steps.",
+      "Two pipeline declaration modes are available:",
+      "- Inline mode (recommended): each step contains one or multiple named operations, each embedding its own configuration, a '_tool' key set to one of: 'annotation', 'calculation', 'prioritization', and an optional '_description' key to document the operation.",
+      "- Referenced mode (alternative, legacy-compatible): each step maps a section name to a tool type (e.g. {\"annotation_frequency\": \"annotation\"}), and parameters are defined in top-level sections of the parameter JSON file. An optional '_description' key can also be added in each referenced section. The '_tool' key can be used instead of define it on pipeline section (e.g. {\"annotation_frequency\": None} with section \"annotation_frequency\" including '_tool' key as \"annotation\").",
+      "The referenced mode is useful to reuse the same operation configuration in multiple pipeline steps, to define a pipeline with a minimal or choosen steps.",
+      "By default, if no pipeline is provided, operations are processed in referenced mode in the specific order: \"annotation\", \"calculation\", \"prioritization.\"",
+      "For more information about steps and operations, see each tool's documentation below."
+    ],
+    "__code_type": "json",
+    "__examples_code": [
+      "# Recommended: pipeline in inline mode with full step descriptions",
+      "\"pipeline\": {",
+      "  \"steps\": [",
+      "    {",
+      "      \"annotation_dbsnp\": {",
+      "        \"_tool\": \"annotation\",",
+      "        \"_description\": \"Annotate variants with dbSNP annotation.\",",
+      "        \"parquet\": {",
+      "          \"annotations\": {",
+      "            \"tests/databases/annotations/current/hg19/avsnp150.parquet\": {\"INFO\": null}",
+      "          }",
+      "        }",
+      "      },",
+      "      \"annotation_dbNSFP\": {",
+      "        \"_tool\": \"annotation\",",
+      "        \"_description\": \"Annotate variants with dbNSFP and COSMIC databases.\",",
+      "        \"parquet\": {",
+      "          \"annotations\": {",
+      "            \"tests/databases/annotations/current/hg19/dbnsfp42a.parquet\": {\"INFO\": null}",
+      "          }",
+      "        },",
+      "        \"bcftools\": {",
+      "          \"annotations\": {",
+      "            \"tests/databases/annotations/current/hg19/cosmic70.vcf.gz\": {\"INFO\": null}",
+      "          }",
+      "        }",
+      "      }",
+      "    },",
+      "    {",
+      "      \"calculation_on_variants\": {",
+      "        \"_tool\": \"calculation\",",
+      "        \"_description\": \"Compute variant and genotype metrics such as vartype and VAF.\",",
+      "        \"calculations\": {\"vartype\": null, \"VAF\": \"\"},",
+      "        \"calculation_config\": \"config/calculations_config.json\"",
+      "      }",
+      "    },",
+      "    {",
+      "      \"prioritization\": {",
+      "        \"_tool\": \"prioritization\",",
+      "        \"_description\": \"Prioritize variants using configured profiles and scoring mode.\",",
+      "        \"profiles\": [\"default\", \"GERMLINE\"],",
+      "        \"prioritization_config\": \"config/prioritization_profiles.json\",",
+      "        \"pzfields\": [\"PZScore\", \"PZFlag\", \"PZComment\"],",
+      "        \"prioritization_score_mode\": \"VaRank\"",
+      "      }",
+      "    }",
+      "  ]",
+      "},",
+      "# Alternative: pipeline in referenced mode (\"prioritization_step\" tool is defined in the \"prioritization_step\" referenced top-level section)",
+      "\"pipeline\": {",
+      "  \"steps\": [",
+      "    {\"annotation_step\": \"annotation\"},",
+      "    {\"calculation_step\": \"calculation\"},",
+      "    {\"prioritization_step\": null}",
+      "  ]",
+      "},",
+      "# Corresponding operation sections for referenced mode",
+      "\"annotation_step\": {",
+      "  \"_description\": \"Annotate variants with configured annotation databases.\",",
+      "  \"parquet\": {",
+      "    \"annotations\": {",
+      "      \"/path/to/database.parquet\": {",
+      "        \"annotation_fields\": {",
+      "          \"INFO\": null",
+      "        }",
+      "      }",
+      "    }",
+      "  }",
+      "},",
+      "\"calculation_step\": {",
+      "  \"_description\": \"Perform configured calculation operations on variants and genotypes.\",",
+      "  \"calculations\": {",
+      "    \"operation1\": null,",
+      "    \"operation2\": {",
+      "      \"options\": {",
+      "        \"option1\": \"value1\",",
+      "        \"option2\": \"value2\"",
+      "      }",
+      "    }",
+      "  },",
+      "  \"calculation_config\": \"calculation_config.json\"",
+      "},",
+      "\"prioritization_step\": {",
+      "  \"_tool\": \"prioritization\",",
+      "  \"_description\": \"Prioritize variants with configured profiles and scoring mode.\",",
+      "  \"prioritizations\": \"config/prioritization_profiles.json\",",
+      "  \"profiles\": [\"GENOME\", \"GERMLINE\"],",
+      "  \"default_profile\": \"GERMLINE\",",
+      "  \"pzfields\": [\"PZScore\", \"PZFlag\", \"PZComment\"],",
+      "  \"prioritization_score_mode\": \"VaRank\"",
+      "}"
+    ],
+    "steps": {
+      "__help": [
+        "List of steps to process in the pipeline.\n",
+        "Each step is a dict and can use one of two formats:",
+        "- Inline format (recommended): operation name as key mapped to an operation object containing '_tool', optional '_description', and operation parameters.",
+        "- Referenced format (alternative): section name as key (e.g. \"annotation\", \"calculation\", \"prioritization\", \"annotation_core\", \"annotation_frequency\") mapped to the tool type (\"annotation\", \"calculation\", \"prioritization\"); the corresponding referenced section may include an alternative '_tool' key, and an optional '_description' key.",
+        "Only tool types \"annotation\", \"calculation\" and \"prioritization\" are available.",
+        "By default, all steps are processed in the order: \"annotation\", \"calculation\", \"prioritization\".\n",
+        "Beware that some referenced steps can be skipped if no corresponding section is provided in the parameter JSON file (e.g. '{\"annotation_frequency\": \"annotation\"}' needs \"annotation_frequency\" section in parameter JSON file)."
+      ],
+      "__type": "list",
+      "__default": "[ {\"annotation\": \"annotation\"}, {\"calculation\": \"calculation\"}, {\"prioritization\": \"prioritization\"} ]",
+      "__code_type": "json",
+      "__examples_code": [
+        "# Recommended: inline full descriptions",
+        "\"steps\": [",
+        "  {",
+        "    \"annotation_dbsnp\": {",
+        "      \"_tool\": \"annotation\",",
+        "      \"_description\": \"Annotate variants with dbSNP annotation.\",",
+        "      \"parquet\": {",
+        "        \"annotations\": {",
+        "          \"tests/databases/annotations/current/hg19/avsnp150.parquet\": {\"INFO\": null}",
+        "        }",
+        "      }",
+        "    }",
+        "  },",
+        "  {",
+        "    \"calculation_on_variants\": {",
+        "      \"_tool\": \"calculation\",",
+        "      \"_description\": \"Compute variant and genotype metrics such as vartype and VAF.\",",
+        "      \"calculations\": {\"vartype\": null, \"VAF\": \"\"},",
+        "      \"calculation_config\": \"config/calculations_config.json\"",
+        "    }",
+        "  },",
+        "  {",
+        "    \"prioritization\": {",
+        "      \"_tool\": \"prioritization\",",
+        "      \"_description\": \"Prioritize variants using configured profiles and scoring mode.\",",
+        "      \"profiles\": [\"default\", \"GERMLINE\"]",
+        "    }",
+        "  }",
+        "]",
+        "# Alternative: referenced format (default order) with tool types",
+        "\"steps\": [",
+        "  {\"annotation\": \"annotation\"},",
+        "  {\"calculation\": \"calculation\"},",
+        "  {\"prioritization\": \"prioritization\"}",
+        "]",
+        "# Referenced sections in parameter JSON file (in main section level)",
+        "\"annotation\": {\"_tool\": \"annotation\", \"_description\": \"Annotate variants with configured annotation databases.\", ...},",
+        "\"calculation\": {\"_tool\": \"calculation\", \"_description\": \"Perform configured calculation operations on variants and genotypes.\", ...},",
+        "\"prioritization\": {\"_tool\": \"prioritization\", \"_description\": \"Prioritize variants with configured profiles and scoring mode.\", ...}",
+        "# Alternative: referenced format with multiple operation sections, with tool types and optional '_description' in each section",
+        "\"steps\": [",
+        "  {\"annotation_core\": null},",
+        "  {\"calculation\": null},",
+        "  {\"annotation_frequency\": null},",
+        "  {\"annotation_scores\": null},",
+        "  {\"calculation_frequency\": null},",
+        "  {\"prioritization\": null},",
+        "  {\"calculation_final\": null}",
+        "]",
+        "# Referenced sections in parameter JSON file (in main section level)",
+        "\"annotation_core\": {\"_tool\": \"annotation\", \"_description\": \"Core annotation step\", ...},",
+        "\"annotation_frequency\": {\"_tool\": \"annotation\", \"_description\": \"Frequency annotation step\", ...},",
+        "\"annotation_scores\": {\"_tool\": \"annotation\", \"_description\": \"Scores annotation step\", ...},",
+        "\"calculation\": {\"_tool\": \"calculation\", \"_description\": \"Main calculation step\", ...},",
+        "\"calculation_frequency\": {\"_tool\": \"calculation\", \"_description\": \"Frequency calculation step\", ...},",
+        "\"calculation_final\": {\"_tool\": \"calculation\", \"_description\": \"Final calculation step\", ...},",
+        "\"prioritization\": {\"_tool\": \"prioritization\", \"_description\": \"Prioritization step\", ...}"
+      ]
+    },
+    "output_files": {}
+  },
   "annotation": {
     "__help": [
       "Annotation process using HOWARD algorithms or external tools.\n",
@@ -1289,191 +1468,7 @@
       ]
     }
   },
-  "pipeline": {
-    "__help": [
-      "Pipeline options to define the order of operations to process as a list of steps. By default, all steps are processed in the order: annotation, calculation, prioritization, with corresponding section in parameter JSON file. Sections can be added in the parameter JSON file (e.g. \"annotation_frequency\", \"calculation_final\"), and steps added in the pipeline parameter with its corresponding type of operation (e.g. 'annotation', 'calculation', respectively)."
-    ],
-    "__code_type": "json",
-    "__examples_code": [
-      "# Pipeline with all steps by default with corresponding parameters for each step",
-      "\"pipeline\": {",
-      "  \"steps\": [",
-      "    {\"annotation\": \"annotation\"},",
-      "    {\"calculation\": \"calculation\"},",
-      "    {\"prioritization\": \"prioritization\"}",
-      "  ]",
-      "},",
-      "\"annotation\": {",
-      "  \"parquet\": {",
-      "    \"annotations\": {",
-      "      \"/path/to/database.parquet\": {",
-      "        \"annotation_fields\": {",
-      "          \"INFO\": null",
-      "        }",
-      "      }",
-      "    }",
-      "  }",
-      "},",
-      "\"calculation\": {",
-      "  \"calculations\": {",
-      "    \"operation1\": null,",
-      "    \"operation2\": {",
-      "      \"options\": {",
-      "        \"option1\": \"value1\",",
-      "        \"option2\": \"value2\"",
-      "      }",
-      "    }",
-      "  },",
-      "  \"calculation_config\": \"calculation_config.json\"",
-      "},",
-      "\"prioritization\": {",
-      "  \"prioritizations\": \"config/prioritization_profiles.json\",",
-      "  \"profiles\": [\"GENOME\", \"GERMLINE\"],",
-      "  \"default_profile\": \"GERMLINE\",",
-      "  \"pzfields\": [\"PZScore\", \"PZFlag\", \"PZComment\"],",
-      "  \"prioritization_score_mode\": \"VaRank\"",
-      "}"
-    ],
-    "steps": {
-      "__help": [
-        "List of steps to process in the pipeline.\n",
-        "A step is defined as a dict of operation section name as key (e.g. \"annotation\", \"calculation\", \"prioritization\", \"annotation_core\", \"annotation_frequency\", \"annotation_scores\", \"calculation_frequency\", \"calculation_final\") that is mapped to corresponding parameters JSON file, associated with a step type that correspond to a tool (only \"annotation\", \"calculation\", \"prioritization\" available).",
-        "By default, all steps are processed in the order: \"annotation\", \"calculation\", \"prioritization\".\n",
-        "Beware that some steps can be skipped if no parameters are provided in the paramter JSON file (e.g. '{\"annotation_frequency\": \"annotation\"}' needs \"annotation_frequency\" in paramter JSON file)."
-      ],
-      "__type": "list",
-      "__default": "[ {\"annotation\": \"annotation\"}, {\"calculation\": \"calculation\"}, {\"prioritization\": \"prioritization\"} ]",
-      "__code_type": "json",
-      "__examples_code": [
-        "# Pipeline with all steps by default",
-        "\"steps\": [",
-        "  {\"annotation\": \"annotation\"},",
-        "  {\"calculation\": \"calculation\"},",
-        "  {\"prioritization\": \"prioritization\"}",
-        "]",
-        "# Pipeline with mult7iple steps of operations as annotation, calculation and prioritization",
-        "\"steps\": [",
-        "  {\"annotation_core\": \"annotation\"},",
-        "  {\"calculation\": \"calculation\"},",
-        "  {\"annotation_frequency\": \"annotation\"},",
-        "  {\"annotation_scores\": \"annotation\"},",
-        "  {\"calculation_frequency\": \"calculation\"},",
-        "  {\"prioritization\": \"prioritization\"},",
-        "  {\"calculation_final\": \"calculation\"}",
-        "]",
-        "# Pipeline with 3 steps that merge multiple operations",
-        "\"steps\": [",
-        "  {\"annotation_core\": \"annotation\", \"calculation\": \"calculation\"},",
-        "  {\"annotation_frequency\": \"annotation\", \"calculation_frequency\": \"calculation\"},",
-        "  {\"annotation_scores\": \"annotation\", \"calculation_final\": \"calculation\"}",
-        "]",
-        "# With corresponding parameters in the parameter JSON file for each step (see above examples)",
-        "\"annotation_core\": {...},",
-        "\"annotation_frequency\": {...},",
-        "\"annotation_scores\": {...},",
-        "\"calculation\": {...},",
-        "\"calculation_frequency\": {...},",
-        "\"calculation_final\": {...},",
-        "\"prioritization\": {}"
-      ]
-    },
-    "output_files": {}
-  },
-  "stats": {
-    "__help": "Statistics on loaded variants.",
-    "stats_md": {},
-    "stats_json": {},
-    "stats_html": {},
-    "stats_pdf": {},
-    "annotations_stats": {},
-    "queries": {
-      "__help": [
-        "Queries to add on statistics.",
-        "Beware that queries are executed on the 'variants_view' view by default. If you want to use another view, please specify it with the 'queries_view' parameter.",
-        "Moreover, query limit is suggested to avoid long processing time and huge output files."
-      ],
-      "__type": "dict",
-      "__default": null,
-      "__code_type": "json",
-      "__examples_code": [
-        "# Queries to add on statistics:",
-        "\"queries\": {",
-        "  \"First 10 variants\": \"SELECT \\\"#CHROM\\\", POS, REF, ALT FROM variants_view LIMIT 10\",",
-        "  \"First 10 INFO tags\": \"SELECT INFOS.* FROM variants_view LIMIT 10\",",
-        "}"
-      ]
-    },
-    "queries_view": {
-      "__help": [
-        "Variants view name to use with queries to add on statistics. By default, the 'variants_view' view is used."
-      ],
-      "__type": "str",
-      "__default": null,
-      "__code_type": "json",
-      "__examples_code": [
-        "# Variants view name for stats queries:",
-        "\"queries_view\": \"variants_view_for_stats_queries\""
-      ]
-    }
-  },
-  "query": {
-    "__help": [
-      "Query options tools. Mainly a SQL query, based on 'variants' table corresponding on input file data, or a independant query. Print options for 'query' tool allow limiting number of lines and choose printing mode."
-    ],
-    "query": {
-      "__code_type": "",
-      "__examples_code": [
-        "# Simple query to show all variants file",
-        "SELECT \"#CHROM\", POS, REF, ALT, INFO ",
-        "FROM variants"
-      ]
-    },
-    "query_limit": {},
-    "query_print_mode": {}
-  },
-  "export": {
-    "__help": [
-      "Export options for output files, such as data order, include header in output and hive partitioning."
-    ],
-    "fields_to_rename": {
-      "__help": [
-        "Rename or remove INFO/tags before exporting."
-      ],
-      "__type": "dict",
-      "__default": null,
-      "__code_type": "json",
-      "__examples_code": [
-        "# Rename 'CLNSIG' field to 'CLNSIG_renamed' and remove 'SIFT' field:",
-        "\"fields_to_rename\": {",
-        "  \"CLNSIG\": \"CLNSIG_renamed\",",
-        "  \"SIFT\": null",
-        "}"
-      ]
-    },
-    "order_by": {},
-    "include_header": {},
-    "parquet_partitions": {},
-    "force_cast_as_flat": {
-      "__help": [
-        "Force cast as flat values (varchar, integer, boolean) for Parquet export. By default, Parquet export preserves all columns type, even as list/nested.",
-        "If 'true', values as list will be aggregated within a varchar value, with separator ','."
-      ],
-      "__type": "bool",
-      "__default": false,
-      "__code_type": "json",
-      "__examples_code": [
-        "# Force cast as flat values for Parquet export:",
-        "\"force_cast_as_flat\": true"
-      ]
-    }
-  },
-  "explode": {
-    "__help": ["Explode options for INFO/tags annotations within VCF files."],
-    "explode_infos": {},
-    "explode_infos_prefix": {},
-    "explode_infos_fields": {}
-  },
-  "transcripts": {
+    "transcripts": {
     "__help": [
       "Transcripts information to create transcript view. Useful to add transcripts annotations in INFO field, to calculate transcripts specific scores (see [Calculation JSON file](help.configuration.calculation.md) help), to merge and map transcript IDs (e.g. from Ensembl to refSeq), or prioritize transcripts (see [Priorization JSON file](help.configuration.prioritization.md) help)."
     ],
@@ -1972,6 +1967,100 @@
       "explode_infos_prefix": {},
       "explode_infos_fields": {}
     }
+  },
+  "stats": {
+    "__help": "Statistics on loaded variants.",
+    "stats_md": {},
+    "stats_json": {},
+    "stats_html": {},
+    "stats_pdf": {},
+    "annotations_stats": {},
+    "queries": {
+      "__help": [
+        "Queries to add on statistics.",
+        "Beware that queries are executed on the 'variants_view' view by default. If you want to use another view, please specify it with the 'queries_view' parameter.",
+        "Moreover, query limit is suggested to avoid long processing time and huge output files."
+      ],
+      "__type": "dict",
+      "__default": null,
+      "__code_type": "json",
+      "__examples_code": [
+        "# Queries to add on statistics:",
+        "\"queries\": {",
+        "  \"First 10 variants\": \"SELECT \\\"#CHROM\\\", POS, REF, ALT FROM variants_view LIMIT 10\",",
+        "  \"First 10 INFO tags\": \"SELECT INFOS.* FROM variants_view LIMIT 10\",",
+        "}"
+      ]
+    },
+    "queries_view": {
+      "__help": [
+        "Variants view name to use with queries to add on statistics. By default, the 'variants_view' view is used."
+      ],
+      "__type": "str",
+      "__default": null,
+      "__code_type": "json",
+      "__examples_code": [
+        "# Variants view name for stats queries:",
+        "\"queries_view\": \"variants_view_for_stats_queries\""
+      ]
+    }
+  },
+  "query": {
+    "__help": [
+      "Query options tools. Mainly a SQL query, based on 'variants' table corresponding on input file data, or a independant query. Print options for 'query' tool allow limiting number of lines and choose printing mode."
+    ],
+    "query": {
+      "__code_type": "",
+      "__examples_code": [
+        "# Simple query to show all variants file",
+        "SELECT \"#CHROM\", POS, REF, ALT, INFO ",
+        "FROM variants"
+      ]
+    },
+    "query_limit": {},
+    "query_print_mode": {}
+  },
+  "export": {
+    "__help": [
+      "Export options for output files, such as data order, include header in output and hive partitioning."
+    ],
+    "fields_to_rename": {
+      "__help": [
+        "Rename or remove INFO/tags before exporting."
+      ],
+      "__type": "dict",
+      "__default": null,
+      "__code_type": "json",
+      "__examples_code": [
+        "# Rename 'CLNSIG' field to 'CLNSIG_renamed' and remove 'SIFT' field:",
+        "\"fields_to_rename\": {",
+        "  \"CLNSIG\": \"CLNSIG_renamed\",",
+        "  \"SIFT\": null",
+        "}"
+      ]
+    },
+    "order_by": {},
+    "include_header": {},
+    "parquet_partitions": {},
+    "force_cast_as_flat": {
+      "__help": [
+        "Force cast as flat values (varchar, integer, boolean) for Parquet export. By default, Parquet export preserves all columns type, even as list/nested.",
+        "If 'true', values as list will be aggregated within a varchar value, with separator ','."
+      ],
+      "__type": "bool",
+      "__default": false,
+      "__code_type": "json",
+      "__examples_code": [
+        "# Force cast as flat values for Parquet export:",
+        "\"force_cast_as_flat\": true"
+      ]
+    }
+  },
+  "explode": {
+    "__help": ["Explode options for INFO/tags annotations within VCF files."],
+    "explode_infos": {},
+    "explode_infos_prefix": {},
+    "explode_infos_fields": {}
   },
   "samples": {
     "__help": [

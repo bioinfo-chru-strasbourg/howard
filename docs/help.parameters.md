@@ -4,187 +4,187 @@ title: HOWARD Help Parameters
 
 - [<span class="toc-section-number">1</span>
   Introduction](#introduction)
-- [<span class="toc-section-number">2</span> annotation](#annotation)
-  - [<span class="toc-section-number">2.1</span> parquet](#parquet)
-    - [<span class="toc-section-number">2.1.1</span>
+- [<span class="toc-section-number">2</span> pipeline](#pipeline)
+  - [<span class="toc-section-number">2.1</span> steps](#steps)
+- [<span class="toc-section-number">3</span> annotation](#annotation)
+  - [<span class="toc-section-number">3.1</span> parquet](#parquet)
+    - [<span class="toc-section-number">3.1.1</span>
       annotations](#annotations)
-  - [<span class="toc-section-number">2.2</span> bcftools](#bcftools)
-    - [<span class="toc-section-number">2.2.1</span>
+  - [<span class="toc-section-number">3.2</span> bcftools](#bcftools)
+    - [<span class="toc-section-number">3.2.1</span>
       annotations](#annotations-1)
-  - [<span class="toc-section-number">2.3</span> annovar](#annovar)
-    - [<span class="toc-section-number">2.3.1</span>
+  - [<span class="toc-section-number">3.3</span> annovar](#annovar)
+    - [<span class="toc-section-number">3.3.1</span>
       annotations](#annotations-2)
-    - [<span class="toc-section-number">2.3.2</span> options](#options)
-  - [<span class="toc-section-number">2.4</span> snpeff](#snpeff)
-    - [<span class="toc-section-number">2.4.1</span>
+    - [<span class="toc-section-number">3.3.2</span> options](#options)
+  - [<span class="toc-section-number">3.4</span> snpeff](#snpeff)
+    - [<span class="toc-section-number">3.4.1</span>
       options](#options-1)
-    - [<span class="toc-section-number">2.4.2</span> stats](#stats)
-    - [<span class="toc-section-number">2.4.3</span>
+    - [<span class="toc-section-number">3.4.2</span> stats](#stats)
+    - [<span class="toc-section-number">3.4.3</span>
       csvStats](#csvstats)
-  - [<span class="toc-section-number">2.5</span> snpsift](#snpsift)
-    - [<span class="toc-section-number">2.5.1</span>
+  - [<span class="toc-section-number">3.5</span> snpsift](#snpsift)
+    - [<span class="toc-section-number">3.5.1</span>
       annotations](#annotations-3)
-  - [<span class="toc-section-number">2.6</span> bigwig](#bigwig)
-    - [<span class="toc-section-number">2.6.1</span>
+  - [<span class="toc-section-number">3.6</span> bigwig](#bigwig)
+    - [<span class="toc-section-number">3.6.1</span>
       annotations](#annotations-4)
-    - [<span class="toc-section-number">2.6.2</span>
+    - [<span class="toc-section-number">3.6.2</span>
       options](#options-2)
-  - [<span class="toc-section-number">2.7</span> exomiser](#exomiser)
-    - [<span class="toc-section-number">2.7.1</span> release](#release)
-    - [<span class="toc-section-number">2.7.2</span>
+  - [<span class="toc-section-number">3.7</span> exomiser](#exomiser)
+    - [<span class="toc-section-number">3.7.1</span> release](#release)
+    - [<span class="toc-section-number">3.7.2</span>
       transcript_source](#transcript_source)
-    - [<span class="toc-section-number">2.7.3</span> hpo](#hpo)
-  - [<span class="toc-section-number">2.8</span> splice](#splice)
-    - [<span class="toc-section-number">2.8.1</span>
+    - [<span class="toc-section-number">3.7.3</span> hpo](#hpo)
+  - [<span class="toc-section-number">3.8</span> splice](#splice)
+    - [<span class="toc-section-number">3.8.1</span>
       split_mode](#split_mode)
-    - [<span class="toc-section-number">2.8.2</span>
+    - [<span class="toc-section-number">3.8.2</span>
       spliceai_distance](#spliceai_distance)
-    - [<span class="toc-section-number">2.8.3</span>
+    - [<span class="toc-section-number">3.8.3</span>
       spliceai_mask](#spliceai_mask)
-    - [<span class="toc-section-number">2.8.4</span>
+    - [<span class="toc-section-number">3.8.4</span>
       transcript](#transcript)
-    - [<span class="toc-section-number">2.8.5</span> rm_snps](#rm_snps)
-    - [<span class="toc-section-number">2.8.6</span>
+    - [<span class="toc-section-number">3.8.5</span> rm_snps](#rm_snps)
+    - [<span class="toc-section-number">3.8.6</span>
       rm_annot](#rm_annot)
-    - [<span class="toc-section-number">2.8.7</span>
+    - [<span class="toc-section-number">3.8.7</span>
       whitespace](#whitespace)
-  - [<span class="toc-section-number">2.9</span> docker](#docker)
-    - [<span class="toc-section-number">2.9.1</span> entries](#entries)
-  - [<span class="toc-section-number">2.10</span> hgvs](#hgvs)
-    - [<span class="toc-section-number">2.10.1</span>
+  - [<span class="toc-section-number">3.9</span> docker](#docker)
+    - [<span class="toc-section-number">3.9.1</span> entries](#entries)
+  - [<span class="toc-section-number">3.10</span> hgvs](#hgvs)
+    - [<span class="toc-section-number">3.10.1</span>
       use_gene](#use_gene)
-    - [<span class="toc-section-number">2.10.2</span>
+    - [<span class="toc-section-number">3.10.2</span>
       use_exon](#use_exon)
-    - [<span class="toc-section-number">2.10.3</span>
+    - [<span class="toc-section-number">3.10.3</span>
       use_protein](#use_protein)
-    - [<span class="toc-section-number">2.10.4</span>
+    - [<span class="toc-section-number">3.10.4</span>
       add_protein](#add_protein)
-    - [<span class="toc-section-number">2.10.5</span>
+    - [<span class="toc-section-number">3.10.5</span>
       full_format](#full_format)
-    - [<span class="toc-section-number">2.10.6</span>
+    - [<span class="toc-section-number">3.10.6</span>
       codon_type](#codon_type)
-    - [<span class="toc-section-number">2.10.7</span> refgene](#refgene)
-    - [<span class="toc-section-number">2.10.8</span>
+    - [<span class="toc-section-number">3.10.7</span> refgene](#refgene)
+    - [<span class="toc-section-number">3.10.8</span>
       refseqlink](#refseqlink)
-- [<span class="toc-section-number">3</span> calculation](#calculation)
-  - [<span class="toc-section-number">3.1</span>
-    calculations](#calculations)
-  - [<span class="toc-section-number">3.2</span>
-    calculation_config](#calculation_config)
-- [<span class="toc-section-number">4</span>
-  prioritization](#prioritization)
+- [<span class="toc-section-number">4</span> calculation](#calculation)
   - [<span class="toc-section-number">4.1</span>
+    calculations](#calculations)
+  - [<span class="toc-section-number">4.2</span>
+    calculation_config](#calculation_config)
+- [<span class="toc-section-number">5</span>
+  prioritization](#prioritization)
+  - [<span class="toc-section-number">5.1</span>
     prioritizations](#prioritizations)
-  - [<span class="toc-section-number">4.2</span> profiles](#profiles)
-  - [<span class="toc-section-number">4.3</span>
+  - [<span class="toc-section-number">5.2</span> profiles](#profiles)
+  - [<span class="toc-section-number">5.3</span>
     default_profile](#default_profile)
-  - [<span class="toc-section-number">4.4</span> pzfields](#pzfields)
-  - [<span class="toc-section-number">4.5</span>
+  - [<span class="toc-section-number">5.4</span> pzfields](#pzfields)
+  - [<span class="toc-section-number">5.5</span>
     prioritization_score_mode](#prioritization_score_mode)
-  - [<span class="toc-section-number">4.6</span> pzprefix](#pzprefix)
-- [<span class="toc-section-number">5</span> pipeline](#pipeline)
-  - [<span class="toc-section-number">5.1</span> steps](#steps)
-- [<span class="toc-section-number">6</span> stats](#stats-1)
-  - [<span class="toc-section-number">6.1</span> stats_md](#stats_md)
+  - [<span class="toc-section-number">5.6</span> pzprefix](#pzprefix)
+- [<span class="toc-section-number">6</span> transcripts](#transcripts)
+  - [<span class="toc-section-number">6.1</span> table](#table)
   - [<span class="toc-section-number">6.2</span>
-    stats_json](#stats_json)
-  - [<span class="toc-section-number">6.3</span>
-    stats_html](#stats_html)
-  - [<span class="toc-section-number">6.4</span> stats_pdf](#stats_pdf)
-  - [<span class="toc-section-number">6.5</span>
-    annotations_stats](#annotations_stats)
-  - [<span class="toc-section-number">6.6</span> queries](#queries)
-  - [<span class="toc-section-number">6.7</span>
-    queries_view](#queries_view)
-- [<span class="toc-section-number">7</span> query](#query)
-  - [<span class="toc-section-number">7.1</span> query](#query-1)
-  - [<span class="toc-section-number">7.2</span>
-    query_limit](#query_limit)
-  - [<span class="toc-section-number">7.3</span>
-    query_print_mode](#query_print_mode)
-- [<span class="toc-section-number">8</span> export](#export)
-  - [<span class="toc-section-number">8.1</span>
-    fields_to_rename](#fields_to_rename)
-  - [<span class="toc-section-number">8.2</span> order_by](#order_by)
-  - [<span class="toc-section-number">8.3</span>
-    include_header](#include_header)
-  - [<span class="toc-section-number">8.4</span>
-    parquet_partitions](#parquet_partitions)
-  - [<span class="toc-section-number">8.5</span>
-    force_cast_as_flat](#force_cast_as_flat)
-- [<span class="toc-section-number">9</span> explode](#explode)
-  - [<span class="toc-section-number">9.1</span>
-    explode_infos](#explode_infos)
-  - [<span class="toc-section-number">9.2</span>
-    explode_infos_prefix](#explode_infos_prefix)
-  - [<span class="toc-section-number">9.3</span>
-    explode_infos_fields](#explode_infos_fields)
-- [<span class="toc-section-number">10</span> transcripts](#transcripts)
-  - [<span class="toc-section-number">10.1</span> table](#table)
-  - [<span class="toc-section-number">10.2</span>
     transcripts_info_field_json](#transcripts_info_field_json)
-  - [<span class="toc-section-number">10.3</span>
+  - [<span class="toc-section-number">6.3</span>
     transcripts_info_field_format](#transcripts_info_field_format)
-  - [<span class="toc-section-number">10.4</span>
+  - [<span class="toc-section-number">6.4</span>
     transcripts_info_json](#transcripts_info_json)
-  - [<span class="toc-section-number">10.5</span>
+  - [<span class="toc-section-number">6.5</span>
     transcripts_info_format](#transcripts_info_format)
-  - [<span class="toc-section-number">10.6</span>
+  - [<span class="toc-section-number">6.6</span>
     transcript_id_remove_version](#transcript_id_remove_version)
-  - [<span class="toc-section-number">10.7</span>
+  - [<span class="toc-section-number">6.7</span>
     transcript_id_mapping_file](#transcript_id_mapping_file)
-  - [<span class="toc-section-number">10.8</span> Example of transcript
+  - [<span class="toc-section-number">6.8</span> Example of transcript
     ID mapping file](#example-of-transcript-id-mapping-file)
-  - [<span class="toc-section-number">10.9</span>
+  - [<span class="toc-section-number">6.9</span>
     transcript_id_mapping_force](#transcript_id_mapping_force)
-  - [<span class="toc-section-number">10.10</span> struct](#struct)
-    - [<span class="toc-section-number">10.10.1</span>
+  - [<span class="toc-section-number">6.10</span> struct](#struct)
+    - [<span class="toc-section-number">6.10.1</span>
       from_column_format](#from_column_format)
-    - [<span class="toc-section-number">10.10.2</span>
+    - [<span class="toc-section-number">6.10.2</span>
       from_columns_map](#from_columns_map)
-    - [<span class="toc-section-number">10.10.3</span>
+    - [<span class="toc-section-number">6.10.3</span>
       from_variants](#from_variants)
-    - [<span class="toc-section-number">10.10.4</span> commons
+    - [<span class="toc-section-number">6.10.4</span> commons
       parameters](#commons-parameters)
-  - [<span class="toc-section-number">10.11</span>
+  - [<span class="toc-section-number">6.11</span>
     prioritization](#prioritization-1)
-    - [<span class="toc-section-number">10.11.1</span>
+    - [<span class="toc-section-number">6.11.1</span>
       profiles](#profiles-1)
-    - [<span class="toc-section-number">10.11.2</span>
+    - [<span class="toc-section-number">6.11.2</span>
       default_profile](#default_profile-1)
-    - [<span class="toc-section-number">10.11.3</span>
+    - [<span class="toc-section-number">6.11.3</span>
       prioritization_config](#prioritization_config)
-    - [<span class="toc-section-number">10.11.4</span>
+    - [<span class="toc-section-number">6.11.4</span>
       prioritization_score_mode](#prioritization_score_mode-1)
-    - [<span class="toc-section-number">10.11.5</span>
+    - [<span class="toc-section-number">6.11.5</span>
       pzprefix](#pzprefix-1)
-    - [<span class="toc-section-number">10.11.6</span>
+    - [<span class="toc-section-number">6.11.6</span>
       pzfields](#pzfields-1)
-    - [<span class="toc-section-number">10.11.7</span>
+    - [<span class="toc-section-number">6.11.7</span>
       prioritization_transcripts_order](#prioritization_transcripts_order)
-    - [<span class="toc-section-number">10.11.8</span>
+    - [<span class="toc-section-number">6.11.8</span>
       prioritization_transcripts_file](#prioritization_transcripts_file)
-    - [<span class="toc-section-number">10.11.9</span>
+    - [<span class="toc-section-number">6.11.9</span>
       prioritization_transcripts_columns](#prioritization_transcripts_columns)
-    - [<span class="toc-section-number">10.11.10</span>
+    - [<span class="toc-section-number">6.11.10</span>
       prioritization_transcripts_force](#prioritization_transcripts_force)
-    - [<span class="toc-section-number">10.11.11</span>
+    - [<span class="toc-section-number">6.11.11</span>
       prioritization_transcripts_version_force](#prioritization_transcripts_version_force)
-  - [<span class="toc-section-number">10.12</span> export](#export-1)
-    - [<span class="toc-section-number">10.12.1</span> output](#output)
-    - [<span class="toc-section-number">10.12.2</span>
+  - [<span class="toc-section-number">6.12</span> export](#export)
+    - [<span class="toc-section-number">6.12.1</span> output](#output)
+    - [<span class="toc-section-number">6.12.2</span>
       export_header](#export_header)
-    - [<span class="toc-section-number">10.12.3</span>
+    - [<span class="toc-section-number">6.12.3</span>
       header_in_output](#header_in_output)
-    - [<span class="toc-section-number">10.12.4</span>
+    - [<span class="toc-section-number">6.12.4</span>
       add_info](#add_info)
-  - [<span class="toc-section-number">10.13</span> explode](#explode-1)
-    - [<span class="toc-section-number">10.13.1</span>
-      explode_infos](#explode_infos-1)
-    - [<span class="toc-section-number">10.13.2</span>
-      explode_infos_prefix](#explode_infos_prefix-1)
-    - [<span class="toc-section-number">10.13.3</span>
-      explode_infos_fields](#explode_infos_fields-1)
+  - [<span class="toc-section-number">6.13</span> explode](#explode)
+    - [<span class="toc-section-number">6.13.1</span>
+      explode_infos](#explode_infos)
+    - [<span class="toc-section-number">6.13.2</span>
+      explode_infos_prefix](#explode_infos_prefix)
+    - [<span class="toc-section-number">6.13.3</span>
+      explode_infos_fields](#explode_infos_fields)
+- [<span class="toc-section-number">7</span> stats](#stats-1)
+  - [<span class="toc-section-number">7.1</span> stats_md](#stats_md)
+  - [<span class="toc-section-number">7.2</span>
+    stats_json](#stats_json)
+  - [<span class="toc-section-number">7.3</span>
+    stats_html](#stats_html)
+  - [<span class="toc-section-number">7.4</span> stats_pdf](#stats_pdf)
+  - [<span class="toc-section-number">7.5</span>
+    annotations_stats](#annotations_stats)
+  - [<span class="toc-section-number">7.6</span> queries](#queries)
+  - [<span class="toc-section-number">7.7</span>
+    queries_view](#queries_view)
+- [<span class="toc-section-number">8</span> query](#query)
+  - [<span class="toc-section-number">8.1</span> query](#query-1)
+  - [<span class="toc-section-number">8.2</span>
+    query_limit](#query_limit)
+  - [<span class="toc-section-number">8.3</span>
+    query_print_mode](#query_print_mode)
+- [<span class="toc-section-number">9</span> export](#export-1)
+  - [<span class="toc-section-number">9.1</span>
+    fields_to_rename](#fields_to_rename)
+  - [<span class="toc-section-number">9.2</span> order_by](#order_by)
+  - [<span class="toc-section-number">9.3</span>
+    include_header](#include_header)
+  - [<span class="toc-section-number">9.4</span>
+    parquet_partitions](#parquet_partitions)
+  - [<span class="toc-section-number">9.5</span>
+    force_cast_as_flat](#force_cast_as_flat)
+- [<span class="toc-section-number">10</span> explode](#explode-1)
+  - [<span class="toc-section-number">10.1</span>
+    explode_infos](#explode_infos-1)
+  - [<span class="toc-section-number">10.2</span>
+    explode_infos_prefix](#explode_infos_prefix-1)
+  - [<span class="toc-section-number">10.3</span>
+    explode_infos_fields](#explode_infos_fields-1)
 - [<span class="toc-section-number">11</span> samples](#samples)
   - [<span class="toc-section-number">11.1</span> list](#list)
   - [<span class="toc-section-number">11.2</span> check](#check)
@@ -316,6 +316,266 @@ Examples:
 >    "export": {
 >       "include_header": true
 >    }
+> }
+> ```
+
+# pipeline
+
+Pipeline options to define the order of operations to process as a list
+of steps.
+
+Two pipeline declaration modes are available:
+
+- Inline mode (recommended): each step contains one or multiple named
+  operations, each embedding its own configuration, a '\_tool' key set
+  to one of: 'annotation', 'calculation', 'prioritization', and an
+  optional '\_description' key to document the operation.
+
+- Referenced mode (alternative, legacy-compatible): each step maps a
+  section name to a tool type (e.g. {"annotation_frequency":
+  "annotation"}), and parameters are defined in top-level sections of
+  the parameter JSON file. An optional '\_description' key can also be
+  added in each referenced section. The '\_tool' key can be used instead
+  of define it on pipeline section (e.g. {"annotation_frequency": None}
+  with section "annotation_frequency" including '\_tool' key as
+  "annotation").
+
+The referenced mode is useful to reuse the same operation configuration
+in multiple pipeline steps, to define a pipeline with a minimal or
+choosen steps.
+
+By default, if no pipeline is provided, operations are processed in
+referenced mode in the specific order: "annotation", "calculation",
+"prioritization."
+
+For more information about steps and operations, see each tool's
+documentation below.
+
+Examples:
+
+> Recommended: pipeline in inline mode with full step descriptions
+
+> ``` json
+> {
+>    "pipeline": {
+>      "steps": [
+>        {
+>          "annotation_dbsnp": {
+>            "_tool": "annotation",
+>            "_description": "Annotate variants with dbSNP annotation.",
+>            "parquet": {
+>              "annotations": {
+>                "tests/databases/annotations/current/hg19/avsnp150.parquet": {"INFO": null}
+>              }
+>            }
+>          },
+>          "annotation_dbNSFP": {
+>            "_tool": "annotation",
+>            "_description": "Annotate variants with dbNSFP and COSMIC databases.",
+>            "parquet": {
+>              "annotations": {
+>                "tests/databases/annotations/current/hg19/dbnsfp42a.parquet": {"INFO": null}
+>              }
+>            },
+>            "bcftools": {
+>              "annotations": {
+>                "tests/databases/annotations/current/hg19/cosmic70.vcf.gz": {"INFO": null}
+>              }
+>            }
+>          }
+>        },
+>        {
+>          "calculation_on_variants": {
+>            "_tool": "calculation",
+>            "_description": "Compute variant and genotype metrics such as vartype and VAF.",
+>            "calculations": {"vartype": null, "VAF": ""},
+>            "calculation_config": "config/calculations_config.json"
+>          }
+>        },
+>        {
+>          "prioritization": {
+>            "_tool": "prioritization",
+>            "_description": "Prioritize variants using configured profiles and scoring mode.",
+>            "profiles": ["default", "GERMLINE"],
+>            "prioritization_config": "config/prioritization_profiles.json",
+>            "pzfields": ["PZScore", "PZFlag", "PZComment"],
+>            "prioritization_score_mode": "VaRank"
+>          }
+>        }
+>      ]
+>    },
+> }
+> ```
+
+> Alternative: pipeline in referenced mode ("prioritization_step" tool
+> is defined in the "prioritization_step" referenced top-level section)
+
+> ``` json
+> {
+>    "pipeline": {
+>      "steps": [
+>        {"annotation_step": "annotation"},
+>        {"calculation_step": "calculation"},
+>        {"prioritization_step": null}
+>      ]
+>    },
+> }
+> ```
+
+> Corresponding operation sections for referenced mode
+
+> ``` json
+> {
+>    "annotation_step": {
+>      "_description": "Annotate variants with configured annotation databases.",
+>      "parquet": {
+>        "annotations": {
+>          "/path/to/database.parquet": {
+>            "annotation_fields": {
+>              "INFO": null
+>            }
+>          }
+>        }
+>      }
+>    },
+>    "calculation_step": {
+>      "_description": "Perform configured calculation operations on variants and genotypes.",
+>      "calculations": {
+>        "operation1": null,
+>        "operation2": {
+>          "options": {
+>            "option1": "value1",
+>            "option2": "value2"
+>          }
+>        }
+>      },
+>      "calculation_config": "calculation_config.json"
+>    },
+>    "prioritization_step": {
+>      "_tool": "prioritization",
+>      "_description": "Prioritize variants with configured profiles and scoring mode.",
+>      "prioritizations": "config/prioritization_profiles.json",
+>      "profiles": ["GENOME", "GERMLINE"],
+>      "default_profile": "GERMLINE",
+>      "pzfields": ["PZScore", "PZFlag", "PZComment"],
+>      "prioritization_score_mode": "VaRank"
+>    }
+> }
+> ```
+
+## steps
+
+List of steps to process in the pipeline.
+
+Each step is a dict and can use one of two formats:
+
+- Inline format (recommended): operation name as key mapped to an
+  operation object containing '\_tool', optional '\_description', and
+  operation parameters.
+
+- Referenced format (alternative): section name as key (e.g.
+  "annotation", "calculation", "prioritization", "annotation_core",
+  "annotation_frequency") mapped to the tool type ("annotation",
+  "calculation", "prioritization"); the corresponding referenced section
+  may include an alternative '\_tool' key, and an optional
+  '\_description' key.
+
+Only tool types "annotation", "calculation" and "prioritization" are
+available.
+
+By default, all steps are processed in the order: "annotation",
+"calculation", "prioritization".
+
+Beware that some referenced steps can be skipped if no corresponding
+section is provided in the parameter JSON file (e.g.
+'{"annotation_frequency": "annotation"}' needs "annotation_frequency"
+section in parameter JSON file).
+
+Type: `list`
+
+Default:
+`[ {"annotation": "annotation"}, {"calculation": "calculation"}, {"prioritization": "prioritization"} ]`
+
+Examples:
+
+> Recommended: inline full descriptions
+
+> ``` json
+> {
+>    "steps": [
+>      {
+>        "annotation_dbsnp": {
+>          "_tool": "annotation",
+>          "_description": "Annotate variants with dbSNP annotation.",
+>          "parquet": {
+>            "annotations": {
+>              "tests/databases/annotations/current/hg19/avsnp150.parquet": {"INFO": null}
+>            }
+>          }
+>        }
+>      },
+>      {
+>        "calculation_on_variants": {
+>          "_tool": "calculation",
+>          "_description": "Compute variant and genotype metrics such as vartype and VAF.",
+>          "calculations": {"vartype": null, "VAF": ""},
+>          "calculation_config": "config/calculations_config.json"
+>        }
+>      },
+>      {
+>        "prioritization": {
+>          "_tool": "prioritization",
+>          "_description": "Prioritize variants using configured profiles and scoring mode.",
+>          "profiles": ["default", "GERMLINE"]
+>        }
+>      }
+>    ]
+> }
+> ```
+
+> Alternative: referenced format (default order) with tool types
+
+> ``` json
+> {
+>    "steps": [
+>      {"annotation": "annotation"},
+>      {"calculation": "calculation"},
+>      {"prioritization": "prioritization"}
+>    ]
+> }
+> ```
+
+> Referenced sections in parameter JSON file (in main section level)
+
+> ``` json
+> {
+>    "annotation": {"_tool": "annotation", "_description": "Annotate variants with configured annotation databases.", ...},
+>    "calculation": {"_tool": "calculation", "_description": "Perform configured calculation operations on variants and genotypes.", ...},
+>    "prioritization": {"_tool": "prioritization", "_description": "Prioritize variants with configured profiles and scoring mode.", ...}
+>    "annotation_core": {"_tool": "annotation", "_description": "Core annotation step", ...},
+>    "annotation_frequency": {"_tool": "annotation", "_description": "Frequency annotation step", ...},
+>    "annotation_scores": {"_tool": "annotation", "_description": "Scores annotation step", ...},
+>    "calculation": {"_tool": "calculation", "_description": "Main calculation step", ...},
+>    "calculation_frequency": {"_tool": "calculation", "_description": "Frequency calculation step", ...},
+>    "calculation_final": {"_tool": "calculation", "_description": "Final calculation step", ...},
+>    "prioritization": {"_tool": "prioritization", "_description": "Prioritization step", ...}
+> }
+> ```
+
+> Alternative: referenced format with multiple operation sections, with
+> tool types and optional '\_description' in each section
+
+> ``` json
+> {
+>    "steps": [
+>      {"annotation_core": null},
+>      {"calculation": null},
+>      {"annotation_frequency": null},
+>      {"annotation_scores": null},
+>      {"calculation_frequency": null},
+>      {"prioritization": null},
+>      {"calculation_final": null}
+>    ]
 > }
 > ```
 
@@ -2271,456 +2531,6 @@ Examples:
 > }
 > ```
 
-# pipeline
-
-Pipeline options to define the order of operations to process as a list
-of steps. By default, all steps are processed in the order: annotation,
-calculation, prioritization, with corresponding section in parameter
-JSON file. Sections can be added in the parameter JSON file (e.g.
-"annotation_frequency", "calculation_final"), and steps added in the
-pipeline parameter with its corresponding type of operation (e.g.
-'annotation', 'calculation', respectively).
-
-Examples:
-
-> Pipeline with all steps by default with corresponding parameters for
-> each step
-
-> ``` json
-> {
->    "pipeline": {
->      "steps": [
->        {"annotation": "annotation"},
->        {"calculation": "calculation"},
->        {"prioritization": "prioritization"}
->      ]
->    },
->    "annotation": {
->      "parquet": {
->        "annotations": {
->          "/path/to/database.parquet": {
->            "annotation_fields": {
->              "INFO": null
->            }
->          }
->        }
->      }
->    },
->    "calculation": {
->      "calculations": {
->        "operation1": null,
->        "operation2": {
->          "options": {
->            "option1": "value1",
->            "option2": "value2"
->          }
->        }
->      },
->      "calculation_config": "calculation_config.json"
->    },
->    "prioritization": {
->      "prioritizations": "config/prioritization_profiles.json",
->      "profiles": ["GENOME", "GERMLINE"],
->      "default_profile": "GERMLINE",
->      "pzfields": ["PZScore", "PZFlag", "PZComment"],
->      "prioritization_score_mode": "VaRank"
->    }
-> }
-> ```
-
-## steps
-
-List of steps to process in the pipeline.
-
-A step is defined as a dict of operation section name as key (e.g.
-"annotation", "calculation", "prioritization", "annotation_core",
-"annotation_frequency", "annotation_scores", "calculation_frequency",
-"calculation_final") that is mapped to corresponding parameters JSON
-file, associated with a step type that correspond to a tool (only
-"annotation", "calculation", "prioritization" available).
-
-By default, all steps are processed in the order: "annotation",
-"calculation", "prioritization".
-
-Beware that some steps can be skipped if no parameters are provided in
-the paramter JSON file (e.g. '{"annotation_frequency": "annotation"}'
-needs "annotation_frequency" in paramter JSON file).
-
-Type: `list`
-
-Default:
-`[ {"annotation": "annotation"}, {"calculation": "calculation"}, {"prioritization": "prioritization"} ]`
-
-Examples:
-
-> Pipeline with all steps by default
-
-> ``` json
-> {
->    "steps": [
->      {"annotation": "annotation"},
->      {"calculation": "calculation"},
->      {"prioritization": "prioritization"}
->    ]
-> }
-> ```
-
-> Pipeline with mult7iple steps of operations as annotation, calculation
-> and prioritization
-
-> ``` json
-> {
->    "steps": [
->      {"annotation_core": "annotation"},
->      {"calculation": "calculation"},
->      {"annotation_frequency": "annotation"},
->      {"annotation_scores": "annotation"},
->      {"calculation_frequency": "calculation"},
->      {"prioritization": "prioritization"},
->      {"calculation_final": "calculation"}
->    ]
-> }
-> ```
-
-> Pipeline with 3 steps that merge multiple operations
-
-> ``` json
-> {
->    "steps": [
->      {"annotation_core": "annotation", "calculation": "calculation"},
->      {"annotation_frequency": "annotation", "calculation_frequency": "calculation"},
->      {"annotation_scores": "annotation", "calculation_final": "calculation"}
->    ]
-> }
-> ```
-
-> With corresponding parameters in the parameter JSON file for each step
-> (see above examples)
-
-> ``` json
-> {
->    "annotation_core": {...},
->    "annotation_frequency": {...},
->    "annotation_scores": {...},
->    "calculation": {...},
->    "calculation_frequency": {...},
->    "calculation_final": {...},
->    "prioritization": {}
-> }
-> ```
-
-# stats
-
-Statistics on loaded variants.
-
-## stats_md
-
-Stats Output file in MarkDown format.
-
-Type: `Path`
-
-Default: `None`
-
-Examples:
-
-> Export statistics in Markdown format
-
-> ``` json
-> {
->    "stats_md": "/tmp/stats.md" 
-> }
-> ```
-
-## stats_json
-
-Stats Output file in JSON format.
-
-Type: `Path`
-
-Default: `None`
-
-Examples:
-
-> Export statistics in JSON format
-
-> ``` json
-> {
->    "stats_json": "/tmp/stats.json" 
-> }
-> ```
-
-## stats_html
-
-Stats Output file in HTML format.
-
-Type: `Path`
-
-Default: `None`
-
-Examples:
-
-> Export statistics in JSON format
-
-> ``` json
-> {
->    "stats_html": "/tmp/stats.html" 
-> }
-> ```
-
-## stats_pdf
-
-Stats Output file in PDF format.
-
-Type: `Path`
-
-Default: `None`
-
-Examples:
-
-> Export statistics in JSON format
-
-> ``` json
-> {
->    "stats_pdf": "/tmp/stats.pdf" 
-> }
-> ```
-
-## annotations_stats
-
-Add statistics on annotations (INFO/tags)).
-
-Default: `False`
-
-## queries
-
-Queries to add on statistics.
-
-Beware that queries are executed on the 'variants_view' view by default.
-If you want to use another view, please specify it with the
-'queries_view' parameter.
-
-Moreover, query limit is suggested to avoid long processing time and
-huge output files.
-
-Type: `dict`
-
-Default: `None`
-
-Examples:
-
-> Queries to add on statistics:
-
-> ``` json
-> {
->    "queries": {
->      "First 10 variants": "SELECT \"#CHROM\", POS, REF, ALT FROM variants_view LIMIT 10",
->      "First 10 INFO tags": "SELECT INFOS.* FROM variants_view LIMIT 10",
->    }
-> }
-> ```
-
-## queries_view
-
-Variants view name to use with queries to add on statistics. By default,
-the 'variants_view' view is used.
-
-Type: `str`
-
-Default: `None`
-
-Examples:
-
-> Variants view name for stats queries:
-
-> ``` json
-> {
->    "queries_view": "variants_view_for_stats_queries"
-> }
-> ```
-
-# query
-
-Query options tools. Mainly a SQL query, based on 'variants' table
-corresponding on input file data, or a independant query. Print options
-for 'query' tool allow limiting number of lines and choose printing
-mode.
-
-Type: `str`
-
-Default: `None`
-
-## query
-
-Query in SQL format (e.g. 'SELECT \* FROM variants LIMIT 50').
-
-Type: `str`
-
-Default: `None`
-
-Examples:
-
-> Simple query to show all variants file
-
-> SELECT "#CHROM", POS, REF, ALT, INFO 
->     FROM variants
-
-## query_limit
-
-Limit of number of row for query (only for print result, not output).
-
-Type: `int`
-
-Default: `10`
-
-## query_print_mode
-
-Print mode of query result (only for print result, not output). Either
-None (default), 'dataframe', 'markdown', 'tabulate' or disabled. If
-None, print mode is 'dataframe' if no export file is provided.
-
-Type: `str`
-
-Choices: `[None, 'dataframe', 'markdown', 'tabulate', 'disabled']`
-
-Default: `None`
-
-# export
-
-Export options for output files, such as data order, include header in
-output and hive partitioning.
-
-## fields_to_rename
-
-Rename or remove INFO/tags before exporting.
-
-Type: `dict`
-
-Default: `None`
-
-Examples:
-
-> Rename 'CLNSIG' field to 'CLNSIG_renamed' and remove 'SIFT' field:
-
-> ``` json
-> {
->    "fields_to_rename": {
->      "CLNSIG": "CLNSIG_renamed",
->      "SIFT": null
->    }
-> }
-> ```
-
-## order_by
-
-List of columns to sort the result-set in ascending or descending order.
-Use SQL format, and keywords ASC (ascending) and DESC (descending). If a
-column is not available, order will not be considered. Order is enable
-only for compatible format (e.g. TSV, CSV, JSON). Examples: 'ACMG_score
-DESC', 'PZFlag DESC, PZScore DESC'.
-
-Type: `str`
-
-Default: ``
-
-Examples:
-
-> Order by ACMG score in descending order
-
-> ``` json
-> {
->    "order_by": "ACMG_score DESC" 
-> }
-> ```
-
-> Order by PZFlag and PZScore in descending order
-
-> ``` json
-> {
->    "order_by": "PZFlag DESC, PZScore DESC" 
-> }
-> ```
-
-## include_header
-
-Include header (in VCF format) in output file. Only for compatible
-formats (tab-delimiter format as TSV or BED).
-
-Default: `False`
-
-## parquet_partitions
-
-Parquet partitioning using hive (available for any format). This option
-is faster parallel writing, but memory consuming. Use 'None' (string)
-for NO partition but split parquet files into a folder. Examples:
-'#CHROM', '#CHROM,REF', 'None'.
-
-Type: `str`
-
-Default: `None`
-
-## force_cast_as_flat
-
-Force cast as flat values (varchar, integer, boolean) for Parquet
-export. By default, Parquet export preserves all columns type, even as
-list/nested.
-
-If 'true', values as list will be aggregated within a varchar value,
-with separator ','.
-
-Type: `bool`
-
-Default: `False`
-
-Examples:
-
-> Force cast as flat values for Parquet export:
-
-> ``` json
-> {
->    "force_cast_as_flat": true
-> }
-> ```
-
-# explode
-
-Explode options for INFO/tags annotations within VCF files.
-
-## explode_infos
-
-Explode VCF INFO/Tag into table columns (e.g. 'variants',
-'transcripts').
-
-Default: `False`
-
-## explode_infos_prefix
-
-Explode VCF INFO/Tag with a specific prefix.
-
-Type: `str`
-
-Default: ``
-
-## explode_infos_fields
-
-Explode VCF INFO/Tag specific fields/tags. Keyword `*` specify all
-available fields, except those already specified. Pattern (regex) can be
-used, such as `.*_score` for fields named with '\_score' at the end.
-Examples:
-
-- 'HGVS,SIFT,Clinvar' (list of 3 fields)
-
-- 'HGVS,\*,Clinvar' (list of 2 fields with all other fields in the
-  middle)
-
-- 'HGVS,.\*\_score,Clinvar' (list of 2 fields with all scores in the
-  middle)
-
-- 'HGVS,.\*\_score,\*' (1 field, scores, all other fields at the end)
-
-Type: `str`
-
-Default: `*`
-
 # transcripts
 
 Transcripts information to create transcript view. Useful to add
@@ -3551,6 +3361,318 @@ Type: `str`
 Default: ``
 
 ### explode_infos_fields
+
+Explode VCF INFO/Tag specific fields/tags. Keyword `*` specify all
+available fields, except those already specified. Pattern (regex) can be
+used, such as `.*_score` for fields named with '\_score' at the end.
+Examples:
+
+- 'HGVS,SIFT,Clinvar' (list of 3 fields)
+
+- 'HGVS,\*,Clinvar' (list of 2 fields with all other fields in the
+  middle)
+
+- 'HGVS,.\*\_score,Clinvar' (list of 2 fields with all scores in the
+  middle)
+
+- 'HGVS,.\*\_score,\*' (1 field, scores, all other fields at the end)
+
+Type: `str`
+
+Default: `*`
+
+# stats
+
+Statistics on loaded variants.
+
+## stats_md
+
+Stats Output file in MarkDown format.
+
+Type: `Path`
+
+Default: `None`
+
+Examples:
+
+> Export statistics in Markdown format
+
+> ``` json
+> {
+>    "stats_md": "/tmp/stats.md" 
+> }
+> ```
+
+## stats_json
+
+Stats Output file in JSON format.
+
+Type: `Path`
+
+Default: `None`
+
+Examples:
+
+> Export statistics in JSON format
+
+> ``` json
+> {
+>    "stats_json": "/tmp/stats.json" 
+> }
+> ```
+
+## stats_html
+
+Stats Output file in HTML format.
+
+Type: `Path`
+
+Default: `None`
+
+Examples:
+
+> Export statistics in JSON format
+
+> ``` json
+> {
+>    "stats_html": "/tmp/stats.html" 
+> }
+> ```
+
+## stats_pdf
+
+Stats Output file in PDF format.
+
+Type: `Path`
+
+Default: `None`
+
+Examples:
+
+> Export statistics in JSON format
+
+> ``` json
+> {
+>    "stats_pdf": "/tmp/stats.pdf" 
+> }
+> ```
+
+## annotations_stats
+
+Add statistics on annotations (INFO/tags)).
+
+Default: `False`
+
+## queries
+
+Queries to add on statistics.
+
+Beware that queries are executed on the 'variants_view' view by default.
+If you want to use another view, please specify it with the
+'queries_view' parameter.
+
+Moreover, query limit is suggested to avoid long processing time and
+huge output files.
+
+Type: `dict`
+
+Default: `None`
+
+Examples:
+
+> Queries to add on statistics:
+
+> ``` json
+> {
+>    "queries": {
+>      "First 10 variants": "SELECT \"#CHROM\", POS, REF, ALT FROM variants_view LIMIT 10",
+>      "First 10 INFO tags": "SELECT INFOS.* FROM variants_view LIMIT 10",
+>    }
+> }
+> ```
+
+## queries_view
+
+Variants view name to use with queries to add on statistics. By default,
+the 'variants_view' view is used.
+
+Type: `str`
+
+Default: `None`
+
+Examples:
+
+> Variants view name for stats queries:
+
+> ``` json
+> {
+>    "queries_view": "variants_view_for_stats_queries"
+> }
+> ```
+
+# query
+
+Query options tools. Mainly a SQL query, based on 'variants' table
+corresponding on input file data, or a independant query. Print options
+for 'query' tool allow limiting number of lines and choose printing
+mode.
+
+Type: `str`
+
+Default: `None`
+
+## query
+
+Query in SQL format (e.g. 'SELECT \* FROM variants LIMIT 50').
+
+Type: `str`
+
+Default: `None`
+
+Examples:
+
+> Simple query to show all variants file
+
+> SELECT "#CHROM", POS, REF, ALT, INFO 
+>     FROM variants
+
+## query_limit
+
+Limit of number of row for query (only for print result, not output).
+
+Type: `int`
+
+Default: `10`
+
+## query_print_mode
+
+Print mode of query result (only for print result, not output). Either
+None (default), 'dataframe', 'markdown', 'tabulate' or disabled. If
+None, print mode is 'dataframe' if no export file is provided.
+
+Type: `str`
+
+Choices: `[None, 'dataframe', 'markdown', 'tabulate', 'disabled']`
+
+Default: `None`
+
+# export
+
+Export options for output files, such as data order, include header in
+output and hive partitioning.
+
+## fields_to_rename
+
+Rename or remove INFO/tags before exporting.
+
+Type: `dict`
+
+Default: `None`
+
+Examples:
+
+> Rename 'CLNSIG' field to 'CLNSIG_renamed' and remove 'SIFT' field:
+
+> ``` json
+> {
+>    "fields_to_rename": {
+>      "CLNSIG": "CLNSIG_renamed",
+>      "SIFT": null
+>    }
+> }
+> ```
+
+## order_by
+
+List of columns to sort the result-set in ascending or descending order.
+Use SQL format, and keywords ASC (ascending) and DESC (descending). If a
+column is not available, order will not be considered. Order is enable
+only for compatible format (e.g. TSV, CSV, JSON). Examples: 'ACMG_score
+DESC', 'PZFlag DESC, PZScore DESC'.
+
+Type: `str`
+
+Default: ``
+
+Examples:
+
+> Order by ACMG score in descending order
+
+> ``` json
+> {
+>    "order_by": "ACMG_score DESC" 
+> }
+> ```
+
+> Order by PZFlag and PZScore in descending order
+
+> ``` json
+> {
+>    "order_by": "PZFlag DESC, PZScore DESC" 
+> }
+> ```
+
+## include_header
+
+Include header (in VCF format) in output file. Only for compatible
+formats (tab-delimiter format as TSV or BED).
+
+Default: `False`
+
+## parquet_partitions
+
+Parquet partitioning using hive (available for any format). This option
+is faster parallel writing, but memory consuming. Use 'None' (string)
+for NO partition but split parquet files into a folder. Examples:
+'#CHROM', '#CHROM,REF', 'None'.
+
+Type: `str`
+
+Default: `None`
+
+## force_cast_as_flat
+
+Force cast as flat values (varchar, integer, boolean) for Parquet
+export. By default, Parquet export preserves all columns type, even as
+list/nested.
+
+If 'true', values as list will be aggregated within a varchar value,
+with separator ','.
+
+Type: `bool`
+
+Default: `False`
+
+Examples:
+
+> Force cast as flat values for Parquet export:
+
+> ``` json
+> {
+>    "force_cast_as_flat": true
+> }
+> ```
+
+# explode
+
+Explode options for INFO/tags annotations within VCF files.
+
+## explode_infos
+
+Explode VCF INFO/Tag into table columns (e.g. 'variants',
+'transcripts').
+
+Default: `False`
+
+## explode_infos_prefix
+
+Explode VCF INFO/Tag with a specific prefix.
+
+Type: `str`
+
+Default: ``
+
+## explode_infos_fields
 
 Explode VCF INFO/Tag specific fields/tags. Keyword `*` specify all
 available fields, except those already specified. Pattern (regex) can be
