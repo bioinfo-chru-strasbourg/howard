@@ -25,6 +25,8 @@ title: HOWARD Help Configuration
   - [<span class="toc-section-number">3.5</span> annovar](#annovar-1)
   - [<span class="toc-section-number">3.6</span> exomiser](#exomiser-1)
   - [<span class="toc-section-number">3.7</span> splice](#splice)
+  - [<span class="toc-section-number">3.8</span>
+    docker_tool_template](#docker_tool_template)
 - [<span class="toc-section-number">4</span> chunking](#chunking)
   - [<span class="toc-section-number">4.1</span>
     chunking_enable](#chunking_enable)
@@ -341,11 +343,23 @@ Examples:
 # tools
 
 External tools paths that can be defined as path to a binary or a dict
-including the binary type (such as "bin", "jar", "perl"). External tools
-can be configured with docker, using 'docker' as binary type and options
-to define docker 'image' (mandatory), to specify 'entrypoint', 'command'
-and docker 'options' (e.g. folder mount '-v
-/path/to/folder:/path/to/folder').
+including the binary type (such as "bin", "jar", "perl").
+
+External tools can be configured with docker, using 'docker' as binary
+type and options to define docker 'image' (mandatory), 'entrypoint',
+'command' and docker runtime 'options'.
+
+For docker-based annotation tools, structural settings are split into
+two sections:
+
+- 'annotation' for annotation command semantics (primary flags, VCF
+  update behavior, defaults such as parameters/resources/output pattern)
+
+- 'runtime' for technical container mounts (databases, mounts, paths).
+
+Within annotation.vcf_update, 'update_existing_fields' controls whether
+existing INFO fields are overwritten during update_from_vcf; this
+default can be overridden per entry in parameters JSON.
 
 Examples:
 
@@ -394,6 +408,46 @@ Examples:
 >            "entrypoint": "/bin/bash",
 >            "options": null,
 >            "command": null
+>          }
+>       }
+>    }
+> }
+> ```
+
+> Example of a docker annotation tool configuration with
+> annotation/runtime split
+
+> ``` json
+> {
+>    "tools": {
+>       "vep": {
+>          "docker": {
+>            "image": "ensemblorg/ensembl-vep",
+>            "entrypoint": "vep",
+>            "command": null,
+>            "annotation": {
+>              "primary": {
+>                "input": "--input_file",
+>                "output": "--output_file",
+>                "threads": "--fork"
+>              },
+>              "vcf_update": {
+>                "remove_info": true,
+>                "add_samples": true,
+>                "update_header": true,
+>                "update_existing_fields": false
+>              },
+>              "defaults": {
+>                "parameters": ["--vcf", "--cache", "--offline", {"key": "--compress_output", "value": "bgzip"}],
+>                "resources": {"threads": 4, "memory": null},
+>                "output_pattern": "*.vcf.gz"
+>              }
+>            },
+>            "runtime": {
+>              "databases": [{"name": "vep", "container_path": "/opt/vep/.vep", "mode": "ro"}],
+>              "mounts": [],
+>              "paths": []
+>            }
 >          }
 >       }
 >    }
@@ -563,6 +617,174 @@ Examples:
 >         "entrypoint": "/bin/bash",
 >         "options": null,
 >         "command": null
+>       }
+>    }
+> }
+> ```
+
+## docker_tool_template
+
+Generic template to configure any docker-based tool in HOWARD.
+
+Use this template under tools.<tool_name>.docker and adapt values for
+your tool:
+
+- docker.image: Docker image reference (required), for example
+  '<registry>/<image>:<tag>'.
+
+- docker.entrypoint: command executed as container entrypoint. Usually
+  the tool binary (for example 'vep') or a shell (for example
+  '/bin/bash').
+
+- docker.command: static command suffix defined in configuration. If
+  null, command arguments are fully built at runtime from
+  parameters/options.
+
+- docker.options: extra docker run options (list of tokens), for example
+  '--user', '--cpus', '--memory', '--env', '--network'.
+
+- docker.config: optional docker runtime behavior for HOWARD wrapper.
+
+- docker.config.automount: if true, HOWARD automatically mounts detected
+  host paths needed by inputs/outputs/resources.
+
+- docker.config.notremove: if true, keep container after execution
+  (debug usage). If false, run with automatic removal.
+
+- docker.config.tmp: container temporary folder used by HOWARD when
+  staging temporary files.
+
+- docker.annotation: annotation-specific semantics used by
+  annotation_docker workflow.
+
+- docker.annotation.primary: mapping of logical I/O/thread concepts to
+  CLI flags for the tool.
+
+- docker.annotation.primary.input: CLI flag used to pass input VCF path
+  inside container.
+
+- docker.annotation.primary.output: CLI flag used to pass output VCF
+  path inside container.
+
+- docker.annotation.primary.threads: CLI flag used to pass thread count
+  to the tool.
+
+- docker.annotation.vcf_update: controls how HOWARD imports annotation
+  output VCF back into the variants table.
+
+- docker.annotation.vcf_update.remove_info: remove existing INFO fields
+  before update/import step.
+
+- docker.annotation.vcf_update.add_samples: include sample
+  columns/genotypes when importing output VCF.
+
+- docker.annotation.vcf_update.update_header: update VCF header metadata
+  from output VCF before importing INFO values.
+
+- docker.annotation.vcf_update.update_existing_fields: if true,
+  overwrite already existing INFO fields; if false, keep existing values
+  when possible. This default can be overridden per entry in parameters
+  JSON.
+
+- docker.annotation.defaults: default values applied to all entries
+  using this tool, unless overridden in parameters JSON entry.
+
+- docker.annotation.defaults.parameters: default tool arguments list
+  (string flags or key/value objects).
+
+- docker.annotation.defaults.resources: default resource limits for this
+  tool.
+
+- docker.annotation.defaults.resources.threads: default thread count
+  passed to the tool (subject to HOWARD/global limits).
+
+- docker.annotation.defaults.resources.memory: default memory limit for
+  the tool (for example '8G' or null for no explicit value).
+
+- docker.annotation.defaults.output_pattern: expected output file
+  pattern generated by the tool inside working directory.
+
+- docker.runtime: technical mounts/paths used to make host resources
+  available in the container.
+
+- docker.runtime.databases: database mount declarations with database
+  'name', destination 'container_path', and optional mode ('ro' or
+  'rw').
+
+- docker.runtime.mounts: explicit mount objects for arbitrary
+  host/container mappings (source/target/mode).
+
+- docker.runtime.paths: legacy/compact mount declarations as strings
+  ('/host:/container\[:mode\]'). Use mounts when possible for clarity.
+
+Examples:
+
+> Generic docker tool template with all possible options
+
+> ``` json
+> {
+>    "<tool_name>": {
+>       "docker": {
+>          "image": "<registry>/<image>:<tag>",
+>          "entrypoint": "<binary_or_shell>",
+>          "command": null,
+>          "options": ["--user", "1000:1000"],
+>          "config": {
+>             "automount": true,
+>             "notremove": false,
+>             "tmp": "/tmp"
+>          },
+>          "annotation": {
+>             "primary": {
+>                "input": "--input_file",
+>                "output": "--output_file",
+>                "threads": "--fork"
+>             },
+>             "vcf_update": {
+>                "remove_info": true,
+>                "add_samples": true,
+>                "update_header": true,
+>                "update_existing_fields": false
+>             },
+>             "defaults": {
+>                "parameters": ["--flag", {"key": "--opt", "value": "value"}],
+>                "resources": {"threads": 4, "memory": null},
+>                "output_pattern": "*.vcf.gz"
+>             }
+>          },
+>          "runtime": {
+>             "databases": [{"name": "<database_name>", "container_path": "/data/db", "mode": "ro"}],
+>             "mounts": [{"source": "/host/path", "target": "/container/path", "mode": "rw"}],
+>             "paths": ["/host/path:/container/path:rw"]
+>          }
+>       }
+>    }
+> }
+> ```
+
+> Example using this template with VEP
+
+> ``` json
+> {
+>    "vep": {
+>       "docker": {
+>          "image": "ensemblorg/ensembl-vep",
+>          "entrypoint": "vep",
+>          "command": null,
+>          "annotation": {
+>             "primary": {"input": "--input_file", "output": "--output_file", "threads": "--fork"},
+>             "vcf_update": {"remove_info": true, "add_samples": true, "update_header": true, "update_existing_fields": false},
+>             "defaults": {
+>                "parameters": ["--vcf", "--cache", "--offline", {"key": "--compress_output", "value": "bgzip"}],
+>                "resources": {"threads": 4, "memory": null},
+>                "output_pattern": "*.vcf.gz"
+>             }
+>          },
+>          "runtime": {
+>             "databases": [{"name": "vep", "container_path": "/opt/vep/.vep", "mode": "ro"}],
+>             "mounts": [],
+>             "paths": []
+>          }
 >       }
 >    }
 > }

@@ -14,11 +14,13 @@ from howard.functions.commons import (
     get_tmp,
     get_random,
     remove_if_exists,
+    default_pipeline,
+    launch_pipeline
 )
 from howard.objects.variants import Variants
 
 
-def process(args: argparse) -> None:
+def process(args: argparse, tools=None) -> None:
     """
     The "process" function processes input arguments, loads parameters in JSON format, creates a VCF
     object, performs annotations, calculations, prioritizations, and queries, exports output, and
@@ -71,7 +73,7 @@ def process(args: argparse) -> None:
 
     # If chunking is not enabled, run the standard processing flow
     if not chunking_enable:
-        return _process_standard(args, config, param)
+        return _process_standard(args, config, param, tools)
     else:
         # Log chunking settings
         log.info("Chunking enabled")
@@ -81,16 +83,16 @@ def process(args: argparse) -> None:
 
         # Call chunked processing in parquet mode
         if chunking_mode.lower() == "parquet" or not chunking_mode:
-            return _process_chunked(args, config, param, chunking_config)
+            return _process_chunked(args, config, param, chunking_config, tools)
         elif chunking_mode.lower() == "duckdb":
             log.debug(f"config1: {config}")
-            return _process_duckdb(args, config, param, chunking_config)
+            return _process_duckdb(args, config, param, chunking_config, tools)
         else:
             log.error(f"Unknown chunking mode: {chunking_mode}")
             raise ValueError(f"Unknown chunking mode: {chunking_mode}")
 
 
-def _process_duckdb(args, config, param, chunking_config):
+def _process_duckdb(args, config, param, chunking_config, tools):
     """
     Process a large input file by chunking it into smaller parts using DuckDB's capabilities.
 
@@ -98,6 +100,7 @@ def _process_duckdb(args, config, param, chunking_config):
     :param config: Configuration dictionary
     :param param: Parameters dictionary
     :param chunking_config: Chunking configuration dictionary
+    :param tools: Tools to be used in the processing
     :return: Processed Variants object
     """
 
@@ -122,16 +125,17 @@ def _process_duckdb(args, config, param, chunking_config):
     )
     config_chunking_mode_duckdb["chunk_size"] = chunk_size
 
-    return _process_standard(args, config_chunking_mode_duckdb, param)
+    return _process_standard(args, config_chunking_mode_duckdb, param, tools)
 
 
-def _process_standard(args, config, param):
+def _process_standard(args, config, param, tools):
     """
     Standard processing function without chunking.
 
     :param args: Command line arguments
     :param config: Configuration dictionary
     :param param: Parameters dictionary
+    :param tools: Tools to be used in the processing
     :return: Processed Variants object
     """
 
@@ -151,17 +155,46 @@ def _process_standard(args, config, param):
     # Load data
     vcfdata_obj.load_data()
 
-    # Annotation HGVS
-    vcfdata_obj.annotation_hgvs()
+    # # Pipeline
+    # pipeline = param.get("pipeline", default_pipeline)
+    # steps = pipeline.get("steps", [])
+    # log.debug(f"{param=}")
 
-    # Annotations
-    vcfdata_obj.annotation()
+    # Start pipeline
+    launch_pipeline(vcfdata_obj=vcfdata_obj, param=param, allowed_tools=tools)
+    # log.debug(f"START pipeline")
+    # step_i = 0
+    # for step in steps:
+    #     step_i += 1
+    #     log.debug(f"Processing step: {step} [{step_i}/{len(steps)}]")
+    #     for step_name in step:
+    #         step_tool = step.get(step_name, "annotation")
+    #         log.info(f"Processing pipeline [{step_i}/{len(steps)}] - '{step_name}' [{step_tool}]...")
+    #         if step_name not in param :
+    #             log.warning(f"Processing pipeline [{step_i}/{len(steps)}] - '{step_name}' [{step_tool}] - Not found in parameters. Try without...")
+    #         try:
+    #             test = eval(f"vcfdata_obj.{step_tool}(section='{step_name}')")
+    #             log.debug(f"Processing pipeline [{step_i}/{len(steps)}] - '{step_name}' [{step_tool}] completed successfully.")
+    #             log.debug(f"Result of step '{step_name}' with tool '{step_tool}': {test}")
+    #         except Exception as e:
+    #             log.error(f"Error processing step '{step_name}' with tool '{step_tool}': {str(e)}")
+    #             raise ValueError(f"Error processing step '{step_name}' with tool '{step_tool}': {str(e)}")
+    #         # else:
+    #         #     log.warning(f"Processing pipeline [{step_i}/{len(steps)}] - '{step_name}' [{step_tool}] not found in parameters, skipping.")
 
-    # Calculations
-    vcfdata_obj.calculation()
+    # log.debug(f"END pipeline")
 
-    # Prioritization
-    vcfdata_obj.prioritization()
+    # # Annotation HGVS
+    # vcfdata_obj.annotation_hgvs()
+
+    # # Annotations
+    # vcfdata_obj.annotation()
+
+    # # Calculations
+    # vcfdata_obj.calculation()
+
+    # # Prioritization
+    # vcfdata_obj.prioritization()
 
     # Explode infos
     if param.get("explode", {}).get("explode_infos", False):
@@ -184,7 +217,7 @@ def _process_standard(args, config, param):
     return vcfdata_obj
 
 
-def _process_chunked(args, config, param, chunking_config):
+def _process_chunked(args, config, param, chunking_config, tools):
     """
     Process a large input file by chunking it into smaller parts, using HOWARD's built-in
     partitioning functionality.
@@ -302,7 +335,7 @@ def _process_chunked(args, config, param, chunking_config):
             log.debug(
                 f"Chunking - Number of variants is less than or equal to chunk size ({chunk_size}), processing without chunking"
             )
-            return _process_standard(args, config, param)
+            return _process_standard(args, config, param, tools)
         else:
             log.debug(
                 f"Chunking - Number of variants exceeds chunk size ({chunk_size}), proceeding with chunked processing"
@@ -336,7 +369,7 @@ def _process_chunked(args, config, param, chunking_config):
                 f"Chunking - Only {len(chunk_files)} parquet chunks created, processing without chunking"
             )
             # Process with standard flow to create empty output
-            return _process_standard(args, config, param)
+            return _process_standard(args, config, param, tools)
         else:
             log.debug(f"Chunking - Created {len(chunk_files)} parquet chunks")
 
@@ -397,7 +430,7 @@ def _process_chunked(args, config, param, chunking_config):
 
             try:
                 # Process the chunk with standard processing (not in read-only mode)
-                _process_standard(chunk_args, chunk_proc_config, chunk_proc_param)
+                _process_standard(chunk_args, chunk_proc_config, chunk_proc_param, tools)
                 processed_chunks.append(chunk_output)
                 processed_chunks_header.append(f"{chunk_output}.hdr")
                 if chunk_transcripts_output and os.path.exists(

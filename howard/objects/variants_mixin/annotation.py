@@ -72,9 +72,11 @@ from howard.functions.utils import (
 )
 
 from howard.objects.database import Database
+from howard.objects.variants_mixin.annotation_docker import variants_annotation_docker
 # from howard.objects.variants import Variants
 
-class variants_annotation:
+
+class variants_annotation(variants_annotation_docker):
 
     ##############
     # Annotation #
@@ -129,7 +131,7 @@ class variants_annotation:
 
         return databases_infos_dict
 
-    def annotation(self) -> None:
+    def annotation(self, section:str = "annotation") -> None:
         """
         It annotates the VCF file with the annotations specified in the config file.
         """
@@ -171,7 +173,7 @@ class variants_annotation:
         if param.get("annotation_parquet", None) != None:
             if isinstance(param.get("annotation_parquet", None), list):
                 param_annotation_list.append(",".join(param.get("annotation_parquet")))
-            else:
+            elif isinstance(param.get("annotation_parquet", None), str):
                 param_annotation_list.append(param.get("annotation_parquet"))
         if param.get("annotation_snpsift", None) != None:
             if isinstance(param.get("annotation_snpsift", None), list):
@@ -179,11 +181,11 @@ class variants_annotation:
                     "snpsift:"
                     + "+".join(param.get("annotation_snpsift")).replace(",", "+")
                 )
-            else:
+            elif isinstance(param.get("annotation_snpsift", None), str):
                 param_annotation_list.append(
                     "snpsift:" + param.get("annotation_snpsift").replace(",", "+")
                 )
-        if param.get("annotation_snpeff", None) != None:
+        if param.get("annotation_snpeff", None) != None and isinstance(param.get("annotation_snpeff", None), str):
             param_annotation_list.append("snpeff:" + param.get("annotation_snpeff"))
         if param.get("annotation_bcftools", None) != None:
             if isinstance(param.get("annotation_bcftools", None), list):
@@ -191,15 +193,15 @@ class variants_annotation:
                     "bcftools:"
                     + "+".join(param.get("annotation_bcftools")).replace(",", "+")
                 )
-            else:
+            elif isinstance(param.get("annotation_bcftools", None), str):
                 param_annotation_list.append(
                     "bcftools:" + param.get("annotation_bcftools").replace(",", "+")
                 )
-        if param.get("annotation_annovar", None) != None:
+        if param.get("annotation_annovar", None) != None and isinstance(param.get("annotation_annovar", None), str):
             param_annotation_list.append("annovar:" + param.get("annotation_annovar"))
-        if param.get("annotation_exomiser", None) != None:
+        if param.get("annotation_exomiser", None) != None and isinstance(param.get("annotation_exomiser", None), str):
             param_annotation_list.append("exomiser:" + param.get("annotation_exomiser"))
-        if param.get("annotation_splice", None) != None:
+        if param.get("annotation_splice", None) != None and isinstance(param.get("annotation_splice", None), str):
             param_annotation_list.append("splice:" + param.get("annotation_splice"))
 
         # Merge param annotations list
@@ -219,8 +221,8 @@ class variants_annotation:
             # Log
             # log.info("Annotations - Check annotation parameters")
 
-            if not "annotation" in param:
-                param["annotation"] = {}
+            if not section in param:
+                param[section] = {}
 
             # List of annotations parameters
             annotations_list_input = {}
@@ -289,14 +291,14 @@ class variants_annotation:
 
                         log.debug(f"Quick Annotation snpEff")
 
-                        if "snpeff" not in param["annotation"]:
-                            param["annotation"]["snpeff"] = {}
+                        if "snpeff" not in param[section]:
+                            param[section]["snpeff"] = {}
 
-                        if "options" not in param["annotation"]["snpeff"]:
-                            param["annotation"]["snpeff"]["options"] = ""
+                        if "options" not in param[section]["snpeff"]:
+                            param[section]["snpeff"]["options"] = ""
 
                         # snpEff options in annotations
-                        param["annotation"]["snpeff"]["options"] = "".join(
+                        param[section]["snpeff"]["options"] = "".join(
                             annotation_file.split(":")[1:]
                         )
 
@@ -305,17 +307,17 @@ class variants_annotation:
 
                         log.debug(f"Quick Annotation Annovar")
 
-                        if "annovar" not in param["annotation"]:
-                            param["annotation"]["annovar"] = {}
+                        if "annovar" not in param[section]:
+                            param[section]["annovar"] = {}
 
-                        if "annotations" not in param["annotation"]["annovar"]:
-                            param["annotation"]["annovar"]["annotations"] = {}
+                        if "annotations" not in param[section]["annovar"]:
+                            param[section]["annovar"]["annotations"] = {}
 
                         # Options
                         annotation_file_split = annotation_file.split(":")
                         for annotation_file_annotation in annotation_file_split[1:]:
                             if annotation_file_annotation:
-                                param["annotation"]["annovar"]["annotations"][
+                                param[section]["annovar"]["annotations"][
                                     annotation_file_annotation
                                 ] = annotations
 
@@ -324,7 +326,7 @@ class variants_annotation:
 
                         log.debug(f"Quick Annotation Exomiser")
 
-                        param["annotation"]["exomiser"] = params_string_to_dict(
+                        param[section]["exomiser"] = params_string_to_dict(
                             annotation_file
                         )
 
@@ -333,7 +335,7 @@ class variants_annotation:
 
                         log.debug(f"Quick Annotation Splice")
 
-                        param["annotation"]["splice"] = params_string_to_dict(
+                        param[section]["splice"] = params_string_to_dict(
                             annotation_file
                         )
 
@@ -433,16 +435,16 @@ class variants_annotation:
 
                                     # Annotation Tool dispatch
                                     if annotation_tool:
-                                        if annotation_tool not in param["annotation"]:
-                                            param["annotation"][annotation_tool] = {}
+                                        if annotation_tool not in param[section]:
+                                            param[section][annotation_tool] = {}
                                         if (
                                             "annotations"
-                                            not in param["annotation"][annotation_tool]
+                                            not in param[section][annotation_tool]
                                         ):
-                                            param["annotation"][annotation_tool][
+                                            param[section][annotation_tool][
                                                 "annotations"
                                             ] = {}
-                                        param["annotation"][annotation_tool][
+                                        param[section][annotation_tool][
                                             "annotations"
                                         ][annotation_file_found] = annotations
 
@@ -453,37 +455,43 @@ class variants_annotation:
 
                 self.set_param(param)
 
-        if param.get("annotation", None):
+        if param.get(section, None):
             log.info("Annotations")
-            if param.get("annotation", {}).get("parquet", None):
+            if param.get(section, {}).get("parquet", None):
                 log.info("Annotations 'parquet'...")
-                self.annotation_parquet()
+                self.annotation_parquet(section=section)
             if not fast:
-                if param.get("annotation", {}).get("bcftools", None):
+                if param.get(section, {}).get("bcftools", None):
                     log.info("Annotations 'bcftools'...")
-                    self.annotation_bcftools()
-                if param.get("annotation", {}).get("snpsift", None):
+                    self.annotation_bcftools(section=section)
+                if param.get(section, {}).get("snpsift", None):
                     log.info("Annotations 'snpsift'...")
-                    self.annotation_snpsift()
-                if param.get("annotation", {}).get("bigwig", None):
+                    self.annotation_snpsift(section=section)
+                if param.get(section, {}).get("bigwig", None):
                     log.info("Annotations 'bigwig'...")
-                    self.annotation_bigwig()
-                if param.get("annotation", {}).get("annovar", None):
+                    self.annotation_bigwig(section=section)
+                if param.get(section, {}).get("annovar", None):
                     log.info("Annotations 'annovar'...")
-                    self.annotation_annovar()
-                if param.get("annotation", {}).get("snpeff", None):
+                    self.annotation_annovar(section=section)
+                if param.get(section, {}).get("snpeff", None):
                     log.info("Annotations 'snpeff'...")
-                    self.annotation_snpeff()
-                if param.get("annotation", {}).get("exomiser", None) is not None:
+                    self.annotation_snpeff(section=section)
+                if param.get(section, {}).get("exomiser", None) is not None:
                     log.info("Annotations 'exomiser'...")
-                    self.annotation_exomiser()
-                if param.get("annotation", {}).get("splice", None) is not None:
+                    self.annotation_exomiser(section=section)
+                if param.get(section, {}).get("splice", None) is not None:
                     log.info("Annotations 'splice' ...")
-                    self.annotation_splice()
+                    self.annotation_splice(section=section)
+                if param.get(section, {}).get("docker", None) is not None:
+                    log.info("Annotations 'docker' ...")
+                    self.annotation_docker(section=section)
+                if param.get(section, {}).get("hgvs", None) is not None:
+                    log.info("Annotations 'hgvs' ...")
+                    self.annotation_hgvs(section=section)
             else:
                 log.warning("Fast mode - skip some annotations tools")
 
-    def annotation_bigwig(self, threads: int = None) -> None:
+    def annotation_bigwig(self, section:str = "annotation", threads: int = None) -> None:
         """
         The function `annotation_bigwig` annotates variants in a VCF file using bigwig databases.
 
@@ -525,21 +533,31 @@ class variants_annotation:
         # Param
         annotations = (
             self.get_param()
-            .get("annotation", {})
+            .get(section, {})
             .get("bigwig", {})
             .get("annotations", None)
         )
         log.debug("Annotations: " + str(annotations))
 
+        # Header fields override (Number/Type/Description), collected from each
+        # annotation's own options block
+        # (annotation.annovar.annotations.<name>.options.header_fields)
+        annotation_header_fields_override = self.get_annotation_header_fields_override(
+            annotations=annotations
+        )
+        log.debug(
+            f"annotation_header_fields_override={annotation_header_fields_override}"
+        )
+
         # Param
         annotations_param = (
-            self.get_param().get("annotation", {}).get("bigwig", {}).get("param", {})
+            self.get_param().get(section, {}).get("bigwig", {}).get("param", {})
         )
         log.debug("Annotations param: " + str(annotations_param))
 
         # Options
         annotations_options = (
-            self.get_param().get("annotation", {}).get("bigwig", {}).get("options", {})
+            self.get_param().get(section, {}).get("bigwig", {}).get("options", {})
         )
         log.debug("Annotations options: " + str(annotations_options))
 
@@ -696,7 +714,8 @@ class variants_annotation:
 
                         # Load header as VCF object
                         db_hdr_vcf = Variants(input=db_hdr_file)
-                        db_hdr_vcf_header_infos = db_hdr_vcf.get_header().infos
+                        db_hdr_vcf_header = db_hdr_vcf.get_header()
+                        db_hdr_vcf_header_infos = db_hdr_vcf_header.infos
                         log.debug(
                             "Annotation database header: "
                             + str(db_hdr_vcf_header_infos)
@@ -781,17 +800,7 @@ class variants_annotation:
                             )
 
                             # Add header on VCF
-                            vcf_reader.infos[annotation_field_new] = vcf.parser._Info(
-                                annotation_field_new,
-                                db_hdr_vcf_header_infos[annotation_field].num,
-                                db_hdr_vcf_header_infos[annotation_field].type,
-                                db_hdr_vcf_header_infos[annotation_field].desc,
-                                "HOWARD BigWig annotation",
-                                "unknown",
-                                self.code_type_map[
-                                    db_hdr_vcf_header_infos[annotation_field].type
-                                ],
-                            )
+                            db_hdr_vcf_header.infos[annotation_field_new] = db_hdr_vcf_header.infos[annotation_field]
 
                         # Load bigwig database
                         bw_db = pyBigWig.open(db_file, "r")
@@ -851,7 +860,7 @@ class variants_annotation:
                                 "bw_db": bw_db,
                                 "bw_type": "bw" if bw_db.isBigWig() else "bb",
                                 "bw_format": "BigWig" if bw_db.isBigWig() else "BigBed",
-                                "vcf_reader": vcf_reader,
+                                "vcf_reader": db_hdr_vcf_header, # VCF header with new annotation fields
                                 "cyvcf2_header_rename_dict": cyvcf2_header_rename_dict,
                                 "cyvcf2_header_list": cyvcf2_header_list,
                                 "cyvcf2_header_indexes": cyvcf2_header_indexes,
@@ -1167,22 +1176,22 @@ class variants_annotation:
                             )
 
                     # Log
-                    log.debug(f"Annotations done.")
+                    log.debug("Annotations done.")
 
                     # Close and write file
-                    log.info(f"Annotations write...")
+                    log.info("Annotations write...")
                     output_vcf.close()
-                    log.debug(f"Annotations write done.")
+                    log.debug("Annotations write done.")
 
                     # Update variants
-                    log.info(f"Annotations update...")
-                    self.update_from_vcf(output_vcf_file)
+                    log.info("Annotations update...")
+                    self.update_from_vcf(output_vcf_file, update_header=True, annotation_header_fields_override=annotation_header_fields_override)
                     remove_if_exists([output_vcf_file])
-                    log.debug(f"Annotations update done.")
+                    log.debug("Annotations update done.")
 
         return True
 
-    def annotation_snpsift(self, threads: int = None) -> None:
+    def annotation_snpsift(self, section:str = "annotation", threads: int = None) -> None:
         """
         This function annotate with bcftools
 
@@ -1246,11 +1255,21 @@ class variants_annotation:
         # Param
         annotations = (
             self.get_param()
-            .get("annotation", {})
+            .get(section, {})
             .get("snpsift", {})
             .get("annotations", None)
         )
         log.debug("Annotations: " + str(annotations))
+
+        # Header fields override (Number/Type/Description), collected from each
+        # annotation's own options block
+        # (annotation.annovar.annotations.<name>.options.header_fields)
+        annotation_header_fields_override = self.get_annotation_header_fields_override(
+            annotations=annotations
+        )
+        log.debug(
+            f"annotation_header_fields_override={annotation_header_fields_override}"
+        )
 
         # Assembly
         assembly = self.get_param().get(
@@ -1430,41 +1449,6 @@ class variants_annotation:
                                         f"{annotation_fields_new_name}:=INFO/{annotation_field}"
                                     )
 
-                                # Add INFO field to header
-                                db_hdr_vcf_header_infos_number = (
-                                    db_hdr_vcf_header_infos[annotation_field].num or "."
-                                )
-                                db_hdr_vcf_header_infos_type = (
-                                    db_hdr_vcf_header_infos[annotation_field].type
-                                    or "String"
-                                )
-                                db_hdr_vcf_header_infos_description = (
-                                    db_hdr_vcf_header_infos[annotation_field].desc
-                                    or f"{annotation_field} description"
-                                )
-                                db_hdr_vcf_header_infos_source = (
-                                    db_hdr_vcf_header_infos[annotation_field].source
-                                    or "unknown"
-                                )
-                                db_hdr_vcf_header_infos_version = (
-                                    db_hdr_vcf_header_infos[annotation_field].version
-                                    or "unknown"
-                                )
-
-                                vcf_reader.infos[annotation_fields_new_name] = (
-                                    vcf.parser._Info(
-                                        annotation_fields_new_name,
-                                        db_hdr_vcf_header_infos_number,
-                                        db_hdr_vcf_header_infos_type,
-                                        db_hdr_vcf_header_infos_description,
-                                        db_hdr_vcf_header_infos_source,
-                                        db_hdr_vcf_header_infos_version,
-                                        self.code_type_map[
-                                            db_hdr_vcf_header_infos_type
-                                        ],
-                                    )
-                                )
-
                                 annotation_list.append(annotation_field)
 
                                 nb_annotation_field += 1
@@ -1548,7 +1532,7 @@ class variants_annotation:
                         log.info(
                             f"Annotation - Updating [{nb_command}/{len(commands)}]..."
                         )
-                        self.update_from_vcf(commands[command_annotate])
+                        self.update_from_vcf(commands[command_annotate], update_header=True, annotation_header_fields_override=annotation_header_fields_override)
                         remove_if_exists(
                             [
                                 commands[command_annotate],
@@ -1556,7 +1540,7 @@ class variants_annotation:
                             ]
                         )
 
-    def annotation_bcftools(self, threads: int = None) -> None:
+    def annotation_bcftools(self, section:str = "annotation", threads: int = None) -> None:
         """
         This function annotate with bcftools
 
@@ -1613,11 +1597,21 @@ class variants_annotation:
         # Param
         annotations = (
             self.get_param()
-            .get("annotation", {})
+            .get(section, {})
             .get("bcftools", {})
             .get("annotations", None)
         )
         log.debug("Annotations: " + str(annotations))
+
+        # Header fields override (Number/Type/Description), collected from each
+        # annotation's own options block
+        # (annotation.annovar.annotations.<name>.options.header_fields)
+        annotation_header_fields_override = self.get_annotation_header_fields_override(
+            annotations=annotations
+        )
+        log.debug(
+            f"annotation_header_fields_override={annotation_header_fields_override}"
+        )
 
         # Assembly
         assembly = self.get_param().get(
@@ -1766,6 +1760,7 @@ class variants_annotation:
                     # Number of fields
                     nb_annotation_field = 0
                     annotation_list = []
+                    annotation_list_to_remove = []
 
                     annotation_name_map = {}
 
@@ -1830,6 +1825,7 @@ class variants_annotation:
                                 annotation_name_map[annotation_field] = (
                                     f"{annotation_fields_new_name}:=INFO/{annotation_field}"
                                 )
+                                annotation_list_to_remove.append(f"INFO/{annotation_field}")
                             else:
                                 annotation_list.append(annotation_field)
                                 annotation_name_map[annotation_field] = annotation_field
@@ -1864,6 +1860,7 @@ class variants_annotation:
                         annotation_list = annotation_list_bed
 
                     annotation_infos = ",".join(annotation_list)
+                    annotation_infos_to_remove = ",".join(annotation_list_to_remove)
 
                     if annotation_infos != "":
 
@@ -1969,8 +1966,14 @@ class variants_annotation:
                                 f"Annotation '{annotation}' - add bcftools command"
                             )
 
+                            # Remove INFO fields command
+                            if annotation_infos_to_remove:
+                                command_remove_infos_fields = f" | {bcftools_bin_command} annotate -x {annotation_infos_to_remove} "
+                            else:
+                                command_remove_infos_fields = ""
+
                             # Command
-                            command_annotate = f"{bcftools_bin_command} annotate --pair-logic exact --regions-file={tmp_bed_name} -a {db_file} -h {tmp_header_vcf_name} -c {annotation_infos} {tmp_vcf_name} -o {tmp_annotation_vcf_name} -Oz1 2>>{tmp_annotation_vcf_name_err} && tabix {tmp_annotation_vcf_name} 2>>{tmp_annotation_vcf_name_err} "
+                            command_annotate = f"{bcftools_bin_command} annotate --pair-logic exact --regions-file={tmp_bed_name} -a {db_file} -h {tmp_header_vcf_name} -c {annotation_infos} {tmp_vcf_name} {command_remove_infos_fields} -o {tmp_annotation_vcf_name} -Oz1 2>>{tmp_annotation_vcf_name_err} && tabix {tmp_annotation_vcf_name} 2>>{tmp_annotation_vcf_name_err} "
 
                             # Add command
                             commands.append(command_annotate)
@@ -2092,12 +2095,12 @@ class variants_annotation:
 
                     # Update variants
                     log.info("Annotation - Updating...")
-                    self.update_from_vcf(tmp_annotate_vcf_name, remove_vcf_file=False)
+                    self.update_from_vcf(tmp_annotate_vcf_name, remove_vcf_file=False, update_header=True, annotation_header_fields_override=annotation_header_fields_override)
 
         # Remove files
         remove_if_exists(remove_files)
 
-    def annotation_exomiser(self, threads: int = None) -> None:
+    def annotation_exomiser(self, section:str = "annotation", threads: int = None) -> None:
         """
         This function annotate with Exomiser
 
@@ -2218,7 +2221,7 @@ class variants_annotation:
         log.debug("Param: " + str(param))
 
         # Param - Exomiser
-        param_exomiser = param.get("annotation", {}).get("exomiser", {})
+        param_exomiser = param.get(section, {}).get("exomiser", {})
         log.debug(f"Param Exomiser: {param_exomiser}")
 
         # Param - Assembly
@@ -2858,22 +2861,12 @@ class variants_annotation:
                     # Log
                     log.debug("Exomiser result VCF update variants")
 
-                    # Find Exomiser INFO field annotation in header
-                    with gzip.open(output_results_vcf, "rt") as f:
-                        header_list = self.read_vcf_header(f)
-                    exomiser_vcf_header = vcf.Reader(
-                        io.StringIO("\n".join(header_list))
-                    )
-
-                    # Add annotation INFO field to header
-                    vcf_reader.infos["Exomiser"] = exomiser_vcf_header.infos["Exomiser"]
-
                     # Update variants with VCF
-                    self.update_from_vcf(output_results_vcf)
+                    self.update_from_vcf(output_results_vcf, update_header=True)
 
         return True
 
-    def annotation_snpeff(self, threads: int = None) -> None:
+    def annotation_snpeff(self, section:str = "annotation", threads: int = None) -> None:
         """
         This function annotate with snpEff
 
@@ -2935,7 +2928,7 @@ class variants_annotation:
         log.debug("Param: " + str(param))
 
         # Param
-        options = param.get("annotation", {}).get("snpeff", {}).get("options", None)
+        options = param.get(section, {}).get("snpeff", {}).get("options", None)
         log.debug("Options: " + str(options))
 
         # Param - Assembly
@@ -2943,11 +2936,11 @@ class variants_annotation:
 
         # Param - Options
         snpeff_options = (
-            param.get("annotation", {}).get("snpeff", {}).get("options", "")
+            param.get(section, {}).get("snpeff", {}).get("options", "")
         )
-        snpeff_stats = param.get("annotation", {}).get("snpeff", {}).get("stats", None)
+        snpeff_stats = param.get(section, {}).get("snpeff", {}).get("stats", None)
         snpeff_csvstats = (
-            param.get("annotation", {}).get("snpeff", {}).get("csvStats", None)
+            param.get(section, {}).get("snpeff", {}).get("csvStats", None)
         )
         if snpeff_stats:
             snpeff_stats = snpeff_stats.replace("OUTPUT", self.get_output())
@@ -3074,18 +3067,9 @@ class variants_annotation:
                 log.error("Annotation failed: Error in commands")
                 raise ValueError("Annotation failed: Error in commands")
 
-            # Find annotation in header
-            with open(tmp_annotate_vcf_name, "rt") as f:
-                header_list = self.read_vcf_header(f)
-            annovar_vcf_header = vcf.Reader(io.StringIO("\n".join(header_list)))
-
-            for ann in annovar_vcf_header.infos:
-                if ann not in self.get_header().infos:
-                    vcf_reader.infos[ann] = annovar_vcf_header.infos.get(ann)
-
             # Update variants
             log.info(f"Annotation - Updating...")
-            self.update_from_vcf(tmp_annotate_vcf_name)
+            self.update_from_vcf(tmp_annotate_vcf_name, update_header=True)
             list_to_remove = [
                 tmp_annotate_vcf_name,
                 tmp_annotate_vcf_name_err,
@@ -3101,7 +3085,7 @@ class variants_annotation:
             if force_update_annotation:
                 log.debug(f"Existing snpEff annotations in VCF - annotation forced")
 
-    def annotation_annovar(self, threads: int = None) -> None:
+    def annotation_annovar(self, section:str = "annotation", threads: int = None) -> None:
         """
         It takes a VCF file, annotates it with Annovar, and then updates the database with the new
         annotations
@@ -3135,8 +3119,9 @@ class variants_annotation:
             # Command - start pipe
             command_annovar += f""" && {bcftools_bin_command} view --threads={threads} {tmp_annotate_vcf_name}.tmp.vcf 2>>{tmp_annotate_vcf_name_err} """
 
-            # Command - Clean INFO/ANNOVAR_DATE (due to Annovar issue with multiple TAGS!)
+            # Command - Clean INFO/ANNOVAR_DATE and INFO/ALLELE_END (due to Annovar issue with multiple TAGS!)
             command_annovar += """ | sed "s/ANNOVAR_DATE=[^;\t]*;//gi" """
+            command_annovar += """ | sed "s/ALLELE_END=[^;\t]*;//gi" """
 
             # Command - Special characters (refGene annotation)
             for char, replacement in char_code_map.items():
@@ -3147,7 +3132,13 @@ class variants_annotation:
 
             # Command - Keep only needed fields, and remove ANNOVAR fields, and compress and index final file
             annovar_fields_to_keep = set(annovar_fields_to_keep + annotations_parameters.get("annovar_fields_to_keep", []))
-            command_annovar += f""" | {bcftools_bin_command} annotate --pair-logic exact --threads={threads} -x {",".join(annovar_fields_to_keep)} --rename-annots={tmp_rename_name} -o {tmp_annotate_vcf_name} -Oz 2>>{tmp_annotate_vcf_name_err} """
+            if len(annovar_fields_to_keep):
+                annovar_fields_to_keep_option = "-x " + ",".join(annovar_fields_to_keep)
+            else:
+                annovar_fields_to_keep_option = ""
+
+            # Command - Annotate with bcftools annotate
+            command_annovar += f""" | {bcftools_bin_command} annotate --pair-logic exact --threads={threads} {annovar_fields_to_keep_option} --rename-annots={tmp_rename_name} -o {tmp_annotate_vcf_name} -Oz 2>>{tmp_annotate_vcf_name_err} """
 
             # Command - indexing
             command_annovar += f"""  && tabix {tmp_annotate_vcf_name} """
@@ -3295,14 +3286,24 @@ class variants_annotation:
         log.debug("Param: " + str(param))
 
         # Param - options
-        options = param.get("annotation", {}).get("annovar", {}).get("options", {})
+        options = param.get(section, {}).get("annovar", {}).get("options", {})
         log.debug("Options: " + str(options))
 
         # Param - annotations
         annotations = (
-            param.get("annotation", {}).get("annovar", {}).get("annotations", {})
+            param.get(section, {}).get("annovar", {}).get("annotations", {})
         )
         log.debug("Annotations: " + str(annotations))
+
+        # Header fields override (Number/Type/Description), collected from each
+        # annotation's own options block
+        # (annotation.annovar.annotations.<name>.options.header_fields)
+        annotation_header_fields_override = self.get_annotation_header_fields_override(
+            annotations=annotations
+        )
+        log.debug(
+            f"annotation_header_fields_override={annotation_header_fields_override}"
+        )
 
         # Param - Assembly
         assembly = param.get("assembly", config.get("assembly", DEFAULT_ASSEMBLY))
@@ -3613,6 +3614,7 @@ class variants_annotation:
                             "operation",
                             "options",
                             "parallelize",
+                            "header_fields"
                         ]:
                             command_options.append(
                                 f""" --{option}={merged_options[option]}"""
@@ -3627,7 +3629,8 @@ class variants_annotation:
                     )
 
                     # Extract only needed fields, and remove ANNOVAR fields, and compress and index final file
-                    annovar_fields_to_keep = ["INFO/ANNOVAR_DATE", "INFO/ALLELE_END"]
+                    #annovar_fields_to_keep = ["INFO/ANNOVAR_DATE", "INFO/ALLELE_END"]
+                    annovar_fields_to_keep = []
                     if "ALL" not in annotation_list and "INFO" not in annotation_list:
                         # for ann in annotation_renamed_list:
                         for ann in annotation_list:
@@ -3837,18 +3840,9 @@ class variants_annotation:
 
                         shutil.copy(tmp_annotates_vcf_name_list[0], tmp_annotate_vcf_name)
 
-                    # Find annotation in header
-                    with bgzf.open(tmp_annotate_vcf_name, "rt") as f:
-                        header_list = self.read_vcf_header(f)
-                    annovar_vcf_header = vcf.Reader(io.StringIO("\n".join(header_list)))
-
-                    for ann in annovar_vcf_header.infos:
-                        if ann not in self.get_header().infos:
-                            vcf_reader.infos[ann] = annovar_vcf_header.infos.get(ann)
-
                     # Update variants
                     log.info(f"Annotations Annovar - Updating...")
-                    self.update_from_vcf(tmp_annotate_vcf_name)
+                    self.update_from_vcf(tmp_annotate_vcf_name, update_header=True, annotation_header_fields_override=annotation_header_fields_override)
                     remove_if_exists(
                         [
                             tmp_annotate_vcf_name,
@@ -3862,7 +3856,7 @@ class variants_annotation:
                 remove_if_exists(tmp_files)
 
     # Parquet
-    def annotation_parquet(self, threads: int = None) -> None:
+    def annotation_parquet(self, section:str = "annotation", threads: int = None) -> None:
         """
         It takes a VCF file, and annotates it with a parquet file
 
@@ -3905,7 +3899,7 @@ class variants_annotation:
         # Param
         annotations = (
             self.get_param()
-            .get("annotation", {})
+            .get(section, {})
             .get("parquet", {})
             .get("annotations", None)
         )
@@ -3919,14 +3913,14 @@ class variants_annotation:
         # Force Update Annotation
         force_update_annotation = (
             self.get_param()
-            .get("annotation", {})
+            .get(section, {})
             .get("options", {})
             .get("annotations_update", False)
         )
         log.debug(f"force_update_annotation={force_update_annotation}")
         force_append_annotation = (
             self.get_param()
-            .get("annotation", {})
+            .get(section, {})
             .get("options", {})
             .get("annotations_append", False)
         )
@@ -4830,7 +4824,7 @@ class variants_annotation:
         # Remove temporary files or folders
         # remove_if_exists(files_or_folders_to_remove)
 
-    def annotation_splice(self, threads: int = None) -> None:
+    def annotation_splice(self, section:str = "annotation", threads: int = None) -> None:
         """
         This function annotate with snpEff
 
@@ -4898,7 +4892,7 @@ class variants_annotation:
         log.debug("Param: " + str(param))
 
         # Param
-        options = param.get("annotation", {}).get("splice", {}).get("options", {})
+        options = param.get(section, {}).get("splice", {}).get("options", {})
         log.debug("Options: " + str(options))
 
         # Data
@@ -5142,17 +5136,8 @@ class variants_annotation:
                 f"Splice output was not generated {os.path.basename(tmp_vcf_name)}*.spip.spliceai.sorted.vcf.gz"
             )
         else:
-            # Get new header from annotated vcf
-            log.debug(f"Initial header: {len(header.infos)} fields")
-            # Create new header with splice infos
-            new_vcf = Variants(input=output_vcf[0])
-            new_vcf_header = new_vcf.get_header().infos
-            for keys, infos in new_vcf_header.items():
-                if keys not in header.infos.keys():
-                    header.infos[keys] = infos
-            log.debug(f"New header: {len(header.infos)} fields")
-            log.debug(f"Splice tmp output: {output_vcf[0]}")
-            self.update_from_vcf(output_vcf[0])
+
+            self.update_from_vcf(output_vcf[0], update_header=True)
 
         # Remove file
         remove_if_exists(output_vcf)
@@ -5161,7 +5146,7 @@ class variants_annotation:
     # HGVS
     ###
 
-    def annotation_hgvs(self, threads: int = None) -> None:
+    def annotation_hgvs(self, section:str = "annotation", threads: int = None) -> None:
         """
         The `annotation_hgvs` function performs HGVS annotation on a set of variants using genomic
         coordinates and alleles.
@@ -5308,8 +5293,10 @@ class variants_annotation:
         # Quick HGVS
         if "hgvs_options" in param and param.get("hgvs_options", ""):
             log.info(f"Quick HGVS Annotation:")
-            if not param.get("hgvs", None):
-                param["hgvs"] = {}
+            if not param.get(section, {}).get("hgvs", ""):
+                if section not in param:
+                    param[section] = {}
+                param[section]["hgvs"] = {}
             for option in param.get("hgvs_options", "").split(","):
                 option_var_val = option.split("=")
                 option_var = option_var_val[0]
@@ -5322,18 +5309,20 @@ class variants_annotation:
                 elif option_val.upper() in ["FALSE"]:
                     option_val = False
                 log.info(f"   {option_var}={option_val}")
-                param["hgvs"][option_var] = option_val
+                param[section][option_var] = option_val
 
         # Check if HGVS annotation enabled
-        if "hgvs" in param:
-            log.info(f"HGVS Annotation... ")
-            for hgvs_option in param.get("hgvs", {}):
-                log.info(f"{hgvs_option}: {param.get('hgvs',{}).get(hgvs_option)}")
+        log.debug(f"HGVS Annotation param: {param}")
+        log.debug(f"HGVS Annotation section: {section}")
+        if "hgvs" in param.get(section, {}):
+            log.info("HGVS Annotation... ")
+            for hgvs_option in param.get(section, {}).get("hgvs", {}):
+                log.info(f""" {hgvs_option}: {param.get(section, {}).get("hgvs", {}).get(hgvs_option)} """)
         else:
             return
 
         # HGVS Param
-        param_hgvs = param.get("hgvs", {})
+        param_hgvs = param.get(section, {}).get("hgvs", {})
         use_exon = param_hgvs.get("use_exon", False)
         use_gene = param_hgvs.get("use_gene", False)
         use_protein = param_hgvs.get("use_protein", False)
@@ -5513,7 +5502,7 @@ class variants_annotation:
                 )
             WHERE "{hgvs_column_name}" NOT IN ('') AND "{hgvs_column_name}" NOT NULL
             """
-        log.debug(f"Update INFO column with HGVS: {sql_query_update}")
+        # log.debug(f"Update INFO column with HGVS: {sql_query_update}")
         self.execute_query(sql_query_update)
 
         # Add header

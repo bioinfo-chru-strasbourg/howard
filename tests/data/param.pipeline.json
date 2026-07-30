@@ -1,14 +1,27 @@
 {
-  "annotation": {
+  "pipeline": {
+    "steps":[
+        {"annotation_dbsnp": "annotation", "annotation_dbNSFP": "annotation"},
+        {"annotation_hgvs": "annotation"},
+        {"calculation": "calculation"},
+        {"prioritization": "prioritization"},
+        {"annotation_frequency": "annotation_parquet"},
+        {"calculation_final": "calculation"}
+    ]
+  },
+  "annotation_dbsnp": {
     "parquet": {
       "annotations": {
         "tests/databases/annotations/current/hg19/avsnp150.parquet": {
           "INFO": null
-        },
+        }
+      }
+    }
+  },
+  "annotation_dbNSFP": {
+    "parquet": {
+      "annotations": {
         "tests/databases/annotations/current/hg19/dbnsfp42a.parquet": {
-          "INFO": null
-        },
-        "tests/databases/annotations/current/hg19/gnomad211_genome.parquet": {
           "INFO": null
         }
       }
@@ -19,27 +32,34 @@
           "INFO": null
         }
       }
-    },
-    "snpeff": {
-      "options": "-lof -hgvs -oicr -spliceSiteSize 3 ",
-      "stats": "OUTPUT.html",
-      "csvStats": "OUTPUT.csv"
-    },
-    "annovar": {
+    }
+  },
+  "annotation_frequency": {
+    "parquet": {
       "annotations": {
-        "refGene": {
+        "tests/databases/annotations/current/hg19/gnomad211_genome.parquet": {
           "INFO": null
         }
-      },
-      "options": {
-        "genebase": "-hgvs -splicing_threshold 3 ",
-        "intronhgvs": 10
       }
+    },
+    "bcftools": {
+      "annotations": {
+        "tests/databases/annotations/current/hg19/nci60.vcf.gz": {
+          "INFO": null
+        }
+      }
+    }
+  },
+  "annotation_hgvs": {
+    "hgvs": {
+      "full_format": true,
+      "use_exon": true
     }
   },
   "calculation": {
     "calculations": {
       "vartype": null,
+      "snpeff_extract": null,
       "snpeff_hgvs": null,
       "NOMEN": {
         "options": {
@@ -57,27 +77,14 @@
     "pzfields": ["PZScore", "PZFlag", "PZComment"],
     "prioritization_score_mode": "VaRank"
   },
-  "hgvs": {
-    "full_format": true,
-    "use_exon": true
-  },
-  "stats": {
-    "stats_md": null,
-    "stats_json": null
-  },
   "query": {
     "query": "SELECT \"#CHROM\", POS, REF, ALT, INFO FROM variants",
     "query_limit": 10,
     "query_print_mode": "default"
   },
-  "explode_infos": {
-    "explode_infos": false,
-    "explode_infos_prefix": ""
-  },
   "export": {
     "header_in_output": false,
     "parquet_partitions": null,
     "order_by": null
-  },
-  "threads": 8
+  }
 }

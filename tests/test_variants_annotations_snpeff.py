@@ -44,7 +44,7 @@ def test_annotation_snpeff_lower():
         param = {
             "annotation": {
                 "snpeff": {
-                    "options": "-lof -hgvs -oicr -noShiftHgvs -spliceSiteSize 3 "
+                    "options": "-lof -hgvs -oicr -spliceSiteSize 3 "
                 }
             }
         }
@@ -103,7 +103,7 @@ def test_annotation_snpeff():
         param = {
             "annotation": {
                 "snpeff": {
-                    "options": "-lof -hgvs -oicr -noShiftHgvs -spliceSiteSize 3 "
+                    "options": "-lof -hgvs -oicr -spliceSiteSize 3 "
                 }
             }
         }
@@ -165,7 +165,7 @@ def test_annotation_snpeff_full_unsorted():
         param = {
             "annotation": {
                 "snpeff": {
-                    "options": "-lof -hgvs -oicr -noShiftHgvs -spliceSiteSize 3 "
+                    "options": "-lof -hgvs -oicr -spliceSiteSize 3 "
                 }
             },
             "explode": {"explode_infos": True},
@@ -242,7 +242,7 @@ def test_annotation_snpeff_no_samples():
         param = {
             "annotation": {
                 "snpeff": {
-                    "options": "-lof -hgvs -oicr -noShiftHgvs -spliceSiteSize 3 "
+                    "options": "-lof -hgvs -oicr -spliceSiteSize 3 "
                 }
             }
         }
@@ -358,7 +358,7 @@ def test_annotation_snpeff_sqlite():
         param = {
             "annotation": {
                 "snpeff": {
-                    "options": "-lof -hgvs -oicr -noShiftHgvs -spliceSiteSize 3 "
+                    "options": "-lof -hgvs -oicr -spliceSiteSize 3 "
                 }
             }
         }

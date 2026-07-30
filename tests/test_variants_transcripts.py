@@ -3134,7 +3134,7 @@ def test_transcripts_create_view_prioritize_nomen(nomen_options, tnomen_expected
         variants.transcripts_prioritization(param=param)
 
         # SNPEFF HGVS
-        variants.calculation_extract_snpeff()
+        variants.calculation_snpeff_extract()
 
         # NOMEN
         variants.calculation_extract_nomen()

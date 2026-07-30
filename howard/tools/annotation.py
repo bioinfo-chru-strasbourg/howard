@@ -1,8 +1,9 @@
 import argparse
 import logging as log
 
-from howard.functions.commons import load_args, load_config_args
+from howard.functions.commons import load_param_and_config
 from howard.objects.variants import Variants
+from howard.tools.process import process
 
 
 def annotation(args: argparse) -> None:
@@ -16,44 +17,9 @@ def annotation(args: argparse) -> None:
     :type args: argparse
     """
 
-    log.info("Start")
+    # Load args, param, config and vcfdata_obj
+    #arguments_dict, config, param, vcfdata_obj = load_param_and_config(args=args, command="annotation", strict=False, load_data=False)
 
-    # Load config args
-    arguments_dict, _, config, param = load_config_args(args)
+    vcfdata_obj = process(args=args, tools=["annotation"])
 
-    # Create variants object
-    vcfdata_obj = Variants(
-        input=args.input, output=args.output, config=config, param=param
-    )
-
-    # Get Config and Params
-    config = vcfdata_obj.get_config()
-    param = vcfdata_obj.get_param()
-
-    # Load args into param
-    param = load_args(
-        param=param,
-        args=args,
-        arguments_dict=arguments_dict,
-        command="annotation",
-        strict=False,
-    )
-
-    # Re-Load Config and Params
-    vcfdata_obj.set_param(param)
-    vcfdata_obj.set_config(config)
-
-    # Load data
-    vcfdata_obj.load_data()
-
-    # Annotation
-    vcfdata_obj.annotation()
-
-    # Export
-    vcfdata_obj.export_output()
-
-    # Log
-    log.info("End")
-
-    # Return Variants object
     return vcfdata_obj

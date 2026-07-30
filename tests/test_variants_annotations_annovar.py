@@ -22,6 +22,74 @@ from test_needed import tests_data_folder, tests_folder, tests_config, tests_ann
 
 
 
+def test_annotation_annovar_change_field_header():
+    """
+    This function tests the annotation of variants using Annovar and checks if the output VCF file is in
+    the correct format.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.vcf.gz"
+        annotation_annovar = "nci60"
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+
+        # Construct param dict
+        param = {
+            "annotation": {
+                "annovar": {
+                    "annotations": {
+                        annotation_annovar: {
+                            "annotation_fields": {
+                                "INFO": None
+                            },
+                            "options": {
+                                "operation": "f",
+                                "header_fields": {
+                                    "nci60": {
+                                        "Number": "1",
+                                        "Type": "String",
+                                        "Description": "NCI60 score"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        # Create object
+        variants = Variants(
+            conn=None,
+            input=input_vcf,
+            output=output_vcf,
+            config=tests_config,
+            param=param,
+            load=True,
+        )
+
+        # Remove if output file exists
+        remove_if_exists([output_vcf])
+
+        # Annotation
+        variants.annotation()
+
+        # query annotated variant
+        result = variants.get_query_to_df(
+            """SELECT 1 AS count FROM variants WHERE "#CHROM" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66'"""
+        )
+        assert len(result) == 1, f"Check annotated variant with nci60, Expected 1 annotated variant, but got {len(result)}"
+
+        # Check if VCF is in correct format with pyVCF
+        variants.export_output()
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False, "VCF file is not in correct format"
+
+
 def test_annotation_annovar():
     """
     This function tests the annotation of variants using Annovar and checks if the output VCF file is in

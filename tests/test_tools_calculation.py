@@ -11,6 +11,7 @@ coverage report --include=howard/* -m
 """
 
 import argparse
+import logging as log
 import os
 from tempfile import TemporaryDirectory
 
@@ -164,3 +165,121 @@ def test_calculation_vcf():
             "SELECT INFO FROM variants WHERE INFO LIKE '%hgvs=%'"
         )
         assert len(result) == 0
+
+
+
+def test_calculation_show_calculations():
+    """
+    Test processing with pipeline enabled and specific parameters.
+    Including exporting transcripts to a TSV file.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.ann.vcf.gz"
+        output_vcf = os.path.join(tmp_dir, "output_file.vcf")
+        config = {}
+        param = tests_folder + "/data/param.pipeline.json"
+        annotations = None
+        calculations = None
+        prioritizations = None
+        input_query = None
+        show_calculations = True
+        show_calculations_md = os.path.join(tmp_dir, "annotations.md")
+
+
+        # prepare arguments for the query function
+        args = argparse.Namespace(
+            input=input_vcf,
+            output=output_vcf,
+            config=config,
+            param=param,
+            annotations=annotations,
+            calculations=calculations,
+            prioritizations=prioritizations,
+            query=input_query,
+            explode_infos=False,
+            explode_infos_prefix="",
+            explode_infos_fields="*",
+            include_header=False,
+            arguments_dict=arguments_dict,
+            show_calculations=show_calculations,
+            show_calculations_md=show_calculations_md
+        )
+
+        # Remove if output file exists
+        remove_if_exists([output_vcf, show_calculations_md])
+
+        # Query
+        try:
+            calculation(args)
+        except SystemExit:
+            log.info("SystemExit raised as expected due to show_calculations flag.")
+            assert True
+
+        assert os.path.exists(show_calculations_md), f"Expected markdown file {show_calculations_md} to be created."
+
+
+def test_calculation_pipeline():
+    """
+    Test processing with pipeline enabled and specific parameters.
+    Including exporting transcripts to a TSV file.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.ann.vcf.gz"
+        output_vcf = os.path.join(tmp_dir, "output_file.vcf")
+        config = {}
+        param = tests_folder + "/data/param.pipeline.json"
+        annotations = None
+        calculations = None
+        prioritizations = None
+        input_query = None
+        output_transcripts_tsv = os.path.join(tmp_dir, "output.transcripts.tsv")
+
+        # prepare arguments for the query function
+        args = argparse.Namespace(
+            input=input_vcf,
+            output=output_vcf,
+            config=config,
+            param=param,
+            annotations=annotations,
+            calculations=calculations,
+            prioritizations=prioritizations,
+            query=input_query,
+            explode_infos=False,
+            explode_infos_prefix="",
+            explode_infos_fields="*",
+            include_header=False,
+            arguments_dict=arguments_dict,
+        )
+
+        # Remove if output file exists
+        remove_if_exists([output_vcf, output_transcripts_tsv])
+
+        # Query
+        calculation(args)
+
+        # Create object
+        variants = Variants(conn=None, input=output_vcf, config=config, load=True)
+
+        # Check annotation
+        result = variants.get_query_to_df(
+            "SELECT INFO FROM variants WHERE INFO LIKE '%VARTYPE=%'"
+        )
+        assert len(result) == 7, f"Expected 7 variants with VARTYPE, but got {len(result)}"
+
+        # Check annotation
+        result = variants.get_query_to_df(
+            "SELECT INFO FROM variants WHERE INFO LIKE '%snpeff_Annotation=%'"
+        )
+        assert len(result) == 7, f"Expected 7 variants with snpeff_Annotation, but got {len(result)}"
+
+        # Check annotation
+        result = variants.get_query_to_df(
+            "SELECT INFO FROM variants WHERE INFO LIKE '%;NOMEN=%'"
+        )
+        assert len(result) == 7, f"Expected 7 variants with NOMEN, but got {len(result)}"

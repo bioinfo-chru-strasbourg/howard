@@ -2,8 +2,7 @@ import argparse
 import logging as log
 from tabulate import tabulate  # type: ignore
 
-from howard.functions.commons import load_args, load_config_args
-from howard.objects.variants import Variants
+from howard.functions.commons import load_param_and_config
 
 
 def sort(args: argparse) -> None:
@@ -18,17 +17,20 @@ def sort(args: argparse) -> None:
 
     log.info("Start")
 
-    # Load config args
-    arguments_dict, _, config, param = load_config_args(args)
+    # Load args, param, config and vcfdata_obj
+    _, config, param, vcfdata_obj = load_param_and_config(args=args, command="query", strict=False, load_data=False)
 
-    # Create variants object
-    vcfdata_obj = Variants(
-        input=args.input, output=args.output, config=config, param=param
-    )
+    # # Load config args
+    # arguments_dict, _, config, param = load_config_args(args)
 
-    # Get Config and Params
-    config = vcfdata_obj.get_config()
-    param = vcfdata_obj.get_param()
+    # # Create variants object
+    # vcfdata_obj = Variants(
+    #     input=args.input, output=args.output, config=config, param=param
+    # )
+
+    # # Get Config and Params
+    # config = vcfdata_obj.get_config()
+    # param = vcfdata_obj.get_param()
 
     # Access
     input_format = vcfdata_obj.get_input_format()
@@ -41,14 +43,14 @@ def sort(args: argparse) -> None:
         access = "RO"
     config["access"] = access
 
-    # Load args into param
-    param = load_args(
-        param=param,
-        args=args,
-        arguments_dict=arguments_dict,
-        command="filter",
-        strict=False,
-    )
+    # # Load args into param
+    # param = load_args(
+    #     param=param,
+    #     args=args,
+    #     arguments_dict=arguments_dict,
+    #     command="filter",
+    #     strict=False,
+    # )
 
     # Load data
     if vcfdata_obj.get_input():

@@ -1,8 +1,7 @@
 import argparse
 import logging as log
 
-from howard.functions.commons import load_args, load_config_args
-from howard.objects.variants import Variants
+from howard.functions.commons import load_param_and_config
 
 
 def convert(args: argparse) -> None:
@@ -16,36 +15,14 @@ def convert(args: argparse) -> None:
     :type args: argparse
     """
 
-    # Load config args
-    arguments_dict, _, config, param = load_config_args(args)
+    # Log
+    log.info("Start")
 
-    # Create variants object
-    vcfdata_obj = Variants(
-        input=args.input, output=args.output, config=config, param=param
-    )
-
-    # Get Config and Params
-    config = vcfdata_obj.get_config()
-    param = vcfdata_obj.get_param()
-
-    # Load args into param
-    param = load_args(
-        param=param,
-        args=args,
-        arguments_dict=arguments_dict,
-        command="convert",
-        strict=False,
-    )
+    # Load args, param, config and vcfdata_obj
+    _, config, param, vcfdata_obj = load_param_and_config(args=args, command="convert", strict=False, load_data=False)
 
     # Access
-    config["access"] = config.get("access", "RO")
-
-    # Init
-    param["explode"] = param.get("explode", {})
-
-    # Re-Load Config and Params
-    vcfdata_obj.set_param(param)
-    vcfdata_obj.set_config(config)
+    config["access"] = config.get("access", "RO") or "RO"
 
     # Determine view type and mode (either "table" or "view", either "explore" or "full")
     view_type = "view"
@@ -93,6 +70,7 @@ def convert(args: argparse) -> None:
             detect_type_list=False,
         )
         query = f"SELECT * FROM {annotation_view_name}"
+        # log.debug(f"Query for export: {query}")
         param["explode"]["explode_infos"] = False
 
     # Export

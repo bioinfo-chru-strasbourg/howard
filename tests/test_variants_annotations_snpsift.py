@@ -224,7 +224,24 @@ def test_annotation_snpsift_rename_field():
         # Construct param dict
         param = {
             "annotation": {
-                "snpsift": {"annotations": {annotation_parquet: {"nci60": "nci61"}}}
+                "snpsift": {
+                    "annotations": {
+                        annotation_parquet: {
+                            "annotation_fields": {
+                                "nci60": "nci61"
+                            },
+                            "options": {
+                                "header_fields": {
+                                    "nci61": {
+                                        "Number": "1",
+                                        "Type": "Float",
+                                        "Description": "NCI60 renamed field"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
 

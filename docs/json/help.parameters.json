@@ -8,10 +8,6 @@
     "__examples_code": {
       "# Parameters for annotation, calculation, prioritization, HGVS annotation and export": [
         "{",
-        "   \"hgvs\": {",
-        "      \"full_format\": true,",
-        "      \"use_exon\": true",
-        "   }",
         "   \"annotation\": {",
         "      \"parquet\": {",
         "         \"annotations\": {",
@@ -81,13 +77,17 @@
         "         }",
         "      },",
         "      \"snpeff\": {",
-        "         \"options\": \" -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr \"",
+        "         \"options\": \" -hgvs -spliceSiteSize 3 -lof -oicr \"",
         "      },",
         "      \"exomiser\": {",
         "         \"release\": \"2109\",",
         "         \"transcript_source\": \"refseq\",",
         "         \"hpo\": [\"HP:0001156\", \"HP:0001363\", \"HP:0011304\", \"HP:0010055\"]",
         "      },",
+        "      \"hgvs\": {",
+        "         \"full_format\": true,",
+        "         \"use_exon\": true",
+        "      }",
         "      \"options\": {",
         "         \"append\": true",
         "      }",
@@ -115,105 +115,190 @@
       ]
     }
   },
-  "hgvs": {
+  "pipeline": {
     "__help": [
-      "HOWARD annotates variants with HGVS annotation using HUGO HGVS internation Sequence Variant Nomenclature (http://varnomen.hgvs.org/). Annotation refere to refGene and genome to generate HGVS nomenclature for all available transcripts. This annotation add 'hgvs' field into VCF INFO column of a VCF file. Several options are available, to add gene, exon and protein information, to generate a 'full format' detailed annotation, to choose codon format."
+      "Pipeline options to define the order of operations to process as a list of steps.",
+      "Two pipeline declaration modes are available:",
+      "- Inline mode (recommended): each step contains one or multiple named operations, each embedding its own configuration, a '_tool' key set to one of: 'annotation', 'calculation', 'prioritization', and an optional '_description' key to document the operation.",
+      "- Referenced mode (alternative, legacy-compatible): each step maps a section name to a tool type (e.g. {\"annotation_frequency\": \"annotation\"}), and parameters are defined in top-level sections of the parameter JSON file. An optional '_description' key can also be added in each referenced section. The '_tool' key can be used instead of define it on pipeline section (e.g. {\"annotation_frequency\": None} with section \"annotation_frequency\" including '_tool' key as \"annotation\").",
+      "The referenced mode is useful to reuse the same operation configuration in multiple pipeline steps, to define a pipeline with a minimal or choosen steps.",
+      "By default, if no pipeline is provided, operations are processed in referenced mode in the specific order: \"annotation\", \"calculation\", \"prioritization.\"",
+      "For more information about steps and operations, see each tool's documentation below."
     ],
     "__code_type": "json",
     "__examples_code": [
-      "# HGVS annotation  with operations for generate variant_id and variant type, extract HGVS from snpEff annotation, select NOMEN from snpEff HGVS with a list of transcripts of preference",
-      "\"hgvs\": {",
-      "  \"full_format\": true,",
-      "  \"use_exon\": true",
+      "# Recommended: pipeline in inline mode with full step descriptions",
+      "\"pipeline\": {",
+      "  \"steps\": [",
+      "    {",
+      "      \"annotation_dbsnp\": {",
+      "        \"_tool\": \"annotation\",",
+      "        \"_description\": \"Annotate variants with dbSNP annotation.\",",
+      "        \"parquet\": {",
+      "          \"annotations\": {",
+      "            \"tests/databases/annotations/current/hg19/avsnp150.parquet\": {\"INFO\": null}",
+      "          }",
+      "        }",
+      "      },",
+      "      \"annotation_dbNSFP\": {",
+      "        \"_tool\": \"annotation\",",
+      "        \"_description\": \"Annotate variants with dbNSFP and COSMIC databases.\",",
+      "        \"parquet\": {",
+      "          \"annotations\": {",
+      "            \"tests/databases/annotations/current/hg19/dbnsfp42a.parquet\": {\"INFO\": null}",
+      "          }",
+      "        },",
+      "        \"bcftools\": {",
+      "          \"annotations\": {",
+      "            \"tests/databases/annotations/current/hg19/cosmic70.vcf.gz\": {\"INFO\": null}",
+      "          }",
+      "        }",
+      "      }",
+      "    },",
+      "    {",
+      "      \"calculation_on_variants\": {",
+      "        \"_tool\": \"calculation\",",
+      "        \"_description\": \"Compute variant and genotype metrics such as vartype and VAF.\",",
+      "        \"calculations\": {\"vartype\": null, \"VAF\": \"\"},",
+      "        \"calculation_config\": \"config/calculations_config.json\"",
+      "      }",
+      "    },",
+      "    {",
+      "      \"prioritization\": {",
+      "        \"_tool\": \"prioritization\",",
+      "        \"_description\": \"Prioritize variants using configured profiles and scoring mode.\",",
+      "        \"profiles\": [\"default\", \"GERMLINE\"],",
+      "        \"prioritization_config\": \"config/prioritization_profiles.json\",",
+      "        \"pzfields\": [\"PZScore\", \"PZFlag\", \"PZComment\"],",
+      "        \"prioritization_score_mode\": \"VaRank\"",
+      "      }",
+      "    }",
+      "  ]",
+      "},",
+      "# Alternative: pipeline in referenced mode (\"prioritization_step\" tool is defined in the \"prioritization_step\" referenced top-level section)",
+      "\"pipeline\": {",
+      "  \"steps\": [",
+      "    {\"annotation_step\": \"annotation\"},",
+      "    {\"calculation_step\": \"calculation\"},",
+      "    {\"prioritization_step\": null}",
+      "  ]",
+      "},",
+      "# Corresponding operation sections for referenced mode",
+      "\"annotation_step\": {",
+      "  \"_description\": \"Annotate variants with configured annotation databases.\",",
+      "  \"parquet\": {",
+      "    \"annotations\": {",
+      "      \"/path/to/database.parquet\": {",
+      "        \"annotation_fields\": {",
+      "          \"INFO\": null",
+      "        }",
+      "      }",
+      "    }",
+      "  }",
+      "},",
+      "\"calculation_step\": {",
+      "  \"_description\": \"Perform configured calculation operations on variants and genotypes.\",",
+      "  \"calculations\": {",
+      "    \"operation1\": null,",
+      "    \"operation2\": {",
+      "      \"options\": {",
+      "        \"option1\": \"value1\",",
+      "        \"option2\": \"value2\"",
+      "      }",
+      "    }",
+      "  },",
+      "  \"calculation_config\": \"calculation_config.json\"",
+      "},",
+      "\"prioritization_step\": {",
+      "  \"_tool\": \"prioritization\",",
+      "  \"_description\": \"Prioritize variants with configured profiles and scoring mode.\",",
+      "  \"prioritizations\": \"config/prioritization_profiles.json\",",
+      "  \"profiles\": [\"GENOME\", \"GERMLINE\"],",
+      "  \"default_profile\": \"GERMLINE\",",
+      "  \"pzfields\": [\"PZScore\", \"PZFlag\", \"PZComment\"],",
+      "  \"prioritization_score_mode\": \"VaRank\"",
       "}"
     ],
-    "use_gene": {
+    "steps": {
       "__help": [
-        "Add Gene information to generate HGVS annotation (e.g. 'NM_152232**(TAS1R2)**:c.231T>C')."
+        "List of steps to process in the pipeline.\n",
+        "Each step is a dict and can use one of two formats:",
+        "- Inline format (recommended): operation name as key mapped to an operation object containing '_tool', optional '_description', and operation parameters.",
+        "- Referenced format (alternative): section name as key (e.g. \"annotation\", \"calculation\", \"prioritization\", \"annotation_core\", \"annotation_frequency\") mapped to the tool type (\"annotation\", \"calculation\", \"prioritization\"); the corresponding referenced section may include an alternative '_tool' key, and an optional '_description' key.",
+        "Only tool types \"annotation\", \"calculation\" and \"prioritization\" are available.",
+        "By default, all steps are processed in the order: \"annotation\", \"calculation\", \"prioritization\".\n",
+        "Beware that some referenced steps can be skipped if no corresponding section is provided in the parameter JSON file (e.g. '{\"annotation_frequency\": \"annotation\"}' needs \"annotation_frequency\" section in parameter JSON file)."
       ],
-      "__code_type": "json",
-      "__examples_code": ["# Use Gene in HGVS annotation", "\"use_gene\": true"]
-    },
-    "use_exon": {
-      "__help": [
-        "Add Exon information to generate HGVS annotation (e.g. 'NM_152232(exon2):c.231T>C'). Only if 'use_gene' is not enabled."
-      ],
-      "__code_type": "json",
-      "__examples_code": ["# Use Exon in HGVS annotation", "\"use_exon\": true"]
-    },
-    "use_protein": {
-      "__help": [
-        "Use Protein level to generate HGVS annotation (e.g. 'NP_689418:p.Cys77Arg'). Can be used with 'use_exon' or 'use_gene'."
-      ],
+      "__type": "list",
+      "__default": "[ {\"annotation\": \"annotation\"}, {\"calculation\": \"calculation\"}, {\"prioritization\": \"prioritization\"} ]",
       "__code_type": "json",
       "__examples_code": [
-        "# Use Protein in HGVS annotation",
-        "\"use_protein\": true"
+        "# Recommended: inline full descriptions",
+        "\"steps\": [",
+        "  {",
+        "    \"annotation_dbsnp\": {",
+        "      \"_tool\": \"annotation\",",
+        "      \"_description\": \"Annotate variants with dbSNP annotation.\",",
+        "      \"parquet\": {",
+        "        \"annotations\": {",
+        "          \"tests/databases/annotations/current/hg19/avsnp150.parquet\": {\"INFO\": null}",
+        "        }",
+        "      }",
+        "    }",
+        "  },",
+        "  {",
+        "    \"calculation_on_variants\": {",
+        "      \"_tool\": \"calculation\",",
+        "      \"_description\": \"Compute variant and genotype metrics such as vartype and VAF.\",",
+        "      \"calculations\": {\"vartype\": null, \"VAF\": \"\"},",
+        "      \"calculation_config\": \"config/calculations_config.json\"",
+        "    }",
+        "  },",
+        "  {",
+        "    \"prioritization\": {",
+        "      \"_tool\": \"prioritization\",",
+        "      \"_description\": \"Prioritize variants using configured profiles and scoring mode.\",",
+        "      \"profiles\": [\"default\", \"GERMLINE\"]",
+        "    }",
+        "  }",
+        "]",
+        "# Alternative: referenced format (default order) with tool types",
+        "\"steps\": [",
+        "  {\"annotation\": \"annotation\"},",
+        "  {\"calculation\": \"calculation\"},",
+        "  {\"prioritization\": \"prioritization\"}",
+        "]",
+        "# Referenced sections in parameter JSON file (in main section level)",
+        "\"annotation\": {\"_tool\": \"annotation\", \"_description\": \"Annotate variants with configured annotation databases.\", ...},",
+        "\"calculation\": {\"_tool\": \"calculation\", \"_description\": \"Perform configured calculation operations on variants and genotypes.\", ...},",
+        "\"prioritization\": {\"_tool\": \"prioritization\", \"_description\": \"Prioritize variants with configured profiles and scoring mode.\", ...}",
+        "# Alternative: referenced format with multiple operation sections, with tool types and optional '_description' in each section",
+        "\"steps\": [",
+        "  {\"annotation_core\": null},",
+        "  {\"calculation\": null},",
+        "  {\"annotation_frequency\": null},",
+        "  {\"annotation_scores\": null},",
+        "  {\"calculation_frequency\": null},",
+        "  {\"prioritization\": null},",
+        "  {\"calculation_final\": null}",
+        "]",
+        "# Referenced sections in parameter JSON file (in main section level)",
+        "\"annotation_core\": {\"_tool\": \"annotation\", \"_description\": \"Core annotation step\", ...},",
+        "\"annotation_frequency\": {\"_tool\": \"annotation\", \"_description\": \"Frequency annotation step\", ...},",
+        "\"annotation_scores\": {\"_tool\": \"annotation\", \"_description\": \"Scores annotation step\", ...},",
+        "\"calculation\": {\"_tool\": \"calculation\", \"_description\": \"Main calculation step\", ...},",
+        "\"calculation_frequency\": {\"_tool\": \"calculation\", \"_description\": \"Frequency calculation step\", ...},",
+        "\"calculation_final\": {\"_tool\": \"calculation\", \"_description\": \"Final calculation step\", ...},",
+        "\"prioritization\": {\"_tool\": \"prioritization\", \"_description\": \"Prioritization step\", ...}"
       ]
     },
-    "add_protein": {
-      "__help": [
-        "Add Protein level to DNA HGVS annotation (e.g. 'NM_152232:c.231T>C,NP_689418:p.Cys77Arg')."
-      ],
-      "__code_type": "json",
-      "__examples_code": [
-        "# Add Protein level to DNA HGVS annotation",
-        "\"add_protein\": true"
-      ]
-    },
-    "full_format": {
-      "__help": [
-        "Generates HGVS annotation in a full format (non-standard, e.g. 'TAS1R2:NM_152232:NP_689418:c.231T>C:p.Cys77Arg', 'TAS1R2:NM_152232:NP_689418:exon2:c.231T>C:p.Cys77Arg'). Full format use all information to generates an exhaustive annotation. Use specifically 'use_exon' to add exon information."
-      ],
-      "__code_type": "json",
-      "__examples_code": [
-        "# Use full format for HGVS annotation",
-        "\"full_format\": true"
-      ]
-    },
-    "codon_type": {
-      "__help": [
-        "Amino Acide Codon format type to use to generate HGVS annotation (default '3'):",
-        "- '1': codon in 1 character (e.g. 'C', 'R')",
-        "- '3': codon in 3 character (e.g. 'Cys', 'Arg')",
-        "- 'FULL': codon in full name (e.g. 'Cysteine', 'Arginine')"
-      ],
-      "__code_type": "json",
-      "__examples_code": [
-        "# Amino Acide Codon format with 1 character",
-        "\"codon_type\": \"1\"",
-        "# Amino Acide Codon format with 3 character",
-        "\"codon_type\": \"3\"",
-        "# Amino Acide Codon format with full name",
-        "\"codon_type\": \"FULL\""
-      ]
-    },
-    "refgene": {
-      "__help": [
-        "Path to refGene annotation file (see [HOWARD User Guide](user_guide.md#databases-tool))."
-      ],
-      "__code_type": "json",
-      "__examples_code": [
-        "# Path to refSeq file",
-        "\"refgene\": \"~/howard/databases/refseq/current/hg19/ncbiRefSeq.txt\""
-      ]
-    },
-    "refseqlink": {
-      "__help": [
-        "Path to refGeneLink annotation file (see [HOWARD User Guide](user_guide.md#databases-tool))."
-      ],
-      "__code_type": "json",
-      "__examples_code": [
-        "# Path to refSeq file",
-        "\"refseqlink\": \"~/howard/databases/refseq/current/hg19/ncbiRefSeqLink.txt\""
-      ]
-    }
+    "output_files": {}
   },
   "annotation": {
     "__help": [
       "Annotation process using HOWARD algorithms or external tools.\n",
       "For HOWARD Parquet algorithm, provide the list of database files available (formats such as Parquet, VCF, TSV, duckDB, JSON) and select fields (rename possible, 'INFO' keyword for all fields), or use 'ALL' keyword to detect available databases.\n",
-      "For external tools, such as Annovar, snpEff and Exomiser, specify parameters such as annotation keywords (Annovar) and options (depending on the tool), and select fields (BCFtools and Annovar, field rename available)."
+      "For external tools, such as Annovar, snpEff, Exomiser and Docker-based annotation tools, specify parameters such as annotation keywords (Annovar), options (depending on the tool), and selected fields (BCFtools and Annovar, field rename available)."
     ],
     "__examples_code": [
       "# Annotation with multiple tools in multiple formats with multiple options",
@@ -286,12 +371,16 @@
       "      }",
       "   },",
       "   \"snpeff\": {",
-      "      \"options\": \" -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr \"",
+      "      \"options\": \" -hgvs -spliceSiteSize 3 -lof -oicr \"",
       "   }",
       "   \"exomiser\": {",
       "      \"release\": \"2109\",",
       "      \"transcript_source\": \"refseq\",",
       "      \"hpo\": [\"HP:0001156\", \"HP:0001363\", \"HP:0011304\", \"HP:0010055\"]",
+      "   }",
+      "   \"hgvs\": {",
+      "      \"full_format\": true,",
+      "      \"use_exon\": true",
       "   }",
       "   \"options\": {",
       "      \"append\": true",
@@ -436,6 +525,15 @@
         "         \"annotation_fields\": {",
         "            \"field1\": null,",
         "            \"field2\": \"field2_renamed\"",
+        "         },",
+        "         \"options\": {",
+        "            \"header_fields\": {",
+        "               \"field1\": {",
+        "                  \"Number\": \".\",",
+        "                  \"Type\": \"String\",",
+        "                  \"Description\": \"field1 as String\"",
+        "               }",
+        "            }",
         "         }",
         "      },",
         "      \"database2.bed.gz\": {",
@@ -451,7 +549,9 @@
         "__help": [
           "Specify the list of database files in formats VCF or BED. Files need to be compressed and indexed.",
           "Section 'annotation_fields' allows to select specific database fields and optionally rename them (e.g. '\"field\": null' to keep field name, '\"field\": \"new_name\"' to rename field). Use 'INFO' or 'ALL' keyword to select all fields within the database INFO/Tags header (e.g. '\"INFO\": null', '\"ALL\": null').\n",
-          "If a full path is not provided, the system will automatically detect files within database folders (see Configuration doc) and assembly (see Parameter option)."
+          "If a full path is not provided, the system will automatically detect files within database folders (see Configuration doc) and assembly (see Parameter option).",
+          "The option section provides:\n",
+          "- 'header_fields' allows to override specific fields in the annotation header when updating the database from a VCF file. The keys of the dictionary represent the field names in the annotation header, and the values represent the new values that you want to assign to those fields. This parameter is optional and can be used to customize the annotation header during the update process. If not provided, the default values from the VCF file will be used for the annotation header fields.\n"
         ],
         "__examples_code": [
           "# Annotation with dbSNP database  with all fields",
@@ -462,14 +562,22 @@
           "      }",
           "   }",
           "}",
-          "# Annotation with dbNSFP (only PolyPhen, ClinVar and REVEL score), and rename fields",
+          "# Annotation with dbNSFP (only PolyPhen, ClinVar and REVEL score), and rename fields and header",
           "\"annotations\": {",
           "   \"tests/databases/annotations/current/hg19/dbnsfp42a.vcf.gz\": {",
           "      \"annotation_fields\": {",
           "         \"Polyphen2_HDIV_pred\": \"PolyPhen\",",
           "         \"ClinPred_pred\": \"ClinVar\",",
           "         \"REVEL_score\": null",
+          "      },",
+          "      \"options\": {",
+          "         \"Polyphen2_HDIV_pred\": {",
+          "            \"Number\": \".\",",
+          "            \"Type\": \"String\",",
+          "            \"Description\": \"PolyPhen prediction for Human\"",
+          "         }",
           "      }",
+          
           "   }",
           "}",
           "# Annotation with refSeq as a BED file",
@@ -503,6 +611,7 @@
         "- 'genebase' is the Annovar genebase option, using with 'g' operation (e.g. '-splicing_threshold 3 -indel_splicing_threshold 3 -hgvs')\n",
         "- 'xref' is the Annovar xref option, using with 'gx' operation (e.g. '/path/to/xref/file')\n",
         "- 'options' is the Annovar additional options (e.g. '-other_options')\n",
+        "- 'header_fields' allows to override specific fields in the annotation header when updating the database from a VCF file. The keys of the dictionary represent the field names in the annotation header, and the values represent the new values that you want to assign to those fields. This parameter is optional and can be used to customize the annotation header during the update process. If not provided, the default values from the VCF file will be used for the annotation header fields.\n",
         "If a full path is not provided, the system will automatically detect files within database folders (see Configuration doc) and assembly (see Parameter option)."
       ],
       "__examples_code": [
@@ -520,7 +629,19 @@
         "            \"genebase\": \"-splicing_threshold 3 -indel_splicing_threshold 3 -hgvs\",",
         "            \"arguments\": \"\",",
         "            \"xref\": \"/path/to/xref/file\",",
-        "            \"options\": \"\"",
+        "            \"options\": \"\",",
+        "            \"header_fields\": {",
+        "               \"field1\": {",
+        "                  \"Number\": \".\",",
+        "                  \"Type\": \"String\",",
+        "                  \"Description\": \"field1 as String\"",
+        "               },",
+        "               \"field2_renamed\": {",
+        "                  \"Number\": \".\",",
+        "                  \"Type\": \"String\",",
+        "                  \"Description\": \"Renamed field2 as String\"",
+        "               }",
+        "            }",
         "         }",
         "      },",
         "      \"annovar_annotation2\": {",
@@ -553,7 +674,7 @@
           "List of keywords refering to Annovar databases (see [Annovar Databases documentation](https://annovar.openbioinformatics.org/en/latest/user-guide/download/)), with a list of selected fields for each of them (rename available)"
         ],
         "__examples_code": [
-          "# Annotation with ClinVar (fields CLNSIG and CLNDN renamed) and Cosmic (all fields)",
+          "# Annotation with ClinVar (fields CLNSIG and CLNDN renamed) and Cosmic (all fields) and header override for ClinVar fields",
           "\"annotations\": {",
           "   \"CLINVAR\": {",
           "      \"annotation_fields\": {",
@@ -563,6 +684,18 @@
           "      \"options\": {",
           "         \"protocol\": \"clinvar_20221231\",",
           "         \"operation\": \"f\"",
+          "         \"header_fields\": {",
+          "            \"ClinVar_class\": {",
+          "               \"Number\": \".\",",
+          "               \"Type\": \"String\",",
+          "               \"Description\": \"ClinVar classification\"",
+          "            },",
+          "            \"ClinVar_desease\": {",
+          "               \"Number\": \".\",",
+          "               \"Type\": \"String\",",
+          "               \"Description\": \"ClinVar disease name\"",
+          "            }",
+          "         }",
           "      }",
           "   },",
           "   \"cosmic70\": {",
@@ -601,7 +734,7 @@
       "__examples_code": [
         "# Annotation with snpEff databases, with options for HGVS annotation and additional tags.",
         "\"snpeff\": {",
-        "   \"options\": \" -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr \"",
+        "   \"options\": \" -hgvs -spliceSiteSize 3 -lof -oicr \"",
         "}"
       ],
       "options": {
@@ -613,7 +746,7 @@
         ],
         "__examples_code": [
           "# Annotation with snpEff databases, with options to generate HGVS annotation, specify to not shift variants according to HGVS notation, define splice sites size to 3, add loss of function (LOF), Nonsense mediated decay and OICR tags.",
-          "\"options\": \" -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr \""
+          "\"options\": \" -hgvs -spliceSiteSize 3 -lof -oicr \""
         ]
       },
       "stats": {
@@ -654,6 +787,15 @@
         "            \"field1\": null,",
         "            \"field2\": null",
         "         }",
+        "         \"options\": {",
+        "            \"header_fields\": {",
+        "               \"field1\": {",
+        "                  \"Number\": \".\",",
+        "                  \"Type\": \"String\",",
+        "                  \"Description\": \"field1 as String\"",
+        "               }",
+        "            }",
+        "         }",
         "      },",
         "      \"/path/to/database2.vcf.gz\": {",
         "         \"annotation_fields\": {",
@@ -669,7 +811,9 @@
         "__help": [
           "Specify the list of database files in formats VCF. Files need to be compressed and indexed.",
           "This parameter enables users to select specific database fields and optionally rename them (e.g. '\"field\": null' to keep field name, '\"field\": \"new_name\"' to rename field). Use 'INFO' or 'ALL' keyword to select all fields within the database INFO/Tags header (e.g. '\"INFO\": null', '\"ALL\": null').\n",
-          "If a full path is not provided, the system will automatically detect files within database folders (see Configuration doc) and assembly (see Parameter option)."
+          "If a full path is not provided, the system will automatically detect files within database folders (see Configuration doc) and assembly (see Parameter option).",
+          "The option section provides:\n",
+          "- 'header_fields' allows to override specific fields in the annotation header when updating the database from a VCF file. The keys of the dictionary represent the field names in the annotation header, and the values represent the new values that you want to assign to those fields. This parameter is optional and can be used to customize the annotation header during the update process. If not provided, the default values from the VCF file will be used for the annotation header fields.\n"
         ],
         "__examples_code": [
           "# Annotation with dbSNP database  with all fields",
@@ -687,6 +831,15 @@
           "         \"Polyphen2_HDIV_pred\": \"PolyPhen\",",
           "         \"ClinPred_pred\": \"ClinVar\",",
           "         \"REVEL_score\": null",
+          "      },",
+          "      \"options\": {",
+          "         \"header_fields\": {",
+          "            \"Polyphen2_HDIV_pred\": {",
+          "               \"Number\": \".\",",
+          "               \"Type\": \"String\",",
+          "               \"Description\": \"PolyPhen prediction for Human\"",
+          "            }",
+          "         }",
           "      }",
           "}",
           "# Annotation with dbNSFP REVEL annotation (as a VCF file) within configured annotation databases folders (default: '~/howard/databases/annotations/current') and assembly (default: 'hg19')",
@@ -705,7 +858,8 @@
       "__help": [
         "Annotation process using BigWig files. Provide a list of database files in BigWig format ('.bw') or BigBed format ('.bb') and annotation fields ('annotations_fields' section).",
         "Options can be provided ('options' section) to define the aggregation method (e.g. mean, max, min, sum, coverage join, uniq) to use when multiple values are found for a variant position (such as for indels).",
-        "Default methods (global 'options' section) can be defined for all databases (by annotation type), and specific methods can be defined for each database and field (default 'mean' for Integer and Float, 'join' for String)."
+        "Default methods (global 'options' section) can be defined for all databases (by annotation type), and specific methods can be defined for each database and field (default 'mean' for Integer and Float, 'join' for String).\n",
+        "The option section also provides 'header_fields' option, that allows to override specific fields in the annotation header when updating the database from a VCF file. The keys of the dictionary represent the field names in the annotation header, and the values represent the new values that you want to assign to those fields. This parameter is optional and can be used to customize the annotation header during the update process. If not provided, the default values from the VCF file will be used for the annotation header fields.\n"
       ],
       "__examples_code": [
         "# Annotation with multiple databases in BigWig and BigBed formats, with default and specific aggregation methods.",
@@ -720,6 +874,13 @@
         "            \"method\": {",
         "               \"field1\": \"max\",",
         "               \"field2_renamed\": \"min\"",
+        "            },",
+        "            \"header_fields\": {",
+        "               \"field1\": {",
+        "                  \"Number\": \".\",",
+        "                  \"Type\": \"String\",",
+        "                  \"Description\": \"field1 as String\"",
+        "               }",
         "            }",
         "         }",
         "      },",
@@ -765,6 +926,13 @@
           "      \"options\": {",
           "         \"method\": {",
           "            \"GERP_score\": \"max\"",
+          "         },",
+          "         \"header_fields\": {",
+          "            \"GERP_score\": {",
+          "               \"Number\": \".\",",
+          "               \"Type\": \"Float\",",
+          "               \"Description\": \"GERP_score as Float\"",
+          "            }",
           "         }",
           "      }",
           "   }",
@@ -914,6 +1082,237 @@
         "__examples_code": [
           "# Remove spaces in INFO field.",
           "\"whitespace\": \"true\""
+        ]
+      }
+    },
+    "docker": {
+      "__help": [
+        "Annotation process using Docker containers. This section defines one or multiple Docker entries to run annotation tools in containers.",
+        "This parameter file is dedicated to run-specific settings. Structural Docker settings are configured in the configuration file under config.tools.<tool>.docker (annotation/runtime).",
+        "Each entry exports variants to an input VCF, runs a container command with mounted resources, and imports output VCF annotations into the variants table."
+      ],
+      "__code_type": "json",
+      "__examples_code": [
+        "# Docker-based annotation with one VEP entry (run-specific parameters)",
+        "\"docker\": {",
+        "  \"entries\": {",
+        "    \"vep\": {",
+        "      \"tool\": \"vep\",",
+        "      \"resources\": {",
+        "        \"threads\": 4,",
+        "        \"memory\": \"8G\"",
+        "      },",
+        "      \"parameters\": [",
+        "        \"--everything\",",
+        "        \"--cache\",",
+        "        { \"key\": \"--assembly\", \"value\": \"GRCh37\" }",
+        "      ],",
+        "      \"where_clause\": \" WHERE \\\"#CHROM\\\" = 'chr7' \"",
+        "    }",
+        "  }",
+        "}"
+      ],
+      "entries": {
+        "__auto": false,
+        "__help": [
+          "Dictionary of Docker annotation entries. Each key is an entry name and each value is an entry definition."
+        ],
+        "__code_type": "json",
+        "__examples_code": [
+          "# Two Docker annotation entries",
+          "\"entries\": {",
+          "  \"vep\": { \"tool\": \"vep\" },",
+          "  \"custom\": { \"tool\": \"mytool\" }",
+          "}"
+        ],
+        "entry_name": {
+          "__help": [
+            "Docker entry identifier (JSON object key).",
+            "One entry generally maps to one containerized annotation command."
+          ],
+          "__code_type": "json",
+          "__examples_code": [
+            "# Entry named 'vep'",
+            "\"vep\": {",
+            "  \"tool\": \"vep\"",
+            "}"
+          ],
+          "tool": {
+            "__help": [
+              "Name of the tool configuration to use from configuration section 'tools' (e.g. tools.<tool>.docker.image)."
+            ],
+            "__examples_code": [
+              "# Use tool definition 'vep' from configuration",
+              "\"tool\": \"vep\""
+            ]
+          },
+          "resources": {
+            "__help": [
+              "Optional entry-level resources override for this run.",
+              "Threads and memory are automatically capped to available resources (run limits and system availability) to avoid invalid container commands."
+            ],
+            "__code_type": "json",
+            "__examples_code": [
+              "# Resource override values",
+              "\"resources\": {",
+              "  \"threads\": 4,",
+              "  \"memory\": \"8G\"",
+              "}"
+            ],
+            "threads": {
+              "__help": [
+                "Threads value for this entry."
+              ],
+              "__examples_code": [
+                "\"threads\": 4"
+              ]
+            },
+            "memory": {
+              "__help": [
+                "Memory value for this entry (string or number, depending on tool syntax)."
+              ],
+              "__examples_code": [
+                "\"memory\": \"8G\""
+              ]
+            }
+          },
+          "parameters": {
+            "__help": [
+              "List of run-specific command parameters appended to the executable.",
+              "Supported formats include string flags, token arrays, or key/value objects.",
+              "These values are merged with default parameters configured in config.tools.<tool>.docker.annotation.defaults.parameters."
+            ],
+            "__examples_code": [
+              "\"parameters\": [",
+              "  \"--cache\",",
+              "  [\"--species\", \"homo_sapiens\"],",
+              "  { \"key\": \"--assembly\", \"value\": \"GRCh37\" }",
+              "]"
+            ]
+          },
+          "options": {
+            "__help": [
+              "Additional run-specific command options merged with 'parameters'.",
+              "Both defaults and entry values are merged; if the same CLI key appears multiple times (e.g. --compress_output), entry value overrides default value."
+            ],
+            "__examples_code": [
+              "\"options\": [",
+              "  \"--flag\"",
+              "]"
+            ]
+          },
+          "where_clause": {
+            "__help": [
+              "Optional SQL WHERE clause to select variants before export for this entry.",
+              "A pre-check query with LIMIT 1 is executed; when no variant matches, entry execution is skipped."
+            ],
+            "__examples_code": [
+              "\"where_clause\": \"#CHROM = '1' AND POS >= 100000\""
+            ]
+          },
+          "output_pattern": {
+            "__help": [
+              "Optional glob pattern override used to locate output VCF when output path does not directly exist.",
+              "If omitted, default value from config.tools.<tool>.docker.annotation.defaults.output_pattern is used when defined."
+            ],
+            "__examples_code": [
+              "\"output_pattern\": \"*.vcf.gz\""
+            ]
+          }
+        }
+      }
+    },
+    "hgvs": {
+      "__help": [
+        "HOWARD annotates variants with HGVS annotation using HUGO HGVS internation Sequence Variant Nomenclature (http://varnomen.hgvs.org/). Annotation refere to refGene and genome to generate HGVS nomenclature for all available transcripts. This annotation add 'hgvs' field into VCF INFO column of a VCF file. Several options are available, to add gene, exon and protein information, to generate a 'full format' detailed annotation, to choose codon format."
+      ],
+      "__code_type": "json",
+      "__examples_code": [
+        "# HGVS annotation  with operations for generate variant_id and variant type, extract HGVS from snpEff annotation, select NOMEN from snpEff HGVS with a list of transcripts of preference",
+        "\"hgvs\": {",
+        "  \"full_format\": true,",
+        "  \"use_exon\": true",
+        "}"
+      ],
+      "use_gene": {
+        "__help": [
+          "Add Gene information to generate HGVS annotation (e.g. 'NM_152232**(TAS1R2)**:c.231T>C')."
+        ],
+        "__code_type": "json",
+        "__examples_code": ["# Use Gene in HGVS annotation", "\"use_gene\": true"]
+      },
+      "use_exon": {
+        "__help": [
+          "Add Exon information to generate HGVS annotation (e.g. 'NM_152232(exon2):c.231T>C'). Only if 'use_gene' is not enabled."
+        ],
+        "__code_type": "json",
+        "__examples_code": ["# Use Exon in HGVS annotation", "\"use_exon\": true"]
+      },
+      "use_protein": {
+        "__help": [
+          "Use Protein level to generate HGVS annotation (e.g. 'NP_689418:p.Cys77Arg'). Can be used with 'use_exon' or 'use_gene'."
+        ],
+        "__code_type": "json",
+        "__examples_code": [
+          "# Use Protein in HGVS annotation",
+          "\"use_protein\": true"
+        ]
+      },
+      "add_protein": {
+        "__help": [
+          "Add Protein level to DNA HGVS annotation (e.g. 'NM_152232:c.231T>C,NP_689418:p.Cys77Arg')."
+        ],
+        "__code_type": "json",
+        "__examples_code": [
+          "# Add Protein level to DNA HGVS annotation",
+          "\"add_protein\": true"
+        ]
+      },
+      "full_format": {
+        "__help": [
+          "Generates HGVS annotation in a full format (non-standard, e.g. 'TAS1R2:NM_152232:NP_689418:c.231T>C:p.Cys77Arg', 'TAS1R2:NM_152232:NP_689418:exon2:c.231T>C:p.Cys77Arg'). Full format use all information to generates an exhaustive annotation. Use specifically 'use_exon' to add exon information."
+        ],
+        "__code_type": "json",
+        "__examples_code": [
+          "# Use full format for HGVS annotation",
+          "\"full_format\": true"
+        ]
+      },
+      "codon_type": {
+        "__help": [
+          "Amino Acide Codon format type to use to generate HGVS annotation (default '3'):",
+          "- '1': codon in 1 character (e.g. 'C', 'R')",
+          "- '3': codon in 3 character (e.g. 'Cys', 'Arg')",
+          "- 'FULL': codon in full name (e.g. 'Cysteine', 'Arginine')"
+        ],
+        "__code_type": "json",
+        "__examples_code": [
+          "# Amino Acide Codon format with 1 character",
+          "\"codon_type\": \"1\"",
+          "# Amino Acide Codon format with 3 character",
+          "\"codon_type\": \"3\"",
+          "# Amino Acide Codon format with full name",
+          "\"codon_type\": \"FULL\""
+        ]
+      },
+      "refgene": {
+        "__help": [
+          "Path to refGene annotation file (see [HOWARD User Guide](user_guide.md#databases-tool))."
+        ],
+        "__code_type": "json",
+        "__examples_code": [
+          "# Path to refSeq file",
+          "\"refgene\": \"~/howard/databases/refseq/current/hg19/ncbiRefSeq.txt\""
+        ]
+      },
+      "refseqlink": {
+        "__help": [
+          "Path to refGeneLink annotation file (see [HOWARD User Guide](user_guide.md#databases-tool))."
+        ],
+        "__code_type": "json",
+        "__examples_code": [
+          "# Path to refSeq file",
+          "\"refseqlink\": \"~/howard/databases/refseq/current/hg19/ncbiRefSeqLink.txt\""
         ]
       }
     }
@@ -1069,101 +1468,7 @@
       ]
     }
   },
-  "stats": {
-    "__help": "Statistics on loaded variants.",
-    "stats_md": {},
-    "stats_json": {},
-    "stats_html": {},
-    "stats_pdf": {},
-    "annotations_stats": {},
-    "queries": {
-      "__help": [
-        "Queries to add on statistics.",
-        "Beware that queries are executed on the 'variants_view' view by default. If you want to use another view, please specify it with the 'queries_view' parameter.",
-        "Moreover, query limit is suggested to avoid long processing time and huge output files."
-      ],
-      "__type": "dict",
-      "__default": null,
-      "__code_type": "json",
-      "__examples_code": [
-        "# Queries to add on statistics:",
-        "\"queries\": {",
-        "  \"First 10 variants\": \"SELECT \\\"#CHROM\\\", POS, REF, ALT FROM variants_view LIMIT 10\",",
-        "  \"First 10 INFO tags\": \"SELECT INFOS.* FROM variants_view LIMIT 10\",",
-        "}"
-      ]
-    },
-    "queries_view": {
-      "__help": [
-        "Variants view name to use with queries to add on statistics. By default, the 'variants_view' view is used."
-      ],
-      "__type": "str",
-      "__default": null,
-      "__code_type": "json",
-      "__examples_code": [
-        "# Variants view name for stats queries:",
-        "\"queries_view\": \"variants_view_for_stats_queries\""
-      ]
-    }
-  },
-  "query": {
-    "__help": [
-      "Query options tools. Mainly a SQL query, based on 'variants' table corresponding on input file data, or a independant query. Print options for 'query' tool allow limiting number of lines and choose printing mode."
-    ],
-    "query": {
-      "__code_type": "",
-      "__examples_code": [
-        "# Simple query to show all variants file",
-        "SELECT \"#CHROM\", POS, REF, ALT, INFO ",
-        "FROM variants"
-      ]
-    },
-    "query_limit": {},
-    "query_print_mode": {}
-  },
-  "export": {
-    "__help": [
-      "Export options for output files, such as data order, include header in output and hive partitioning."
-    ],
-    "fields_to_rename": {
-      "__help": [
-        "Rename or remove INFO/tags before exporting."
-      ],
-      "__type": "dict",
-      "__default": null,
-      "__code_type": "json",
-      "__examples_code": [
-        "# Rename 'CLNSIG' field to 'CLNSIG_renamed' and remove 'SIFT' field:",
-        "\"fields_to_rename\": {",
-        "  \"CLNSIG\": \"CLNSIG_renamed\",",
-        "  \"SIFT\": null",
-        "}"
-      ]
-    },
-    "order_by": {},
-    "include_header": {},
-    "parquet_partitions": {},
-    "force_cast_as_flat": {
-      "__help": [
-        "Force cast as flat values (varchar, integer, boolean) for Parquet export. By default, Parquet export preserves all columns type, even as list/nested.",
-        "If 'true', values as list will be aggregated within a varchar value, with separator ','."
-      ],
-      "__type": "bool",
-      "__default": false,
-      "__code_type": "json",
-      "__examples_code": [
-        "# Force cast as flat values for Parquet export:",
-        "\"force_cast_as_flat\": true"
-      ]
-    }
-  },
-  "explode": {
-    "__help": ["Explode options for INFO/tags annotations within VCF files."],
-    "explode_infos": {},
-    "explode_infos_prefix": {},
-    "explode_infos_fields": {}
-  },
-  "transcripts": {
+    "transcripts": {
     "__help": [
       "Transcripts information to create transcript view. Useful to add transcripts annotations in INFO field, to calculate transcripts specific scores (see [Calculation JSON file](help.configuration.calculation.md) help), to merge and map transcript IDs (e.g. from Ensembl to refSeq), or prioritize transcripts (see [Priorization JSON file](help.configuration.prioritization.md) help)."
     ],
@@ -1662,6 +1967,100 @@
       "explode_infos_prefix": {},
       "explode_infos_fields": {}
     }
+  },
+  "stats": {
+    "__help": "Statistics on loaded variants.",
+    "stats_md": {},
+    "stats_json": {},
+    "stats_html": {},
+    "stats_pdf": {},
+    "annotations_stats": {},
+    "queries": {
+      "__help": [
+        "Queries to add on statistics.",
+        "Beware that queries are executed on the 'variants_view' view by default. If you want to use another view, please specify it with the 'queries_view' parameter.",
+        "Moreover, query limit is suggested to avoid long processing time and huge output files."
+      ],
+      "__type": "dict",
+      "__default": null,
+      "__code_type": "json",
+      "__examples_code": [
+        "# Queries to add on statistics:",
+        "\"queries\": {",
+        "  \"First 10 variants\": \"SELECT \\\"#CHROM\\\", POS, REF, ALT FROM variants_view LIMIT 10\",",
+        "  \"First 10 INFO tags\": \"SELECT INFOS.* FROM variants_view LIMIT 10\",",
+        "}"
+      ]
+    },
+    "queries_view": {
+      "__help": [
+        "Variants view name to use with queries to add on statistics. By default, the 'variants_view' view is used."
+      ],
+      "__type": "str",
+      "__default": null,
+      "__code_type": "json",
+      "__examples_code": [
+        "# Variants view name for stats queries:",
+        "\"queries_view\": \"variants_view_for_stats_queries\""
+      ]
+    }
+  },
+  "query": {
+    "__help": [
+      "Query options tools. Mainly a SQL query, based on 'variants' table corresponding on input file data, or a independant query. Print options for 'query' tool allow limiting number of lines and choose printing mode."
+    ],
+    "query": {
+      "__code_type": "",
+      "__examples_code": [
+        "# Simple query to show all variants file",
+        "SELECT \"#CHROM\", POS, REF, ALT, INFO ",
+        "FROM variants"
+      ]
+    },
+    "query_limit": {},
+    "query_print_mode": {}
+  },
+  "export": {
+    "__help": [
+      "Export options for output files, such as data order, include header in output and hive partitioning."
+    ],
+    "fields_to_rename": {
+      "__help": [
+        "Rename or remove INFO/tags before exporting."
+      ],
+      "__type": "dict",
+      "__default": null,
+      "__code_type": "json",
+      "__examples_code": [
+        "# Rename 'CLNSIG' field to 'CLNSIG_renamed' and remove 'SIFT' field:",
+        "\"fields_to_rename\": {",
+        "  \"CLNSIG\": \"CLNSIG_renamed\",",
+        "  \"SIFT\": null",
+        "}"
+      ]
+    },
+    "order_by": {},
+    "include_header": {},
+    "parquet_partitions": {},
+    "force_cast_as_flat": {
+      "__help": [
+        "Force cast as flat values (varchar, integer, boolean) for Parquet export. By default, Parquet export preserves all columns type, even as list/nested.",
+        "If 'true', values as list will be aggregated within a varchar value, with separator ','."
+      ],
+      "__type": "bool",
+      "__default": false,
+      "__code_type": "json",
+      "__examples_code": [
+        "# Force cast as flat values for Parquet export:",
+        "\"force_cast_as_flat\": true"
+      ]
+    }
+  },
+  "explode": {
+    "__help": ["Explode options for INFO/tags annotations within VCF files."],
+    "explode_infos": {},
+    "explode_infos_prefix": {},
+    "explode_infos_fields": {}
   },
   "samples": {
     "__help": [

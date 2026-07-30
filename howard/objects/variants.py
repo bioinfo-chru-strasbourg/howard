@@ -22,6 +22,7 @@ import fastparquet as fp  # type: ignore
 from howard.functions.commons import (
     DEFAULT_CHUNK_SIZE,
     DEFAULT_ASSEMBLY,
+    CODE_TYPE_MAP,
     cast_columns_query,
     clean_annotation_field,
     convert_markdown_to_html,
@@ -1695,7 +1696,7 @@ class Variants(
 
         return connexion_db
 
-    def get_header(self, type: str = "vcf"):
+    def get_header(self, type: str = "vcf", vcf_file: str = None) -> list:
         """
         This function returns the header of the VCF file as a list of strings
 
@@ -1703,7 +1704,14 @@ class Variants(
         :return: The header of the vcf file.
         """
 
-        if self.header_vcf:
+        if vcf_file:
+            vcf_file_header = self.read_vcf_header_file(file=vcf_file)
+            if type == "vcf":
+                header = vcf.Reader(io.StringIO("\n".join(vcf_file_header)))
+                return header
+            elif type == "list":
+                return vcf_file_header
+        elif self.header_vcf:
             if type == "vcf":
                 return self.header_vcf
             elif type == "list":
@@ -3545,6 +3553,8 @@ class Variants(
         update_existing_fields: bool = False,
         remove_vcf_file: bool = True,
         upper_case: bool = True,
+        update_header: bool = False,
+        annotation_header_fields_override: dict | None = None,
     ) -> None:
         """
         > If the database is duckdb, then use the parquet method, otherwise use the sqlite method
@@ -3557,8 +3567,47 @@ class Variants(
         :param remove_vcf_file: If True, the VCF file will be removed after the update is complete,
         defaults to True
         :type remove_vcf_file: bool (optional)
+        :param upper_case: If True, the ALT and REF fields will be compared in uppercase, defaults to True
+        :type upper_case: bool (optional)
+        :param update_header: If True, the header of the VCF file will be updated
+        :type update_header: bool (optional)
+        :param annotation_header_fields_override: A dictionary that allows you to override specific
+        fields in the annotation header when updating the database from a VCF file. The keys of
+        the dictionary represent the field names in the annotation header, and the values represent
+        the new values that you want to assign to those fields. This parameter is optional and can
+        be used to customize the annotation header during the update process. If not provided, the
+        default values from the VCF file will be used for the annotation header fields
+        :type annotation_header_fields_override: dict | None (optional)
+
         :return: None
         """
+
+        # Header
+
+        if update_header:
+
+            # VCF header
+            vcf_reader = self.get_header()
+
+            # Find annotation in header
+            vcf_file_header = self.get_header(type="vcf", vcf_file=vcf_file)
+
+            # Add annotation to header if not exist
+            for ann in vcf_file_header.infos:
+                #log.debug(f"Check annotation '{ann}' in header...")
+                if ann not in self.get_header().infos or update_existing_fields:
+                    ann_info = vcf_file_header.infos.get(ann)
+                    vcf_reader.infos[ann] = self.build_info_with_header_override(
+                        field_name=ann,
+                        field_number=ann_info.num,
+                        field_type=ann_info.type,
+                        field_description=ann_info.desc,
+                        field_source=ann_info.source,
+                        field_version=ann_info.version,
+                        header_fields_override=annotation_header_fields_override,
+                    )
+
+        # Update content of vcf file in database
 
         connexion_format = self.get_connexion_format()
 
@@ -5054,13 +5103,17 @@ class Variants(
 
             # Extract ANN header
             ann_description = vcf_reader.infos[annotation_field].desc
-            pattern = r"'(.+?)'"
+            # pattern = r"'(.+?)'"
+            # pattern = r"Format: (.+?)$"
+            # pattern = r"'(.+?)'|Format: (.+?)"
+            pattern = r"(?:'|Format:\s*)(.+?)(?:'|$)"
             match = re.search(pattern, ann_description)
             if match:
-                ann_header_match = match.group(1).split(" | ")
+                ann_header_match = match.group(1).split("|")
                 ann_header = []
                 ann_header_desc = {}
                 for i in range(len(ann_header_match)):
+                    ann_header_match[i] = ann_header_match[i].strip()
                     ann_header_info = "".join(
                         char for char in ann_header_match[i] if char.isalnum()
                     )
@@ -5708,3 +5761,116 @@ class Variants(
         )
 
         log.debug(f"renamed_fields:{renamed_fields}")
+
+    def get_annotation_header_fields_override(self, annotations: dict) -> dict:
+        """
+            Return header fields override dict (Number/Type/Description), collected
+            ONLY from each annotation's own options block (per-annotation level).
+            No tool-level/global header_fields config is considered.
+
+            Config location (within each annotation entry, sibling of
+            "annotation_fields"):
+                "annotation": {
+                    "annovar": {
+                        "annotations": {
+                            "ALL.sites.2015_08": {
+                                "annotation_fields": {
+                                    "ALL.sites.2015_08": "1000genomesALL"
+                                },
+                                "options": {
+                                    "header_fields": {
+                                        "1000genomesALL": {
+                                            "number": ".",
+                                            "type": "Float",
+                                            "description": "1000genomesALL by Annovar"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+            :param annotations: annotations dict (e.g. param.annotation.<tool>.annotations),
+                where each annotation entry may define its own "options.header_fields"
+            :return: dict field_name -> {"number": ..., "type": ..., "description": ...}
+        """
+        header_fields_override = {}
+        for annotation in annotations:
+            annotation_options = annotations[annotation].get("options", {})
+            annotation_header_fields = annotation_options.get("header_fields", {})
+            if annotation_header_fields:
+                header_fields_override.update(annotation_header_fields)
+        return header_fields_override
+    
+
+    def build_info_with_header_override(
+        self,
+        field_name: str,
+        header_fields_override: dict = None,
+        **kwargs
+    ):
+        """
+        Build a vcf.parser._Info object for INFO field 'field_name', applying
+        Number/Type/Description override if defined in header_fields_override
+        (see get_annotation_header_fields_override).
+
+        kwargs can include:
+            - field_number: The number of values expected for the INFO field. It can be an integer or a string (e.g., "1", "A", "G", "."). If not provided, it will default to "." (unknown).
+            - field_type: The data type of the INFO field. It can be one of the following: "Integer", "Float", "Flag", "Character", or "String". If not provided, it will default to "String".
+            - field_description: A description of the INFO field. If not provided, it will default to "unknown".
+            - field_source: The source of the INFO field. If not provided, it will default to None.
+            - field_version: The version of the INFO field. If not provided, it will default to None.
+
+        :param field_name: The `field_name` parameter is a string that represents the name of the INFO field
+        for which the vcf.parser._Info object is being built. This field name is used to look up any overrides in the `header_fields_override` dictionary, which may contain custom definitions for the field's number, type, description, source, and version. If an override is found for the specified field name, it will be applied when constructing the vcf.parser._Info object
+        :type field_name: str
+        :param header_fields_override: The `header_fields_override` parameter is a dictionary that contains
+        overrides for the header fields of a VCF (Variant Call Format) file. It allows you to specify custom values for the "number", "type", "description", "source", and "version" attributes of the INFO fields in the VCF header. If an override is provided for a specific field name, it will be used instead of the default values when building the vcf.parser._Info object for that field. If no override is provided, the default values will be used
+        :type header_fields_override: dict
+
+        :param kwargs: Additional keyword arguments that can be used to override specific attributes of the INFO field.
+        :type kwargs: dict
+        
+
+        :return: vcf.parser._Info object
+        """
+
+        # Init
+        if header_fields_override is None:
+            header_fields_override = {}
+
+        # Get field override for this field_name, if any
+        field_override = header_fields_override.get(field_name, {})
+
+        # field_override as lowercase keys (e.g. "number", "type", "description")
+        field_override = {k.lower(): v for k, v in field_override.items()}
+
+        # Check override type
+        override_type = field_override.get("type")
+        if override_type and override_type not in CODE_TYPE_MAP:
+            msg_err = (
+                f"Header field '{field_name}' override - type '{override_type}' "
+                f"not valid (should be one of {list(CODE_TYPE_MAP.keys())})"
+            )
+            log.error(msg_err)
+            raise ValueError(msg_err)
+            
+        # Apply override if defined, otherwise use kwargs or defaults
+        field_number = field_override.get("number") or kwargs.get("field_number") or "."
+        field_type = field_override.get("type") or kwargs.get("field_type") or "String"
+        field_description = field_override.get("description") or kwargs.get("field_description") or "unknown"
+        field_source = field_override.get("source") or kwargs.get("field_source") or None
+        field_version = field_override.get("version") or kwargs.get("field_version") or None
+
+        # Return vcf.parser._Info object with applied overrides
+        return vcf.parser._Info(
+            field_name,
+            field_number,
+            field_type,
+            field_description,
+            field_source,
+            field_version,
+            self.code_type_map[field_type],
+        )
+    

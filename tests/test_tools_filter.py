@@ -125,3 +125,74 @@ def test_filter(filter, samples, expected_results):
         # Variants
         variants = Variants(input=output_vcf, load=True)
         assert variants.get_header_sample_list() == expected_result_samples
+
+
+
+def test_filter_pipeline():
+    """
+    Test processing with pipeline enabled and specific parameters.
+    Including exporting transcripts to a TSV file.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.ann.vcf.gz"
+        output_vcf = os.path.join(tmp_dir, "output_file.tsv")
+        config = {}
+        param = tests_folder + "/data/param.pipeline.json"
+        annotations = None
+        calculations = None
+        prioritizations = None
+        input_query = "SELECT * FROM variants WHERE REF = 'A' AND POS < 100000"
+        #explode_infos_fields = "DP,SIFT,AA"
+        filter="INFOS.CLNSIG LIKE 'pathogenic'"
+        samples="sample1,sample2"
+
+        # prepare arguments for the filter function
+        args = argparse.Namespace(
+            input=input_vcf,
+            output=output_vcf,
+            config=config,
+            param=param,
+            annotations=annotations,
+            calculations=calculations,
+            prioritizations=prioritizations,
+            query=input_query,
+            explode_infos=True,
+            explode_infos_prefix="",
+            #explode_infos_fields=explode_infos_fields,
+            filter=filter,
+            samples=samples,
+            include_header=False,
+            arguments_dict=arguments_dict,
+        )
+
+        # Remove if output file exists
+        remove_if_exists([output_vcf])
+
+        # Filter
+        vcf_filter(args)
+
+        # Create object
+        variants = Variants(conn=None, input=output_vcf, config=config, load=True)
+
+        # DEVEL
+        result = variants.get_query_to_df("SELECT * FROM variants")
+        log.debug(f"result:\n{result.to_string()}")
+
+        # Check annotation
+        result = variants.get_query_to_df(
+            "SELECT * FROM variants"
+        )
+        assert len(result) == 1, f"Expected 1 variant with filter '{filter}', but got {len(result)}"
+
+        # Check annotation
+        result = variants.get_query_to_df(
+            "DESCRIBE SELECT * FROM variants"
+        )
+        log.debug(f"""result:\n{list(result.get("column_name"))}""")
+        assert "sample1" in list(result.get("column_name")), f"Expected 'sample1' in columns, but got {list(result.get('column_name'))}"
+        assert "sample2" in list(result.get("column_name")), f"Expected 'sample2' in columns, but got {list(result.get('column_name'))}"
+        assert "sample3" not in list(result.get("column_name")), f"Expected 'sample3' not in columns, but got {list(result.get('column_name'))}"
+        assert "sample4" not in list(result.get("column_name")), f"Expected 'sample4' not in columns, but got {list(result.get('column_name'))}"

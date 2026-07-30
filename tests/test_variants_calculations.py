@@ -748,26 +748,9 @@ def test_calculation_nomen():
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
-        input_vcf = tests_data_folder + "/example.vcf.gz"
-        output_vcf = f"{tmp_dir}/output.vcf.gz"
+        input_vcf = tests_data_folder + "/example.annovar.vcf"
+        output_vcf = f"{tmp_dir}/output.vcf"
         input_param = {
-            "annotation": {
-                "annovar": {
-                    "annotations": {
-                        "refGene": {
-                            "Func_refGene": "location",
-                            "Gene_refGene": "gene",
-                            "GeneDetail_refGene": "GeneDetail",
-                            "ExonicFunc_refGene": "outcome",
-                            "AAChange_refGene": "hgvs",
-                        }
-                    },
-                    "options": {
-                        "genebase": "-hgvs -splicing_threshold 3 ",
-                        "intronhgvs": 10,
-                    },
-                }
-            },
             "calculation": {
                 "calculations": {"NOMEN": {"options": {"hgvs_field": "hgvs"}}}
             },
@@ -2956,6 +2939,69 @@ def test_calculation_variant_id(
                 assert False
             except:
                 assert True
+
+        # Check if VCF is in correct format with pyVCF
+        remove_if_exists([output_vcf])
+        variants.export_output()
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
+
+@pytest.mark.parametrize(
+    "where_clause, expected_nb_variant",
+    [
+        (
+            None, 7
+        ),
+        (
+            "", 7
+        ),
+        (
+            "\"#CHROM\" = 'chr1'", 6
+        ),
+        (
+            "CLNSIG = 'pathogenic'", 1
+        ),
+        (
+            "SAMPLES.sample1.DP >= 100 AND SAMPLES.sample2.DP >= 100", 2
+        )
+    ],
+)
+def test_calculation_variant_filter(
+    where_clause, expected_nb_variant
+):
+    """
+    This is a test function for the calculation of variant IDs in a VCF file using the Variants class in Python.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.vcf.gz"
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+
+        # Construct param dict
+        param = {
+            "calculation_test": {"calculations": {"variant_filter": {"where_clause": where_clause}}}
+        }  # test custom tag name
+
+        # Create object
+        variants = Variants(
+            conn=None, input=input_vcf, output=output_vcf, param=param, load=True
+        )
+
+        # Remove if output file exists
+        remove_if_exists([output_vcf])
+
+        # Calculation
+        variants.calculation(section="calculation_test")
+
+        # Check if all variant have variant_id
+        result = variants.get_query_to_df(
+            f""" SELECT * FROM variants """
+        )
+        assert len(result) == expected_nb_variant, f"Expected {expected_nb_variant} variants with where_clause '{where_clause}', but got {len(result)}"
 
         # Check if VCF is in correct format with pyVCF
         remove_if_exists([output_vcf])

@@ -4,20 +4,8 @@ title: HOWARD Help Parameters
 
 - [<span class="toc-section-number">1</span>
   Introduction](#introduction)
-- [<span class="toc-section-number">2</span> hgvs](#hgvs)
-  - [<span class="toc-section-number">2.1</span> use_gene](#use_gene)
-  - [<span class="toc-section-number">2.2</span> use_exon](#use_exon)
-  - [<span class="toc-section-number">2.3</span>
-    use_protein](#use_protein)
-  - [<span class="toc-section-number">2.4</span>
-    add_protein](#add_protein)
-  - [<span class="toc-section-number">2.5</span>
-    full_format](#full_format)
-  - [<span class="toc-section-number">2.6</span>
-    codon_type](#codon_type)
-  - [<span class="toc-section-number">2.7</span> refgene](#refgene)
-  - [<span class="toc-section-number">2.8</span>
-    refseqlink](#refseqlink)
+- [<span class="toc-section-number">2</span> pipeline](#pipeline)
+  - [<span class="toc-section-number">2.1</span> steps](#steps)
 - [<span class="toc-section-number">3</span> annotation](#annotation)
   - [<span class="toc-section-number">3.1</span> parquet](#parquet)
     - [<span class="toc-section-number">3.1.1</span>
@@ -62,6 +50,24 @@ title: HOWARD Help Parameters
       rm_annot](#rm_annot)
     - [<span class="toc-section-number">3.8.7</span>
       whitespace](#whitespace)
+  - [<span class="toc-section-number">3.9</span> docker](#docker)
+    - [<span class="toc-section-number">3.9.1</span> entries](#entries)
+  - [<span class="toc-section-number">3.10</span> hgvs](#hgvs)
+    - [<span class="toc-section-number">3.10.1</span>
+      use_gene](#use_gene)
+    - [<span class="toc-section-number">3.10.2</span>
+      use_exon](#use_exon)
+    - [<span class="toc-section-number">3.10.3</span>
+      use_protein](#use_protein)
+    - [<span class="toc-section-number">3.10.4</span>
+      add_protein](#add_protein)
+    - [<span class="toc-section-number">3.10.5</span>
+      full_format](#full_format)
+    - [<span class="toc-section-number">3.10.6</span>
+      codon_type](#codon_type)
+    - [<span class="toc-section-number">3.10.7</span> refgene](#refgene)
+    - [<span class="toc-section-number">3.10.8</span>
+      refseqlink](#refseqlink)
 - [<span class="toc-section-number">4</span> calculation](#calculation)
   - [<span class="toc-section-number">4.1</span>
     calculations](#calculations)
@@ -78,107 +84,107 @@ title: HOWARD Help Parameters
   - [<span class="toc-section-number">5.5</span>
     prioritization_score_mode](#prioritization_score_mode)
   - [<span class="toc-section-number">5.6</span> pzprefix](#pzprefix)
-- [<span class="toc-section-number">6</span> stats](#stats-1)
-  - [<span class="toc-section-number">6.1</span> stats_md](#stats_md)
+- [<span class="toc-section-number">6</span> transcripts](#transcripts)
+  - [<span class="toc-section-number">6.1</span> table](#table)
   - [<span class="toc-section-number">6.2</span>
-    stats_json](#stats_json)
-  - [<span class="toc-section-number">6.3</span>
-    stats_html](#stats_html)
-  - [<span class="toc-section-number">6.4</span> stats_pdf](#stats_pdf)
-  - [<span class="toc-section-number">6.5</span>
-    annotations_stats](#annotations_stats)
-  - [<span class="toc-section-number">6.6</span> queries](#queries)
-  - [<span class="toc-section-number">6.7</span>
-    queries_view](#queries_view)
-- [<span class="toc-section-number">7</span> query](#query)
-  - [<span class="toc-section-number">7.1</span> query](#query-1)
-  - [<span class="toc-section-number">7.2</span>
-    query_limit](#query_limit)
-  - [<span class="toc-section-number">7.3</span>
-    query_print_mode](#query_print_mode)
-- [<span class="toc-section-number">8</span> export](#export)
-  - [<span class="toc-section-number">8.1</span>
-    fields_to_rename](#fields_to_rename)
-  - [<span class="toc-section-number">8.2</span> order_by](#order_by)
-  - [<span class="toc-section-number">8.3</span>
-    include_header](#include_header)
-  - [<span class="toc-section-number">8.4</span>
-    parquet_partitions](#parquet_partitions)
-  - [<span class="toc-section-number">8.5</span>
-    force_cast_as_flat](#force_cast_as_flat)
-- [<span class="toc-section-number">9</span> explode](#explode)
-  - [<span class="toc-section-number">9.1</span>
-    explode_infos](#explode_infos)
-  - [<span class="toc-section-number">9.2</span>
-    explode_infos_prefix](#explode_infos_prefix)
-  - [<span class="toc-section-number">9.3</span>
-    explode_infos_fields](#explode_infos_fields)
-- [<span class="toc-section-number">10</span> transcripts](#transcripts)
-  - [<span class="toc-section-number">10.1</span> table](#table)
-  - [<span class="toc-section-number">10.2</span>
     transcripts_info_field_json](#transcripts_info_field_json)
-  - [<span class="toc-section-number">10.3</span>
+  - [<span class="toc-section-number">6.3</span>
     transcripts_info_field_format](#transcripts_info_field_format)
-  - [<span class="toc-section-number">10.4</span>
+  - [<span class="toc-section-number">6.4</span>
     transcripts_info_json](#transcripts_info_json)
-  - [<span class="toc-section-number">10.5</span>
+  - [<span class="toc-section-number">6.5</span>
     transcripts_info_format](#transcripts_info_format)
-  - [<span class="toc-section-number">10.6</span>
+  - [<span class="toc-section-number">6.6</span>
     transcript_id_remove_version](#transcript_id_remove_version)
-  - [<span class="toc-section-number">10.7</span>
+  - [<span class="toc-section-number">6.7</span>
     transcript_id_mapping_file](#transcript_id_mapping_file)
-  - [<span class="toc-section-number">10.8</span> Example of transcript
+  - [<span class="toc-section-number">6.8</span> Example of transcript
     ID mapping file](#example-of-transcript-id-mapping-file)
-  - [<span class="toc-section-number">10.9</span>
+  - [<span class="toc-section-number">6.9</span>
     transcript_id_mapping_force](#transcript_id_mapping_force)
-  - [<span class="toc-section-number">10.10</span> struct](#struct)
-    - [<span class="toc-section-number">10.10.1</span>
+  - [<span class="toc-section-number">6.10</span> struct](#struct)
+    - [<span class="toc-section-number">6.10.1</span>
       from_column_format](#from_column_format)
-    - [<span class="toc-section-number">10.10.2</span>
+    - [<span class="toc-section-number">6.10.2</span>
       from_columns_map](#from_columns_map)
-    - [<span class="toc-section-number">10.10.3</span>
+    - [<span class="toc-section-number">6.10.3</span>
       from_variants](#from_variants)
-    - [<span class="toc-section-number">10.10.4</span> commons
+    - [<span class="toc-section-number">6.10.4</span> commons
       parameters](#commons-parameters)
-  - [<span class="toc-section-number">10.11</span>
+  - [<span class="toc-section-number">6.11</span>
     prioritization](#prioritization-1)
-    - [<span class="toc-section-number">10.11.1</span>
+    - [<span class="toc-section-number">6.11.1</span>
       profiles](#profiles-1)
-    - [<span class="toc-section-number">10.11.2</span>
+    - [<span class="toc-section-number">6.11.2</span>
       default_profile](#default_profile-1)
-    - [<span class="toc-section-number">10.11.3</span>
+    - [<span class="toc-section-number">6.11.3</span>
       prioritization_config](#prioritization_config)
-    - [<span class="toc-section-number">10.11.4</span>
+    - [<span class="toc-section-number">6.11.4</span>
       prioritization_score_mode](#prioritization_score_mode-1)
-    - [<span class="toc-section-number">10.11.5</span>
+    - [<span class="toc-section-number">6.11.5</span>
       pzprefix](#pzprefix-1)
-    - [<span class="toc-section-number">10.11.6</span>
+    - [<span class="toc-section-number">6.11.6</span>
       pzfields](#pzfields-1)
-    - [<span class="toc-section-number">10.11.7</span>
+    - [<span class="toc-section-number">6.11.7</span>
       prioritization_transcripts_order](#prioritization_transcripts_order)
-    - [<span class="toc-section-number">10.11.8</span>
+    - [<span class="toc-section-number">6.11.8</span>
       prioritization_transcripts_file](#prioritization_transcripts_file)
-    - [<span class="toc-section-number">10.11.9</span>
+    - [<span class="toc-section-number">6.11.9</span>
       prioritization_transcripts_columns](#prioritization_transcripts_columns)
-    - [<span class="toc-section-number">10.11.10</span>
+    - [<span class="toc-section-number">6.11.10</span>
       prioritization_transcripts_force](#prioritization_transcripts_force)
-    - [<span class="toc-section-number">10.11.11</span>
+    - [<span class="toc-section-number">6.11.11</span>
       prioritization_transcripts_version_force](#prioritization_transcripts_version_force)
-  - [<span class="toc-section-number">10.12</span> export](#export-1)
-    - [<span class="toc-section-number">10.12.1</span> output](#output)
-    - [<span class="toc-section-number">10.12.2</span>
+  - [<span class="toc-section-number">6.12</span> export](#export)
+    - [<span class="toc-section-number">6.12.1</span> output](#output)
+    - [<span class="toc-section-number">6.12.2</span>
       export_header](#export_header)
-    - [<span class="toc-section-number">10.12.3</span>
+    - [<span class="toc-section-number">6.12.3</span>
       header_in_output](#header_in_output)
-    - [<span class="toc-section-number">10.12.4</span>
+    - [<span class="toc-section-number">6.12.4</span>
       add_info](#add_info)
-  - [<span class="toc-section-number">10.13</span> explode](#explode-1)
-    - [<span class="toc-section-number">10.13.1</span>
-      explode_infos](#explode_infos-1)
-    - [<span class="toc-section-number">10.13.2</span>
-      explode_infos_prefix](#explode_infos_prefix-1)
-    - [<span class="toc-section-number">10.13.3</span>
-      explode_infos_fields](#explode_infos_fields-1)
+  - [<span class="toc-section-number">6.13</span> explode](#explode)
+    - [<span class="toc-section-number">6.13.1</span>
+      explode_infos](#explode_infos)
+    - [<span class="toc-section-number">6.13.2</span>
+      explode_infos_prefix](#explode_infos_prefix)
+    - [<span class="toc-section-number">6.13.3</span>
+      explode_infos_fields](#explode_infos_fields)
+- [<span class="toc-section-number">7</span> stats](#stats-1)
+  - [<span class="toc-section-number">7.1</span> stats_md](#stats_md)
+  - [<span class="toc-section-number">7.2</span>
+    stats_json](#stats_json)
+  - [<span class="toc-section-number">7.3</span>
+    stats_html](#stats_html)
+  - [<span class="toc-section-number">7.4</span> stats_pdf](#stats_pdf)
+  - [<span class="toc-section-number">7.5</span>
+    annotations_stats](#annotations_stats)
+  - [<span class="toc-section-number">7.6</span> queries](#queries)
+  - [<span class="toc-section-number">7.7</span>
+    queries_view](#queries_view)
+- [<span class="toc-section-number">8</span> query](#query)
+  - [<span class="toc-section-number">8.1</span> query](#query-1)
+  - [<span class="toc-section-number">8.2</span>
+    query_limit](#query_limit)
+  - [<span class="toc-section-number">8.3</span>
+    query_print_mode](#query_print_mode)
+- [<span class="toc-section-number">9</span> export](#export-1)
+  - [<span class="toc-section-number">9.1</span>
+    fields_to_rename](#fields_to_rename)
+  - [<span class="toc-section-number">9.2</span> order_by](#order_by)
+  - [<span class="toc-section-number">9.3</span>
+    include_header](#include_header)
+  - [<span class="toc-section-number">9.4</span>
+    parquet_partitions](#parquet_partitions)
+  - [<span class="toc-section-number">9.5</span>
+    force_cast_as_flat](#force_cast_as_flat)
+- [<span class="toc-section-number">10</span> explode](#explode-1)
+  - [<span class="toc-section-number">10.1</span>
+    explode_infos](#explode_infos-1)
+  - [<span class="toc-section-number">10.2</span>
+    explode_infos_prefix](#explode_infos_prefix-1)
+  - [<span class="toc-section-number">10.3</span>
+    explode_infos_fields](#explode_infos_fields-1)
 - [<span class="toc-section-number">11</span> samples](#samples)
   - [<span class="toc-section-number">11.1</span> list](#list)
   - [<span class="toc-section-number">11.2</span> check](#check)
@@ -192,7 +198,7 @@ title: HOWARD Help Parameters
     chunking_partitions](#chunking_partitions)
   - [<span class="toc-section-number">13.4</span>
     chunking_sort](#chunking_sort)
-- [<span class="toc-section-number">14</span> threads](#threads)
+- [<span class="toc-section-number">14</span> threads](#threads-1)
 - [<span class="toc-section-number">15</span> fast](#fast)
 
 # Introduction
@@ -207,10 +213,6 @@ Examples:
 
 > ``` json
 > {
->    "hgvs": {
->       "full_format": true,
->       "use_exon": true
->    }
 >    "annotation": {
 >       "parquet": {
 >          "annotations": {
@@ -280,13 +282,17 @@ Examples:
 >          }
 >       },
 >       "snpeff": {
->          "options": " -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr "
+>          "options": " -hgvs -spliceSiteSize 3 -lof -oicr "
 >       },
 >       "exomiser": {
 >          "release": "2109",
 >          "transcript_source": "refseq",
 >          "hpo": ["HP:0001156", "HP:0001363", "HP:0011304", "HP:0010055"]
 >       },
+>       "hgvs": {
+>          "full_format": true,
+>          "use_exon": true
+>       }
 >       "options": {
 >          "append": true
 >       }
@@ -313,197 +319,263 @@ Examples:
 > }
 > ```
 
-# hgvs
+# pipeline
 
-HOWARD annotates variants with HGVS annotation using HUGO HGVS
-internation Sequence Variant Nomenclature (http://varnomen.hgvs.org/).
-Annotation refere to refGene and genome to generate HGVS nomenclature
-for all available transcripts. This annotation add 'hgvs' field into VCF
-INFO column of a VCF file. Several options are available, to add gene,
-exon and protein information, to generate a 'full format' detailed
-annotation, to choose codon format.
+Pipeline options to define the order of operations to process as a list
+of steps.
+
+Two pipeline declaration modes are available:
+
+- Inline mode (recommended): each step contains one or multiple named
+  operations, each embedding its own configuration, a '\_tool' key set
+  to one of: 'annotation', 'calculation', 'prioritization', and an
+  optional '\_description' key to document the operation.
+
+- Referenced mode (alternative, legacy-compatible): each step maps a
+  section name to a tool type (e.g. {"annotation_frequency":
+  "annotation"}), and parameters are defined in top-level sections of
+  the parameter JSON file. An optional '\_description' key can also be
+  added in each referenced section. The '\_tool' key can be used instead
+  of define it on pipeline section (e.g. {"annotation_frequency": None}
+  with section "annotation_frequency" including '\_tool' key as
+  "annotation").
+
+The referenced mode is useful to reuse the same operation configuration
+in multiple pipeline steps, to define a pipeline with a minimal or
+choosen steps.
+
+By default, if no pipeline is provided, operations are processed in
+referenced mode in the specific order: "annotation", "calculation",
+"prioritization."
+
+For more information about steps and operations, see each tool's
+documentation below.
 
 Examples:
 
-> HGVS annotation with operations for generate variant_id and variant
-> type, extract HGVS from snpEff annotation, select NOMEN from snpEff
-> HGVS with a list of transcripts of preference
+> Recommended: pipeline in inline mode with full step descriptions
 
 > ``` json
 > {
->    "hgvs": {
->      "full_format": true,
->      "use_exon": true
+>    "pipeline": {
+>      "steps": [
+>        {
+>          "annotation_dbsnp": {
+>            "_tool": "annotation",
+>            "_description": "Annotate variants with dbSNP annotation.",
+>            "parquet": {
+>              "annotations": {
+>                "tests/databases/annotations/current/hg19/avsnp150.parquet": {"INFO": null}
+>              }
+>            }
+>          },
+>          "annotation_dbNSFP": {
+>            "_tool": "annotation",
+>            "_description": "Annotate variants with dbNSFP and COSMIC databases.",
+>            "parquet": {
+>              "annotations": {
+>                "tests/databases/annotations/current/hg19/dbnsfp42a.parquet": {"INFO": null}
+>              }
+>            },
+>            "bcftools": {
+>              "annotations": {
+>                "tests/databases/annotations/current/hg19/cosmic70.vcf.gz": {"INFO": null}
+>              }
+>            }
+>          }
+>        },
+>        {
+>          "calculation_on_variants": {
+>            "_tool": "calculation",
+>            "_description": "Compute variant and genotype metrics such as vartype and VAF.",
+>            "calculations": {"vartype": null, "VAF": ""},
+>            "calculation_config": "config/calculations_config.json"
+>          }
+>        },
+>        {
+>          "prioritization": {
+>            "_tool": "prioritization",
+>            "_description": "Prioritize variants using configured profiles and scoring mode.",
+>            "profiles": ["default", "GERMLINE"],
+>            "prioritization_config": "config/prioritization_profiles.json",
+>            "pzfields": ["PZScore", "PZFlag", "PZComment"],
+>            "prioritization_score_mode": "VaRank"
+>          }
+>        }
+>      ]
+>    },
+> }
+> ```
+
+> Alternative: pipeline in referenced mode ("prioritization_step" tool
+> is defined in the "prioritization_step" referenced top-level section)
+
+> ``` json
+> {
+>    "pipeline": {
+>      "steps": [
+>        {"annotation_step": "annotation"},
+>        {"calculation_step": "calculation"},
+>        {"prioritization_step": null}
+>      ]
+>    },
+> }
+> ```
+
+> Corresponding operation sections for referenced mode
+
+> ``` json
+> {
+>    "annotation_step": {
+>      "_description": "Annotate variants with configured annotation databases.",
+>      "parquet": {
+>        "annotations": {
+>          "/path/to/database.parquet": {
+>            "annotation_fields": {
+>              "INFO": null
+>            }
+>          }
+>        }
+>      }
+>    },
+>    "calculation_step": {
+>      "_description": "Perform configured calculation operations on variants and genotypes.",
+>      "calculations": {
+>        "operation1": null,
+>        "operation2": {
+>          "options": {
+>            "option1": "value1",
+>            "option2": "value2"
+>          }
+>        }
+>      },
+>      "calculation_config": "calculation_config.json"
+>    },
+>    "prioritization_step": {
+>      "_tool": "prioritization",
+>      "_description": "Prioritize variants with configured profiles and scoring mode.",
+>      "prioritizations": "config/prioritization_profiles.json",
+>      "profiles": ["GENOME", "GERMLINE"],
+>      "default_profile": "GERMLINE",
+>      "pzfields": ["PZScore", "PZFlag", "PZComment"],
+>      "prioritization_score_mode": "VaRank"
 >    }
 > }
 > ```
 
-## use_gene
+## steps
 
-Add Gene information to generate HGVS annotation (e.g.
-'NM_152232**(TAS1R2)**:c.231T\>C').
+List of steps to process in the pipeline.
 
-Default: `False`
+Each step is a dict and can use one of two formats:
 
-Examples:
+- Inline format (recommended): operation name as key mapped to an
+  operation object containing '\_tool', optional '\_description', and
+  operation parameters.
 
-> Use Gene in HGVS annotation
+- Referenced format (alternative): section name as key (e.g.
+  "annotation", "calculation", "prioritization", "annotation_core",
+  "annotation_frequency") mapped to the tool type ("annotation",
+  "calculation", "prioritization"); the corresponding referenced section
+  may include an alternative '\_tool' key, and an optional
+  '\_description' key.
 
-> ``` json
-> {
->    "use_gene": true
-> }
-> ```
+Only tool types "annotation", "calculation" and "prioritization" are
+available.
 
-## use_exon
+By default, all steps are processed in the order: "annotation",
+"calculation", "prioritization".
 
-Add Exon information to generate HGVS annotation (e.g.
-'NM_152232(exon2):c.231T\>C'). Only if 'use_gene' is not enabled.
+Beware that some referenced steps can be skipped if no corresponding
+section is provided in the parameter JSON file (e.g.
+'{"annotation_frequency": "annotation"}' needs "annotation_frequency"
+section in parameter JSON file).
 
-Default: `False`
+Type: `list`
 
-Examples:
-
-> Use Exon in HGVS annotation
-
-> ``` json
-> {
->    "use_exon": true
-> }
-> ```
-
-## use_protein
-
-Use Protein level to generate HGVS annotation (e.g.
-'NP_689418:p.Cys77Arg'). Can be used with 'use_exon' or 'use_gene'.
-
-Default: `False`
+Default:
+`[ {"annotation": "annotation"}, {"calculation": "calculation"}, {"prioritization": "prioritization"} ]`
 
 Examples:
 
-> Use Protein in HGVS annotation
+> Recommended: inline full descriptions
 
 > ``` json
 > {
->    "use_protein": true
+>    "steps": [
+>      {
+>        "annotation_dbsnp": {
+>          "_tool": "annotation",
+>          "_description": "Annotate variants with dbSNP annotation.",
+>          "parquet": {
+>            "annotations": {
+>              "tests/databases/annotations/current/hg19/avsnp150.parquet": {"INFO": null}
+>            }
+>          }
+>        }
+>      },
+>      {
+>        "calculation_on_variants": {
+>          "_tool": "calculation",
+>          "_description": "Compute variant and genotype metrics such as vartype and VAF.",
+>          "calculations": {"vartype": null, "VAF": ""},
+>          "calculation_config": "config/calculations_config.json"
+>        }
+>      },
+>      {
+>        "prioritization": {
+>          "_tool": "prioritization",
+>          "_description": "Prioritize variants using configured profiles and scoring mode.",
+>          "profiles": ["default", "GERMLINE"]
+>        }
+>      }
+>    ]
 > }
 > ```
 
-## add_protein
-
-Add Protein level to DNA HGVS annotation (e.g.
-'NM_152232:c.231T\>C,NP_689418:p.Cys77Arg').
-
-Default: `False`
-
-Examples:
-
-> Add Protein level to DNA HGVS annotation
+> Alternative: referenced format (default order) with tool types
 
 > ``` json
 > {
->    "add_protein": true
+>    "steps": [
+>      {"annotation": "annotation"},
+>      {"calculation": "calculation"},
+>      {"prioritization": "prioritization"}
+>    ]
 > }
 > ```
 
-## full_format
-
-Generates HGVS annotation in a full format (non-standard, e.g.
-'TAS1R2:NM_152232:NP_689418:c.231T\>C:p.Cys77Arg',
-'TAS1R2:NM_152232:NP_689418:exon2:c.231T\>C:p.Cys77Arg'). Full format
-use all information to generates an exhaustive annotation. Use
-specifically 'use_exon' to add exon information.
-
-Default: `False`
-
-Examples:
-
-> Use full format for HGVS annotation
+> Referenced sections in parameter JSON file (in main section level)
 
 > ``` json
 > {
->    "full_format": true
+>    "annotation": {"_tool": "annotation", "_description": "Annotate variants with configured annotation databases.", ...},
+>    "calculation": {"_tool": "calculation", "_description": "Perform configured calculation operations on variants and genotypes.", ...},
+>    "prioritization": {"_tool": "prioritization", "_description": "Prioritize variants with configured profiles and scoring mode.", ...}
+>    "annotation_core": {"_tool": "annotation", "_description": "Core annotation step", ...},
+>    "annotation_frequency": {"_tool": "annotation", "_description": "Frequency annotation step", ...},
+>    "annotation_scores": {"_tool": "annotation", "_description": "Scores annotation step", ...},
+>    "calculation": {"_tool": "calculation", "_description": "Main calculation step", ...},
+>    "calculation_frequency": {"_tool": "calculation", "_description": "Frequency calculation step", ...},
+>    "calculation_final": {"_tool": "calculation", "_description": "Final calculation step", ...},
+>    "prioritization": {"_tool": "prioritization", "_description": "Prioritization step", ...}
 > }
 > ```
 
-## codon_type
-
-Amino Acide Codon format type to use to generate HGVS annotation
-(default '3'):
-
-- '1': codon in 1 character (e.g. 'C', 'R')
-
-- '3': codon in 3 character (e.g. 'Cys', 'Arg')
-
-- 'FULL': codon in full name (e.g. 'Cysteine', 'Arginine')
-
-Type: `str`
-
-Choices: `['1', '3', 'FULL']`
-
-Default: `3`
-
-Examples:
-
-> Amino Acide Codon format with 1 character
+> Alternative: referenced format with multiple operation sections, with
+> tool types and optional '\_description' in each section
 
 > ``` json
 > {
->    "codon_type": "1"
-> }
-> ```
-
-> Amino Acide Codon format with 3 character
-
-> ``` json
-> {
->    "codon_type": "3"
-> }
-> ```
-
-> Amino Acide Codon format with full name
-
-> ``` json
-> {
->    "codon_type": "FULL"
-> }
-> ```
-
-## refgene
-
-Path to refGene annotation file (see [HOWARD User
-Guide](user_guide.md#databases-tool)).
-
-Type: `Path`
-
-Default: `None`
-
-Examples:
-
-> Path to refSeq file
-
-> ``` json
-> {
->    "refgene": "~/howard/databases/refseq/current/hg19/ncbiRefSeq.txt"
-> }
-> ```
-
-## refseqlink
-
-Path to refGeneLink annotation file (see [HOWARD User
-Guide](user_guide.md#databases-tool)).
-
-Type: `Path`
-
-Default: `None`
-
-Examples:
-
-> Path to refSeq file
-
-> ``` json
-> {
->    "refseqlink": "~/howard/databases/refseq/current/hg19/ncbiRefSeqLink.txt"
+>    "steps": [
+>      {"annotation_core": null},
+>      {"calculation": null},
+>      {"annotation_frequency": null},
+>      {"annotation_scores": null},
+>      {"calculation_frequency": null},
+>      {"prioritization": null},
+>      {"calculation_final": null}
+>    ]
 > }
 > ```
 
@@ -516,10 +588,10 @@ available (formats such as Parquet, VCF, TSV, duckDB, JSON) and select
 fields (rename possible, 'INFO' keyword for all fields), or use 'ALL'
 keyword to detect available databases.
 
-For external tools, such as Annovar, snpEff and Exomiser, specify
-parameters such as annotation keywords (Annovar) and options (depending
-on the tool), and select fields (BCFtools and Annovar, field rename
-available).
+For external tools, such as Annovar, snpEff, Exomiser and Docker-based
+annotation tools, specify parameters such as annotation keywords
+(Annovar), options (depending on the tool), and selected fields
+(BCFtools and Annovar, field rename available).
 
 Examples:
 
@@ -597,12 +669,16 @@ Examples:
 >          }
 >       },
 >       "snpeff": {
->          "options": " -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr "
+>          "options": " -hgvs -spliceSiteSize 3 -lof -oicr "
 >       }
 >       "exomiser": {
 >          "release": "2109",
 >          "transcript_source": "refseq",
 >          "hpo": ["HP:0001156", "HP:0001363", "HP:0011304", "HP:0010055"]
+>       }
+>       "hgvs": {
+>          "full_format": true,
+>          "use_exon": true
 >       }
 >       "options": {
 >          "append": true
@@ -825,6 +901,15 @@ Examples:
 >             "annotation_fields": {
 >                "field1": null,
 >                "field2": "field2_renamed"
+>             },
+>             "options": {
+>                "header_fields": {
+>                   "field1": {
+>                      "Number": ".",
+>                      "Type": "String",
+>                      "Description": "field1 as String"
+>                   }
+>                }
 >             }
 >          },
 >          "database2.bed.gz": {
@@ -852,6 +937,17 @@ If a full path is not provided, the system will automatically detect
 files within database folders (see Configuration doc) and assembly (see
 Parameter option).
 
+The option section provides:
+
+- 'header_fields' allows to override specific fields in the annotation
+  header when updating the database from a VCF file. The keys of the
+  dictionary represent the field names in the annotation header, and the
+  values represent the new values that you want to assign to those
+  fields. This parameter is optional and can be used to customize the
+  annotation header during the update process. If not provided, the
+  default values from the VCF file will be used for the annotation
+  header fields.
+
 Examples:
 
 > Annotation with dbSNP database with all fields
@@ -869,7 +965,7 @@ Examples:
 > ```
 
 > Annotation with dbNSFP (only PolyPhen, ClinVar and REVEL score), and
-> rename fields
+> rename fields and header
 
 > ``` json
 > {
@@ -879,6 +975,13 @@ Examples:
 >             "Polyphen2_HDIV_pred": "PolyPhen",
 >             "ClinPred_pred": "ClinVar",
 >             "REVEL_score": null
+>          },
+>          "options": {
+>             "Polyphen2_HDIV_pred": {
+>                "Number": ".",
+>                "Type": "String",
+>                "Description": "PolyPhen prediction for Human"
+>             }
 >          }
 >       }
 >    }
@@ -950,6 +1053,15 @@ Section 'options' allows to define Annovar options (e.g. 'protocol',
 
 - 'options' is the Annovar additional options (e.g. '-other_options')
 
+- 'header_fields' allows to override specific fields in the annotation
+  header when updating the database from a VCF file. The keys of the
+  dictionary represent the field names in the annotation header, and the
+  values represent the new values that you want to assign to those
+  fields. This parameter is optional and can be used to customize the
+  annotation header during the update process. If not provided, the
+  default values from the VCF file will be used for the annotation
+  header fields.
+
 If a full path is not provided, the system will automatically detect
 files within database folders (see Configuration doc) and assembly (see
 Parameter option).
@@ -974,7 +1086,19 @@ Examples:
 >                "genebase": "-splicing_threshold 3 -indel_splicing_threshold 3 -hgvs",
 >                "arguments": "",
 >                "xref": "/path/to/xref/file",
->                "options": ""
+>                "options": "",
+>                "header_fields": {
+>                   "field1": {
+>                      "Number": ".",
+>                      "Type": "String",
+>                      "Description": "field1 as String"
+>                   },
+>                   "field2_renamed": {
+>                      "Number": ".",
+>                      "Type": "String",
+>                      "Description": "Renamed field2 as String"
+>                   }
+>                }
 >             }
 >          },
 >          "annovar_annotation2": {
@@ -1012,7 +1136,7 @@ with a list of selected fields for each of them (rename available)
 Examples:
 
 > Annotation with ClinVar (fields CLNSIG and CLNDN renamed) and Cosmic
-> (all fields)
+> (all fields) and header override for ClinVar fields
 
 > ``` json
 > {
@@ -1025,6 +1149,18 @@ Examples:
 >          "options": {
 >             "protocol": "clinvar_20221231",
 >             "operation": "f"
+>             "header_fields": {
+>                "ClinVar_class": {
+>                   "Number": ".",
+>                   "Type": "String",
+>                   "Description": "ClinVar classification"
+>                },
+>                "ClinVar_desease": {
+>                   "Number": ".",
+>                   "Type": "String",
+>                   "Description": "ClinVar disease name"
+>                }
+>             }
 >          }
 >       },
 >       "cosmic70": {
@@ -1090,7 +1226,7 @@ Examples:
 > ``` json
 > {
 >    "snpeff": {
->       "options": " -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr "
+>       "options": " -hgvs -spliceSiteSize 3 -lof -oicr "
 >    }
 > }
 > ```
@@ -1115,7 +1251,7 @@ Examples:
 
 > ``` json
 > {
->    "options": " -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr "
+>    "options": " -hgvs -spliceSiteSize 3 -lof -oicr "
 > }
 > ```
 
@@ -1193,6 +1329,15 @@ Examples:
 >                "field1": null,
 >                "field2": null
 >             }
+>             "options": {
+>                "header_fields": {
+>                   "field1": {
+>                      "Number": ".",
+>                      "Type": "String",
+>                      "Description": "field1 as String"
+>                   }
+>                }
+>             }
 >          },
 >          "/path/to/database2.vcf.gz": {
 >             "annotation_fields": {
@@ -1220,6 +1365,17 @@ If a full path is not provided, the system will automatically detect
 files within database folders (see Configuration doc) and assembly (see
 Parameter option).
 
+The option section provides:
+
+- 'header_fields' allows to override specific fields in the annotation
+  header when updating the database from a VCF file. The keys of the
+  dictionary represent the field names in the annotation header, and the
+  values represent the new values that you want to assign to those
+  fields. This parameter is optional and can be used to customize the
+  annotation header during the update process. If not provided, the
+  default values from the VCF file will be used for the annotation
+  header fields.
+
 Examples:
 
 > Annotation with dbSNP database with all fields
@@ -1246,6 +1402,15 @@ Examples:
 >             "Polyphen2_HDIV_pred": "PolyPhen",
 >             "ClinPred_pred": "ClinVar",
 >             "REVEL_score": null
+>          },
+>          "options": {
+>             "header_fields": {
+>                "Polyphen2_HDIV_pred": {
+>                   "Number": ".",
+>                   "Type": "String",
+>                   "Description": "PolyPhen prediction for Human"
+>                }
+>             }
 >          }
 >    }
 > }
@@ -1284,6 +1449,15 @@ databases (by annotation type), and specific methods can be defined for
 each database and field (default 'mean' for Integer and Float, 'join'
 for String).
 
+The option section also provides 'header_fields' option, that allows to
+override specific fields in the annotation header when updating the
+database from a VCF file. The keys of the dictionary represent the field
+names in the annotation header, and the values represent the new values
+that you want to assign to those fields. This parameter is optional and
+can be used to customize the annotation header during the update
+process. If not provided, the default values from the VCF file will be
+used for the annotation header fields.
+
 Examples:
 
 > Annotation with multiple databases in BigWig and BigBed formats, with
@@ -1302,6 +1476,13 @@ Examples:
 >                "method": {
 >                   "field1": "max",
 >                   "field2_renamed": "min"
+>                },
+>                "header_fields": {
+>                   "field1": {
+>                      "Number": ".",
+>                      "Type": "String",
+>                      "Description": "field1 as String"
+>                   }
 >                }
 >             }
 >          },
@@ -1372,6 +1553,13 @@ Examples:
 >          "options": {
 >             "method": {
 >                "GERP_score": "max"
+>             },
+>             "header_fields": {
+>                "GERP_score": {
+>                   "Number": ".",
+>                   "Type": "Float",
+>                   "Description": "GERP_score as Float"
+>                }
 >             }
 >          }
 >       }
@@ -1621,6 +1809,430 @@ Examples:
 > ``` json
 > {
 >    "whitespace": "true"
+> }
+> ```
+
+## docker
+
+Annotation process using Docker containers. This section defines one or
+multiple Docker entries to run annotation tools in containers.
+
+This parameter file is dedicated to run-specific settings. Structural
+Docker settings are configured in the configuration file under
+config.tools.<tool>.docker (annotation/runtime).
+
+Each entry exports variants to an input VCF, runs a container command
+with mounted resources, and imports output VCF annotations into the
+variants table.
+
+Examples:
+
+> Docker-based annotation with one VEP entry (run-specific parameters)
+
+> ``` json
+> {
+>    "docker": {
+>      "entries": {
+>        "vep": {
+>          "tool": "vep",
+>          "resources": {
+>            "threads": 4,
+>            "memory": "8G"
+>          },
+>          "parameters": [
+>            "--everything",
+>            "--cache",
+>            { "key": "--assembly", "value": "GRCh37" }
+>          ],
+>          "where_clause": " WHERE \"#CHROM\" = 'chr7' "
+>        }
+>      }
+>    }
+> }
+> ```
+
+### entries
+
+Dictionary of Docker annotation entries. Each key is an entry name and
+each value is an entry definition.
+
+Examples:
+
+> Two Docker annotation entries
+
+> ``` json
+> {
+>    "entries": {
+>      "vep": { "tool": "vep" },
+>      "custom": { "tool": "mytool" }
+>    }
+> }
+> ```
+
+#### entry_name
+
+Docker entry identifier (JSON object key).
+
+One entry generally maps to one containerized annotation command.
+
+Examples:
+
+> Entry named 'vep'
+
+> ``` json
+> {
+>    "vep": {
+>      "tool": "vep"
+>    }
+> }
+> ```
+
+##### tool
+
+Name of the tool configuration to use from configuration section 'tools'
+(e.g. tools.<tool>.docker.image).
+
+Examples:
+
+> Use tool definition 'vep' from configuration
+
+> ``` json
+> {
+>    "tool": "vep"
+> }
+> ```
+
+##### resources
+
+Optional entry-level resources override for this run.
+
+Threads and memory are automatically capped to available resources (run
+limits and system availability) to avoid invalid container commands.
+
+Examples:
+
+> Resource override values
+
+> ``` json
+> {
+>    "resources": {
+>      "threads": 4,
+>      "memory": "8G"
+>    }
+> }
+> ```
+
+###### threads
+
+Threads value for this entry.
+
+Type: `int`
+
+Default: `-1`
+
+Examples:
+
+> 
+
+> ``` json
+> {
+>    "threads": 4
+> }
+> ```
+
+###### memory
+
+Memory value for this entry (string or number, depending on tool
+syntax).
+
+Type: `str`
+
+Format: `FLOAT[kMG]`
+
+Default: `None`
+
+Examples:
+
+> 
+
+> ``` json
+> {
+>    "memory": "8G"
+> }
+> ```
+
+##### parameters
+
+List of run-specific command parameters appended to the executable.
+
+Supported formats include string flags, token arrays, or key/value
+objects.
+
+These values are merged with default parameters configured in
+config.tools.<tool>.docker.annotation.defaults.parameters.
+
+Examples:
+
+> 
+
+> ``` json
+> {
+>    "parameters": [
+>      "--cache",
+>      ["--species", "homo_sapiens"],
+>      { "key": "--assembly", "value": "GRCh37" }
+>    ]
+> }
+> ```
+
+##### options
+
+Additional run-specific command options merged with 'parameters'.
+
+Both defaults and entry values are merged; if the same CLI key appears
+multiple times (e.g. --compress_output), entry value overrides default
+value.
+
+Examples:
+
+> 
+
+> ``` json
+> {
+>    "options": [
+>      "--flag"
+>    ]
+> }
+> ```
+
+##### where_clause
+
+Optional SQL WHERE clause to select variants before export for this
+entry.
+
+A pre-check query with LIMIT 1 is executed; when no variant matches,
+entry execution is skipped.
+
+Examples:
+
+> 
+
+> ``` json
+> {
+>    "where_clause": "#CHROM = '1' AND POS >= 100000"
+> }
+> ```
+
+##### output_pattern
+
+Optional glob pattern override used to locate output VCF when output
+path does not directly exist.
+
+If omitted, default value from
+config.tools.<tool>.docker.annotation.defaults.output_pattern is used
+when defined.
+
+Examples:
+
+> 
+
+> ``` json
+> {
+>    "output_pattern": "*.vcf.gz"
+> }
+> ```
+
+## hgvs
+
+HOWARD annotates variants with HGVS annotation using HUGO HGVS
+internation Sequence Variant Nomenclature (http://varnomen.hgvs.org/).
+Annotation refere to refGene and genome to generate HGVS nomenclature
+for all available transcripts. This annotation add 'hgvs' field into VCF
+INFO column of a VCF file. Several options are available, to add gene,
+exon and protein information, to generate a 'full format' detailed
+annotation, to choose codon format.
+
+Examples:
+
+> HGVS annotation with operations for generate variant_id and variant
+> type, extract HGVS from snpEff annotation, select NOMEN from snpEff
+> HGVS with a list of transcripts of preference
+
+> ``` json
+> {
+>    "hgvs": {
+>      "full_format": true,
+>      "use_exon": true
+>    }
+> }
+> ```
+
+### use_gene
+
+Add Gene information to generate HGVS annotation (e.g.
+'NM_152232**(TAS1R2)**:c.231T\>C').
+
+Default: `False`
+
+Examples:
+
+> Use Gene in HGVS annotation
+
+> ``` json
+> {
+>    "use_gene": true
+> }
+> ```
+
+### use_exon
+
+Add Exon information to generate HGVS annotation (e.g.
+'NM_152232(exon2):c.231T\>C'). Only if 'use_gene' is not enabled.
+
+Default: `False`
+
+Examples:
+
+> Use Exon in HGVS annotation
+
+> ``` json
+> {
+>    "use_exon": true
+> }
+> ```
+
+### use_protein
+
+Use Protein level to generate HGVS annotation (e.g.
+'NP_689418:p.Cys77Arg'). Can be used with 'use_exon' or 'use_gene'.
+
+Default: `False`
+
+Examples:
+
+> Use Protein in HGVS annotation
+
+> ``` json
+> {
+>    "use_protein": true
+> }
+> ```
+
+### add_protein
+
+Add Protein level to DNA HGVS annotation (e.g.
+'NM_152232:c.231T\>C,NP_689418:p.Cys77Arg').
+
+Default: `False`
+
+Examples:
+
+> Add Protein level to DNA HGVS annotation
+
+> ``` json
+> {
+>    "add_protein": true
+> }
+> ```
+
+### full_format
+
+Generates HGVS annotation in a full format (non-standard, e.g.
+'TAS1R2:NM_152232:NP_689418:c.231T\>C:p.Cys77Arg',
+'TAS1R2:NM_152232:NP_689418:exon2:c.231T\>C:p.Cys77Arg'). Full format
+use all information to generates an exhaustive annotation. Use
+specifically 'use_exon' to add exon information.
+
+Default: `False`
+
+Examples:
+
+> Use full format for HGVS annotation
+
+> ``` json
+> {
+>    "full_format": true
+> }
+> ```
+
+### codon_type
+
+Amino Acide Codon format type to use to generate HGVS annotation
+(default '3'):
+
+- '1': codon in 1 character (e.g. 'C', 'R')
+
+- '3': codon in 3 character (e.g. 'Cys', 'Arg')
+
+- 'FULL': codon in full name (e.g. 'Cysteine', 'Arginine')
+
+Type: `str`
+
+Choices: `['1', '3', 'FULL']`
+
+Default: `3`
+
+Examples:
+
+> Amino Acide Codon format with 1 character
+
+> ``` json
+> {
+>    "codon_type": "1"
+> }
+> ```
+
+> Amino Acide Codon format with 3 character
+
+> ``` json
+> {
+>    "codon_type": "3"
+> }
+> ```
+
+> Amino Acide Codon format with full name
+
+> ``` json
+> {
+>    "codon_type": "FULL"
+> }
+> ```
+
+### refgene
+
+Path to refGene annotation file (see [HOWARD User
+Guide](user_guide.md#databases-tool)).
+
+Type: `Path`
+
+Default: `None`
+
+Examples:
+
+> Path to refSeq file
+
+> ``` json
+> {
+>    "refgene": "~/howard/databases/refseq/current/hg19/ncbiRefSeq.txt"
+> }
+> ```
+
+### refseqlink
+
+Path to refGeneLink annotation file (see [HOWARD User
+Guide](user_guide.md#databases-tool)).
+
+Type: `Path`
+
+Default: `None`
+
+Examples:
+
+> Path to refSeq file
+
+> ``` json
+> {
+>    "refseqlink": "~/howard/databases/refseq/current/hg19/ncbiRefSeqLink.txt"
 > }
 > ```
 
@@ -1918,318 +2530,6 @@ Examples:
 >    "pzprefix": "PZT"
 > }
 > ```
-
-# stats
-
-Statistics on loaded variants.
-
-## stats_md
-
-Stats Output file in MarkDown format.
-
-Type: `Path`
-
-Default: `None`
-
-Examples:
-
-> Export statistics in Markdown format
-
-> ``` json
-> {
->    "stats_md": "/tmp/stats.md" 
-> }
-> ```
-
-## stats_json
-
-Stats Output file in JSON format.
-
-Type: `Path`
-
-Default: `None`
-
-Examples:
-
-> Export statistics in JSON format
-
-> ``` json
-> {
->    "stats_json": "/tmp/stats.json" 
-> }
-> ```
-
-## stats_html
-
-Stats Output file in HTML format.
-
-Type: `Path`
-
-Default: `None`
-
-Examples:
-
-> Export statistics in JSON format
-
-> ``` json
-> {
->    "stats_html": "/tmp/stats.html" 
-> }
-> ```
-
-## stats_pdf
-
-Stats Output file in PDF format.
-
-Type: `Path`
-
-Default: `None`
-
-Examples:
-
-> Export statistics in JSON format
-
-> ``` json
-> {
->    "stats_pdf": "/tmp/stats.pdf" 
-> }
-> ```
-
-## annotations_stats
-
-Add statistics on annotations (INFO/tags)).
-
-Default: `False`
-
-## queries
-
-Queries to add on statistics.
-
-Beware that queries are executed on the 'variants_view' view by default.
-If you want to use another view, please specify it with the
-'queries_view' parameter.
-
-Moreover, query limit is suggested to avoid long processing time and
-huge output files.
-
-Type: `dict`
-
-Default: `None`
-
-Examples:
-
-> Queries to add on statistics:
-
-> ``` json
-> {
->    "queries": {
->      "First 10 variants": "SELECT \"#CHROM\", POS, REF, ALT FROM variants_view LIMIT 10",
->      "First 10 INFO tags": "SELECT INFOS.* FROM variants_view LIMIT 10",
->    }
-> }
-> ```
-
-## queries_view
-
-Variants view name to use with queries to add on statistics. By default,
-the 'variants_view' view is used.
-
-Type: `str`
-
-Default: `None`
-
-Examples:
-
-> Variants view name for stats queries:
-
-> ``` json
-> {
->    "queries_view": "variants_view_for_stats_queries"
-> }
-> ```
-
-# query
-
-Query options tools. Mainly a SQL query, based on 'variants' table
-corresponding on input file data, or a independant query. Print options
-for 'query' tool allow limiting number of lines and choose printing
-mode.
-
-Type: `str`
-
-Default: `None`
-
-## query
-
-Query in SQL format (e.g. 'SELECT \* FROM variants LIMIT 50').
-
-Type: `str`
-
-Default: `None`
-
-Examples:
-
-> Simple query to show all variants file
-
-> SELECT "#CHROM", POS, REF, ALT, INFO 
->     FROM variants
-
-## query_limit
-
-Limit of number of row for query (only for print result, not output).
-
-Type: `int`
-
-Default: `10`
-
-## query_print_mode
-
-Print mode of query result (only for print result, not output). Either
-None (default), 'dataframe', 'markdown', 'tabulate' or disabled. If
-None, print mode is 'dataframe' if no export file is provided.
-
-Type: `str`
-
-Choices: `[None, 'dataframe', 'markdown', 'tabulate', 'disabled']`
-
-Default: `None`
-
-# export
-
-Export options for output files, such as data order, include header in
-output and hive partitioning.
-
-## fields_to_rename
-
-Rename or remove INFO/tags before exporting.
-
-Type: `dict`
-
-Default: `None`
-
-Examples:
-
-> Rename 'CLNSIG' field to 'CLNSIG_renamed' and remove 'SIFT' field:
-
-> ``` json
-> {
->    "fields_to_rename": {
->      "CLNSIG": "CLNSIG_renamed",
->      "SIFT": null
->    }
-> }
-> ```
-
-## order_by
-
-List of columns to sort the result-set in ascending or descending order.
-Use SQL format, and keywords ASC (ascending) and DESC (descending). If a
-column is not available, order will not be considered. Order is enable
-only for compatible format (e.g. TSV, CSV, JSON). Examples: 'ACMG_score
-DESC', 'PZFlag DESC, PZScore DESC'.
-
-Type: `str`
-
-Default: ``
-
-Examples:
-
-> Order by ACMG score in descending order
-
-> ``` json
-> {
->    "order_by": "ACMG_score DESC" 
-> }
-> ```
-
-> Order by PZFlag and PZScore in descending order
-
-> ``` json
-> {
->    "order_by": "PZFlag DESC, PZScore DESC" 
-> }
-> ```
-
-## include_header
-
-Include header (in VCF format) in output file. Only for compatible
-formats (tab-delimiter format as TSV or BED).
-
-Default: `False`
-
-## parquet_partitions
-
-Parquet partitioning using hive (available for any format). This option
-is faster parallel writing, but memory consuming. Use 'None' (string)
-for NO partition but split parquet files into a folder. Examples:
-'#CHROM', '#CHROM,REF', 'None'.
-
-Type: `str`
-
-Default: `None`
-
-## force_cast_as_flat
-
-Force cast as flat values (varchar, integer, boolean) for Parquet
-export. By default, Parquet export preserves all columns type, even as
-list/nested.
-
-If 'true', values as list will be aggregated within a varchar value,
-with separator ','.
-
-Type: `bool`
-
-Default: `False`
-
-Examples:
-
-> Force cast as flat values for Parquet export:
-
-> ``` json
-> {
->    "force_cast_as_flat": true
-> }
-> ```
-
-# explode
-
-Explode options for INFO/tags annotations within VCF files.
-
-## explode_infos
-
-Explode VCF INFO/Tag into table columns (e.g. 'variants',
-'transcripts').
-
-Default: `False`
-
-## explode_infos_prefix
-
-Explode VCF INFO/Tag with a specific prefix.
-
-Type: `str`
-
-Default: ``
-
-## explode_infos_fields
-
-Explode VCF INFO/Tag specific fields/tags. Keyword `*` specify all
-available fields, except those already specified. Pattern (regex) can be
-used, such as `.*_score` for fields named with '\_score' at the end.
-Examples:
-
-- 'HGVS,SIFT,Clinvar' (list of 3 fields)
-
-- 'HGVS,\*,Clinvar' (list of 2 fields with all other fields in the
-  middle)
-
-- 'HGVS,.\*\_score,Clinvar' (list of 2 fields with all scores in the
-  middle)
-
-- 'HGVS,.\*\_score,\*' (1 field, scores, all other fields at the end)
-
-Type: `str`
-
-Default: `*`
 
 # transcripts
 
@@ -3061,6 +3361,318 @@ Type: `str`
 Default: ``
 
 ### explode_infos_fields
+
+Explode VCF INFO/Tag specific fields/tags. Keyword `*` specify all
+available fields, except those already specified. Pattern (regex) can be
+used, such as `.*_score` for fields named with '\_score' at the end.
+Examples:
+
+- 'HGVS,SIFT,Clinvar' (list of 3 fields)
+
+- 'HGVS,\*,Clinvar' (list of 2 fields with all other fields in the
+  middle)
+
+- 'HGVS,.\*\_score,Clinvar' (list of 2 fields with all scores in the
+  middle)
+
+- 'HGVS,.\*\_score,\*' (1 field, scores, all other fields at the end)
+
+Type: `str`
+
+Default: `*`
+
+# stats
+
+Statistics on loaded variants.
+
+## stats_md
+
+Stats Output file in MarkDown format.
+
+Type: `Path`
+
+Default: `None`
+
+Examples:
+
+> Export statistics in Markdown format
+
+> ``` json
+> {
+>    "stats_md": "/tmp/stats.md" 
+> }
+> ```
+
+## stats_json
+
+Stats Output file in JSON format.
+
+Type: `Path`
+
+Default: `None`
+
+Examples:
+
+> Export statistics in JSON format
+
+> ``` json
+> {
+>    "stats_json": "/tmp/stats.json" 
+> }
+> ```
+
+## stats_html
+
+Stats Output file in HTML format.
+
+Type: `Path`
+
+Default: `None`
+
+Examples:
+
+> Export statistics in JSON format
+
+> ``` json
+> {
+>    "stats_html": "/tmp/stats.html" 
+> }
+> ```
+
+## stats_pdf
+
+Stats Output file in PDF format.
+
+Type: `Path`
+
+Default: `None`
+
+Examples:
+
+> Export statistics in JSON format
+
+> ``` json
+> {
+>    "stats_pdf": "/tmp/stats.pdf" 
+> }
+> ```
+
+## annotations_stats
+
+Add statistics on annotations (INFO/tags)).
+
+Default: `False`
+
+## queries
+
+Queries to add on statistics.
+
+Beware that queries are executed on the 'variants_view' view by default.
+If you want to use another view, please specify it with the
+'queries_view' parameter.
+
+Moreover, query limit is suggested to avoid long processing time and
+huge output files.
+
+Type: `dict`
+
+Default: `None`
+
+Examples:
+
+> Queries to add on statistics:
+
+> ``` json
+> {
+>    "queries": {
+>      "First 10 variants": "SELECT \"#CHROM\", POS, REF, ALT FROM variants_view LIMIT 10",
+>      "First 10 INFO tags": "SELECT INFOS.* FROM variants_view LIMIT 10",
+>    }
+> }
+> ```
+
+## queries_view
+
+Variants view name to use with queries to add on statistics. By default,
+the 'variants_view' view is used.
+
+Type: `str`
+
+Default: `None`
+
+Examples:
+
+> Variants view name for stats queries:
+
+> ``` json
+> {
+>    "queries_view": "variants_view_for_stats_queries"
+> }
+> ```
+
+# query
+
+Query options tools. Mainly a SQL query, based on 'variants' table
+corresponding on input file data, or a independant query. Print options
+for 'query' tool allow limiting number of lines and choose printing
+mode.
+
+Type: `str`
+
+Default: `None`
+
+## query
+
+Query in SQL format (e.g. 'SELECT \* FROM variants LIMIT 50').
+
+Type: `str`
+
+Default: `None`
+
+Examples:
+
+> Simple query to show all variants file
+
+> SELECT "#CHROM", POS, REF, ALT, INFO 
+>     FROM variants
+
+## query_limit
+
+Limit of number of row for query (only for print result, not output).
+
+Type: `int`
+
+Default: `10`
+
+## query_print_mode
+
+Print mode of query result (only for print result, not output). Either
+None (default), 'dataframe', 'markdown', 'tabulate' or disabled. If
+None, print mode is 'dataframe' if no export file is provided.
+
+Type: `str`
+
+Choices: `[None, 'dataframe', 'markdown', 'tabulate', 'disabled']`
+
+Default: `None`
+
+# export
+
+Export options for output files, such as data order, include header in
+output and hive partitioning.
+
+## fields_to_rename
+
+Rename or remove INFO/tags before exporting.
+
+Type: `dict`
+
+Default: `None`
+
+Examples:
+
+> Rename 'CLNSIG' field to 'CLNSIG_renamed' and remove 'SIFT' field:
+
+> ``` json
+> {
+>    "fields_to_rename": {
+>      "CLNSIG": "CLNSIG_renamed",
+>      "SIFT": null
+>    }
+> }
+> ```
+
+## order_by
+
+List of columns to sort the result-set in ascending or descending order.
+Use SQL format, and keywords ASC (ascending) and DESC (descending). If a
+column is not available, order will not be considered. Order is enable
+only for compatible format (e.g. TSV, CSV, JSON). Examples: 'ACMG_score
+DESC', 'PZFlag DESC, PZScore DESC'.
+
+Type: `str`
+
+Default: ``
+
+Examples:
+
+> Order by ACMG score in descending order
+
+> ``` json
+> {
+>    "order_by": "ACMG_score DESC" 
+> }
+> ```
+
+> Order by PZFlag and PZScore in descending order
+
+> ``` json
+> {
+>    "order_by": "PZFlag DESC, PZScore DESC" 
+> }
+> ```
+
+## include_header
+
+Include header (in VCF format) in output file. Only for compatible
+formats (tab-delimiter format as TSV or BED).
+
+Default: `False`
+
+## parquet_partitions
+
+Parquet partitioning using hive (available for any format). This option
+is faster parallel writing, but memory consuming. Use 'None' (string)
+for NO partition but split parquet files into a folder. Examples:
+'#CHROM', '#CHROM,REF', 'None'.
+
+Type: `str`
+
+Default: `None`
+
+## force_cast_as_flat
+
+Force cast as flat values (varchar, integer, boolean) for Parquet
+export. By default, Parquet export preserves all columns type, even as
+list/nested.
+
+If 'true', values as list will be aggregated within a varchar value,
+with separator ','.
+
+Type: `bool`
+
+Default: `False`
+
+Examples:
+
+> Force cast as flat values for Parquet export:
+
+> ``` json
+> {
+>    "force_cast_as_flat": true
+> }
+> ```
+
+# explode
+
+Explode options for INFO/tags annotations within VCF files.
+
+## explode_infos
+
+Explode VCF INFO/Tag into table columns (e.g. 'variants',
+'transcripts').
+
+Default: `False`
+
+## explode_infos_prefix
+
+Explode VCF INFO/Tag with a specific prefix.
+
+Type: `str`
+
+Default: ``
+
+## explode_infos_fields
 
 Explode VCF INFO/Tag specific fields/tags. Keyword `*` specify all
 available fields, except those already specified. Pattern (regex) can be

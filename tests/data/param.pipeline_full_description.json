@@ -1,0 +1,115 @@
+{
+  "pipeline": {
+    "steps":[
+        {
+          "annotation_dbsnp": {
+            "_tool": "annotation",
+            "_description": "Annotate variants with dbSNP annotation.",
+            "parquet": {
+              "annotations": {
+                "tests/databases/annotations/current/hg19/avsnp150.parquet": {
+                  "INFO": null
+                }
+              }
+            }
+          },
+          "annotation_dbNSFP": {
+            "_tool": "annotation",
+            "_description": "Annotate variants with Parquet dbNSFP database and COSMIC annotation using BCFTools.",
+            "parquet": {
+              "annotations": {
+                "tests/databases/annotations/current/hg19/dbnsfp42a.parquet": {
+                  "INFO": null
+                }
+              }
+            },
+            "bcftools": {
+              "annotations": {
+                "tests/databases/annotations/current/hg19/cosmic70.vcf.gz": {
+                  "INFO": null
+                }
+              }
+            }
+          }
+        },
+        {
+          "annotation_HGVS": {
+            "_tool": "annotation",
+            "_description": "Annotate variants with HGVS nomenclature.",
+            "hgvs": {
+              "full_format": true,
+              "use_exon": true
+            }
+          },
+          "calculation_on_variant_HGVS": {
+            "_tool": "calculation",
+            "_description": "Perform HGVS calculations on variants, including SnpEff extraction and HGVS nomenclature.",
+            "calculations": {
+              "snpeff_extract": null,
+              "snpeff_hgvs": null,
+              "NOMEN": {
+                "options": {
+                  "hgvs_field": "snpeff_hgvs",
+                  "transcripts": "tests/data/transcripts.tsv"
+                }
+              }            },
+            "calculation_config": "config/calculations_config.json"
+          }
+        },
+        {
+          "calculation_on_variants": {
+            "_tool": "calculation",
+            "_description": "Perform calculations on variants, including variant type, and on genotypes, including VAF calculation.",
+            "calculations": {
+              "vartype": null,
+              "VAF": ""
+            },
+            "calculation_config": "config/calculations_config.json"
+          }
+        },
+        {
+          "prioritization": {
+            "_tool": "prioritization",
+            "_description": "Prioritize variants based on specified profiles and scoring mode.",
+            "profiles": ["default", "GERMLINE"],
+            "prioritization_config": "config/prioritization_profiles.json",
+            "pzfields": ["PZScore", "PZFlag", "PZComment"],
+            "prioritization_score_mode": "VaRank"
+          }
+        },
+        {
+          "annotation_frequency": {
+            "_tool": "annotation",
+            "_description": "Annotate variants with Parquet gnomAD frequencies databases and BCFTools NCI60 frequency databases.",
+            "parquet": {
+              "annotations": {
+                "tests/databases/annotations/current/hg19/gnomad211_genome.parquet": {
+                  "INFO": null
+                }
+              }
+            },
+            "bcftools": {
+              "annotations": {
+                "tests/databases/annotations/current/hg19/nci60.vcf.gz": {
+                  "INFO": null
+                }
+              }
+            }
+          }
+        },
+        {
+          "final_step": {}
+        }
+    ]
+  },
+  "query": {
+    "query": "SELECT \"#CHROM\", POS, REF, ALT, INFO FROM variants",
+    "query_limit": 10,
+    "query_print_mode": "default"
+  },
+  "export": {
+    "header_in_output": false,
+    "parquet_partitions": null,
+    "order_by": null
+  }
+}

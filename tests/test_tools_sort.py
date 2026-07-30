@@ -80,3 +80,87 @@ def test_filter():
             "Y",
             "M",
         ]
+
+
+def test_sort_pipeline():
+    """
+    Test processing with pipeline enabled and specific parameters.
+    Including exporting transcripts to a TSV file.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.ann.vcf.gz"
+        output_vcf = os.path.join(tmp_dir, "output_file.tsv")
+        config = {}
+        param = tests_folder + "/data/param.pipeline.json"
+        annotations = None
+        calculations = None
+        prioritizations = None
+        input_query = "SELECT * FROM variants WHERE REF = 'A' AND POS < 100000"
+        explode_infos_fields = "DP,SIFT,AA"
+
+        # prepare arguments for the query function
+        args = argparse.Namespace(
+            input=input_vcf,
+            output=output_vcf,
+            config=config,
+            param=param,
+            annotations=annotations,
+            calculations=calculations,
+            prioritizations=prioritizations,
+            query=input_query,
+            explode_infos=True,
+            explode_infos_prefix="",
+            explode_infos_fields=explode_infos_fields,
+            include_header=False,
+            arguments_dict=arguments_dict,
+        )
+
+        # Remove if output file exists
+        remove_if_exists([output_vcf])
+
+        # Query
+        vcf_sort(args)
+
+        # Create object
+        variants = Variants(conn=None, input=output_vcf, config=config, load=True)
+
+        # Check annotation
+        result = variants.get_query_to_df(
+            "SELECT * FROM variants"
+        )
+        assert len(result) == 7, f"Expected 7 variants with sorting, but got {len(result)}"
+
+        # Chromosomes list
+        assert list(variants.get_header().contigs.keys()) == [
+            "1",
+            "chr1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "chr7",
+            "8",
+            "9",
+            "10",
+            "11",
+            "12",
+            "13",
+            "14",
+            "15",
+            "16",
+            "17",
+            "18",
+            "19",
+            "20",
+            "21",
+            "22",
+            "X",
+            "Y",
+            "M",
+        ]
+
