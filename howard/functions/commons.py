@@ -1,3 +1,4 @@
+import copy
 import gzip
 import multiprocessing
 import os
@@ -156,6 +157,17 @@ DEFAULT_DATA_FOLDER = os.path.join(folder_howard_home, "data")
 
 # Deefault Assembly
 DEFAULT_ASSEMBLY = "hg19"
+
+DEFAULT_ASSEMBLY_MAPPING = {
+    "default_source": "howard",
+    "aliases": ["howard", "generic", "default", "HG"],
+    "sources": {
+        "GRCH": {
+            "hg19": "GRCh37",
+            "hg38": "GRCh38",
+        }
+    },
+}
 
 # DuckDB extension
 DUCKDB_EXTENSION = f"{file_folder}/duckdb_extension"
@@ -955,6 +967,73 @@ def find_genome(genome_path: str, assembly: str = None, file: str = None) -> str
         elif assembly and find_all(assembly + ".fa", genome_dir):
             genome_path = find_all(assembly + ".fa", genome_dir)[0]
     return genome_path
+
+
+def get_default_assembly_mapping() -> dict:
+    return copy.deepcopy(DEFAULT_ASSEMBLY_MAPPING)
+
+
+def get_assembly_mapping_config(config: dict | None = None) -> dict:
+    if isinstance(config, dict):
+        assembly_mapping = config.get("assembly_mapping", None)
+        if isinstance(assembly_mapping, dict):
+            return assembly_mapping
+    return get_default_assembly_mapping()
+
+
+def normalize_assembly_mapping_source(source: str | None) -> str:
+    default_source = DEFAULT_ASSEMBLY_MAPPING.get("default_source", "howard")
+    if source is None:
+        return default_source
+
+    source_str = str(source).strip()
+    if not source_str:
+        return default_source
+
+    aliases = {
+        str(alias).lower(): default_source
+        for alias in DEFAULT_ASSEMBLY_MAPPING.get("aliases", [])
+    }
+    return aliases.get(source_str.lower(), source_str)
+
+
+def resolve_assembly_mapping(
+    assembly: str | None,
+    source: str | None = None,
+    mapping: dict | None = None,
+    assembly_mapping_config: dict | None = None,
+) -> str | None:
+    if assembly is None:
+        return None
+
+    normalized_source = normalize_assembly_mapping_source(source)
+    default_source = DEFAULT_ASSEMBLY_MAPPING.get("default_source", "howard")
+    if normalized_source == default_source:
+        return str(assembly)
+
+    effective_mapping = mapping if isinstance(mapping, dict) else None
+    if effective_mapping is None:
+        mapping_config = (
+            assembly_mapping_config
+            if isinstance(assembly_mapping_config, dict)
+            else get_default_assembly_mapping()
+        )
+        sources = mapping_config.get("sources", {})
+        if isinstance(sources, dict):
+            effective_mapping = sources.get(normalized_source, None)
+
+    if not isinstance(effective_mapping, dict) or not effective_mapping:
+        raise ValueError(
+            f"Assembly mapping source '{normalized_source}' is not configured"
+        )
+
+    mapped_assembly = effective_mapping.get(assembly, None)
+    if mapped_assembly is None:
+        raise ValueError(
+            f"Assembly '{assembly}' is not mapped for source '{normalized_source}'"
+        )
+
+    return str(mapped_assembly)
 
 
 def find_file_prefix(

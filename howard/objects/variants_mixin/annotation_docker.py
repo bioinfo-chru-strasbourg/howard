@@ -10,12 +10,17 @@ from typing import Any
 import logging as log
 
 from howard.functions.commons import (
+    DEFAULT_GENOME_FOLDER,
 	DEFAULT_TOOLS_FOLDER,
 	check_docker_image_exists,
 	command,
 	extract_memory_in_go,
 	get_bin_command,
 	get_random,
+	get_assembly_mapping_config,
+	find_genome,
+	normalize_assembly_mapping_source,
+	resolve_assembly_mapping,
 )
 
 
@@ -288,9 +293,317 @@ def _format_mount(path_item: Any, default_mode: str = "ro") -> str | None:
 	return f"-v {host_path}:{host_path}:{default_mode}"
 
 
+def _mount_host_path(mount_item: Any) -> str | None:
+	formatted_mount = _format_mount(mount_item)
+	if not formatted_mount:
+		return None
+
+	mount_body = formatted_mount[3:].strip() if formatted_mount.startswith("-v ") else formatted_mount
+	if not mount_body:
+		return None
+
+	return mount_body.split(":", 1)[0]
+
+
+def _append_unique_mount(
+	mounts: list[str],
+	mount_item: Any,
+	default_mode: str,
+	seen_host_paths: set[str],
+) -> None:
+	formatted_mount = _format_mount(mount_item, default_mode=default_mode)
+	if not formatted_mount:
+		return None
+
+	host_path = _mount_host_path(formatted_mount)
+	if host_path and host_path in seen_host_paths:
+		return None
+	if host_path:
+		seen_host_paths.add(host_path)
+	mounts.append(formatted_mount)
+
+
+def _coerce_dict(value: Any) -> dict:
+	if isinstance(value, dict):
+		return value
+	return {}
+
+
+def _resolve_entry_primary_spec(entry_name: str, tool: str, primary: dict) -> dict:
+	input_flag = primary.get("input", None)
+	output_flag = primary.get("output", None)
+	threads_flag = primary.get("threads", None)
+	memory_flag = primary.get("memory", None)
+	assembly_cfg = primary.get("assembly", {})
+	genome_cfg = primary.get("genome", {})
+
+	if assembly_cfg is None:
+		assembly_cfg = {}
+	if genome_cfg is None:
+		genome_cfg = {}
+	if not isinstance(assembly_cfg, dict):
+		raise ValueError(
+			f"annotation_docker entry '{entry_name}': config.tools.{tool}.docker.annotation.primary.assembly must be a dict"
+		)
+	if not isinstance(genome_cfg, dict):
+		raise ValueError(
+			f"annotation_docker entry '{entry_name}': config.tools.{tool}.docker.annotation.primary.genome must be a dict"
+		)
+	if not input_flag:
+		raise ValueError(
+			f"annotation_docker entry '{entry_name}': missing input flag in config.tools.{tool}.docker.annotation.primary.input"
+		)
+	if not output_flag:
+		raise ValueError(
+			f"annotation_docker entry '{entry_name}': missing output flag in config.tools.{tool}.docker.annotation.primary.output"
+		)
+
+	return {
+		"input_flag": input_flag,
+		"output_flag": output_flag,
+		"threads_flag": threads_flag,
+		"memory_flag": memory_flag,
+		"assembly": assembly_cfg,
+		"genome": genome_cfg,
+	}
+
+
+def _resolve_entry_resource_settings(
+	entry_name: str,
+	entry: dict,
+	defaults_cfg: dict,
+	annotation_cfg: dict,
+	default_threads: int,
+	default_memory: str,
+) -> tuple[int, str]:
+	cfg_resources = _coerce_dict(defaults_cfg.get("resources", annotation_cfg.get("resources", {})))
+	entry_resources = _coerce_dict(entry.get("resources", {}))
+
+	entry_threads = entry_resources.get(
+		"threads",
+		cfg_resources.get("threads", default_threads),
+	)
+	entry_memory = entry_resources.get(
+		"memory",
+		cfg_resources.get("memory", default_memory),
+	)
+
+	if entry_threads is None:
+		entry_threads = default_threads
+	if entry_memory is None:
+		entry_memory = default_memory
+
+	threads_limit = _get_effective_threads_limit(default_threads=default_threads)
+	memory_limit_gb = _get_effective_memory_limit_gb(default_memory=default_memory)
+	return _normalize_entry_resources(
+		entry_name=entry_name,
+		entry_threads=entry_threads,
+		entry_memory=entry_memory,
+		default_memory=default_memory,
+		threads_limit=threads_limit,
+		memory_limit_gb=memory_limit_gb,
+	)
+
+
+def _resolve_entry_update_settings(
+	entry: dict,
+	annotation_cfg: dict,
+	vcf_update_cfg: dict,
+) -> tuple[bool, bool, bool, bool]:
+	remove_info = vcf_update_cfg.get("remove_info", annotation_cfg.get("remove_info", True))
+	add_samples = vcf_update_cfg.get("add_samples", annotation_cfg.get("add_samples", False))
+	update_header = vcf_update_cfg.get("update_header", annotation_cfg.get("update_header", True))
+	update_existing_fields = vcf_update_cfg.get(
+		"update_existing_fields",
+		annotation_cfg.get("update_existing_fields", False),
+	)
+	update_existing_fields = bool(
+		entry.get("update_existing_fields", update_existing_fields)
+	)
+
+	return bool(remove_info), bool(add_samples), bool(update_header), bool(update_existing_fields)
+
+
+def _build_command_tokens(
+	spec: dict,
+	effective_command: str | None,
+	input_vcf: str,
+	output_vcf_expected: str,
+	resolved_assembly: str | None,
+	resolved_genome_path: str | None,
+) -> list[str]:
+	cmd_tokens: list[str] = []
+	if effective_command:
+		cmd_tokens.append(str(effective_command))
+
+	cmd_tokens.extend([spec["input_flag"], input_vcf])
+	if spec["assembly"].get("flag") and resolved_assembly:
+		cmd_tokens.extend([spec["assembly"]["flag"], resolved_assembly])
+	if spec["genome"].get("flag") and resolved_genome_path:
+		cmd_tokens.extend([spec["genome"]["flag"], resolved_genome_path])
+	cmd_tokens.extend(spec["parameters"])
+	cmd_tokens.extend([spec["output_flag"], output_vcf_expected])
+
+	if spec["threads_flag"] and spec["threads"] is not None:
+		cmd_tokens.extend([spec["threads_flag"], str(spec["threads"])])
+
+	if spec["memory_flag"] and spec["memory"] is not None:
+		cmd_tokens.extend([spec["memory_flag"], str(spec["memory"])])
+
+	return cmd_tokens
+
+
+def _resolve_runtime_genome_container_path(config: dict, tool: str, genome_host_path: str | None) -> str | None:
+	if not genome_host_path:
+		return None
+
+	host_genomes_root = _expand_path(
+		str(config.get("folders", {}).get("databases", {}).get("genomes", ""))
+	)
+	genome_host_path = _expand_path(str(genome_host_path))
+	if not host_genomes_root or not genome_host_path.startswith(host_genomes_root):
+		return None
+
+	runtime_databases = config.get("tools", {}).get(tool, {}).get("docker", {}).get("runtime", {}).get("databases", [])
+	for db_item in _as_list(runtime_databases):
+		if not isinstance(db_item, dict):
+			continue
+		if db_item.get("name", db_item.get("key", None)) != "genomes":
+			continue
+		container_root = db_item.get("container_path", None)
+		if not container_root:
+			container_root = config.get("folders", {}).get("databases_mounts", {}).get("genomes", {}).get("container_path", None)
+		if not container_root:
+			return None
+		relative_path = os.path.relpath(genome_host_path, host_genomes_root)
+		return _expand_path(os.path.join(str(container_root), relative_path))
+
+	return None
+
+
+def _resolve_runtime_primary_values(
+	config: dict,
+	tool: str,
+	entry_name: str,
+	spec: dict,
+	assembly: str | None,
+) -> tuple[str | None, str | None]:
+	resolved_assembly = _resolve_entry_assembly(
+		config=config,
+		entry_name=entry_name,
+		assembly=assembly,
+		assembly_cfg=spec.get("assembly", {}),
+	)
+	resolved_genome_host_path, auto_genome_mount = _resolve_entry_genome(
+		config=config,
+		entry_name=entry_name,
+		assembly=assembly,
+		genome_cfg=spec.get("genome", {}),
+	)
+	resolved_genome_path = _resolve_runtime_genome_container_path(
+		config=config,
+		tool=tool,
+		genome_host_path=resolved_genome_host_path,
+	) or resolved_genome_host_path
+	genome_mode = str(spec.get("genome", {}).get("mode", spec.get("genome", {}).get("mount", "ro"))).lower()
+	genome_mounts: list[dict[str, str]] = []
+	if resolved_genome_host_path and auto_genome_mount:
+		genome_mounts.append(
+			{
+				"host_path": resolved_genome_host_path,
+				"container_path": resolved_genome_path,
+				"mode": "ro",
+			}
+		)
+		if genome_mode == "rw":
+			genome_mounts.append(
+				{
+					"host_path": os.path.dirname(resolved_genome_host_path),
+					"container_path": os.path.dirname(resolved_genome_path),
+					"mode": "rw",
+				}
+			)
+	spec["resolved_assembly"] = resolved_assembly
+	spec["resolved_genome_host_path"] = resolved_genome_host_path
+	spec["resolved_genome_path"] = resolved_genome_path
+	spec["genome_mounts"] = genome_mounts
+	return resolved_assembly, resolved_genome_path
+
+
+def _resolve_entry_assembly(
+	config: dict,
+	entry_name: str,
+	assembly: str | None,
+	assembly_cfg: dict,
+) -> str | None:
+	if not isinstance(assembly_cfg, dict):
+		return assembly
+
+	assembly_source = normalize_assembly_mapping_source(assembly_cfg.get("source", None))
+	assembly_mapping = assembly_cfg.get("mapping", None)
+	assembly_mapping_config = get_assembly_mapping_config(config)
+
+	try:
+		return resolve_assembly_mapping(
+			assembly=assembly,
+			source=assembly_source,
+			mapping=assembly_mapping,
+			assembly_mapping_config=assembly_mapping_config,
+		)
+	except ValueError as exc:
+		raise ValueError(
+			f"annotation_docker entry '{entry_name}': {exc}"
+		) from exc
+
+
+def _resolve_entry_genome(
+	config: dict,
+	entry_name: str,
+	assembly: str | None,
+	genome_cfg: dict,
+) -> tuple[str | None, bool]:
+	if not isinstance(genome_cfg, dict):
+		return None, False
+	if not genome_cfg:
+		return None, False
+
+	genome_source = normalize_assembly_mapping_source(genome_cfg.get("source", None))
+	genome_path = genome_cfg.get("path", None)
+	mount_setting = genome_cfg.get("mount", "auto")
+	auto_mount = mount_setting is None or mount_setting is True or str(mount_setting).lower() == "auto"
+
+	if genome_path:
+		resolved_genome = find_genome(str(genome_path), assembly=assembly, file=f"{assembly}.fa" if assembly else None)
+		if not resolved_genome:
+			raise ValueError(
+				f"annotation_docker entry '{entry_name}': genome path '{genome_path}' could not be resolved"
+			)
+		return resolved_genome, auto_mount
+
+	if genome_source != "howard":
+		raise ValueError(
+			f"annotation_docker entry '{entry_name}': genome source '{genome_source}' requires an explicit path"
+		)
+
+	genomes_folder = config.get("folders", {}).get("databases", {}).get("genomes", DEFAULT_GENOME_FOLDER)
+	resolved_genome = find_genome(
+		str(genomes_folder),
+		assembly=assembly,
+		file=f"{assembly}.fa" if assembly else None,
+	)
+	if not resolved_genome:
+		raise ValueError(
+			f"annotation_docker entry '{entry_name}': genome fasta not found for assembly '{assembly}' in '{genomes_folder}'"
+		)
+
+	return resolved_genome, auto_mount
+
+
 def _warn_entry_forbidden_overrides(entry_name: str, entry: dict, tool: str) -> None:
 	location_map = {
 		"primary": f"config.tools.{tool}.docker.annotation.primary",
+		"assembly": f"config.tools.{tool}.docker.annotation.primary.assembly",
+		"genome": f"config.tools.{tool}.docker.annotation.primary.genome",
 		"databases": f"config.tools.{tool}.docker.runtime.databases",
 		"mounts": f"config.tools.{tool}.docker.runtime.mounts",
 		"mount": f"config.tools.{tool}.docker.runtime.mounts",
@@ -304,6 +617,8 @@ def _warn_entry_forbidden_overrides(entry_name: str, entry: dict, tool: str) -> 
 
 	for forbidden_key in [
 		"primary",
+		"assembly",
+		"genome",
 		"databases",
 		"mounts",
 		"mount",
@@ -475,51 +790,15 @@ def _resolve_entry_spec(
 		raise ValueError(
 			f"annotation_docker entry '{entry_name}': config.tools.{tool}.docker.annotation.primary must be a dict"
 		)
+	primary_spec = _resolve_entry_primary_spec(entry_name=entry_name, tool=tool, primary=primary)
 
-	input_flag = primary.get("input", None)
-	output_flag = primary.get("output", None)
-	threads_flag = primary.get("threads", None)
-	memory_flag = primary.get("memory", None)
-
-	if not input_flag:
-		raise ValueError(
-			f"annotation_docker entry '{entry_name}': missing input flag in config.tools.{tool}.docker.annotation.primary.input"
-		)
-	if not output_flag:
-		raise ValueError(
-			f"annotation_docker entry '{entry_name}': missing output flag in config.tools.{tool}.docker.annotation.primary.output"
-		)
-
-	cfg_resources = defaults_cfg.get("resources", annotation_cfg.get("resources", {}))
-	entry_resources = entry.get("resources", {})
-	if not isinstance(cfg_resources, dict):
-		cfg_resources = {}
-	if not isinstance(entry_resources, dict):
-		entry_resources = {}
-
-	entry_threads = entry_resources.get(
-		"threads",
-		cfg_resources.get("threads", default_threads),
-	)
-	entry_memory = entry_resources.get(
-		"memory",
-		cfg_resources.get("memory", default_memory),
-	)
-
-	if entry_threads is None:
-		entry_threads = default_threads
-	if entry_memory is None:
-		entry_memory = default_memory
-
-	threads_limit = _get_effective_threads_limit(default_threads=default_threads)
-	memory_limit_gb = _get_effective_memory_limit_gb(default_memory=default_memory)
-	entry_threads, entry_memory = _normalize_entry_resources(
+	entry_threads, entry_memory = _resolve_entry_resource_settings(
 		entry_name=entry_name,
-		entry_threads=entry_threads,
-		entry_memory=entry_memory,
+		entry=entry,
+		defaults_cfg=defaults_cfg,
+		annotation_cfg=annotation_cfg,
+		default_threads=default_threads,
 		default_memory=default_memory,
-		threads_limit=threads_limit,
-		memory_limit_gb=memory_limit_gb,
 	)
 
 	default_parameters = defaults_cfg.get(
@@ -549,24 +828,16 @@ def _resolve_entry_spec(
 		annotation_cfg=annotation_cfg,
 	)
 
-	remove_info = vcf_update_cfg.get("remove_info", annotation_cfg.get("remove_info", True))
-	add_samples = vcf_update_cfg.get("add_samples", annotation_cfg.get("add_samples", False))
-	update_header = vcf_update_cfg.get("update_header", annotation_cfg.get("update_header", True))
-	update_existing_fields = vcf_update_cfg.get(
-		"update_existing_fields",
-		annotation_cfg.get("update_existing_fields", False),
-	)
-	update_existing_fields = bool(
-		entry.get("update_existing_fields", update_existing_fields)
+	remove_info, add_samples, update_header, update_existing_fields = _resolve_entry_update_settings(
+		entry=entry,
+		annotation_cfg=annotation_cfg,
+		vcf_update_cfg=vcf_update_cfg,
 	)
 
 	return {
 		"tool": tool,
 		"command": command_name,
-		"input_flag": input_flag,
-		"output_flag": output_flag,
-		"threads_flag": threads_flag,
-		"memory_flag": memory_flag,
+		**primary_spec,
 		"threads": entry_threads,
 		"memory": entry_memory,
 		"parameters": _collect_cli_params(merged_param_blocks),
@@ -695,11 +966,15 @@ class variants_annotation_docker:
 			if os.getenv(var) is not None
 		]
 		entry_mounts = [f"-v {run_dir}:{run_dir}:rw"]
+		seen_mount_hosts: set[str] = {run_dir}
 
 		for mount in spec["mounts"]:
-			formatted_mount = _format_mount(mount, default_mode="rw")
-			if formatted_mount:
-				entry_mounts.append(formatted_mount)
+			_append_unique_mount(
+				mounts=entry_mounts,
+				mount_item=mount,
+				default_mode="rw",
+				seen_host_paths=seen_mount_hosts,
+			)
 
 		for db_path in _resolve_database_paths(
 			entry_name=entry_name,
@@ -707,14 +982,28 @@ class variants_annotation_docker:
 			databases_value=spec.get("databases", []),
 			assembly=assembly,
 		):
-			formatted_mount = _format_mount(db_path, default_mode="ro")
-			if formatted_mount:
-				entry_mounts.append(formatted_mount)
+			_append_unique_mount(
+				mounts=entry_mounts,
+				mount_item=db_path,
+				default_mode="ro",
+				seen_host_paths=seen_mount_hosts,
+			)
 
 		for path_item in spec.get("paths", []):
-			formatted_mount = _format_mount(path_item, default_mode="ro")
-			if formatted_mount:
-				entry_mounts.append(formatted_mount)
+			_append_unique_mount(
+				mounts=entry_mounts,
+				mount_item=path_item,
+				default_mode="ro",
+				seen_host_paths=seen_mount_hosts,
+			)
+
+		for genome_mount in spec.get("genome_mounts", []):
+			_append_unique_mount(
+				mounts=entry_mounts,
+				mount_item=genome_mount,
+				default_mode="ro",
+				seen_host_paths=seen_mount_hosts,
+			)
 
 		run_name = f"HOWARD-ANNOT-{entry_name}-{get_random()}"
 		docker_add_options = (
@@ -787,27 +1076,22 @@ class variants_annotation_docker:
 				where_clause=spec["where_clause"],
 			)
 
-			command_in_container = None
-			cmd_tokens = []
+			resolved_assembly, resolved_genome_path = _resolve_runtime_primary_values(
+				config=config,
+				tool=tool,
+				entry_name=entry_name,
+				spec=spec,
+				assembly=assembly,
+			)
 
-			# Build command from configured executable path + generated args.
-			# If executable is missing but docker entrypoint exists, pass only args.
-			if effective_command:
-				cmd_tokens.append(str(effective_command))
-				cmd_tokens.extend([spec["input_flag"], input_vcf])
-				cmd_tokens.extend(spec["parameters"])
-				cmd_tokens.extend([spec["output_flag"], output_vcf_expected])
-			else:
-				cmd_tokens.extend([spec["input_flag"], input_vcf])
-				cmd_tokens.extend(spec["parameters"])
-				cmd_tokens.extend([spec["output_flag"], output_vcf_expected])
-
-			if spec["threads_flag"] and spec["threads"] is not None:
-				cmd_tokens.extend([spec["threads_flag"], str(spec["threads"])])
-
-			if spec["memory_flag"] and spec["memory"] is not None:
-				cmd_tokens.extend([spec["memory_flag"], str(spec["memory"])])
-
+			cmd_tokens = _build_command_tokens(
+				spec=spec,
+				effective_command=effective_command,
+				input_vcf=input_vcf,
+				output_vcf_expected=output_vcf_expected,
+				resolved_assembly=resolved_assembly,
+				resolved_genome_path=resolved_genome_path,
+			)
 			command_in_container = _shell_join(cmd_tokens)
 			log.debug(
 				f"annotation_docker entry '{entry_name}' command: {command_in_container}"
