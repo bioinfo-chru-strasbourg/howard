@@ -669,6 +669,38 @@ your tool:
 - docker.annotation.primary.threads: CLI flag used to pass thread count
   to the tool.
 
+- docker.annotation.primary.assembly: optional assembly mapping section
+  to inject a mapped assembly value.
+
+- docker.annotation.primary.assembly.flag: CLI flag used to pass
+  assembly value (for example '--assembly').
+
+- docker.annotation.primary.assembly.source: mapping source name. Use
+  'howard' for identity default mapping (e.g. use howard assembly such
+  as 'hg19'), or a configured source such as 'GRCH' (e.g. assembly
+  'hg19' will be mapped as 'GRCH37' as defined on HOWARD).
+
+- docker.annotation.primary.assembly.mapping: optional local source
+  mapping override (for example {'hg19':'GRCh37','hg38':'GRCh38'}, which
+  is GRCh mapping).
+
+- docker.annotation.primary.genome: optional genome section to inject
+  fasta path for the selected assembly.
+
+- docker.annotation.primary.genome.flag: CLI flag used to pass genome
+  fasta path (for example '--fasta').
+
+- docker.annotation.primary.genome.source: genome source. Default
+  behavior uses 'howard' to resolve fasta from
+  folders.databases.genomes.
+
+- docker.annotation.primary.genome.path: optional explicit fasta
+  path/folder (required when source is not 'howard').
+
+- docker.annotation.primary.genome.mode: genome mount policy. With 'rw',
+  HOWARD keeps fasta mount in ro and adds a rw mount on genome directory
+  to allow lock files.
+
 - docker.annotation.vcf_update: controls how HOWARD imports annotation
   output VCF back into the variants table.
 
@@ -738,7 +770,9 @@ Examples:
 >             "primary": {
 >                "input": "--input_file",
 >                "output": "--output_file",
->                "threads": "--fork"
+>                "threads": "--fork",
+>                "assembly": {"flag": "--assembly", "source": "GRCH"},
+>                "genome": {"flag": "--fasta", "source": "howard", "mode": "rw"}
 >             },
 >             "vcf_update": {
 >                "remove_info": true,
@@ -772,7 +806,7 @@ Examples:
 >          "entrypoint": "vep",
 >          "command": null,
 >          "annotation": {
->             "primary": {"input": "--input_file", "output": "--output_file", "threads": "--fork"},
+>             "primary": {"input": "--input_file", "output": "--output_file", "threads": "--fork", "assembly": {"flag": "--assembly", "source": "GRCH"}, "genome": {"flag": "--fasta", "source": "howard", "mode": "rw"}},
 >             "vcf_update": {"remove_info": true, "add_samples": true, "update_header": true, "update_existing_fields": false},
 >             "defaults": {
 >                "parameters": ["--vcf", "--cache", "--offline", {"key": "--compress_output", "value": "bgzip"}],

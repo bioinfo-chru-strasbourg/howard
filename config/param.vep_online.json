@@ -1,0 +1,15 @@
+{
+  "annotation": {
+    "docker": {
+      "entries": {
+        "vep_online": {
+          "tool": "vep_online",
+          "update_existing_fields": false,
+          "parameters": [
+
+          ]
+        }
+      }
+    }
+  }
+}
