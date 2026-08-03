@@ -14,7 +14,6 @@ from howard.functions.commons import (
     get_tmp,
     get_random,
     remove_if_exists,
-    default_pipeline,
     launch_pipeline
 )
 from howard.objects.variants import Variants

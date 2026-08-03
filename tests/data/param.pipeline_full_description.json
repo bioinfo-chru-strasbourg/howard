@@ -1,6 +1,7 @@
 {
-  "pipeline": {
-    "steps":[
+  "pipelines_list": ["pipeline"],
+  "pipelines": {
+    "pipeline":[
         {
           "annotation_dbsnp": {
             "_tool": "annotation",

@@ -4,202 +4,203 @@ title: HOWARD Help Parameters
 
 - [<span class="toc-section-number">1</span>
   Introduction](#introduction)
-- [<span class="toc-section-number">2</span> pipeline](#pipeline)
-  - [<span class="toc-section-number">2.1</span> steps](#steps)
-- [<span class="toc-section-number">3</span> annotation](#annotation)
-  - [<span class="toc-section-number">3.1</span> parquet](#parquet)
-    - [<span class="toc-section-number">3.1.1</span>
+- [<span class="toc-section-number">2</span> pipelines](#pipelines)
+- [<span class="toc-section-number">3</span>
+  pipelines_list](#pipelines_list)
+- [<span class="toc-section-number">4</span> annotation](#annotation)
+  - [<span class="toc-section-number">4.1</span> parquet](#parquet)
+    - [<span class="toc-section-number">4.1.1</span>
       annotations](#annotations)
-  - [<span class="toc-section-number">3.2</span> bcftools](#bcftools)
-    - [<span class="toc-section-number">3.2.1</span>
+  - [<span class="toc-section-number">4.2</span> bcftools](#bcftools)
+    - [<span class="toc-section-number">4.2.1</span>
       annotations](#annotations-1)
-  - [<span class="toc-section-number">3.3</span> annovar](#annovar)
-    - [<span class="toc-section-number">3.3.1</span>
+  - [<span class="toc-section-number">4.3</span> annovar](#annovar)
+    - [<span class="toc-section-number">4.3.1</span>
       annotations](#annotations-2)
-    - [<span class="toc-section-number">3.3.2</span> options](#options)
-  - [<span class="toc-section-number">3.4</span> snpeff](#snpeff)
-    - [<span class="toc-section-number">3.4.1</span>
+    - [<span class="toc-section-number">4.3.2</span> options](#options)
+  - [<span class="toc-section-number">4.4</span> snpeff](#snpeff)
+    - [<span class="toc-section-number">4.4.1</span>
       options](#options-1)
-    - [<span class="toc-section-number">3.4.2</span> stats](#stats)
-    - [<span class="toc-section-number">3.4.3</span>
+    - [<span class="toc-section-number">4.4.2</span> stats](#stats)
+    - [<span class="toc-section-number">4.4.3</span>
       csvStats](#csvstats)
-  - [<span class="toc-section-number">3.5</span> snpsift](#snpsift)
-    - [<span class="toc-section-number">3.5.1</span>
+  - [<span class="toc-section-number">4.5</span> snpsift](#snpsift)
+    - [<span class="toc-section-number">4.5.1</span>
       annotations](#annotations-3)
-  - [<span class="toc-section-number">3.6</span> bigwig](#bigwig)
-    - [<span class="toc-section-number">3.6.1</span>
+  - [<span class="toc-section-number">4.6</span> bigwig](#bigwig)
+    - [<span class="toc-section-number">4.6.1</span>
       annotations](#annotations-4)
-    - [<span class="toc-section-number">3.6.2</span>
+    - [<span class="toc-section-number">4.6.2</span>
       options](#options-2)
-  - [<span class="toc-section-number">3.7</span> exomiser](#exomiser)
-    - [<span class="toc-section-number">3.7.1</span> release](#release)
-    - [<span class="toc-section-number">3.7.2</span>
+  - [<span class="toc-section-number">4.7</span> exomiser](#exomiser)
+    - [<span class="toc-section-number">4.7.1</span> release](#release)
+    - [<span class="toc-section-number">4.7.2</span>
       transcript_source](#transcript_source)
-    - [<span class="toc-section-number">3.7.3</span> hpo](#hpo)
-  - [<span class="toc-section-number">3.8</span> splice](#splice)
-    - [<span class="toc-section-number">3.8.1</span>
+    - [<span class="toc-section-number">4.7.3</span> hpo](#hpo)
+  - [<span class="toc-section-number">4.8</span> splice](#splice)
+    - [<span class="toc-section-number">4.8.1</span>
       split_mode](#split_mode)
-    - [<span class="toc-section-number">3.8.2</span>
+    - [<span class="toc-section-number">4.8.2</span>
       spliceai_distance](#spliceai_distance)
-    - [<span class="toc-section-number">3.8.3</span>
+    - [<span class="toc-section-number">4.8.3</span>
       spliceai_mask](#spliceai_mask)
-    - [<span class="toc-section-number">3.8.4</span>
+    - [<span class="toc-section-number">4.8.4</span>
       transcript](#transcript)
-    - [<span class="toc-section-number">3.8.5</span> rm_snps](#rm_snps)
-    - [<span class="toc-section-number">3.8.6</span>
+    - [<span class="toc-section-number">4.8.5</span> rm_snps](#rm_snps)
+    - [<span class="toc-section-number">4.8.6</span>
       rm_annot](#rm_annot)
-    - [<span class="toc-section-number">3.8.7</span>
+    - [<span class="toc-section-number">4.8.7</span>
       whitespace](#whitespace)
-  - [<span class="toc-section-number">3.9</span> docker](#docker)
-    - [<span class="toc-section-number">3.9.1</span> entries](#entries)
-  - [<span class="toc-section-number">3.10</span> hgvs](#hgvs)
-    - [<span class="toc-section-number">3.10.1</span>
+  - [<span class="toc-section-number">4.9</span> docker](#docker)
+    - [<span class="toc-section-number">4.9.1</span> entries](#entries)
+  - [<span class="toc-section-number">4.10</span> hgvs](#hgvs)
+    - [<span class="toc-section-number">4.10.1</span>
       use_gene](#use_gene)
-    - [<span class="toc-section-number">3.10.2</span>
+    - [<span class="toc-section-number">4.10.2</span>
       use_exon](#use_exon)
-    - [<span class="toc-section-number">3.10.3</span>
+    - [<span class="toc-section-number">4.10.3</span>
       use_protein](#use_protein)
-    - [<span class="toc-section-number">3.10.4</span>
+    - [<span class="toc-section-number">4.10.4</span>
       add_protein](#add_protein)
-    - [<span class="toc-section-number">3.10.5</span>
+    - [<span class="toc-section-number">4.10.5</span>
       full_format](#full_format)
-    - [<span class="toc-section-number">3.10.6</span>
+    - [<span class="toc-section-number">4.10.6</span>
       codon_type](#codon_type)
-    - [<span class="toc-section-number">3.10.7</span> refgene](#refgene)
-    - [<span class="toc-section-number">3.10.8</span>
+    - [<span class="toc-section-number">4.10.7</span> refgene](#refgene)
+    - [<span class="toc-section-number">4.10.8</span>
       refseqlink](#refseqlink)
-- [<span class="toc-section-number">4</span> calculation](#calculation)
-  - [<span class="toc-section-number">4.1</span>
-    calculations](#calculations)
-  - [<span class="toc-section-number">4.2</span>
-    calculation_config](#calculation_config)
-- [<span class="toc-section-number">5</span>
-  prioritization](#prioritization)
+- [<span class="toc-section-number">5</span> calculation](#calculation)
   - [<span class="toc-section-number">5.1</span>
+    calculations](#calculations)
+  - [<span class="toc-section-number">5.2</span>
+    calculation_config](#calculation_config)
+- [<span class="toc-section-number">6</span>
+  prioritization](#prioritization)
+  - [<span class="toc-section-number">6.1</span>
     prioritizations](#prioritizations)
-  - [<span class="toc-section-number">5.2</span> profiles](#profiles)
-  - [<span class="toc-section-number">5.3</span>
-    default_profile](#default_profile)
-  - [<span class="toc-section-number">5.4</span> pzfields](#pzfields)
-  - [<span class="toc-section-number">5.5</span>
-    prioritization_score_mode](#prioritization_score_mode)
-  - [<span class="toc-section-number">5.6</span> pzprefix](#pzprefix)
-- [<span class="toc-section-number">6</span> transcripts](#transcripts)
-  - [<span class="toc-section-number">6.1</span> table](#table)
-  - [<span class="toc-section-number">6.2</span>
-    transcripts_info_field_json](#transcripts_info_field_json)
+  - [<span class="toc-section-number">6.2</span> profiles](#profiles)
   - [<span class="toc-section-number">6.3</span>
-    transcripts_info_field_format](#transcripts_info_field_format)
-  - [<span class="toc-section-number">6.4</span>
-    transcripts_info_json](#transcripts_info_json)
+    default_profile](#default_profile)
+  - [<span class="toc-section-number">6.4</span> pzfields](#pzfields)
   - [<span class="toc-section-number">6.5</span>
-    transcripts_info_format](#transcripts_info_format)
-  - [<span class="toc-section-number">6.6</span>
-    transcript_id_remove_version](#transcript_id_remove_version)
-  - [<span class="toc-section-number">6.7</span>
-    transcript_id_mapping_file](#transcript_id_mapping_file)
-  - [<span class="toc-section-number">6.8</span> Example of transcript
-    ID mapping file](#example-of-transcript-id-mapping-file)
-  - [<span class="toc-section-number">6.9</span>
-    transcript_id_mapping_force](#transcript_id_mapping_force)
-  - [<span class="toc-section-number">6.10</span> struct](#struct)
-    - [<span class="toc-section-number">6.10.1</span>
-      from_column_format](#from_column_format)
-    - [<span class="toc-section-number">6.10.2</span>
-      from_columns_map](#from_columns_map)
-    - [<span class="toc-section-number">6.10.3</span>
-      from_variants](#from_variants)
-    - [<span class="toc-section-number">6.10.4</span> commons
-      parameters](#commons-parameters)
-  - [<span class="toc-section-number">6.11</span>
-    prioritization](#prioritization-1)
-    - [<span class="toc-section-number">6.11.1</span>
-      profiles](#profiles-1)
-    - [<span class="toc-section-number">6.11.2</span>
-      default_profile](#default_profile-1)
-    - [<span class="toc-section-number">6.11.3</span>
-      prioritization_config](#prioritization_config)
-    - [<span class="toc-section-number">6.11.4</span>
-      prioritization_score_mode](#prioritization_score_mode-1)
-    - [<span class="toc-section-number">6.11.5</span>
-      pzprefix](#pzprefix-1)
-    - [<span class="toc-section-number">6.11.6</span>
-      pzfields](#pzfields-1)
-    - [<span class="toc-section-number">6.11.7</span>
-      prioritization_transcripts_order](#prioritization_transcripts_order)
-    - [<span class="toc-section-number">6.11.8</span>
-      prioritization_transcripts_file](#prioritization_transcripts_file)
-    - [<span class="toc-section-number">6.11.9</span>
-      prioritization_transcripts_columns](#prioritization_transcripts_columns)
-    - [<span class="toc-section-number">6.11.10</span>
-      prioritization_transcripts_force](#prioritization_transcripts_force)
-    - [<span class="toc-section-number">6.11.11</span>
-      prioritization_transcripts_version_force](#prioritization_transcripts_version_force)
-  - [<span class="toc-section-number">6.12</span> export](#export)
-    - [<span class="toc-section-number">6.12.1</span> output](#output)
-    - [<span class="toc-section-number">6.12.2</span>
-      export_header](#export_header)
-    - [<span class="toc-section-number">6.12.3</span>
-      header_in_output](#header_in_output)
-    - [<span class="toc-section-number">6.12.4</span>
-      add_info](#add_info)
-  - [<span class="toc-section-number">6.13</span> explode](#explode)
-    - [<span class="toc-section-number">6.13.1</span>
-      explode_infos](#explode_infos)
-    - [<span class="toc-section-number">6.13.2</span>
-      explode_infos_prefix](#explode_infos_prefix)
-    - [<span class="toc-section-number">6.13.3</span>
-      explode_infos_fields](#explode_infos_fields)
-- [<span class="toc-section-number">7</span> stats](#stats-1)
-  - [<span class="toc-section-number">7.1</span> stats_md](#stats_md)
+    prioritization_score_mode](#prioritization_score_mode)
+  - [<span class="toc-section-number">6.6</span> pzprefix](#pzprefix)
+- [<span class="toc-section-number">7</span> transcripts](#transcripts)
+  - [<span class="toc-section-number">7.1</span> table](#table)
   - [<span class="toc-section-number">7.2</span>
-    stats_json](#stats_json)
+    transcripts_info_field_json](#transcripts_info_field_json)
   - [<span class="toc-section-number">7.3</span>
-    stats_html](#stats_html)
-  - [<span class="toc-section-number">7.4</span> stats_pdf](#stats_pdf)
+    transcripts_info_field_format](#transcripts_info_field_format)
+  - [<span class="toc-section-number">7.4</span>
+    transcripts_info_json](#transcripts_info_json)
   - [<span class="toc-section-number">7.5</span>
-    annotations_stats](#annotations_stats)
-  - [<span class="toc-section-number">7.6</span> queries](#queries)
+    transcripts_info_format](#transcripts_info_format)
+  - [<span class="toc-section-number">7.6</span>
+    transcript_id_remove_version](#transcript_id_remove_version)
   - [<span class="toc-section-number">7.7</span>
-    queries_view](#queries_view)
-- [<span class="toc-section-number">8</span> query](#query)
-  - [<span class="toc-section-number">8.1</span> query](#query-1)
+    transcript_id_mapping_file](#transcript_id_mapping_file)
+  - [<span class="toc-section-number">7.8</span> Example of transcript
+    ID mapping file](#example-of-transcript-id-mapping-file)
+  - [<span class="toc-section-number">7.9</span>
+    transcript_id_mapping_force](#transcript_id_mapping_force)
+  - [<span class="toc-section-number">7.10</span> struct](#struct)
+    - [<span class="toc-section-number">7.10.1</span>
+      from_column_format](#from_column_format)
+    - [<span class="toc-section-number">7.10.2</span>
+      from_columns_map](#from_columns_map)
+    - [<span class="toc-section-number">7.10.3</span>
+      from_variants](#from_variants)
+    - [<span class="toc-section-number">7.10.4</span> commons
+      parameters](#commons-parameters)
+  - [<span class="toc-section-number">7.11</span>
+    prioritization](#prioritization-1)
+    - [<span class="toc-section-number">7.11.1</span>
+      profiles](#profiles-1)
+    - [<span class="toc-section-number">7.11.2</span>
+      default_profile](#default_profile-1)
+    - [<span class="toc-section-number">7.11.3</span>
+      prioritization_config](#prioritization_config)
+    - [<span class="toc-section-number">7.11.4</span>
+      prioritization_score_mode](#prioritization_score_mode-1)
+    - [<span class="toc-section-number">7.11.5</span>
+      pzprefix](#pzprefix-1)
+    - [<span class="toc-section-number">7.11.6</span>
+      pzfields](#pzfields-1)
+    - [<span class="toc-section-number">7.11.7</span>
+      prioritization_transcripts_order](#prioritization_transcripts_order)
+    - [<span class="toc-section-number">7.11.8</span>
+      prioritization_transcripts_file](#prioritization_transcripts_file)
+    - [<span class="toc-section-number">7.11.9</span>
+      prioritization_transcripts_columns](#prioritization_transcripts_columns)
+    - [<span class="toc-section-number">7.11.10</span>
+      prioritization_transcripts_force](#prioritization_transcripts_force)
+    - [<span class="toc-section-number">7.11.11</span>
+      prioritization_transcripts_version_force](#prioritization_transcripts_version_force)
+  - [<span class="toc-section-number">7.12</span> export](#export)
+    - [<span class="toc-section-number">7.12.1</span> output](#output)
+    - [<span class="toc-section-number">7.12.2</span>
+      export_header](#export_header)
+    - [<span class="toc-section-number">7.12.3</span>
+      header_in_output](#header_in_output)
+    - [<span class="toc-section-number">7.12.4</span>
+      add_info](#add_info)
+  - [<span class="toc-section-number">7.13</span> explode](#explode)
+    - [<span class="toc-section-number">7.13.1</span>
+      explode_infos](#explode_infos)
+    - [<span class="toc-section-number">7.13.2</span>
+      explode_infos_prefix](#explode_infos_prefix)
+    - [<span class="toc-section-number">7.13.3</span>
+      explode_infos_fields](#explode_infos_fields)
+- [<span class="toc-section-number">8</span> stats](#stats-1)
+  - [<span class="toc-section-number">8.1</span> stats_md](#stats_md)
   - [<span class="toc-section-number">8.2</span>
-    query_limit](#query_limit)
+    stats_json](#stats_json)
   - [<span class="toc-section-number">8.3</span>
-    query_print_mode](#query_print_mode)
-- [<span class="toc-section-number">9</span> export](#export-1)
-  - [<span class="toc-section-number">9.1</span>
-    fields_to_rename](#fields_to_rename)
-  - [<span class="toc-section-number">9.2</span> order_by](#order_by)
+    stats_html](#stats_html)
+  - [<span class="toc-section-number">8.4</span> stats_pdf](#stats_pdf)
+  - [<span class="toc-section-number">8.5</span>
+    annotations_stats](#annotations_stats)
+  - [<span class="toc-section-number">8.6</span> queries](#queries)
+  - [<span class="toc-section-number">8.7</span>
+    queries_view](#queries_view)
+- [<span class="toc-section-number">9</span> query](#query)
+  - [<span class="toc-section-number">9.1</span> query](#query-1)
+  - [<span class="toc-section-number">9.2</span>
+    query_limit](#query_limit)
   - [<span class="toc-section-number">9.3</span>
-    include_header](#include_header)
-  - [<span class="toc-section-number">9.4</span>
-    parquet_partitions](#parquet_partitions)
-  - [<span class="toc-section-number">9.5</span>
-    force_cast_as_flat](#force_cast_as_flat)
-- [<span class="toc-section-number">10</span> explode](#explode-1)
+    query_print_mode](#query_print_mode)
+- [<span class="toc-section-number">10</span> export](#export-1)
   - [<span class="toc-section-number">10.1</span>
-    explode_infos](#explode_infos-1)
-  - [<span class="toc-section-number">10.2</span>
-    explode_infos_prefix](#explode_infos_prefix-1)
+    fields_to_rename](#fields_to_rename)
+  - [<span class="toc-section-number">10.2</span> order_by](#order_by)
   - [<span class="toc-section-number">10.3</span>
+    include_header](#include_header)
+  - [<span class="toc-section-number">10.4</span>
+    parquet_partitions](#parquet_partitions)
+  - [<span class="toc-section-number">10.5</span>
+    force_cast_as_flat](#force_cast_as_flat)
+- [<span class="toc-section-number">11</span> explode](#explode-1)
+  - [<span class="toc-section-number">11.1</span>
+    explode_infos](#explode_infos-1)
+  - [<span class="toc-section-number">11.2</span>
+    explode_infos_prefix](#explode_infos_prefix-1)
+  - [<span class="toc-section-number">11.3</span>
     explode_infos_fields](#explode_infos_fields-1)
-- [<span class="toc-section-number">11</span> samples](#samples)
-  - [<span class="toc-section-number">11.1</span> list](#list)
-  - [<span class="toc-section-number">11.2</span> check](#check)
-- [<span class="toc-section-number">12</span> databases](#databases)
-- [<span class="toc-section-number">13</span> chunking](#chunking)
-  - [<span class="toc-section-number">13.1</span>
+- [<span class="toc-section-number">12</span> samples](#samples)
+  - [<span class="toc-section-number">12.1</span> list](#list)
+  - [<span class="toc-section-number">12.2</span> check](#check)
+- [<span class="toc-section-number">13</span> databases](#databases)
+- [<span class="toc-section-number">14</span> chunking](#chunking)
+  - [<span class="toc-section-number">14.1</span>
     chunking_enable](#chunking_enable)
-  - [<span class="toc-section-number">13.2</span>
+  - [<span class="toc-section-number">14.2</span>
     chunking_size](#chunking_size)
-  - [<span class="toc-section-number">13.3</span>
+  - [<span class="toc-section-number">14.3</span>
     chunking_partitions](#chunking_partitions)
-  - [<span class="toc-section-number">13.4</span>
+  - [<span class="toc-section-number">14.4</span>
     chunking_sort](#chunking_sort)
-- [<span class="toc-section-number">14</span> threads](#threads-1)
-- [<span class="toc-section-number">15</span> fast](#fast)
+- [<span class="toc-section-number">15</span> threads](#threads-1)
+- [<span class="toc-section-number">16</span> fast](#fast)
 
 # Introduction
 
@@ -213,7 +214,22 @@ Examples:
 
 > ``` json
 > {
+>    "pipelines": {
+>       "default": [
+>          {
+>             "annotation": null
+>          },
+>          {
+>             "calculation": null
+>          },
+>          {
+>             "prioritization": null
+>          }
+>       ]
+>    },
 >    "annotation": {
+>       "_tool": "annotation",
+>       "_description": "Main annotation step",
 >       "parquet": {
 >          "annotations": {
 >             "/path/to/database3.parquet": {
@@ -298,6 +314,8 @@ Examples:
 >       }
 >    },
 >    "calculation": {
+>       "_tool": "calculation",
+>       "_description": "Main calculation step",
 >       "operation1": null,
 >       "operation2": {
 >         "options": {
@@ -307,6 +325,8 @@ Examples:
 >       }
 >    },
 >    "prioritization": {
+>       "_tool": "prioritization",
+>       "_description": "Main prioritization step",
 >       "prioritizations": "config/prioritization_profiles.json",
 >       "profiles": ["GENOME", "GERMLINE"],
 >       "default_profile": "GERMLINE",
@@ -319,46 +339,49 @@ Examples:
 > }
 > ```
 
-# pipeline
+# pipelines
 
-Pipeline options to define the order of operations to process as a list
-of steps.
+Dictionary of named pipelines. Each pipeline is a list of ordered steps.
+
+A step is a dictionary containing one or multiple operation names (such
+as annotation, calculation, or prioritization tools).
 
 Two pipeline declaration modes are available:
 
-- Inline mode (recommended): each step contains one or multiple named
-  operations, each embedding its own configuration, a '\_tool' key set
-  to one of: 'annotation', 'calculation', 'prioritization', and an
-  optional '\_description' key to document the operation.
+- Inline mode (recommended): operation name mapped to an operation
+  object containing '\_tool', optional '\_description', and operation
+  parameters.
 
-- Referenced mode (alternative, legacy-compatible): each step maps a
-  section name to a tool type (e.g. {"annotation_frequency":
-  "annotation"}), and parameters are defined in top-level sections of
-  the parameter JSON file. An optional '\_description' key can also be
-  added in each referenced section. The '\_tool' key can be used instead
-  of define it on pipeline section (e.g. {"annotation_frequency": None}
-  with section "annotation_frequency" including '\_tool' key as
-  "annotation").
+- Referenced mode (alternative): operation name mapped to a tool string
+  (for example {"annotation_frequency": "annotation"}) or null; in this
+  case parameters are read from the top-level section with the same
+  operation name, and '\_tool' can be defined there.
 
 The referenced mode is useful to reuse the same operation configuration
-in multiple pipeline steps, to define a pipeline with a minimal or
-choosen steps.
+in multiple pipelines and define shorter or custom execution paths.
 
-By default, if no pipeline is provided, operations are processed in
-referenced mode in the specific order: "annotation", "calculation",
-"prioritization."
+Only tool types 'annotation', 'calculation' and 'prioritization' are
+available.
 
-For more information about steps and operations, see each tool's
-documentation below.
+If 'pipelines' is omitted, the default pipeline is equivalent to
+'{"default": \[{"annotation": "annotation"}, {"calculation":
+"calculation"}, {"prioritization": "prioritization"}\]}' and refers to
+top-level corresponding sections.
+
+Type: `dict`
+
+Default:
+`{"default": [{"annotation": "annotation"}, {"calculation": "calculation"}, {"prioritization": "prioritization"}]}`
 
 Examples:
 
-> Recommended: pipeline in inline mode with full step descriptions
+> Inline mode inside a single named pipeline with full operation
+> descriptions
 
 > ``` json
 > {
->    "pipeline": {
->      "steps": [
+>    "pipelines": {
+>      "default": [
 >        {
 >          "annotation_dbsnp": {
 >            "_tool": "annotation",
@@ -407,25 +430,126 @@ Examples:
 > }
 > ```
 
-> Alternative: pipeline in referenced mode ("prioritization_step" tool
-> is defined in the "prioritization_step" referenced top-level section)
+> Recommended: multi-pipeline configuration (inline mode)
 
 > ``` json
 > {
->    "pipeline": {
->      "steps": [
->        {"annotation_step": "annotation"},
->        {"calculation_step": "calculation"},
->        {"prioritization_step": null}
+>    "pipelines": {
+>      "default": [
+>        {
+>          "annotation_dbsnp": {
+>            "_tool": "annotation",
+>            "_description": "Annotate variants with dbSNP annotation.",
+>            "parquet": {
+>              "annotations": {
+>                "tests/databases/annotations/current/hg19/avsnp150.parquet": {"INFO": null}
+>              }
+>            }
+>          },
+>          "annotation_dbNSFP": {
+>            "_tool": "annotation",
+>            "parquet": {
+>              "annotations": {
+>                "tests/databases/annotations/current/hg19/dbnsfp42a.parquet": {"INFO": null}
+>              }
+>            }
+>          }
+>        },
+>        {
+>          "calculation": {
+>            "_tool": "calculation",
+>            "_description": "Perform calculations on variant data, such as vartype and VAF homogenization and calculation.",
+>            "calculations": {
+>              "vartype": null,
+>              "VAF": ""
+>            }
+>          }
+>        },
+>        {
+>          "prioritization": {
+>            "_tool": "prioritization",
+>            "_description": "Perform prioritization of variants based on defined profiles.",
+>            "profiles": ["default", "GERMLINE"]
+>          }
+>        },
+>        {
+>          "annotation_frequency": {
+>            "_tool": "annotation",
+>            "_description": "Annotate variants with frequency data.",
+>            "parquet": {
+>              "annotations": {
+>                "tests/databases/annotations/current/hg19/gnomad.parquet": {"INFO": null}
+>              }
+>            }
+>          }
+>        },
+>        {
+>          "calculation_final": {
+>            "_tool": "calculation",
+>            "_description": "Perform final calculations to extract NOMEN for each variant.",
+>            "calculations": {
+>              "NOMEN": null
+>            }
+>          }
+>        }
+>      ],
+>      "default2": [
+>        {
+>          "annotation_dbsnp": {
+>            "_tool": "annotation",
+>            "parquet": {
+>              "annotations": {
+>                "tests/databases/annotations/current/hg19/avsnp150.parquet": {"INFO": null}
+>              }
+>            }
+>          }
+>        },
+>        {
+>          "annotation_dbNSFP": {
+>            "_tool": "annotation",
+>            "parquet": {
+>              "annotations": {
+>                "tests/databases/annotations/current/hg19/dbnsfp42a.parquet": {"INFO": null}
+>              }
+>            }
+>          }
+>        },
+>        {
+>          "calculation": {
+>            "_tool": "calculation",
+>            "calculations": {
+>              "vartype": null
+>            }
+>          }
+>        },
+>        {
+>          "prioritization": {
+>            "_tool": "prioritization",
+>            "profiles": ["GERMLINE"]
+>          }
+>        }
 >      ]
 >    },
 > }
 > ```
 
-> Corresponding operation sections for referenced mode
+> Referenced mode with explicit tool names in pipeline entries
 
 > ``` json
 > {
+>    "pipelines": {
+>      "default": [
+>        {
+>          "annotation_step": "annotation"
+>        },
+>        {
+>          "calculation_step": "calculation"
+>        },
+>        {
+>          "prioritization_step": null
+>        }
+>      ]
+>    },
 >    "annotation_step": {
 >      "_description": "Annotate variants with configured annotation databases.",
 >      "parquet": {
@@ -459,123 +583,142 @@ Examples:
 >      "default_profile": "GERMLINE",
 >      "pzfields": ["PZScore", "PZFlag", "PZComment"],
 >      "prioritization_score_mode": "VaRank"
+>    },
+> }
+> ```
+
+> Referenced mode with a multi-pipeline configuration and '\_tool'
+> defined in referenced sections
+
+> ``` json
+> {
+>    "pipelines": {
+>      "default": [
+>        {
+>          "annotation_core": null
+>        },
+>        {
+>          "annotation_scores": null
+>        },
+>        {
+>          "calculation": null
+>        },
+>        {
+>          "calculation_frequency": null
+>        },
+>        {
+>          "annotation_frequency": null
+>        },
+>        {
+>          "calculation_final": null
+>        },
+>        {
+>          "prioritization": null
+>        }
+>      ],
+>      "secondary": [
+>        {
+>          "annotation_core": null
+>        },
+>        {
+>          "annotation_scores": null
+>        },
+>        {
+>          "calculation": null
+>        },
+>        {
+>          "prioritization": null
+>        }
+>      ]
+>    },
+>    "annotation_core": {
+>      "_tool": "annotation",
+>      "_description": "Core annotation",
+>      ...
+>    },
+>    "annotation_scores": {
+>      "_tool": "annotation",
+>      "_description": "Scores annotation",
+>      ...
+>    },
+>    "annotation_frequency": {
+>      "_tool": "annotation",
+>      "_description": "Frequency annotation",
+>      ...
+>    },
+>    "calculation": {
+>      "_tool": "calculation",
+>      "_description": "Main calculation",
+>      ...
+>    },
+>    "calculation_frequency": {
+>      "_tool": "calculation",
+>      "_description": "Frequency calculation",
+>      ...
+>    },
+>    "calculation_final": {
+>      "_tool": "calculation",
+>      "_description": "Final calculation",
+>      ...
+>    },
+>    "prioritization": {
+>      "_tool": "prioritization",
+>      "_description": "Prioritization",
+>      ...
 >    }
 > }
 > ```
 
-## steps
+# pipelines_list
 
-List of steps to process in the pipeline.
+List of pipeline names to execute (in order).
 
-Each step is a dict and can use one of two formats:
+Each name must match a key defined in 'pipelines'.
 
-- Inline format (recommended): operation name as key mapped to an
-  operation object containing '\_tool', optional '\_description', and
-  operation parameters.
+This section replaces legacy single-pipeline execution and allows
+selecting one or many named pipelines.
 
-- Referenced format (alternative): section name as key (e.g.
-  "annotation", "calculation", "prioritization", "annotation_core",
-  "annotation_frequency") mapped to the tool type ("annotation",
-  "calculation", "prioritization"); the corresponding referenced section
-  may include an alternative '\_tool' key, and an optional
-  '\_description' key.
+If omitted, all pipelines defined in 'pipelines' are executed in key
+order.
 
-Only tool types "annotation", "calculation" and "prioritization" are
-available.
-
-By default, all steps are processed in the order: "annotation",
-"calculation", "prioritization".
-
-Beware that some referenced steps can be skipped if no corresponding
-section is provided in the parameter JSON file (e.g.
-'{"annotation_frequency": "annotation"}' needs "annotation_frequency"
-section in parameter JSON file).
+A comma-separated string is also accepted (for example from CLI
+overrides): 'default,default2'.
 
 Type: `list`
 
-Default:
-`[ {"annotation": "annotation"}, {"calculation": "calculation"}, {"prioritization": "prioritization"} ]`
+Default: `None`
 
 Examples:
 
-> Recommended: inline full descriptions
+> Run all pipelines
 
 > ``` json
 > {
->    "steps": [
->      {
->        "annotation_dbsnp": {
->          "_tool": "annotation",
->          "_description": "Annotate variants with dbSNP annotation.",
->          "parquet": {
->            "annotations": {
->              "tests/databases/annotations/current/hg19/avsnp150.parquet": {"INFO": null}
->            }
->          }
->        }
->      },
->      {
->        "calculation_on_variants": {
->          "_tool": "calculation",
->          "_description": "Compute variant and genotype metrics such as vartype and VAF.",
->          "calculations": {"vartype": null, "VAF": ""},
->          "calculation_config": "config/calculations_config.json"
->        }
->      },
->      {
->        "prioritization": {
->          "_tool": "prioritization",
->          "_description": "Prioritize variants using configured profiles and scoring mode.",
->          "profiles": ["default", "GERMLINE"]
->        }
->      }
->    ]
+>    "pipelines_list": null
 > }
 > ```
 
-> Alternative: referenced format (default order) with tool types
+> Run only one pipeline
 
 > ``` json
 > {
->    "steps": [
->      {"annotation": "annotation"},
->      {"calculation": "calculation"},
->      {"prioritization": "prioritization"}
->    ]
+>    "pipelines_list": ["default"]
 > }
 > ```
 
-> Referenced sections in parameter JSON file (in main section level)
+> Run two pipelines in sequence
 
 > ``` json
 > {
->    "annotation": {"_tool": "annotation", "_description": "Annotate variants with configured annotation databases.", ...},
->    "calculation": {"_tool": "calculation", "_description": "Perform configured calculation operations on variants and genotypes.", ...},
->    "prioritization": {"_tool": "prioritization", "_description": "Prioritize variants with configured profiles and scoring mode.", ...}
->    "annotation_core": {"_tool": "annotation", "_description": "Core annotation step", ...},
->    "annotation_frequency": {"_tool": "annotation", "_description": "Frequency annotation step", ...},
->    "annotation_scores": {"_tool": "annotation", "_description": "Scores annotation step", ...},
->    "calculation": {"_tool": "calculation", "_description": "Main calculation step", ...},
->    "calculation_frequency": {"_tool": "calculation", "_description": "Frequency calculation step", ...},
->    "calculation_final": {"_tool": "calculation", "_description": "Final calculation step", ...},
->    "prioritization": {"_tool": "prioritization", "_description": "Prioritization step", ...}
+>    "pipelines_list": ["default", "secondary"]
 > }
 > ```
 
-> Alternative: referenced format with multiple operation sections, with
-> tool types and optional '\_description' in each section
+> CLI-compatible string override
 
 > ``` json
 > {
->    "steps": [
->      {"annotation_core": null},
->      {"calculation": null},
->      {"annotation_frequency": null},
->      {"annotation_scores": null},
->      {"calculation_frequency": null},
->      {"prioritization": null},
->      {"calculation_final": null}
->    ]
+>    "pipelines_list": "default,secondary"
 > }
 > ```
 
@@ -620,7 +763,7 @@ Examples:
 >                }
 >             }
 >          }
->       }
+>       },
 >       "bcftools": {
 >          "annotations": {
 >             "/path/to/database6.vcf.gz": {
@@ -635,7 +778,7 @@ Examples:
 >                }
 >             }
 >          }
->       }
+>       },
 >       "annovar": {
 >          "annotations": {
 >             "annovar_annotation1": {
@@ -656,7 +799,7 @@ Examples:
 >                "annotation_fields": {
 >                   "INFO": null,
 >                   "field2": "field2_renamed"
->                }
+>                },
 >                "options": {
 >                   "protocol": "annovar_keyword2",
 >                   "operation": "f",
@@ -670,16 +813,16 @@ Examples:
 >       },
 >       "snpeff": {
 >          "options": " -hgvs -spliceSiteSize 3 -lof -oicr "
->       }
+>       },
 >       "exomiser": {
 >          "release": "2109",
 >          "transcript_source": "refseq",
 >          "hpo": ["HP:0001156", "HP:0001363", "HP:0011304", "HP:0010055"]
->       }
+>       },
 >       "hgvs": {
 >          "full_format": true,
 >          "use_exon": true
->       }
+>       },
 >       "options": {
 >          "append": true
 >       }

@@ -141,8 +141,8 @@ class variants_calculation:
             },
             "vep_extract_refseq": {
                 "type": "python",
-                "name": "vep_extract",
-                "description": "HGVS nomenclatures from VEP annotation",
+                "name": "vep_extract_refseq",
+                "description": "HGVS nomenclatures from VEP annotation unsing RefSeq transcripts",
                 "comment": "Extract HGVS nomenclatures from VEP annotation (field CSQ) and create new INFO fields with prefix 'vep_' (e.g. vep_hgvs, vep_impact, vep_gene_name...). This calculation parses the CSQ field from VEP annotations, extracting relevant information such as HGVS nomenclatures (with refSeq), impact, gene name, etc., and creates new INFO fields with a 'vep_' prefix for easier access and downstream analysis.",
                 "available": True,
                 "function_name": "calculation_annotation_with_format_extract",
@@ -374,6 +374,22 @@ class variants_calculation:
                 "available": True,
                 "function_name": "calculation_genotype_stats",
                 "function_params": {"info": "DP"},
+            },
+            "genotype_stats": {
+                "type": "python",
+                "name": "GENOTYPE_STATS",
+                "description": "Calculate genotype statistics on a specific genotype field (e.g. VAF, DP, GQ...)",
+                "comment": [
+                    "Calculate genotype statistics on a specific genotype field (e.g. VAF, DP, GQ...). This calculation computes statistical measures for a specified genotype field across different samples, providing insights into the distribution and variability of the chosen genotype metric.\n",
+                    "Options for this calculation can be specified in the JSON parameter file, directly in the calculation parameters (see help.parameters.md). The parameter 'info' allows for the specification of the genotype field to be analyzed. For example, to calculate statistics for the GQ field, you can specify:\n",
+                    "```json",
+                    """{ "info": "GQ" }""",
+                    "```",
+                    "If no 'info' parameter is provided, the calculation will default to analyzing the VAF field. Other genotype fields can be specified as needed, such as DP (Depth), GQ (Genotype Quality), etc., by providing the appropriate field name in the 'info' parameter."
+                ],
+                "available": True,
+                "function_name": "calculation_genotype_stats",
+                "function_params": {}
             },
             "INFO_TO_FORMAT": {
                 "type": "python",
@@ -3272,7 +3288,7 @@ class variants_calculation:
                     )
 
 
-    def calculation_genotype_stats(self, info: str = "VAF", **kwargs) -> None:
+    def calculation_genotype_stats(self, section: str = "calculation", info: str = None, **kwargs) -> None:
         """
         The `calculation_genotype_stats` function calculates genotype statistics for a given information
         field in a VCF file and updates the INFO column of the variants table with the calculated
@@ -3284,6 +3300,20 @@ class variants_calculation:
         maximum value, the mean, the median, defaults to VAF
         :type info: str (optional)
         """
+
+        operation_params, _ = self.get_operation_params(
+            section=section, operation_params=kwargs, operation_name="calculation_genotype_stats"
+        )
+
+        ### Parameters for genotype stats calculation
+
+        # variant_id annotation field
+        if info is None:
+            info = (
+                operation_params.get("info")
+                or info
+                or "VAF"
+            )
 
         # if FORMAT and samples
         if (

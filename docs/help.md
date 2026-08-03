@@ -743,6 +743,15 @@ Usage examples:
 
 <small>
 
+>     --pipelines_list=<pipelines_list>
+>
+>     List of pipelines to process. Pipelines are defined in parameters JSON file
+>     (e.g. 'pipeline1,pipeline2').
+
+</small>
+
+<small>
+
 >     --hgvs_options=<HGVS options>
 >
 >     Quick HGVS annotation options.
@@ -924,6 +933,15 @@ Usage examples:
 >
 >     Parameters JSON file (or string) defines parameters to process 
 >     annotations, calculations, prioritizations, convertions and queries.
+
+</small>
+
+<small>
+
+>     --pipelines_list=<pipelines_list>
+>
+>     List of pipelines to process. Pipelines are defined in parameters JSON file
+>     (e.g. 'pipeline1,pipeline2').
 
 </small>
 
@@ -1133,6 +1151,15 @@ Usage examples:
 
 <small>
 
+>     --pipelines_list=<pipelines_list>
+>
+>     List of pipelines to process. Pipelines are defined in parameters JSON file
+>     (e.g. 'pipeline1,pipeline2').
+
+</small>
+
+<small>
+
 >     --calculations=<operations>
 >
 >     Quick calculations on genetic variants information and genotype information,
@@ -1278,6 +1305,15 @@ Usage examples:
 
 <small>
 
+>     --pipelines_list=<pipelines_list>
+>
+>     List of pipelines to process. Pipelines are defined in parameters JSON file
+>     (e.g. 'pipeline1,pipeline2').
+
+</small>
+
+<small>
+
 >     --prioritizations=<prioritisations>
 >
 >     List of prioritization profiles to process (based on Prioritization JSON file),
@@ -1394,6 +1430,15 @@ Usage examples:
 >
 >     Parameters JSON file (or string) defines parameters to process 
 >     annotations, calculations, prioritizations, convertions and queries.
+
+</small>
+
+<small>
+
+>     --pipelines_list=<pipelines_list>
+>
+>     List of pipelines to process. Pipelines are defined in parameters JSON file
+>     (e.g. 'pipeline1,pipeline2').
 
 </small>
 
