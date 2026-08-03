@@ -2376,6 +2376,64 @@ def test_calculation_dp_stats():
             assert False
 
 
+def test_calculation_genotype_stats():
+    """
+    This is a test function for the calculation of genotype statistics in a VCF
+    file using the Variants class in Python.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.vcf.gz"
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+
+        # Construct param dict
+        param = {"calculation": {"calculations": {"genotype_stats": {"info": "GQ"}}}}
+
+        # Create object
+        variants = Variants(
+            conn=None, input=input_vcf, output=output_vcf, param=param, load=True
+        )
+
+        # Calculation
+        variants.calculation()
+
+        result = variants.get_query_to_df(
+            """ SELECT INFO FROM variants WHERE INFO LIKE '%GQ_stats%' """
+        )
+        assert len(result) == 7
+
+        result = variants.get_query_to_df(
+            """ SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND INFO LIKE '%GQ_stats_nb=4%' """
+        )
+        assert len(result) == 1
+
+        result = variants.get_query_to_df(
+            """ SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND INFO LIKE '%GQ_stats_min=99.0%' """
+        )
+        assert len(result) == 1
+
+        result = variants.get_query_to_df(
+            """ SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND INFO LIKE '%GQ_stats_max=99.0%' """
+        )
+        assert len(result) == 1
+
+        result = variants.get_query_to_df(
+            """ SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND INFO LIKE '%GQ_stats_mean=99.0%' """
+        )
+        assert len(result) == 1
+
+        # Check if VCF is in correct format with pyVCF
+        remove_if_exists([output_vcf])
+        variants.export_output()
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
+
+
+
 @pytest.mark.parametrize(
     "options, expect_in_info_fields, expect_not_in_info_fields, expected_in_format_fields, expected_not_in_format_fields, pattern_format_column, pattern_samples_column_variant1, pattern_samples_column_variant2, pattern_samples_column_variant3, pattern_samples_column_variant4",
     [

@@ -1,12 +1,19 @@
 {
-  "pipeline": {
-    "steps":[
+  "pipelines_list": ["default"],
+  "pipelines": {
+    "default":[
         {"annotation_dbsnp": "annotation", "annotation_dbNSFP": "annotation"},
         {"annotation_hgvs": "annotation"},
         {"calculation": "calculation"},
         {"prioritization": "prioritization"},
         {"annotation_frequency": "annotation_parquet"},
         {"calculation_final": "calculation"}
+    ],
+    "default2":[
+        {"annotation_dbsnp": "annotation"},
+        {"annotation_dbNSFP": "annotation"},
+        {"calculation": "calculation"},
+        {"prioritization": "prioritization"}
     ]
   },
   "annotation_dbsnp": {
