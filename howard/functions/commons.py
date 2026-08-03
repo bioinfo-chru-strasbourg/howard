@@ -87,8 +87,8 @@ vcf_required_columns = ["#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "
 
 vcf_required = [vcf_required_release, "\t".join(vcf_required_columns)]
 
-default_pipeline = {
-    "steps": [
+default_pipelines = {
+    "default": [
         {"annotation": "annotation"},
         {"calculation": "calculation"},
         {"prioritization": "prioritization"},
@@ -97,7 +97,7 @@ default_pipeline = {
 
 list_pipeline_tool = [
     step_tool
-    for step in default_pipeline["steps"]
+    for step in default_pipelines["default"]
     for step_name in step
     for step_tool in [step[step_name]]
     if step_tool is not None
@@ -412,80 +412,105 @@ def load_param_and_config(args: argparse, command: str, strict: bool = False, lo
     return arguments_dict, config, param, vcfdata_obj
 
 
-def launch_pipeline(vcfdata_obj, param, allowed_tools=None):
+def launch_pipeline(vcfdata_obj, param, allowed_tools=None, pipelines_list=None):
     """
     The `launch_pipeline` function executes a series of steps defined in a pipeline, logging the
     progress and handling exceptions for each step.
     """
 
-    # Pipeline
-    pipeline = param.get("pipeline", default_pipeline)
-    steps = pipeline.get("steps", [])
-    log.debug(f"{param=}")
+    # Pipelines
+    pipelines = param.get("pipelines", default_pipelines)
 
-    # filter steps by allowed tools, and remove completly empty dictionaries
-    if allowed_tools is not None:
-        steps = [
-            step
-            for step in steps
-            if any(
-                step.get(step_name, "annotation") in allowed_tools
-                for step_name in step
-            )
-        ]
+    # Pipelines list
+    if pipelines_list is None:
+        pipelines_list = param.get("pipelines_list", None) or list(pipelines.keys())
+    
+    # Check if pipelines_list is a string and split it into a list if necessary
+    if isinstance(pipelines_list, str):
+        pipelines_list = pipelines_list.split(",")
 
     # Start pipeline
-    log.debug("START pipeline")
-    step_i = 0
+    log.debug("START pipelines")
+    pipeline_i = 0
 
-    for step in steps:
-    
-        # Increment step index
-        step_i += 1
-    
+    for pipeline in pipelines_list:
+
+        # Check if pipeline exists in pipelines
+        if pipeline not in pipelines:
+            msg_err = f"Pipeline '{pipeline}' not found in pipelines."
+            log.error(msg_err)
+            raise ValueError(msg_err)
+
         # Log
-        log.debug(f"Processing step: {step} [{step_i}/{len(steps)}]")
-    
-        # Iterate through the steps
-        for step_name in step:
+        pipeline_i += 1
+        log.info(f"Processing pipeline '{pipeline}' [{pipeline_i}/{len(pipelines_list)}]")
 
-            # Get step tool
-            step_tool = get_step_tool(param, step, step_name, default_tool="annotation")
-            
-            
-            if allowed_tools is None or step_tool in allowed_tools:
+        # Get steps for this pipeline
+        steps = pipelines.get(pipeline, [])
 
-                # Get step param
-                step_param = get_step_param(param, step, step_name)
+        # filter steps by allowed tools, and remove completly empty dictionaries
+        if allowed_tools is not None:
+            steps = [
+                step
+                for step in steps
+                if any(
+                    #step.get(step_name, "annotation") in allowed_tools
+                    get_step_tool(param, step, step_name, default_tool="annotation") in allowed_tools
+                    for step_name in step
+                )
+            ]
+
+        log.debug(f"Pipeline steps: {steps}")
+        step_i = 0
+
+        for step in steps:
+        
+            # Increment step index
+            step_i += 1
+        
+            # Log
+            log.debug(f"Processing step: {step} [{step_i}/{len(steps)}]")
+        
+            # Iterate through the steps
+            for step_name in step:
+
+                # Get step tool
+                step_tool = get_step_tool(param, step, step_name, default_tool="annotation")
                 
-                # Update param for this step: include the step param in the main param, and set it to the vcfdata_obj
-                param_for_step = param.copy()
-                step_name_for_step = f"{step_name}_{get_random()}"
-                param_for_step[step_name_for_step] = step_param
-                vcfdata_obj.set_param(param_for_step)
+                if allowed_tools is None or step_tool in allowed_tools:
 
-                # Get step description
-                step_description = get_step_description(param_for_step, step, step_name, default_description="Unknown description")
+                    # Get step param
+                    step_param = get_step_param(param, step, step_name)
+                    
+                    # Update param for this step: include the step param in the main param, and set it to the vcfdata_obj
+                    param_for_step = param.copy()
+                    step_name_for_step = f"{step_name}_{get_random()}"
+                    param_for_step[step_name_for_step] = step_param
+                    vcfdata_obj.set_param(param_for_step)
 
-                # Log
-                log.info(f"Processing pipeline [{step_i}/{len(steps)}] - '{step_name}' [{step_tool}]: {step_description}")
-                if step_name_for_step not in param_for_step:
-                    log.warning(f"Processing pipeline [{step_i}/{len(steps)}] - '{step_name}' [{step_tool}] - Not found in JSON parameters. Try without...")
+                    # Get step description
+                    #step_description = get_step_description(param_for_step, step, step_name, default_description="Unknown description")
+                    step_description = get_step_description(param_for_step, step, step_name, default_description="")
 
-                # Run step: eval the function with the step name and tool
-                try:
-                    eval(f"vcfdata_obj.{step_tool}(section='{step_name_for_step}')")
-                    log.debug(f"Processing pipeline [{step_i}/{len(steps)}] - '{step_name}' [{step_tool}] completed successfully.")
-                except Exception as e:
-                    msg_err = f"Error processing step '{step_name}' with tool '{step_tool}': {str(e)}"
-                    log.error(msg_err)
-                    raise ValueError(msg_err)
-                
-                # Reverse to original param: remove the step param from the main param, and set it to the vcfdata_obj
-                vcfdata_obj.set_param(param)
-                
-            else:
-                log.warning(f"Processing pipeline [{step_i}/{len(steps)}] - '{step_name}' [{step_tool}] not in {allowed_tools}, skipping.")
+                    # Log
+                    log.info(f"Processing pipeline '{pipeline}' [{pipeline_i}/{len(pipelines_list)}] - steps [{step_i}/{len(steps)}] - '{step_name}' [{step_tool}] {step_description}")
+                    if step_name_for_step not in param_for_step:
+                        log.warning(f"Processing pipeline '{pipeline}' [{pipeline_i}/{len(pipelines_list)}] - steps [{step_i}/{len(steps)}] - '{step_name}' [{step_tool}] - Not found in JSON parameters. Try without...")
+
+                    # Run step: eval the function with the step name and tool
+                    try:
+                        eval(f"vcfdata_obj.{step_tool}(section='{step_name_for_step}')")
+                        log.debug(f"Processing pipeline '{pipeline}' [{pipeline_i}/{len(pipelines_list)}] - steps [{step_i}/{len(steps)}] - '{step_name}' [{step_tool}] completed successfully.")
+                    except Exception as e:
+                        msg_err = f"Error processing step '{step_name}' with tool '{step_tool}': {str(e)}"
+                        log.error(msg_err)
+                        raise ValueError(msg_err)
+                    
+                    # Reverse to original param: remove the step param from the main param, and set it to the vcfdata_obj
+                    vcfdata_obj.set_param(param)
+                    
+                else:
+                    log.warning(f"Processing pipeline '{pipeline}' [{pipeline_i}/{len(pipelines_list)}] - steps [{step_i}/{len(steps)}] - '{step_name}' [{step_tool}] not in {allowed_tools}, skipping.")
 
     log.debug("END pipeline")
 

@@ -161,6 +161,16 @@ arguments = {
             },
         },
     },
+    "pipelines_list": {
+        "metavar": "pipelines_list",
+        "help": """List of pipelines to process. Pipelines are defined in parameters JSON file\n""" """(e.g. 'pipeline1,pipeline2').\n""",
+        "default": None,
+        "type": str,
+        "gooey": {
+            "widget": "Textarea",
+            "options": {"initial_value": ""},
+        },
+    },
     "query": {
         "metavar": "query",
         "help": """Query in SQL format\n"""
@@ -2040,7 +2050,12 @@ commands_arguments = {
         """   howard query --input=tests/data/example.vcf.gz --param=config/param.json \n"""
         """    \n""",
         "groups": {
-            "main": {"input": False, "output": False, "param": False, "query": False},
+            "main": {
+                "input": False,
+                "output": False,
+                "param": False,
+                "query": False
+            },
             "Explode": {
                 "explode_infos": False,
                 "explode_infos_prefix": False,
@@ -2051,7 +2066,10 @@ commands_arguments = {
                 "query_print_mode": False,
                 "interactive_mode": False,
             },
-            "Export": {"include_header": False, "parquet_partitions": False},
+            "Export": {
+                "include_header": False,
+                "parquet_partitions": False
+            },
         },
     },
     "filter": {
@@ -2073,7 +2091,10 @@ commands_arguments = {
                 "filter": False,
                 "samples": False,
             },
-            "Export": {"include_header": False, "parquet_partitions": False},
+            "Export": {
+                "include_header": False,
+                "parquet_partitions": False
+            },
         },
     },
     "sort": {
@@ -2088,7 +2109,10 @@ commands_arguments = {
                 "input": True,
                 "output": True,
             },
-            "Export": {"include_header": False, "parquet_partitions": False},
+            "Export": {
+                "include_header": False,
+                "parquet_partitions": False
+            },
         },
     },
     "stats": {
@@ -2102,7 +2126,10 @@ commands_arguments = {
         """   howard stats --input=tests/data/example.vcf.gz --param=config/param.json \n"""
         """    \n""",
         "groups": {
-            "main": {"input": True, "param": False},
+            "main": {
+                "input": True,
+                "param": False
+            },
             "Stats": {
                 "stats_stdout": False,
                 "stats_md": False,
@@ -2125,7 +2152,11 @@ commands_arguments = {
         """   howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv --param=config/param.json \n"""
         """    \n""",
         "groups": {
-            "main": {"input": True, "output": True, "param": False},
+            "main": {
+                "input": True,
+                "output": True,
+                "param": False
+            },
             "Explode": {
                 "explode_infos": False,
                 "explode_infos_prefix": False,
@@ -2152,6 +2183,7 @@ commands_arguments = {
                 "input": True,
                 "output": True,
                 "param": False,
+                "pipelines_list": False,
                 "hgvs_options": False,
                 "assembly": False,
             },
@@ -2164,11 +2196,7 @@ commands_arguments = {
                 "codon_type": False,
                 "refgene": False,
                 "refseqlink": False,
-            },
-            # "Databases": {
-            #     "refseq-folder": False,
-            #     "genomes-folder": False
-            # }
+            }
         },
     },
     "annotation": {
@@ -2193,6 +2221,7 @@ commands_arguments = {
                 "input": True,
                 "output": True,
                 "param": False,
+                "pipelines_list": False,
                 "annotations": False,
                 "annotation_parquet": False,
                 "annotation_bcftools": False,
@@ -2228,6 +2257,7 @@ commands_arguments = {
                 "input": False,
                 "output": False,
                 "param": False,
+                "pipelines_list": False,
                 "calculations": False,
             },
             "Calculation": {
@@ -2235,9 +2265,16 @@ commands_arguments = {
                 "show_calculations": False,
                 "show_calculations_md": False,
             },
-            "NOMEN": {"hgvs_field": False, "transcripts": False},
-            "TRIO": {"trio_pedigree": False},
-            "BARCODEFAMILY": {"family_pedigree": False},
+            "NOMEN": {
+                "hgvs_field": False,
+                "transcripts": False
+            },
+            "TRIO": {
+                "trio_pedigree": False
+            },
+            "BARCODEFAMILY": {
+                "family_pedigree": False
+            },
         },
     },
     "prioritization": {
@@ -2254,6 +2291,7 @@ commands_arguments = {
                 "input": True,
                 "output": True,
                 "param": False,
+                "pipelines_list": False,
                 "prioritizations": False,
             },
             "Prioritization": {
@@ -2285,6 +2323,7 @@ commands_arguments = {
                 "input": True,
                 "output": True,
                 "param": False,
+                "pipelines_list": False,
                 "hgvs_options": False,
                 "annotations": False,
                 "calculations": False,

@@ -50,6 +50,19 @@ Concordance of genotype for multi caller VCF
 
 Concordance of genotype for multi caller VCF. This calculation assesses the concordance of genotypes for a given variant across multiple callers in a multi-caller VCF file. It helps in evaluating the consistency of genotype calls and can be used to identify variants with high confidence based on agreement among different callers.
 
+## GENOTYPE_STATS
+
+Calculate genotype statistics on a specific genotype field (e.g. VAF, DP, GQ...)
+
+Calculate genotype statistics on a specific genotype field (e.g. VAF, DP, GQ...). This calculation computes statistical measures for a specified genotype field across different samples, providing insights into the distribution and variability of the chosen genotype metric.
+
+Options for this calculation can be specified in the JSON parameter file, directly in the calculation parameters (see help.parameters.md). The parameter 'info' allows for the specification of the genotype field to be analyzed. For example, to calculate statistics for the GQ field, you can specify:
+
+```json
+{ "info": "GQ" }
+```
+If no 'info' parameter is provided, the calculation will default to analyzing the VAF field. Other genotype fields can be specified as needed, such as DP (Depth), GQ (Genotype Quality), etc., by providing the appropriate field name in the 'info' parameter.
+
 ## INFO_TO_FORMAT
 
 INFO to FORMAT conversion
@@ -221,6 +234,12 @@ Create a variant ID with chromosome, position, alt and ref
 
 This calculation generates a variant ID with chromosome, position, alt and ref, with format '#CHROM_POS_REF_ALT'. Useful for variant identification and comparison across datasets
 
+## VARIANT_FILTER
+
+Filter variants based on specified criteria (using SQL parameters)
+
+Filter variants based on specified criteria. This calculation allows for the filtering of variants using SQL-like parameters specified in the JSON parameter file, either in the 'variants' section or directly in the calculation parameters (see help.parameters.md), including options for the filtering conditions and any additional criteria to apply during the filtering process.
+
 ## VARIANT_ID
 
 Variant ID generated from variant position and type
@@ -250,3 +269,15 @@ Variant ID generated from variant position and variation (ref and alt) and type 
 Variant type (e.g. SNV, INDEL, MNV, BND...)
 
 Determine the type of variant based on its characteristics, such as the length of the reference and alternate alleles, and the presence of structural variant information. This calculation classifies variants into types like SNV, INDEL, MNV, BND, etc., which is essential for downstream analysis and interpretation.
+
+## VEP_EXTRACT
+
+HGVS nomenclatures from VEP annotation
+
+Extract HGVS nomenclatures from VEP annotation (field CSQ) and create new INFO fields with prefix 'vep_' (e.g. vep_hgvs, vep_impact, vep_gene_name...). This calculation parses the CSQ field from VEP annotations, extracting relevant information such as HGVS nomenclatures, impact, gene name, etc., and creates new INFO fields with a 'vep_' prefix for easier access and downstream analysis.
+
+## VEP_EXTRACT_REFSEQ
+
+HGVS nomenclatures from VEP annotation unsing RefSeq transcripts
+
+Extract HGVS nomenclatures from VEP annotation (field CSQ) and create new INFO fields with prefix 'vep_' (e.g. vep_hgvs, vep_impact, vep_gene_name...). This calculation parses the CSQ field from VEP annotations, extracting relevant information such as HGVS nomenclatures (with refSeq), impact, gene name, etc., and creates new INFO fields with a 'vep_' prefix for easier access and downstream analysis.
