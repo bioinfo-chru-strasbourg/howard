@@ -5098,30 +5098,81 @@ def clean_annotation_field(name: str = "", char_allowed: list = None) -> str:
     )
 
 
+def inside_docker_container() -> bool:
+    """
+    Check if we are inside a docker container
+    :return: True if inside docker container, False otherwise
+    """
+
+    # Check for /.dockerenv file
+    if os.path.exists("/.dockerenv"):
+        log.debug("Found /.dockerenv file, inside docker container")
+        return True
+    else:
+        log.debug("No /.dockerenv file found, check for cgroup file")
+
+    # Check for cgroup file
+    try:
+        with open("/proc/self/cgroup", "r") as f:
+            for line in f:
+                if "docker" in line:
+                    return True
+    except Exception as e:
+        log.debug(f"Error checking cgroup file: {e}")
+        log.debug("No cgroup file found, not inside docker container")
+
+    log.debug("Not inside docker container")
+    return False
+
+def get_container_id() -> str:
+    """
+    Get container ID from within container
+    :return: string containing container ID
+    """
+
+    container_id = None
+
+    import socket
+    container_id = socket.gethostname()
+
+    # Check for cgroup file or cpuset file
+    if not container_id:
+        container_id = command(
+            r"cat /proc/self/cgroup | grep 'docker' | sed 's/^.*\///' | tail -n1"
+        )
+    if not container_id:
+        container_id = command("cat /proc/1/cpuset | cut -d/ -f3")
+    
+    return container_id
+
 def docker_automount() -> str:
     """
      Add needed volume to the tool container, check first if we are already inside one otherwise return empty string
     :param containerid: for other linux distribution catch container mount from container ID
     :return: string containing volume to add
     """
-    if not os.path.exists("/.dockerenv"):
-        log.warning("Not inside docker container, block automount option")
+
+    #if not os.path.exists("/.dockerenv"):
+    if not inside_docker_container():
+        log.debug("Not inside docker container, block automount option")
         return ""
+    else:
+        log.debug("Inside docker container, check for automount volumes")
 
-    container_id = command(
-        r"cat /proc/self/cgroup | grep 'docker' | sed 's/^.*\///' | tail -n1"
-    )
-    if not container_id:
-        container_id = command("cat /proc/1/cpuset | cut -d/ -f3")
-    if not container_id:
-        raise ValueError("Can't get container ID from within container EXIT")
+    # Get container ID
+    container_id = get_container_id()
 
-    mounts_new = ""
-    mounts = json.loads(command(f"docker inspect -f json {container_id}"))[0]["Mounts"]
-    for volume in mounts:
-        if "sock" not in volume.get("Source") and "tmp" not in volume.get("Source"):
-            mounts_new += f" -v {volume.get('Source')}:{volume.get ('Destination')}:{volume.get('Mode')}"
-    return mounts_new
+    if container_id is None:
+        log.debug(f"No Container ID found, block automount option")
+        return ""
+    else:
+        log.debug(f"Container ID '{container_id}' found, check for automount volumes")
+        mounts_new = ""
+        mounts = json.loads(command(f"docker inspect -f json {container_id}"))[0]["Mounts"]
+        for volume in mounts:
+            if "sock" not in volume.get("Source") and "tmp" not in volume.get("Source"):
+                mounts_new += f" -v {volume.get('Source')}:{volume.get ('Destination')}:{volume.get('Mode')}"
+        return mounts_new
 
 
 # Sort contig function

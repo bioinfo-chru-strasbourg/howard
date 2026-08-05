@@ -91,7 +91,9 @@ def test_annotation_splice():
     # Param
     param = PARAM
 
-    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+    # User "/tmp" folder for temporary files, because of Docker mount issues with a folder that is not mounted in the container (e.g., /home/user/howard/tests)
+    #with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+    with TemporaryDirectory(dir="/tmp") as tmp_dir:
 
         # Param
         param["annotation"]["splice"]["options"]["output_folder"] = tmp_dir

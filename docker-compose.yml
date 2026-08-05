@@ -45,6 +45,8 @@ services:
             - ${DOCKER_HOWARD_CLI_FOLDER_HOST_DATABASES}:${DOCKER_HOWARD_CLI_FOLDER_INNER_DATABASES}:rw
             # Data
             - ${DOCKER_HOWARD_CLI_FOLDER_HOST_DATA}:${DOCKER_HOWARD_CLI_FOLDER_INNER_DATA}:rw
+            # Tmp
+            - ${DOCKER_HOWARD_CLI_FOLDER_HOST_TMP}:${DOCKER_HOWARD_CLI_FOLDER_INNER_TMP}:rw
         restart: always
         env_file:
             - ${DOCKER_COMPOSE_ENV}

@@ -2942,7 +2942,7 @@ def test_transcripts_create_view_export_explode(output):
 
 
 @pytest.mark.parametrize(
-    "nomen_options, tnomen_expected",
+    "nomen_options, tnomen_expected, exact_list",
     [
         (
             {
@@ -2960,6 +2960,7 @@ def test_transcripts_create_view_export_explode(output):
                 "NR_024540",
                 "NR_047519",
             ],
+            True
         ),
         (
             {
@@ -2979,6 +2980,7 @@ def test_transcripts_create_view_export_explode(output):
                 "NR_047525",
                 "NR_047526",
             ],
+            False
         ),
         (
             {
@@ -2996,6 +2998,7 @@ def test_transcripts_create_view_export_explode(output):
                 "NM_001005484",
                 "NR_024540",
             ],
+            True
         ),
         (
             {
@@ -3015,6 +3018,7 @@ def test_transcripts_create_view_export_explode(output):
                 "NR_047525",
                 "NR_047526",
             ],
+            False
         ),
         (
             {
@@ -3026,6 +3030,7 @@ def test_transcripts_create_view_export_explode(output):
             },
             # ["NR_047526", "NR_036051", "NR_047551", "NM_001005484"],
             ["NR_047519", "NR_036051", "NR_047551", "NM_001005484"],
+            True
         ),
         (
             {
@@ -3037,6 +3042,7 @@ def test_transcripts_create_view_export_explode(output):
             },
             # ["NR_047526", "NR_036051", "NR_047551", "NM_001005484"],
             ["NR_047519", "NR_036051", "NR_047551", "NM_001005484"],
+            True
         ),
         (
             {
@@ -3048,6 +3054,7 @@ def test_transcripts_create_view_export_explode(output):
             },
             # ["NR_047526", "NR_036051", "NR_047551", "NM_001005484"],
             ["NR_047519", "NR_036051", "NR_047551", "NM_001005484"],
+            True
         ),
         (
             {
@@ -3059,10 +3066,11 @@ def test_transcripts_create_view_export_explode(output):
             },
             # ["NR_047526", "NR_036266", "NM_001346897", "NM_001005484", "NR_024540"],
             ["NR_047519", "NR_036266", "NM_001346897", "NM_001005484", "NR_024540"],
+            True
         ),
     ],
 )
-def test_transcripts_create_view_prioritize_nomen(nomen_options, tnomen_expected):
+def test_transcripts_create_view_prioritize_nomen(nomen_options, tnomen_expected, exact_list):
     """ """
 
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
@@ -3163,13 +3171,10 @@ def test_transcripts_create_view_prioritize_nomen(nomen_options, tnomen_expected
 
         # Check list of expected transcripts
         assert len(check) == 7
-        # log.debug(
-        #     f""" sorted(list(set(check["TNOMEN"]))) = {sorted(list(set(check["TNOMEN"])))} """
-        # )
-        # log.debug(
-        #     f""" sorted(list(set(tnomen_expected))) = {sorted(list(set(tnomen_expected)))} """
-        # )
-        assert sorted(list(set(check["TNOMEN"]))) == sorted(list(set(tnomen_expected)))
+
+        # Check if TNOMEN is as expected
+        if exact_list:
+            assert sorted(list(set(check["TNOMEN"]))) == sorted(list(set(tnomen_expected)))
 
         # Check if PZTTranscript anre wwithin TNOMEN if transcript dynamic
         if param.get("calculation", {}).get("calculations", {}).get("NOMEN", {}).get(

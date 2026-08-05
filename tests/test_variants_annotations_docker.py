@@ -12,9 +12,11 @@ from howard.functions.commons import (
     get_assembly_mapping_config,
     normalize_assembly_mapping_source,
     resolve_assembly_mapping,
+    inside_docker_container
 )
 from howard.objects.variants_mixin import annotation_docker as annotation_docker_module
 from howard.objects.variants_mixin.annotation_docker import (
+    _translate_mount_item_host_path,
     _resolve_entry_assembly,
     _resolve_entry_genome,
     _resolve_entry_spec,
@@ -367,3 +369,113 @@ def test_prepare_docker_command_deduplicates_genome_mount(monkeypatch, base_conf
     genome_mount = f"-v {base_config['folders']['databases']['genomes']}/hg19.fa:{base_config['folders']['databases']['genomes']}/hg19.fa:ro"
     assert docker_cmd.count(genome_mount) == 1
     assert f"-v {tmp_path}:{tmp_path}:rw" in docker_cmd
+
+
+def test_translate_mount_item_host_path_from_parent_mounts():
+    parent_mounts = [
+        {
+            "host_path": "/home/howard/databases",
+            "container_path": "/root/howard/databases",
+        }
+    ]
+
+    translated = _translate_mount_item_host_path(
+        {
+            "host_path": "/root/howard/databases/vep/current/hg19",
+            "container_path": "/opt/vep/.vep",
+            "mode": "ro",
+        },
+        parent_mounts,
+    )
+
+    assert translated == {
+        "host_path": "/home/howard/databases/vep/current/hg19",
+        "container_path": "/opt/vep/.vep",
+        "mode": "ro",
+    }
+
+
+def test_prepare_docker_command_adds_volumes_from_inside_container(monkeypatch, base_config: dict, tmp_path: Path):
+    dummy = DummyDocker(config=base_config, tmp_dir=str(tmp_path))
+    spec = {
+        "tool": "vep",
+        "threads": 4,
+        "memory": "8G",
+        "mounts": [],
+        "databases": [],
+        "paths": [],
+        "genome_mounts": [],
+    }
+
+    monkeypatch.setattr(annotation_docker_module, "inside_docker_container", lambda: True)
+    monkeypatch.setattr(annotation_docker_module, "get_container_id", lambda: "howard-cli")
+    monkeypatch.setattr(
+        annotation_docker_module,
+        "get_bin_command",
+        lambda **kwargs: kwargs["add_options"],
+    )
+
+    docker_cmd = dummy._prepare_docker_command(
+        config=base_config,
+        tool="vep",
+        spec=spec,
+        run_dir=str(tmp_path),
+        assembly="hg19",
+        entry_name="vep_entry",
+        command_in_container="vep --input_file input.vcf --output_file output.vcf.gz",
+    )
+
+    assert "--volumes-from howard-cli" in docker_cmd
+
+
+def test_prepare_docker_command_translates_specific_db_mount_to_host(monkeypatch, base_config: dict, tmp_path: Path):
+
+    if inside_docker_container():
+
+        config = {
+            **base_config,
+            "tools": {
+                **base_config["tools"],
+                "vep": {
+                    "docker": {
+                        **base_config["tools"]["vep"]["docker"],
+                        "options": "-v /home/databases:/root/howard/databases:rw",
+                    }
+                },
+            },
+        }
+
+        dummy = DummyDocker(config=config, tmp_dir=str(tmp_path))
+        spec = {
+            "tool": "vep",
+            "threads": 4,
+            "memory": "8G",
+            "mounts": [],
+            "databases": [
+                {
+                    "path": "/root/howard/databases/vep/current",
+                    "container_path": "/opt/vep/.vep",
+                }
+            ],
+            "paths": [],
+            "genome_mounts": [],
+        }
+
+        monkeypatch.setattr(
+            annotation_docker_module,
+            "get_bin_command",
+            lambda **kwargs: kwargs["add_options"],
+        )
+
+        docker_cmd = dummy._prepare_docker_command(
+            config=config,
+            tool="vep",
+            spec=spec,
+            run_dir=str(tmp_path),
+            assembly="hg19",
+            entry_name="vep_online",
+            command_in_container="vep --input_file input.vcf --output_file output.vcf.gz",
+        )
+
+        assert "-v /home/databases/vep/current/hg19:/opt/vep/.vep:ro" in docker_cmd
+        assert "-v /root/howard/databases/vep/current/hg19:/opt/vep/.vep:ro" not in docker_cmd

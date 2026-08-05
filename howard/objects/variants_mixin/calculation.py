@@ -90,13 +90,15 @@ class variants_calculation:
                 "output_column_description": "Merge HGVS nomenclatures from snpEff (snpeff_hgvs) and ANNOVAR (AAChange_refGene) into merged_hgvs field",
                 "operation_query": """
                         list_aggregate(
-                            list_distinct(
-                                list_reduce(
-                                    [
-                                        "snpeff_hgvs",
-                                        "AAChange_refGene",
-                                    ],
-                                    (a, b) -> list_concat(a, b)
+                            list_sort(
+                                list_distinct(
+                                    list_reduce(
+                                        [
+                                            "snpeff_hgvs",
+                                            "AAChange_refGene",
+                                        ],
+                                        (a, b) -> list_concat(a, b)
+                                    )
                                 )
                             ),
                             'string_agg',
