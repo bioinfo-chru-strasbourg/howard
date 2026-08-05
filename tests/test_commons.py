@@ -520,7 +520,10 @@ def test_get_bin_command_splice(config, modifier):
         .get("config", {})
         .get("automount", "")
     ):
-        assert "-v" not in tool_command
+        if inside_docker_container():
+            assert "-v" in tool_command
+        else:
+            assert "-v" not in tool_command
 
 
 def test_get_bin_command_snpeff():
