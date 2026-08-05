@@ -14,10 +14,13 @@ from howard.functions.commons import (
 	DEFAULT_TOOLS_FOLDER,
 	check_docker_image_exists,
 	command,
+	docker_automount,
 	extract_memory_in_go,
+	get_container_id,
 	get_bin_command,
 	get_random,
 	get_assembly_mapping_config,
+	inside_docker_container,
 	find_genome,
 	normalize_assembly_mapping_source,
 	resolve_assembly_mapping,
@@ -152,6 +155,200 @@ def _merge_cli_param_blocks(
 
 def _expand_path(path: str) -> str:
 	return os.path.abspath(os.path.expanduser(path))
+
+
+def _split_mount_spec(mount_spec: str) -> tuple[str | None, str | None]:
+	"""Split a Docker mount spec string into host and container paths."""
+
+	if not mount_spec:
+		return None, None
+
+	parts = str(mount_spec).split(":")
+	if len(parts) < 2:
+		return None, None
+
+	host_path = parts[0].strip()
+	container_path = parts[1].strip()
+	if not host_path or not container_path:
+		return None, None
+
+	return _expand_path(host_path), os.path.normpath(container_path)
+
+
+def _extract_mounts_from_option_string(options: str | None) -> list[dict[str, str]]:
+	"""Extract mount mappings from a Docker options string ("-v src:dst[:mode]")."""
+
+	mounts: list[dict[str, str]] = []
+	if not options:
+		return mounts
+
+	try:
+		tokens = shlex.split(str(options))
+	except Exception:
+		return mounts
+
+	i = 0
+	while i < len(tokens):
+		token = tokens[i]
+		mount_spec = None
+
+		if token in ["-v", "--volume"] and i + 1 < len(tokens):
+			mount_spec = tokens[i + 1]
+			i += 2
+		elif token.startswith("-v") and token != "-v":
+			mount_spec = token[2:]
+			i += 1
+		elif token.startswith("--volume="):
+			mount_spec = token.split("=", 1)[1]
+			i += 1
+		else:
+			i += 1
+
+		if not mount_spec:
+			continue
+
+		host_path, container_path = _split_mount_spec(mount_spec)
+		if not host_path or not container_path:
+			continue
+
+		mounts.append({"host_path": host_path, "container_path": container_path})
+
+	return mounts
+
+
+def _path_is_same_or_child(path: str, parent: str) -> bool:
+	path_norm = os.path.normpath(path)
+	parent_norm = os.path.normpath(parent)
+	if path_norm == parent_norm:
+		return True
+	if parent_norm == os.sep:
+		return path_norm.startswith(os.sep)
+	return path_norm.startswith(parent_norm + os.sep)
+
+
+def _translate_path_from_parent_mounts(path: str, mounts: list[dict[str, str]]) -> str:
+	"""
+	Translate a container-visible path to a host path using parent mount mappings.
+
+	If no mapping applies, the original path is returned unchanged.
+	"""
+
+	if not path:
+		return path
+
+	path_abs = _expand_path(path)
+	best_match = None
+	best_container_len = -1
+
+	for mount in mounts:
+		host_path = mount.get("host_path", "")
+		container_path = mount.get("container_path", "")
+		if not host_path or not container_path:
+			continue
+
+		container_norm = os.path.normpath(container_path)
+		if not _path_is_same_or_child(path_abs, container_norm):
+			continue
+
+		container_len = len(container_norm)
+		if container_len > best_container_len:
+			best_container_len = container_len
+			best_match = (host_path, container_norm)
+
+	if not best_match:
+		return path_abs
+
+	host_root, container_root = best_match
+	rel_path = os.path.relpath(path_abs, container_root)
+	if rel_path == ".":
+		return host_root
+
+	return _expand_path(os.path.join(host_root, rel_path))
+
+
+def _collect_parent_mount_mappings(config: dict, tool: str) -> list[dict[str, str]]:
+	"""Collect parent mount mappings usable for path translation."""
+
+	mappings: list[dict[str, str]] = []
+
+	tool_options = (
+		config.get("tools", {})
+		.get(tool, {})
+		.get("docker", {})
+		.get("options", "")
+	)
+	mappings.extend(_extract_mounts_from_option_string(tool_options))
+
+	global_options = config.get("docker", {}).get("options", "")
+	mappings.extend(_extract_mounts_from_option_string(global_options))
+
+	try:
+		if inside_docker_container():
+			mappings.extend(_extract_mounts_from_option_string(docker_automount()))
+	except Exception as exc:
+		log.debug(f"annotation_docker: unable to collect container automount mappings: {exc}")
+
+	unique: dict[tuple[str, str], dict[str, str]] = {}
+	for mapping in mappings:
+		host_path = mapping.get("host_path", "")
+		container_path = mapping.get("container_path", "")
+		if not host_path or not container_path:
+			continue
+		key = (_expand_path(host_path), os.path.normpath(container_path))
+		unique[key] = {"host_path": key[0], "container_path": key[1]}
+
+	# Longest container prefix first so specific parent mounts win.
+	return sorted(unique.values(), key=lambda item: len(item["container_path"]), reverse=True)
+
+
+def _translate_mount_item_host_path(mount_item: Any, parent_mounts: list[dict[str, str]]) -> Any:
+	"""Translate host_path/path in mount items from container paths to host paths."""
+
+	if not parent_mounts:
+		return mount_item
+
+	if isinstance(mount_item, dict):
+		translated = dict(mount_item)
+		if "host_path" in translated and translated.get("host_path"):
+			translated["host_path"] = _translate_path_from_parent_mounts(
+				str(translated["host_path"]),
+				parent_mounts,
+			)
+		elif "path" in translated and translated.get("path"):
+			translated["path"] = _translate_path_from_parent_mounts(
+				str(translated["path"]),
+				parent_mounts,
+			)
+		return translated
+
+	if isinstance(mount_item, str):
+		return _translate_mount_string_host_path(mount_item, parent_mounts)
+
+	return mount_item
+
+
+def _translate_mount_string_host_path(
+	mount_string: str,
+	parent_mounts: list[dict[str, str]],
+) -> str:
+	"""Translate host-side path in a string mount item."""
+
+	mount_str = mount_string.strip()
+	if not mount_str:
+		return mount_string
+
+	if not mount_str.startswith("-v "):
+		return _translate_path_from_parent_mounts(mount_str, parent_mounts)
+
+	mount_spec = mount_str[3:].strip()
+	host_path, container_path = _split_mount_spec(mount_spec)
+	if not host_path or not container_path:
+		return mount_string
+
+	translated_host = _translate_path_from_parent_mounts(host_path, parent_mounts)
+	# Keep the original mode/destination formatting from the original mount spec.
+	remainder = mount_spec.split(":", 1)[1]
+	return f"-v {translated_host}:{remainder}"
 
 
 def _path_contains_assembly(path: str, assembly: str) -> bool:
@@ -965,10 +1162,13 @@ class variants_annotation_docker:
 			for var in ["https_proxy", "http_proxy", "ftp_proxy"]
 			if os.getenv(var) is not None
 		]
-		entry_mounts = [f"-v {run_dir}:{run_dir}:rw"]
-		seen_mount_hosts: set[str] = {run_dir}
+		parent_mounts = _collect_parent_mount_mappings(config=config, tool=tool)
+		run_dir_host = _translate_path_from_parent_mounts(run_dir, parent_mounts)
+		entry_mounts = [f"-v {run_dir_host}:{run_dir}:rw"]
+		seen_mount_hosts: set[str] = {run_dir_host}
 
 		for mount in spec["mounts"]:
+			mount = _translate_mount_item_host_path(mount, parent_mounts)
 			_append_unique_mount(
 				mounts=entry_mounts,
 				mount_item=mount,
@@ -982,6 +1182,7 @@ class variants_annotation_docker:
 			databases_value=spec.get("databases", []),
 			assembly=assembly,
 		):
+			db_path = _translate_mount_item_host_path(db_path, parent_mounts)
 			_append_unique_mount(
 				mounts=entry_mounts,
 				mount_item=db_path,
@@ -990,6 +1191,7 @@ class variants_annotation_docker:
 			)
 
 		for path_item in spec.get("paths", []):
+			path_item = _translate_mount_item_host_path(path_item, parent_mounts)
 			_append_unique_mount(
 				mounts=entry_mounts,
 				mount_item=path_item,
@@ -998,6 +1200,7 @@ class variants_annotation_docker:
 			)
 
 		for genome_mount in spec.get("genome_mounts", []):
+			genome_mount = _translate_mount_item_host_path(genome_mount, parent_mounts)
 			_append_unique_mount(
 				mounts=entry_mounts,
 				mount_item=genome_mount,
@@ -1006,8 +1209,26 @@ class variants_annotation_docker:
 			)
 
 		run_name = f"HOWARD-ANNOT-{entry_name}-{get_random()}"
-		docker_add_options = (
-			f"--name {run_name} {' '.join(entry_mounts)} {' '.join(proxy)}"
+		volumes_from_option = ""
+		try:
+			if inside_docker_container():
+				parent_container_id = get_container_id()
+				if parent_container_id:
+					volumes_from_option = f"--volumes-from {parent_container_id}"
+		except Exception as exc:
+			log.warning(
+				f"annotation_docker entry '{entry_name}': unable to resolve parent container for --volumes-from ({exc})"
+			)
+
+		docker_add_options = " ".join(
+			part
+			for part in [
+				f"--name {run_name}",
+				volumes_from_option,
+				" ".join(entry_mounts),
+				" ".join(proxy),
+			]
+			if part
 		)
 
 		return get_bin_command(
