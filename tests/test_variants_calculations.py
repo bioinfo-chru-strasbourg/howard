@@ -3008,27 +3008,124 @@ def test_calculation_variant_id(
             assert False
 
 @pytest.mark.parametrize(
-    "where_clause, expected_nb_variant",
+    "input_vcf, filter_name, where_clause, expected_nb_variant, sample_list, genotype_filter",
     [
         (
-            None, 7
+            tests_data_folder + "/example.vcf.gz",
+            "No filter on variants",
+            None,
+            7,
+            [],
+            False
         ),
         (
-            "", 7
+            tests_data_folder + "/example.vcf.gz",
+            "No filter on variants with empty where clause",
+            "",
+            7,
+            [],
+            False
         ),
         (
-            "\"#CHROM\" = 'chr1'", 6
+            tests_data_folder + "/example.vcf.gz",
+            "Filter on chromosome 1",
+            "\"#CHROM\" = 'chr1'",
+            6,
+            [],
+            False
         ),
         (
-            "CLNSIG = 'pathogenic'", 1
+            tests_data_folder + "/example.vcf.gz",
+            "Filter on CLNSIG with pathogenic value",
+            "CLNSIG = 'pathogenic'",
+            1,
+            [],
+            False
         ),
         (
-            "SAMPLES.sample1.DP >= 100 AND SAMPLES.sample2.DP >= 100", 2
-        )
+            tests_data_folder + "/example.vcf.gz",
+            "Filter on sample1 DP with value greater than 100",
+            "SAMPLES.sample1.DP >= 100 AND SAMPLES.sample2.DP >= 100",
+            2,
+            [],
+            False
+        ),
+        (
+            tests_data_folder + "/example.vcf.gz",
+            "Filter on samples with only sample1 and sample2",
+            "",
+            7,
+            ["sample1", "sample2"],
+            False
+        ),
+        (
+            tests_data_folder + "/example.vcf.gz",
+            "Filter on samples with only sample1 and sample2, with sample list as string",
+            "",
+            7,
+            "sample1,sample2",
+            False
+        ),
+        (
+            tests_data_folder + "/example.vcf.gz",
+            "Filter on chromosome 1 and on samples with only sample1 and sample2, with sample list as string",
+            "\"#CHROM\" = 'chr1'",
+            6,
+            "sample1,sample2",
+            False
+        ),
+        (
+            tests_data_folder + "/example.vcf.gz",
+            "Filter on chromosome 1 and on samples with only sample1 and sample2, with sample list as string",
+            "\"#CHROM\" = 'chr1'",
+            6,
+            "sample2",
+            False
+        ),
+        (
+            tests_data_folder + "/example.vcf.gz",
+            "Filter on chromosome 1 and on samples with only sample1 and sample2, with sample list as string, and with genotype filter",
+            "\"#CHROM\" = 'chr1'",
+            2,
+            "sample2",
+            True
+        ),
+        (
+            tests_data_folder + "/example.vcf.gz",
+            "Filter on chromosome 1 and on samples with only sample1 and sample2, with sample list as string",
+            "\"#CHROM\" = 'chr1'",
+            6,
+            "sample1,sample2",
+            False
+        ),
+        (
+            tests_data_folder + "/example.with_allowed_genotypes.vcf",
+            "Filter on chromosome 1 and on samples with only sample1 and sample2, with sample list as string, and with genotype filter",
+            "\"#CHROM\" = 'chr1'",
+            2,
+            "sample2,sample3",
+            True
+        ),
+        (
+            tests_data_folder + "/example.with_allowed_genotypes.vcf",
+            "Filter on samples with only sample2 and sample3, with sample list as string, and with genotype filter",
+            "",
+            3,
+            "sample2,sample3",
+            True
+        ),
+        (
+        tests_data_folder + "/example.with_allowed_genotypes.vcf",
+        "Filter only with genotype filter",
+        "",
+        7,
+        None,
+        True
+    ),
     ],
 )
 def test_calculation_variant_filter(
-    where_clause, expected_nb_variant
+    input_vcf, filter_name, where_clause, expected_nb_variant, sample_list, genotype_filter
 ):
     """
     This is a test function for the calculation of variant IDs in a VCF file using the Variants class in Python.
@@ -3037,12 +3134,20 @@ def test_calculation_variant_filter(
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
-        input_vcf = tests_data_folder + "/example.vcf.gz"
         output_vcf = f"{tmp_dir}/output.vcf.gz"
 
         # Construct param dict
         param = {
-            "calculation_test": {"calculations": {"variant_filter": {"where_clause": where_clause}}}
+            "calculation_test": {
+                "calculations": {
+                    "variant_filter": {
+                        "filter_name": filter_name,
+                        "where_clause": where_clause,
+                        "sample_list": sample_list,
+                        "genotype_filter": genotype_filter
+                    }
+                }
+            }
         }  # test custom tag name
 
         # Create object
@@ -3060,7 +3165,7 @@ def test_calculation_variant_filter(
         result = variants.get_query_to_df(
             f""" SELECT * FROM variants """
         )
-        assert len(result) == expected_nb_variant, f"Expected {expected_nb_variant} variants with where_clause '{where_clause}', but got {len(result)}"
+        assert len(result) == expected_nb_variant, f"Expected {expected_nb_variant} variants with filter_name '{filter_name}', but got {len(result)}"
 
         # Check if VCF is in correct format with pyVCF
         remove_if_exists([output_vcf])
