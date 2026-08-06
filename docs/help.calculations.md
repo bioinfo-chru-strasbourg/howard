@@ -236,9 +236,19 @@ This calculation generates a variant ID with chromosome, position, alt and ref, 
 
 ## VARIANT_FILTER
 
-Filter variants based on specified criteria (using SQL parameters)
+Filter variants based on specified criteria (using SQL parameters and sample list)
 
-Filter variants based on specified criteria. This calculation allows for the filtering of variants using SQL-like parameters specified in the JSON parameter file, either in the 'variants' section or directly in the calculation parameters (see help.parameters.md), including options for the filtering conditions and any additional criteria to apply during the filtering process.
+Filter variants based on specified criteria. This calculation allows for the filtering of variants using SQL-like parameters specified in the JSON parameter file in the calculation parameters (see help.parameters.md), including options for the filtering conditions and any additional criteria (such as a list of samples) to apply during the filtering process.
+Example that filter variants on ClinVar pathogenic, on DP >= 100 for 'sample1', selection of only 2 samples, and ensure only not null genotypes:
+
+```json
+{
+   "filter_name": "Filter on ClinVar pathogenic, DP for sample1, select only 2 samples, and ensure only not null genotypes",
+   "where_clause": "INFOS.CLNSIG = 'pathogenic' AND SAMPLES.sample1.DP >= 100",
+   "sample_list": ["sample1", "sample2"],
+   "genotype_filter": true
+}
+```
 
 ## VARIANT_ID
 

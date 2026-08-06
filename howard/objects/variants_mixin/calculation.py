@@ -537,7 +537,16 @@ class variants_calculation:
                 "name": "variant_filter",
                 "description": "Filter variants based on specified criteria (using SQL parameters and sample list)",
                 "comment": [
-                    "Filter variants based on specified criteria. This calculation allows for the filtering of variants using SQL-like parameters specified in the JSON parameter file in the calculation parameters (see help.parameters.md), including options for the filtering conditions and any additional criteria (such as a list of samples) to apply during the filtering process."
+                    "Filter variants based on specified criteria. This calculation allows for the filtering of variants using SQL-like parameters specified in the JSON parameter file in the calculation parameters (see help.parameters.md), including options for the filtering conditions and any additional criteria (such as a list of samples) to apply during the filtering process.\n"
+                    "Example that filter variants on ClinVar pathogenic, on DP >= 100 for 'sample1', selection of only 2 samples, and ensure only not null genotypes:\n",
+                    "```json",
+                    """{""",
+                    """   "filter_name": "Filter on ClinVar pathogenic, DP for sample1, select only 2 samples, and ensure only not null genotypes",""",
+                    """   "where_clause": "INFOS.CLNSIG = 'pathogenic' AND SAMPLES.sample1.DP >= 100",""",
+                    """   "sample_list": ["sample1", "sample2"],""",
+                    """   "genotype_filter": true""",
+                    """}""",
+                    "```",
                 ],
                 "available": True,
                 "function_name": "calculation_variant_filter",
