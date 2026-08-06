@@ -148,4 +148,5 @@ def download_needed_databases():
         files=annovar_files,
         assemblies=[assembly],
         force_check_dblist=True,
+        force_update=False
     )

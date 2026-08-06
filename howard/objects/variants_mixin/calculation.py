@@ -535,9 +535,9 @@ class variants_calculation:
             "variant_filter": {
                 "type": "python",
                 "name": "variant_filter",
-                "description": "Filter variants based on specified criteria (using SQL parameters)",
+                "description": "Filter variants based on specified criteria (using SQL parameters and sample list)",
                 "comment": [
-                    "Filter variants based on specified criteria. This calculation allows for the filtering of variants using SQL-like parameters specified in the JSON parameter file, either in the 'variants' section or directly in the calculation parameters (see help.parameters.md), including options for the filtering conditions and any additional criteria to apply during the filtering process."
+                    "Filter variants based on specified criteria. This calculation allows for the filtering of variants using SQL-like parameters specified in the JSON parameter file in the calculation parameters (see help.parameters.md), including options for the filtering conditions and any additional criteria (such as a list of samples) to apply during the filtering process."
                 ],
                 "available": True,
                 "function_name": "calculation_variant_filter",
@@ -3581,10 +3581,26 @@ class variants_calculation:
         self,
         section="calculation",
         where_clause: str = None,
+        sample_list: list = None,
+        filter_name: str = None,
+        genotype_filter: bool = None,
         **kwargs
     ) -> None:
         """
         Filter variants based on specified criteria (using SQL parameters)
+
+        :param section: The `section` parameter is a string that specifies the section of the configuration file to use for the calculation. It is used to retrieve the relevant parameters for the operation, defaults to "calculation"
+        :type section: str (optional)
+        :param where_clause: The `where_clause` parameter is a string that represents the SQL WHERE clause used to filter variants in a database query. It allows the user to specify conditions for selecting specific variants based on their attributes, defaults to None
+        :type where_clause: str (optional)
+        :param sample_list: The `sample_list` parameter is a list of sample names that will be used to filter variants based on their presence in those samples. If provided, only variants that are present in the specified samples will be retained, defaults to None
+        :type sample_list: list (optional)
+        :param filter_name: The `filter_name` parameter is a string that represents the name of the filter to be applied to the variants. It is used to identify and label the filter in the output, defaults to None
+        :type filter_name: str (optional)
+        :param genotype_filter: The `genotype_filter` parameter is a boolean that determines whether to apply a genotype filter to the variants. If set to True, only variants with non-missing genotypes will be retained, while if set to False, all variants will be considered regardless of their genotype status, defaults to None
+        :type genotype_filter: bool (optional)
+
+        :return: The function does not return anything. It modifies the variants table in the database by applying the specified filters and updating the table accordingly.
         """
 
         log.debug("Calculation variant_filter...")
@@ -3602,14 +3618,37 @@ class variants_calculation:
             or None
         )
 
+        # variant filter sample_list
+        sample_list = (
+            operation_params.get("sample_list")
+            or sample_list
+            or []
+        )
+        if sample_list and isinstance(sample_list, str):
+            sample_list = [s.strip() for s in sample_list.split(",")]
+
+        # variant filter filter_name
+        filter_name = (
+            operation_params.get("filter_name")
+            or filter_name
+            or "Unknown"
+        )
+
+        # variant filter genotype_filter
+        genotype_filter = (
+            operation_params.get("genotype_filter", None) is True
+            or kwargs.get("genotype_filter", None) is True
+            or genotype_filter is True
+            or False
+        )
+
         # Check where_clause
-        if where_clause is None:
+        if where_clause is None and (not sample_list or len(sample_list) == 0) and not genotype_filter:
             log.warning(
-                f"variant_filter calculation: No where clause specified in parameters. No filtering will be applied."
+                f"Variant filter calculation: No filter parameters (neither where_clause, sample_list, nor genotype_filter). No filtering will be applied."
             )
             return None
         else:
-            log.debug(f"variant_filter calculation: Applying where_clause: {where_clause}")
 
             table_variants = self.get_table_variants()
 
@@ -3627,20 +3666,60 @@ class variants_calculation:
                 sample_struct_column="SAMPLES",
                 detect_type_list=True,
             )
+
+            # Create column selection for query variants_old table, depending on the sample list provided
+            # Get columns and samples from header
+            columns = self.get_header_columns_as_list()
+            columns_samples = self.get_header_sample_list(check=True)
+            # Create column selection for query variants_old table, depending on the sample list provided
+            columns_selection = []
+            for col in columns:
+                if not (col in columns_samples and sample_list and col not in sample_list):
+                    columns_selection.append(col)
+            # Create columns selection query
+            columns_selection_query = ", ".join([f'"variants_old"."{col}"' for col in columns_selection])
+            # Set samples to filter
+            self.set_samples(samples=sample_list)
+
+            # Where clause check
+            where_clause_variant_filter_query = f" {where_clause} " if where_clause is not None and where_clause.strip() else ""
+
+            # Where clause for genotype filter
+            if genotype_filter:
+                where_clause_genotype_filter = []
+                for sample in sample_list:
+                    # Filter for missing genotypes (./. or .|.)
+                    where_clause_genotype_filter.append(
+                        f'regexp_matches(CAST(SAMPLES."{sample}"."GT" AS VARCHAR), \'^[.]([/|][.])*$\')'
+                    )
+                # Create where clause for genotype filter (if all samples have missing genotypes, the variant is filtered out)
+                where_clause_genotype_filter_query = "NOT (" + " AND ".join(where_clause_genotype_filter) + ")" if where_clause_genotype_filter else ""
+            else:
+                where_clause_genotype_filter_query = ""
+
+            # Merge where clauses
+            conditions = [
+                c for c in (
+                    where_clause_variant_filter_query,
+                    where_clause_genotype_filter_query,
+                )
+                if c
+            ]
+            where_clause_query = f" WHERE {' AND '.join(conditions)}" if conditions else ""
             
             # Replace table variants by a SQL query
             query_replace_variants = f"""
                 CREATE OR REPLACE TABLE {table_variants} AS
-                SELECT variants_old.*
+                SELECT {columns_selection_query}
                 FROM {table_variants} as variants_old
-                JOIN (SELECT "#CHROM", "POS", "REF", "ALT" FROM {annotation_view_name} WHERE {where_clause}) as variants
+                JOIN (SELECT "#CHROM", "POS", "REF", "ALT" FROM {annotation_view_name}{where_clause_query}) as variants
                 ON variants_old."#CHROM" = variants."#CHROM"
                 AND variants_old.POS = variants.POS
                 AND variants_old.REF = variants.REF
                 AND variants_old.ALT = variants.ALT
                 
             """
-            #log.debug(f"variant_filter calculation: SQL query to replace variants table: {query_replace_variants}")
+            #log.debug(f"variant_filter calculation: SQL query to replace variants table:\n{query_replace_variants}")
             self.execute_query(query_replace_variants)
 
         return None
