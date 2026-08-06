@@ -3037,7 +3037,7 @@ def test_calculation_variant_id(
         (
             tests_data_folder + "/example.vcf.gz",
             "Filter on CLNSIG with pathogenic value",
-            "CLNSIG = 'pathogenic'",
+            "INFOS.CLNSIG = 'pathogenic'",
             1,
             [],
             False

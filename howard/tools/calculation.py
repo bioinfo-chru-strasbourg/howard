@@ -40,11 +40,16 @@ def calculation(args: argparse) -> None:
             ):
                 log.info(help_line)
 
-        exit()
+    elif param.get("input", None) and param.get("output", None):
 
+        # Calculation
+        vcfdata_obj = process(args=args, tools=["calculation"])
 
-    # Calculation
-    vcfdata_obj = process(args=args, tools=["calculation"])
+    else:
+        log.error(
+            "No input or output specified. Please provide an input file and an output file."
+        )
+        exit(1)
 
     # Return Variants object
     return vcfdata_obj
