@@ -170,7 +170,7 @@
       "**Default and quick pipeline definition**",
       "If 'pipelines' is omitted, the default pipeline is equivalent to:",
       "```json",
-      "{\n   \"pipelines\"\n      \"default\": [\n         {\"annotation\": \"annotation\"},\n         {\"calculation\": \"calculation\"},\n         {\"prioritization\": \"prioritization\"}\n      ]\n   }\n}",
+      "{\n   \"pipelines\": {\n      \"default\": [\n         {\"annotation\": \"annotation\"},\n         {\"calculation\": \"calculation\"},\n         {\"prioritization\": \"prioritization\"}\n      ]\n   }\n}",
       "```",
       "and refers to top-level corresponding sections in the JSON file (if a section does not exist, it will not be processed).",
       "The default quick pipeline only needs to define operations in the JSON file.",
