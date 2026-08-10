@@ -2,6 +2,29 @@
 
 List of available calculations
 
+## ANNOTATION
+
+Annotation of variants based on specified databases and tools
+
+Annotate variants based on specified databases and tools. This calculation allows for the annotation of variants using parameters specified in the JSON parameter file in the annotation parameters (see help.annotation.md), including options on tools to use (HOWARD parquet algorithm, Annovar, snpEff, BCFTools...).
+Example that annotate variants with database in parquet format, annovar, snpEff and BCFTools with databases in VCF or BED format:
+
+```json
+{
+   "annotation": {
+      "parquet": {
+         "annotations": {
+            "my.database.parquet": {...},
+            "my.other.database.parquet": {...}
+         }
+      },
+      "annovar": {...}
+      "snpeff": {...}
+      "bcftools": {...}
+   }
+}
+```
+
 ## BARCODE
 
 BARCODE as VaRank tool
@@ -114,6 +137,22 @@ Extract NOMEN information (e.g. NOMEN, CNOMEN, PNOMEN...) from HGVS nomenclature
 NOMEN information (e.g. NOMEN, CNOMEN, PNOMEN...) from HGVS nomenclature field (see parameters help)
 
 Extract NOMEN information (e.g. NOMEN, CNOMEN, PNOMEN...) from HGVS nomenclature field (see parameters help). This calculation parses the HGVS nomenclature field to extract specific NOMEN information such as NOMEN, CNOMEN, PNOMEN, etc., specifically based on snpEff HGVS annotations field 'snpeff_hgvs'. It creates new INFO fields with the extracted NOMEN information for easier access and downstream analysis.
+
+## PRIORITIZATION
+
+Prioritization of variants based on specified profiles
+
+Prioritize variants based on specified profiles. This calculation allows for the prioritization of variants using parameters specified in the JSON parameter file in the prioritization parameters (see help.prioritization.md), including options on profiles to use and scoring methods.
+Example that prioritize variants using default and GERMLINE profiles:
+
+```json
+{
+   "prioritization": {
+      "profiles": ["default", "GERMLINE"],
+      "pzfields": ["PZFlag", "PZScore", "PZClass", "PZComment", "PZInfos", "PZTags"]
+   }
+}
+```
 
 ## RECREATE_INFO_FIELDS
 

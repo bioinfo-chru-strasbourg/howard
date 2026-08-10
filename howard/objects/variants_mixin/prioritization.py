@@ -75,6 +75,7 @@ class variants_prioritization:
     def prioritization(
         self,
         section: str = "prioritization",
+        param: dict = None,
         table: str = None,
         pz_prefix: str = None,
         pz_param: dict = None,
@@ -104,7 +105,8 @@ class variants_prioritization:
         config = self.get_config()
 
         # Param
-        param = self.get_param()
+        if param is None:
+            param = self.get_param()
 
         # Prioritization param
         if pz_param is not None:
