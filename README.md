@@ -19,6 +19,9 @@ normalizes annotations, explore data with an interactive terminal,
 translates files in multiple formats (e.g. vcf, tsv, Parquet),
 generates variants statistics, and provides a graphical user interface.
 
+HOWARD defines pipelines, which are a list of steps containing
+multiple operations (either annotation, calculation and prioritization).
+
 HOWARD annotation tool is primarily based on a built-in Parquet annotation
 method and external tools such as BCFTOOLS, ANNOVAR, snpEff, Exomiser,
 and Splice (see documentation, automatically downloaded if needed).
