@@ -427,7 +427,7 @@ If 'pipelines' is omitted, the default pipeline is equivalent to:
 ``` json
 
 {
-   "pipelines"
+   "pipelines": {
       "default": [
          {"annotation": "annotation"},
          {"calculation": "calculation"},

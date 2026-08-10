@@ -372,6 +372,32 @@ prioritization, calculations, convertions and queries. Use this
 parameters file to configure tools, instead of options or as a main
 configuration (options will replace parameters in JSON file).
 
+This Parameters JSON file define custom pipelines, which are a list
+of steps containing multiple operations
+(either annotation, calculation and prioritization)
+
+> Diagram of a pipeline with three steps: frequency, knowledge, and
+> prioritization, each with multiple operations
+
+- pipelines
+  - My pipeline
+    - Step 1: Frequency Annotation, Variant filter on frequency
+    - Step 2: Knowledge Annotation, Calculation on annotation
+    - Step 3: Prioritization of variants
+
+``` mermaid
+     graph LR
+      Z@{ shape: tag-rect, label: "pipelines" } --> A@{ shape: procs, label: "My pipeline" }
+      A --> B@{ shape: lin-rect, label: "Step 1" }
+      B --> E@{ shape: odd, label: "Frequency Annotation _annotation_" }
+      E --> F@{ shape: odd, label: "Variant filter on frequency _calculation_" }
+      A --> C@{ shape: lin-rect, label: "Step 2" }
+      C --> G@{ shape: odd, label: "Knowledge Annotation _annotation_" }
+      G --> H@{ shape: odd, label: "Calculation on annotation _calculation_" }
+      A --> D@{ shape: lin-rect, label: "Step 3" }
+      D --> I@{ shape: odd, label: "Prioritization of variants _prioritization_" }
+```
+
 See [HOWARD Parameters JSON](docs/help.param.md) for more information.
 
 ## Stats
