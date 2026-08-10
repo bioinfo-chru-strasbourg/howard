@@ -239,20 +239,44 @@
 <h1 data-number="1" id="calculations"><span
 class="header-section-number">1</span> Calculations</h1>
 <p>List of available calculations</p>
-<h2 data-number="1.1" id="barcode"><span
-class="header-section-number">1.1</span> BARCODE</h2>
+<h2 data-number="1.1" id="annotation"><span
+class="header-section-number">1.1</span> ANNOTATION</h2>
+<p>Annotation of variants based on specified databases and tools</p>
+<p>Annotate variants based on specified databases and tools. This
+calculation allows for the annotation of variants using parameters
+specified in the JSON parameter file in the annotation parameters (see
+help.annotation.html), including options on tools to use (HOWARD parquet
+algorithm, Annovar, snpEff, BCFTools&#x2026;). Example that annotate variants
+with database in parquet format, annovar, snpEff and BCFTools with
+databases in VCF or BED format:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;annotation&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;parquet&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;annotations&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>            <span class="dt">&quot;my.database.parquet&quot;</span><span class="fu">:</span> <span class="fu">{</span><span class="er">...</span><span class="fu">},</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>            <span class="dt">&quot;my.other.database.parquet&quot;</span><span class="fu">:</span> <span class="fu">{</span><span class="er">...</span><span class="fu">}</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>         <span class="fu">}</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>      <span class="fu">},</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;annovar&quot;</span><span class="fu">:</span> <span class="fu">{</span><span class="er">...</span><span class="fu">}</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;snpeff&quot;</span><span class="er">:</span> <span class="fu">{</span><span class="er">...</span><span class="fu">}</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;bcftools&quot;</span><span class="er">:</span> <span class="fu">{</span><span class="er">...</span><span class="fu">}</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<h2 data-number="1.2" id="barcode"><span
+class="header-section-number">1.2</span> BARCODE</h2>
 <p>BARCODE as VaRank tool</p>
 <p>BARCODE as VaRank tool. This calculation generates a BARCODE for each
 sample based on sample genotype (0 for reference, 1 for heterozygous, 2
 for homozygous alternate).</p>
-<h2 data-number="1.2" id="barcodefamily"><span
-class="header-section-number">1.2</span> BARCODEFAMILY</h2>
+<h2 data-number="1.3" id="barcodefamily"><span
+class="header-section-number">1.3</span> BARCODEFAMILY</h2>
 <p>BARCODEFAMILY as VaRank tool</p>
 <p>BARCODEFAMILY as VaRank tool. This calculation generates a BARCODE
 for each family based on sample genotype (0 for reference, 1 for
 heterozygous, 2 for homozygous alternate) and family relationships.</p>
-<h2 data-number="1.3" id="count_samples"><span
-class="header-section-number">1.3</span> COUNT_SAMPLES</h2>
+<h2 data-number="1.4" id="count_samples"><span
+class="header-section-number">1.4</span> COUNT_SAMPLES</h2>
 <p>Number of sample that have a genotype for the variant (for multi
 sample VCF)</p>
 <p>Number of sample that have a genotype for the variant (for multi
@@ -260,14 +284,14 @@ sample VCF). This calculation counts the number of samples (fixed
 &#x2018;count_samples&#x2019; field) that have a genotype for a given variant in a
 multi-sample VCF file. It helps in assessing the presence of the variant
 across different samples.</p>
-<h2 data-number="1.4" id="dp_stats"><span
-class="header-section-number">1.4</span> DP_STATS</h2>
+<h2 data-number="1.5" id="dp_stats"><span
+class="header-section-number">1.5</span> DP_STATS</h2>
 <p>Depth (DP) statistics</p>
 <p>Depth (DP) statistics. This calculation provides statistical measures
 for the sequencing depth (DP) across different samples. It helps in
 understanding the coverage and reliability of variant calls.</p>
-<h2 data-number="1.5" id="find_samples"><span
-class="header-section-number">1.5</span> FIND_SAMPLES</h2>
+<h2 data-number="1.6" id="find_samples"><span
+class="header-section-number">1.6</span> FIND_SAMPLES</h2>
 <p>Number of sample that have a genotype for the variant (for multi
 sample VCF)</p>
 <p>This calculation counts the number of samples that have a genotype
@@ -281,22 +305,22 @@ created, with the key being the tag name and the value being either
 For example, to create an INFO tag &#x2018;count_samples&#x2019; that counts the
 number of samples and an INFO tag &#x2018;list_samples&#x2019; that lists the samples,
 you can specify:</p>
-<div class="sourceCode" id="cb1"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span> <span class="dt">&quot;tags&quot;</span><span class="fu">:</span> <span class="fu">{</span><span class="dt">&quot;count_samples&quot;</span><span class="fu">:</span> <span class="st">&quot;count&quot;</span><span class="fu">,</span> <span class="dt">&quot;list_samples&quot;</span><span class="fu">:</span> <span class="st">&quot;list&quot;</span><span class="fu">}</span> <span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span> <span class="dt">&quot;tags&quot;</span><span class="fu">:</span> <span class="fu">{</span><span class="dt">&quot;count_samples&quot;</span><span class="fu">:</span> <span class="st">&quot;count&quot;</span><span class="fu">,</span> <span class="dt">&quot;list_samples&quot;</span><span class="fu">:</span> <span class="st">&quot;list&quot;</span><span class="fu">}</span> <span class="fu">}</span></span></code></pre></div>
 <p>Otherwise, change the default tags in the parameter file, like in
 this example:</p>
-<div class="sourceCode" id="cb2"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span> <span class="dt">&quot;tags&quot;</span><span class="fu">:</span> <span class="fu">{</span><span class="dt">&quot;count_samples_for_variants&quot;</span><span class="fu">:</span> <span class="st">&quot;count&quot;</span><span class="fu">,</span> <span class="dt">&quot;list_samples_for_variants&quot;</span><span class="fu">:</span> <span class="st">&quot;list&quot;</span><span class="fu">,</span> <span class="dt">&quot;another_list_samples_tag&quot;</span><span class="fu">:</span> <span class="st">&quot;list&quot;</span><span class="fu">}</span> <span class="fu">}</span></span></code></pre></div>
-<h2 data-number="1.6" id="genotypeconcordance"><span
-class="header-section-number">1.6</span> GENOTYPECONCORDANCE</h2>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span> <span class="dt">&quot;tags&quot;</span><span class="fu">:</span> <span class="fu">{</span><span class="dt">&quot;count_samples_for_variants&quot;</span><span class="fu">:</span> <span class="st">&quot;count&quot;</span><span class="fu">,</span> <span class="dt">&quot;list_samples_for_variants&quot;</span><span class="fu">:</span> <span class="st">&quot;list&quot;</span><span class="fu">,</span> <span class="dt">&quot;another_list_samples_tag&quot;</span><span class="fu">:</span> <span class="st">&quot;list&quot;</span><span class="fu">}</span> <span class="fu">}</span></span></code></pre></div>
+<h2 data-number="1.7" id="genotypeconcordance"><span
+class="header-section-number">1.7</span> GENOTYPECONCORDANCE</h2>
 <p>Concordance of genotype for multi caller VCF</p>
 <p>Concordance of genotype for multi caller VCF. This calculation
 assesses the concordance of genotypes for a given variant across
 multiple callers in a multi-caller VCF file. It helps in evaluating the
 consistency of genotype calls and can be used to identify variants with
 high confidence based on agreement among different callers.</p>
-<h2 data-number="1.7" id="genotype_stats"><span
-class="header-section-number">1.7</span> GENOTYPE_STATS</h2>
+<h2 data-number="1.8" id="genotype_stats"><span
+class="header-section-number">1.8</span> GENOTYPE_STATS</h2>
 <p>Calculate genotype statistics on a specific genotype field (e.g.&#xA0;VAF,
 DP, GQ&#x2026;)</p>
 <p>Calculate genotype statistics on a specific genotype field (e.g.&#xA0;VAF,
@@ -308,14 +332,14 @@ file, directly in the calculation parameters (see help.parameters.html).
 The parameter &#x2018;info&#x2019; allows for the specification of the genotype field
 to be analyzed. For example, to calculate statistics for the GQ field,
 you can specify:</p>
-<div class="sourceCode" id="cb3"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span> <span class="dt">&quot;info&quot;</span><span class="fu">:</span> <span class="st">&quot;GQ&quot;</span> <span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span> <span class="dt">&quot;info&quot;</span><span class="fu">:</span> <span class="st">&quot;GQ&quot;</span> <span class="fu">}</span></span></code></pre></div>
 <p>If no &#x2018;info&#x2019; parameter is provided, the calculation will default to
 analyzing the VAF field. Other genotype fields can be specified as
 needed, such as DP (Depth), GQ (Genotype Quality), etc., by providing
 the appropriate field name in the &#x2018;info&#x2019; parameter.</p>
-<h2 data-number="1.8" id="info_to_format"><span
-class="header-section-number">1.8</span> INFO_TO_FORMAT</h2>
+<h2 data-number="1.9" id="info_to_format"><span
+class="header-section-number">1.9</span> INFO_TO_FORMAT</h2>
 <p>INFO to FORMAT conversion</p>
 <p>INFO to FORMAT conversion. This calculation converts INFO fields to
 FORMAT fields in the VCF file.</p>
@@ -337,18 +361,18 @@ fields after conversion to FORMAT fields. If set to true, the original
 INFO fields will be removed from the VCF file.</p></li>
 </ul>
 <p>Options example:</p>
-<div class="sourceCode" id="cb4"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;annotation_fields&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>        <span class="dt">&quot;count_samples&quot;</span><span class="fu">:</span> <span class="kw">null</span><span class="fu">,</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>        <span class="dt">&quot;list_samples&quot;</span><span class="fu">:</span> <span class="st">&quot;LS&quot;</span><span class="fu">,</span></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>        <span class="dt">&quot;calling_quality&quot;</span><span class="fu">:</span> <span class="st">&quot;CQ&quot;</span></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">},</span></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;samples&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;sample1&quot;</span><span class="ot">,</span> <span class="st">&quot;sample2&quot;</span><span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;remove_info_fields&quot;</span><span class="fu">:</span> <span class="kw">true</span></span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
-<h2 data-number="1.9" id="list_samples"><span
-class="header-section-number">1.9</span> LIST_SAMPLES</h2>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;annotation_fields&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>        <span class="dt">&quot;count_samples&quot;</span><span class="fu">:</span> <span class="kw">null</span><span class="fu">,</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>        <span class="dt">&quot;list_samples&quot;</span><span class="fu">:</span> <span class="st">&quot;LS&quot;</span><span class="fu">,</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>        <span class="dt">&quot;calling_quality&quot;</span><span class="fu">:</span> <span class="st">&quot;CQ&quot;</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">},</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;samples&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;sample1&quot;</span><span class="ot">,</span> <span class="st">&quot;sample2&quot;</span><span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;remove_info_fields&quot;</span><span class="fu">:</span> <span class="kw">true</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<h2 data-number="1.10" id="list_samples"><span
+class="header-section-number">1.10</span> LIST_SAMPLES</h2>
 <p>List of samples that have a genotype for the variant (for multi
 sample VCF)</p>
 <p>List of samples that have a genotype for the variant (for multi
@@ -356,8 +380,8 @@ sample VCF). This calculation provides a list of samples (fixed
 &#x2018;list_samples&#x2019; field) that have a genotype for a given variant in a
 multi-sample VCF file. It helps in understanding which samples support
 the presence of the variant.</p>
-<h2 data-number="1.10" id="merged_hgvs"><span
-class="header-section-number">1.10</span> MERGED_HGVS</h2>
+<h2 data-number="1.11" id="merged_hgvs"><span
+class="header-section-number">1.11</span> MERGED_HGVS</h2>
 <p>Merge HGVS nomenclatures from snpEff (snpeff_hgvs) and ANNOVAR
 (AAChange_refGene) into merged_hgvs field</p>
 <p>This calculation merges HGVS nomenclatures from snpEff (snpeff_hgvs)
@@ -366,8 +390,8 @@ It aggregates distinct HGVS annotations from both sources, concatenating
 them with a comma separator. This unified field allows for easier access
 to HGVS information regardless of the annotation source, facilitating
 downstream analysis and interpretation.</p>
-<h2 data-number="1.11" id="nomen"><span
-class="header-section-number">1.11</span> NOMEN</h2>
+<h2 data-number="1.12" id="nomen"><span
+class="header-section-number">1.12</span> NOMEN</h2>
 <p>NOMEN information (e.g.&#xA0;NOMEN, CNOMEN, PNOMEN&#x2026;) from HGVS
 nomenclature field (see parameters help)</p>
 <p>Extract NOMEN information (e.g.&#xA0;NOMEN, CNOMEN, PNOMEN&#x2026;) from HGVS
@@ -376,8 +400,8 @@ HGVS nomenclature field to extract specific NOMEN information such as
 NOMEN, CNOMEN, PNOMEN, etc., based on the parameters provided. It
 creates new INFO fields with the extracted NOMEN information for easier
 access and downstream analysis.</p>
-<h2 data-number="1.12" id="nomen_snpeff"><span
-class="header-section-number">1.12</span> NOMEN_SNPEFF</h2>
+<h2 data-number="1.13" id="nomen_snpeff"><span
+class="header-section-number">1.13</span> NOMEN_SNPEFF</h2>
 <p>NOMEN information (e.g.&#xA0;NOMEN, CNOMEN, PNOMEN&#x2026;) from HGVS
 nomenclature field (see parameters help)</p>
 <p>Extract NOMEN information (e.g.&#xA0;NOMEN, CNOMEN, PNOMEN&#x2026;) from HGVS
@@ -387,16 +411,32 @@ NOMEN, CNOMEN, PNOMEN, etc., specifically based on snpEff HGVS
 annotations field &#x2018;snpeff_hgvs&#x2019;. It creates new INFO fields with the
 extracted NOMEN information for easier access and downstream
 analysis.</p>
-<h2 data-number="1.13" id="recreate_info_fields"><span
-class="header-section-number">1.13</span> RECREATE_INFO_FIELDS</h2>
+<h2 data-number="1.14" id="prioritization"><span
+class="header-section-number">1.14</span> PRIORITIZATION</h2>
+<p>Prioritization of variants based on specified profiles</p>
+<p>Prioritize variants based on specified profiles. This calculation
+allows for the prioritization of variants using parameters specified in
+the JSON parameter file in the prioritization parameters (see
+help.prioritization.html), including options on profiles to use and
+scoring methods. Example that prioritize variants using default and
+GERMLINE profiles:</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;prioritization&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;profiles&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;default&quot;</span><span class="ot">,</span> <span class="st">&quot;GERMLINE&quot;</span><span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;pzfields&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;PZFlag&quot;</span><span class="ot">,</span> <span class="st">&quot;PZScore&quot;</span><span class="ot">,</span> <span class="st">&quot;PZClass&quot;</span><span class="ot">,</span> <span class="st">&quot;PZComment&quot;</span><span class="ot">,</span> <span class="st">&quot;PZInfos&quot;</span><span class="ot">,</span> <span class="st">&quot;PZTags&quot;</span><span class="ot">]</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<h2 data-number="1.15" id="recreate_info_fields"><span
+class="header-section-number">1.15</span> RECREATE_INFO_FIELDS</h2>
 <p>Recreate INFO_tags, rename or remove tags</p>
 <p>Recreate INFO_tags, rename or remove tags. This calculation allows
 for the recreation of INFO fields by renaming existing tags or removing
 them based on specified parameters. It provides flexibility in managing
 INFO fields, enabling users to customize their VCF annotations according
 to their analysis needs.</p>
-<h2 data-number="1.14" id="rename_info_fields"><span
-class="header-section-number">1.14</span> RENAME_INFO_FIELDS</h2>
+<h2 data-number="1.16" id="rename_info_fields"><span
+class="header-section-number">1.16</span> RENAME_INFO_FIELDS</h2>
 <p>Rename or remove INFO/tags</p>
 <p>Rename or remove INFO/tags. This calculation allows for the renaming
 of existing INFO fields or the removal of specific tags based on
@@ -408,10 +448,10 @@ fields to rename or remove.</p>
 <p>This example will rename INFO field &#x2018;ENOMEN&#x2019; to &#x2018;exon&#x2019; and remove
 INFO fields &#x2018;SPiP&#x2019;, &#x2018;SPiP_Alt&#x2019; and &#x2018;SPiP_distSS&#x2019; from the &#x2018;variants&#x2019;
 table:</p>
-<div class="sourceCode" id="cb5"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span><span class="dt">&quot;fields_to_rename&quot;</span><span class="fu">:</span> <span class="fu">{</span><span class="dt">&quot;ENOMEN&quot;</span><span class="fu">:</span> <span class="st">&quot;exon&quot;</span><span class="fu">,</span> <span class="dt">&quot;SPiP&quot;</span><span class="fu">:</span> <span class="kw">null</span><span class="fu">,</span> <span class="dt">&quot;SPiP_Alt&quot;</span><span class="fu">:</span> <span class="kw">null</span><span class="fu">,</span> <span class="dt">&quot;SPiP_distSS&quot;</span><span class="fu">:</span> <span class="kw">null</span> <span class="fu">},</span> <span class="dt">&quot;table&quot;</span><span class="fu">:</span> <span class="st">&quot;variants&quot;</span><span class="fu">}</span></span></code></pre></div>
-<h2 data-number="1.15" id="snpeff_ann_explode"><span
-class="header-section-number">1.15</span> SNPEFF_ANN_EXPLODE</h2>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span><span class="dt">&quot;fields_to_rename&quot;</span><span class="fu">:</span> <span class="fu">{</span><span class="dt">&quot;ENOMEN&quot;</span><span class="fu">:</span> <span class="st">&quot;exon&quot;</span><span class="fu">,</span> <span class="dt">&quot;SPiP&quot;</span><span class="fu">:</span> <span class="kw">null</span><span class="fu">,</span> <span class="dt">&quot;SPiP_Alt&quot;</span><span class="fu">:</span> <span class="kw">null</span><span class="fu">,</span> <span class="dt">&quot;SPiP_distSS&quot;</span><span class="fu">:</span> <span class="kw">null</span> <span class="fu">},</span> <span class="dt">&quot;table&quot;</span><span class="fu">:</span> <span class="st">&quot;variants&quot;</span><span class="fu">}</span></span></code></pre></div>
+<h2 data-number="1.17" id="snpeff_ann_explode"><span
+class="header-section-number">1.17</span> SNPEFF_ANN_EXPLODE</h2>
 <p>Explode snpEff annotations</p>
 <p>Explode snpEff annotations from the ANN field, creating new INFO
 fields with prefix &#x2018;snpeff_&#x2019; for each annotation. This calculation takes
@@ -420,8 +460,8 @@ annotations for a single variant, and explodes it so that each
 annotation is represented in separate INFO fields with a &#x2018;snpeff_&#x2019;
 prefix. This allows for easier access to individual annotations and
 facilitates downstream analysis.</p>
-<h2 data-number="1.16" id="snpeff_ann_explode_json"><span
-class="header-section-number">1.16</span> SNPEFF_ANN_EXPLODE_JSON</h2>
+<h2 data-number="1.18" id="snpeff_ann_explode_json"><span
+class="header-section-number">1.18</span> SNPEFF_ANN_EXPLODE_JSON</h2>
 <p>Explode snpEff annotations in JSON format</p>
 <p>Explode snpEff annotations from the ANN field, creating a new INFO
 field &#x2018;snpeff_json&#x2019; in JSON format that contains all annotations. This
@@ -430,8 +470,8 @@ contain multiple annotations for a single variant, and explodes it into
 a structured JSON format stored in a new INFO field named &#x2018;snpeff_json&#x2019;.
 This allows for easier access to all annotations in a single field and
 facilitates downstream analysis.</p>
-<h2 data-number="1.17" id="snpeff_ann_explode_uniquify"><span
-class="header-section-number">1.17</span>
+<h2 data-number="1.19" id="snpeff_ann_explode_uniquify"><span
+class="header-section-number">1.19</span>
 SNPEFF_ANN_EXPLODE_UNIQUIFY</h2>
 <p>Explode snpEff annotations with uniquify values</p>
 <p>Explode snpEff annotations from the ANN field, creating new INFO
@@ -442,8 +482,8 @@ variant, and explodes it so that each annotation is represented in
 separate INFO fields with a &#x2018;snpeff_uniquify_&#x2019; prefix, ensuring that
 only unique values are retained. This allows for easier access to
 individual annotations and facilitates downstream analysis.</p>
-<h2 data-number="1.18" id="snpeff_extract"><span
-class="header-section-number">1.18</span> SNPEFF_EXTRACT</h2>
+<h2 data-number="1.20" id="snpeff_extract"><span
+class="header-section-number">1.20</span> SNPEFF_EXTRACT</h2>
 <p>HGVS nomenclatures from snpEff annotation</p>
 <p>Extract HGVS nomenclatures from snpEff annotation (field ANN) and
 create new INFO fields with prefix &#x2018;snpeff_&#x2019; (e.g.&#xA0;snpeff_hgvs,
@@ -451,8 +491,8 @@ snpeff_impact, snpeff_gene_name&#x2026;). This calculation parses the ANN field
 from snpEff annotations, extracting relevant information such as HGVS
 nomenclatures, impact, gene name, etc., and creates new INFO fields with
 a &#x2018;snpeff_&#x2019; prefix for easier access and downstream analysis.</p>
-<h2 data-number="1.19" id="snpeff_hgvs"><span
-class="header-section-number">1.19</span> SNPEFF_HGVS</h2>
+<h2 data-number="1.21" id="snpeff_hgvs"><span
+class="header-section-number">1.21</span> SNPEFF_HGVS</h2>
 <p>HGVS nomenclatures from snpEff annotation</p>
 <p>Extract HGVS nomenclatures from snpEff annotation (field ANN) and
 create new INFO field &#x2018;snpeff_hgvs&#x2019;. This calculation specifically
@@ -460,8 +500,8 @@ targets the extraction of HGVS nomenclatures from the ANN field of
 snpEff annotations, creating a new INFO field named &#x2018;snpeff_hgvs&#x2019; that
 contains the extracted HGVS information for easier access and downstream
 analysis.</p>
-<h2 data-number="1.20" id="transcripts_annotations"><span
-class="header-section-number">1.20</span> TRANSCRIPTS_ANNOTATIONS</h2>
+<h2 data-number="1.22" id="transcripts_annotations"><span
+class="header-section-number">1.22</span> TRANSCRIPTS_ANNOTATIONS</h2>
 <p>Perform transcripts annotations and generate a transcripts table/view
 (using JSON parameters file)</p>
 <p>Perform transcripts annotations and generate a transcripts
@@ -472,8 +512,8 @@ analysis pipeline. The specific format(s) used can be determined based
 on parameters specified in the JSON parameter file in &#x2018;transcripts&#x2019;
 section (see help.parameters.html), or directly in the calculation
 parameters.</p>
-<h2 data-number="1.21" id="transcripts_json"><span
-class="header-section-number">1.21</span> TRANSCRIPTS_JSON</h2>
+<h2 data-number="1.23" id="transcripts_json"><span
+class="header-section-number">1.23</span> TRANSCRIPTS_JSON</h2>
 <p>Perform transcripts annotations and export into INFO field in JSON
 format (field &#x2018;transcripts_json&#x2019;)</p>
 <p>Perform transcripts annotations and generate a transcripts
@@ -487,8 +527,8 @@ INFO fields in structured format (field &#x2018;transcripts_ann&#x2019;). This
 calculation allows for the inclusion of transcript annotations in a JSON
 format, facilitating the integration of transcript information into the
 variant analysis pipeline.</p>
-<h2 data-number="1.22" id="transcripts_ann"><span
-class="header-section-number">1.22</span> TRANSCRIPTS_ANN</h2>
+<h2 data-number="1.24" id="transcripts_ann"><span
+class="header-section-number">1.24</span> TRANSCRIPTS_ANN</h2>
 <p>Perform transcripts annotations and export into INFO field in
 structured format (field &#x2018;transcripts_ann&#x2019;)</p>
 <p>Perform transcripts annotations and generate a transcripts
@@ -502,8 +542,8 @@ INFO fields in structured format (field &#x2018;transcripts_ann&#x2019;). This
 calculation allows for the inclusion of transcript annotations in a
 structured format, facilitating the integration of transcript
 information into the variant analysis pipeline.</p>
-<h2 data-number="1.23" id="transcripts_export"><span
-class="header-section-number">1.23</span> TRANSCRIPTS_EXPORT</h2>
+<h2 data-number="1.25" id="transcripts_export"><span
+class="header-section-number">1.25</span> TRANSCRIPTS_EXPORT</h2>
 <p>Export transcripts table/view as a file (using JSON parameters
 file)</p>
 <p>Export transcripts table/view as a file. This calculation allows for
@@ -513,8 +553,8 @@ parameters for this calculation can be specified in the JSON parameter
 file, either in &#x2018;transcripts&#x2019; section or directly in the calculation
 parameters (see help.parameters.html), including options for the output
 file path, format, and any filters to apply during export.</p>
-<h2 data-number="1.24" id="transcripts_prioritization"><span
-class="header-section-number">1.24</span>
+<h2 data-number="1.26" id="transcripts_prioritization"><span
+class="header-section-number">1.26</span>
 TRANSCRIPTS_PRIORITIZATION</h2>
 <p>Prioritize transcripts with a prioritization profile (using JSON
 parameters file)</p>
@@ -524,8 +564,8 @@ predefined profile specified in the JSON parameter file, either in
 &#x2018;transcripts&#x2019; section or directly in the calculation parameters (see
 help.parameters.html), helping to identify the most relevant transcripts
 for further analysis.</p>
-<h2 data-number="1.25" id="transcripts_prioritization_strict"><span
-class="header-section-number">1.25</span>
+<h2 data-number="1.27" id="transcripts_prioritization_strict"><span
+class="header-section-number">1.27</span>
 TRANSCRIPTS_PRIORITIZATION_STRICT</h2>
 <p>Prioritize transcripts with a prioritization profile (using JSON
 parameters file)</p>
@@ -536,8 +576,8 @@ profile specified in the JSON parameter file, either in &#x2018;transcripts&#x20
 section or directly in the calculation parameters (see
 help.parameters.html), helping to identify the most relevant transcripts
 for further analysis.</p>
-<h2 data-number="1.26" id="trio"><span
-class="header-section-number">1.26</span> TRIO</h2>
+<h2 data-number="1.28" id="trio"><span
+class="header-section-number">1.28</span> TRIO</h2>
 <p>Inheritance for a trio family</p>
 <p>Inheritance for a trio family. This calculation assesses the
 inheritance pattern of a variant within a trio family pedigree (father,
@@ -547,47 +587,56 @@ for this calculation can be specified in the JSON parameter file,
 directly in the calculation parameters (see help.parameters.html). The
 parameter &#x2018;trio_samples&#x2019; allows for the specification of the sample
 names for father, mother, and child:</p>
-<div class="sourceCode" id="cb6"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span><span class="dt">&quot;father&quot;</span><span class="fu">:</span> <span class="st">&quot;sample_father&quot;</span><span class="fu">,</span> <span class="dt">&quot;mother&quot;</span><span class="fu">:</span> <span class="st">&quot;sample_mother&quot;</span><span class="fu">,</span> <span class="dt">&quot;child&quot;</span><span class="fu">:</span> <span class="st">&quot;sample_child&quot;</span><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span><span class="dt">&quot;father&quot;</span><span class="fu">:</span> <span class="st">&quot;sample_father&quot;</span><span class="fu">,</span> <span class="dt">&quot;mother&quot;</span><span class="fu">:</span> <span class="st">&quot;sample_mother&quot;</span><span class="fu">,</span> <span class="dt">&quot;child&quot;</span><span class="fu">:</span> <span class="st">&quot;sample_child&quot;</span><span class="fu">}</span></span></code></pre></div>
 <p>This parameter can also be specified in a JSON file (containing the
 trio sample names):</p>
-<div class="sourceCode" id="cb7"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a> <span class="st">&quot;/path/to/trio_samples.json&quot;</span> </span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a> <span class="st">&quot;/path/to/trio_samples.json&quot;</span> </span></code></pre></div>
 <p>If no pedigree information is provided, the calculation will use the
 first 3 samples in the VCF file.</p>
-<h2 data-number="1.27" id="vaf"><span
-class="header-section-number">1.27</span> VAF</h2>
+<h2 data-number="1.29" id="vaf"><span
+class="header-section-number">1.29</span> VAF</h2>
 <p>Variant Allele Frequency (VAF) harmonization</p>
 <p>Variant Allele Frequency (VAF) harmonization. This calculation
 normalizes the Variant Allele Frequency (VAF) across different samples
 and callers to ensure consistency in VAF representation. It helps in
 comparing VAF values across samples and callers by applying a
 harmonization process.</p>
-<h2 data-number="1.28" id="vaf_stats"><span
-class="header-section-number">1.28</span> VAF_STATS</h2>
+<h2 data-number="1.30" id="vaf_stats"><span
+class="header-section-number">1.30</span> VAF_STATS</h2>
 <p>Variant Allele Frequency (VAF) statistics</p>
 <p>Variant Allele Frequency (VAF) statistics. This calculation provides
 statistical measures for the Variant Allele Frequency (VAF) across
 different samples. It helps in understanding the distribution and
 variability of VAF values.</p>
-<h2 data-number="1.29" id="variant_chr_pos_alt_ref"><span
-class="header-section-number">1.29</span> VARIANT_CHR_POS_ALT_REF</h2>
+<h2 data-number="1.31" id="variant_chr_pos_alt_ref"><span
+class="header-section-number">1.31</span> VARIANT_CHR_POS_ALT_REF</h2>
 <p>Create a variant ID with chromosome, position, alt and ref</p>
 <p>This calculation generates a variant ID with chromosome, position,
 alt and ref, with format &#x2018;#CHROM_POS_REF_ALT&#x2019;. Useful for variant
 identification and comparison across datasets</p>
-<h2 data-number="1.30" id="variant_filter"><span
-class="header-section-number">1.30</span> VARIANT_FILTER</h2>
-<p>Filter variants based on specified criteria (using SQL
-parameters)</p>
+<h2 data-number="1.32" id="variant_filter"><span
+class="header-section-number">1.32</span> VARIANT_FILTER</h2>
+<p>Filter variants based on specified criteria (using SQL parameters and
+sample list)</p>
 <p>Filter variants based on specified criteria. This calculation allows
 for the filtering of variants using SQL-like parameters specified in the
-JSON parameter file, either in the &#x2018;variants&#x2019; section or directly in the
-calculation parameters (see help.parameters.html), including options for
-the filtering conditions and any additional criteria to apply during the
-filtering process.</p>
-<h2 data-number="1.31" id="variant_id"><span
-class="header-section-number">1.31</span> VARIANT_ID</h2>
+JSON parameter file in the calculation parameters (see
+help.parameters.html), including options for the filtering conditions
+and any additional criteria (such as a list of samples) to apply during
+the filtering process. Example that filter variants on ClinVar
+pathogenic, on DP &gt;= 100 for &#x2018;sample1&#x2019;, selection of only 2 samples,
+and ensure only not null genotypes:</p>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;filter_name&quot;</span><span class="fu">:</span> <span class="st">&quot;Filter on ClinVar pathogenic, DP for sample1, select only 2 samples, and ensure only not null genotypes&quot;</span><span class="fu">,</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;where_clause&quot;</span><span class="fu">:</span> <span class="st">&quot;INFOS.CLNSIG = &#39;pathogenic&#39; AND SAMPLES.sample1.DP &gt;= 100&quot;</span><span class="fu">,</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;sample_list&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;sample1&quot;</span><span class="ot">,</span> <span class="st">&quot;sample2&quot;</span><span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;genotype_filter&quot;</span><span class="fu">:</span> <span class="kw">true</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<h2 data-number="1.33" id="variant_id"><span
+class="header-section-number">1.33</span> VARIANT_ID</h2>
 <p>Variant ID generated from variant position and type</p>
 <p>Variant ID generated from variant position and variation (ref and
 alt) and type (SVTYPE). This calculation creates a unique identifier for
@@ -599,33 +648,33 @@ specification of the INFO tag to be used for the variant ID. By default,
 it uses &#x2018;variant_id&#x2019;, but it can be changed to any other INFO tag name
 as needed. For example, to use &#x2018;varid&#x2019; as the INFO tag for the variant
 ID, you can specify:</p>
-<div class="sourceCode" id="cb8"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span> <span class="dt">&quot;variant_id_tag&quot;</span><span class="fu">:</span> <span class="st">&quot;varid&quot;</span> <span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb11"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span> <span class="dt">&quot;variant_id_tag&quot;</span><span class="fu">:</span> <span class="st">&quot;varid&quot;</span> <span class="fu">}</span></span></code></pre></div>
 <p>Other options as &#x2018;variant_id_tag_info&#x2019; allows for the specification
 of the description in the VCF header, and &#x2018;keep_variant_id_tag_column&#x2019;
 allows for keeping the variant ID tag column in the &#x2018;variants&#x2019; table for
 further analysis.</p>
 <p>As an axample of the JSON parameter file, you can specify:</p>
-<div class="sourceCode" id="cb9"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span> <span class="dt">&quot;variant_id_tag&quot;</span><span class="fu">:</span> <span class="st">&quot;varid&quot;</span><span class="fu">,</span> <span class="dt">&quot;variant_id_tag_info&quot;</span><span class="fu">:</span> <span class="st">&quot;Variant ID generated from variant position and type&quot;</span><span class="fu">,</span> <span class="dt">&quot;keep_variant_id_tag_column&quot;</span><span class="fu">:</span> <span class="kw">true</span> <span class="fu">}</span></span></code></pre></div>
-<h2 data-number="1.32" id="variant_id_varid"><span
-class="header-section-number">1.32</span> VARIANT_ID_VARID</h2>
+<div class="sourceCode" id="cb12"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span> <span class="dt">&quot;variant_id_tag&quot;</span><span class="fu">:</span> <span class="st">&quot;varid&quot;</span><span class="fu">,</span> <span class="dt">&quot;variant_id_tag_info&quot;</span><span class="fu">:</span> <span class="st">&quot;Variant ID generated from variant position and type&quot;</span><span class="fu">,</span> <span class="dt">&quot;keep_variant_id_tag_column&quot;</span><span class="fu">:</span> <span class="kw">true</span> <span class="fu">}</span></span></code></pre></div>
+<h2 data-number="1.34" id="variant_id_varid"><span
+class="header-section-number">1.34</span> VARIANT_ID_VARID</h2>
 <p>Variant ID generated from variant position and type, using &#x2018;varid&#x2019; as
 INFO tag</p>
 <p>Variant ID generated from variant position and variation (ref and
 alt) and type (SVTYPE). This calculation creates a unique identifier for
 each variant, facilitating variant tracking and comparison across
 datasets.</p>
-<h2 data-number="1.33" id="vartype"><span
-class="header-section-number">1.33</span> VARTYPE</h2>
+<h2 data-number="1.35" id="vartype"><span
+class="header-section-number">1.35</span> VARTYPE</h2>
 <p>Variant type (e.g.&#xA0;SNV, INDEL, MNV, BND&#x2026;)</p>
 <p>Determine the type of variant based on its characteristics, such as
 the length of the reference and alternate alleles, and the presence of
 structural variant information. This calculation classifies variants
 into types like SNV, INDEL, MNV, BND, etc., which is essential for
 downstream analysis and interpretation.</p>
-<h2 data-number="1.34" id="vep_extract"><span
-class="header-section-number">1.34</span> VEP_EXTRACT</h2>
+<h2 data-number="1.36" id="vep_extract"><span
+class="header-section-number">1.36</span> VEP_EXTRACT</h2>
 <p>HGVS nomenclatures from VEP annotation</p>
 <p>Extract HGVS nomenclatures from VEP annotation (field CSQ) and create
 new INFO fields with prefix &#x2018;vep_&#x2019; (e.g.&#xA0;vep_hgvs, vep_impact,
@@ -633,8 +682,8 @@ vep_gene_name&#x2026;). This calculation parses the CSQ field from VEP
 annotations, extracting relevant information such as HGVS nomenclatures,
 impact, gene name, etc., and creates new INFO fields with a &#x2018;vep_&#x2019;
 prefix for easier access and downstream analysis.</p>
-<h2 data-number="1.35" id="vep_extract_refseq"><span
-class="header-section-number">1.35</span> VEP_EXTRACT_REFSEQ</h2>
+<h2 data-number="1.37" id="vep_extract_refseq"><span
+class="header-section-number">1.37</span> VEP_EXTRACT_REFSEQ</h2>
 <p>HGVS nomenclatures from VEP annotation unsing RefSeq transcripts</p>
 <p>Extract HGVS nomenclatures from VEP annotation (field CSQ) and create
 new INFO fields with prefix &#x2018;vep_&#x2019; (e.g.&#xA0;vep_hgvs, vep_impact,

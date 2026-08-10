@@ -18,6 +18,9 @@ HOWARD annotates and prioritizes genetic variations, calculates and
 normalizes annotations, translates files in multiple formats (e.g. vcf,
 tsv, parquet) and generates variants statistics.
 
+HOWARD defines pipelines, which are a list of steps containing
+multiple operations (either annotation, calculation and prioritization).
+
 HOWARD annotation is mainly based on a build-in Parquet annotation
 method, and external tools such as BCFTOOLS, ANNOVAR, snpEff, Exomiser
 and Splice (see docs, automatically downloaded if needed). Parquet
@@ -220,6 +223,7 @@ Configuration file example:
     "snpsift": "~/howard/tools/snpeff/current/bin/SnpSift.jar",
     "annovar": "~/howard/tools/annovar/current/bin/table_annovar.pl",
     "exomiser": "~/howard/tools/exomiser/current/bin/exomiser-cli-14.0.0.jar",
+    "docker": "docker",
     "splice": {
       "docker": {
         "image": "bioinfochrustrasbourg/splice:0.2.4",
@@ -227,8 +231,7 @@ Configuration file example:
         "options": null,
         "command": null
       }
-    },
-    "docker": "docker"
+    }
   }
 }
 ```
@@ -239,6 +242,46 @@ In order to use external tools, mainly for annotation (e.g. Annovar,
 snpEff, Exomiser, Splice), they need to be installed (see doc of each
 tools). For Splice tool, a Docker image is automatically downloaded
 using configuration file.
+
+### Generic Docker configuration connector
+
+A generic Docker configuration can provide connector to a Docker tool,
+mainly to annotate VCF files (from VCF to VCF).
+This configuration describes tool docker image and command/endpoint,
+maps tool parameters (input and output files, assembly and genome, resources),
+defines default parameters and mount folders.
+
+> Example of Docker configuration for VEP online VCF annotation
+
+```json
+{
+  "tools": {
+    "vep_online": {
+      "docker": {
+        "image": "ensemblorg/ensembl-vep",
+        "entrypoint": "vep",
+        "parameters": {
+          "primary": {
+            "input": "--input_file",
+            "output": "--output_file",
+            "threads": "--fork",
+            "assembly": {
+              "flag": "--assembly",
+              "source": "GRCH"
+            }
+          },
+          "defaults": {
+            "parameters": [
+              "--vcf",
+              "--database"
+            ]
+          }
+        }
+      }
+    }
+  }
+}
+```
 
 ## Docker
 
@@ -258,6 +301,7 @@ The persitent CLI contains external tools, such as:
 |----|----|
 | [BCFTools](https://samtools.github.io/bcftools/) | Utilities for variant calling and manipulating VCFs and BCFs |
 | [snpEff](https://pcingola.github.io/SnpEff/) | Genomic variant annotations, and functional effect prediction toolbox |
+| [snpSift](https://pcingola.github.io/SnpEff/#snpsift) | SnpSift annotates genomic variants using databases, filters, and manipulates genomic annotated variants. |
 | [Annovar](https://annovar.openbioinformatics.org/) | Efficient software tool to utilize update-to-date information to functionally annotate genetic variants |
 | [Exomiser](https://www.sanger.ac.uk/tool/exomiser/) | Program that finds potential disease-causing variants from whole-exome or whole-genome sequencing data |
 | [Splice](https://hub.docker.com/r/bioinfochrustrasbourg/splice) | Image to run SPiP and SpliceAI tools in an nextflow pipeline. |
@@ -447,6 +491,30 @@ prioritization, calculations, convertions and queries. Use this
 parameters file to configure tools, instead of options or as a main
 configuration (options will replace parameters in JSON file).
 
+This Parameters JSON file define custom pipelines, which are a list of steps containing multiple operations (either annotation, calculation and prioritization)
+
+> Diagram of a pipeline with three steps: frequency, knowledge, and
+> prioritization, each with multiple operations
+
+- pipelines
+  - My pipeline
+    - Step 1: Frequency Annotation, Variant filter on frequency
+    - Step 2: Knowledge Annotation, Calculation on annotation
+    - Step 3: Prioritization of variants
+
+``` mermaid
+     graph LR
+      Z@{ shape: tag-rect, label: "pipelines" } --> A@{ shape: procs, label: "My pipeline" }
+      A --> B@{ shape: lin-rect, label: "Step 1" }
+      B --> E@{ shape: odd, label: "Frequency Annotation _annotation_" }
+      E --> F@{ shape: odd, label: "Variant filter on frequency _calculation_" }
+      A --> C@{ shape: lin-rect, label: "Step 2" }
+      C --> G@{ shape: odd, label: "Knowledge Annotation _annotation_" }
+      G --> H@{ shape: odd, label: "Calculation on annotation _calculation_" }
+      A --> D@{ shape: lin-rect, label: "Step 3" }
+      D --> I@{ shape: odd, label: "Prioritization of variants _prioritization_" }
+```
+
 See [HOWARD Parameters JSON](help.parameters.md) for more information.
 
 > Example: Use parameters JSON file with query tool
@@ -484,10 +552,17 @@ See [HOWARD Parameters JSON](help.parameters.md) for more information.
 > 1        chr1
 > ```
 
-> Example: Parameters JSON file with multiple options for tools
+> Example: Parameters JSON file with a default and quick pipeline and multiple options
 >
 > ``` json
 > {
+>   "pipelines": {
+>      "default": [
+>          {"annotation": null},
+>          {"calculation": null},
+>          {"prioritization": null}
+>      ]
+>   },
 >   "annotation": {
 >     "parquet": {
 >       "annotations": {
@@ -529,6 +604,17 @@ See [HOWARD Parameters JSON](help.parameters.md) for more information.
 >         "genebase": "-hgvs -splicing_threshold 3 ",
 >         "intronhgvs": 10
 >       }
+>     },
+>     "docker": {
+>       "entries": {
+>         "vep": {
+>           "tool": "vep_online",
+>           "update_existing_fields": false,
+>           "parameters": [
+>             "--everything"
+>           ]
+>         }
+>       }
 >     }
 >   },
 >   "calculation": {
@@ -550,10 +636,6 @@ See [HOWARD Parameters JSON](help.parameters.md) for more information.
 >     "prioritization_config": "config/prioritization_profiles.json",
 >     "pzfields": ["PZScore", "PZFlag", "PZComment"],
 >     "prioritization_score_mode": "VaRank"
->   },
->   "hgvs": {
->     "full_format": true,
->     "use_exon": true
 >   },
 >   "stats": {
 >     "stats_md": null,
@@ -579,9 +661,14 @@ See [HOWARD Parameters JSON](help.parameters.md) for more information.
 > ```
 
 Moreover, a transcripts file can be defined, especially to select NOMEN
-from a list of HGVS annotation (see [Calculation](#calculation) and
-[HGVS and NOMEN from snpEff](#hgvs-and-nomen-from-snpeff)). This file is
-a tab-delimited with 'transcript' as first column and 'gene' a second
+from a list of HGVS annotation for calculations such as NOMEN extraction
+or transcripts prioritization calculation
+(see [Calculation](#calculation),
+[HGVS and NOMEN from snpEff](#hgvs-and-nomen-from-snpeff), and
+[configured and available calculation](#help.calculations.md)
+for more information).
+
+This file is a tab-delimited with 'transcript' as first column and 'gene' a second
 column. For a gene, transcripts of reference are ordered (first is
 priority, e.g. 'NM_001346897' has prior over 'NM_005228').
 
@@ -1373,6 +1460,8 @@ parameter.
 To list all available calculations, from HOWARD default configuration or
 with a homemade Calculation configuration JSON file, use the
 `--show_calculations` parameter.
+Some calculations need additional parameters to defined in Parameters JSON file.
+See [configured and available calculation](#help.calculations.md) file for more information.
 
 > Example: List of build-in calculation
 >
@@ -1381,30 +1470,46 @@ with a homemade Calculation configuration JSON file, use the
 >    --show_calculations
 > ```
 >
+
 > ``` text
-> #[INFO] Start
-> #[INFO] Available calculation operations:
-> #[INFO]    BARCODE: BARCODE as VaRank tool
-> #[INFO]    BARCODEFAMILY: BARCODEFAMILY as VaRank tool
-> #[INFO]    DP_STATS: Depth (DP) statistics
-> #[INFO]    FINDBYPIPELINE: Number of pipeline that identify the variant (for multi pipeline VCF)
-> #[INFO]    FINDBYSAMPLE: Number of sample that have a genotype for the variant (for multi sample VCF)
-> #[INFO]    GENOTYPECONCORDANCE: Concordance of genotype for multi caller VCF
-> #[INFO]    NOMEN: NOMEN information (e.g. NOMEN, CNOMEN, PNOMEN...) from HGVS nomenclature field
-> #[INFO]    SNPEFF_ANN_EXPLODE: Explode snpEff annotations
-> #[INFO]    SNPEFF_ANN_EXPLODE_JSON: Explode snpEff annotations in JSON format
-> #[INFO]    SNPEFF_ANN_EXPLODE_UNIQUIFY: Explode snpEff annotations with uniquify values
-> #[INFO]    SNPEFF_HGVS: HGVS nomenclatures from snpEff annotation
-> #[INFO]    TRANSCRIPTS_ANN: Add transcripts annotations in structured format (field 'transcripts_ann')
-> #[INFO]    TRANSCRIPTS_ANNOTATIONS: Add transcripts annotations in JSON and/or structured format (see param JSON file)
-> #[INFO]    TRANSCRIPTS_JSON: Add transcripts annotations in JSON format (field 'transcripts_json')
-> #[INFO]    TRANSCRIPTS_PRIORITIZATION: Prioritize transcripts with a prioritization profile (using param.json)
-> #[INFO]    TRIO: Inheritance for a trio family
-> #[INFO]    VAF: Variant Allele Frequency (VAF) harmonization
-> #[INFO]    VAF_STATS: Variant Allele Frequency (VAF) statistics
-> #[INFO]    VARIANT_ID: Variant ID generated from variant position and type
-> #[INFO]    VARTYPE: Variant type (e.g. SNV, INDEL, MNV, BND...)
-> #[INFO] End
+> #    INFO| Available calculation operations:
+> #    INFO|    ANNOTATION: Annotation of variants based on specified databases and tools
+> #    INFO|    BARCODE: BARCODE as VaRank tool
+> #    INFO|    BARCODEFAMILY: BARCODEFAMILY as VaRank tool
+> #    INFO|    COUNT_SAMPLES: Number of sample that have a genotype for the variant (for multi sample VCF)
+> #    INFO|    DP_STATS: Depth (DP) statistics
+> #    INFO|    FIND_SAMPLES: Number of sample that have a genotype for the variant (for multi sample VCF)
+> #    INFO|    GENOTYPECONCORDANCE: Concordance of genotype for multi caller VCF
+> #    INFO|    GENOTYPE_STATS: Calculate genotype statistics on a specific genotype field (e.g. VAF, DP, GQ...)
+> #    INFO|    INFO_TO_FORMAT: INFO to FORMAT conversion
+> #    INFO|    LIST_SAMPLES: List of samples that have a genotype for the variant (for multi sample VCF)
+> #    INFO|    MERGED_HGVS: Merge HGVS nomenclatures from snpEff (snpeff_hgvs) and ANNOVAR (AAChange_refGene) into merged_hgvs field
+> #    INFO|    NOMEN: NOMEN information (e.g. NOMEN, CNOMEN, PNOMEN...) from HGVS nomenclature field (see parameters help)
+> #    INFO|    NOMEN_SNPEFF: NOMEN information (e.g. NOMEN, CNOMEN, PNOMEN...) from HGVS nomenclature field (see parameters help)
+> #    INFO|    PRIORITIZATION: Prioritization of variants based on specified profiles
+> #    INFO|    RECREATE_INFO_FIELDS: Recreate INFO_tags, rename or remove tags
+> #    INFO|    RENAME_INFO_FIELDS: Rename or remove INFO/tags
+> #    INFO|    SNPEFF_ANN_EXPLODE: Explode snpEff annotations
+> #    INFO|    SNPEFF_ANN_EXPLODE_JSON: Explode snpEff annotations in JSON format
+> #    INFO|    SNPEFF_ANN_EXPLODE_UNIQUIFY: Explode snpEff annotations with uniquify values
+> #    INFO|    SNPEFF_EXTRACT: HGVS nomenclatures from snpEff annotation
+> #    INFO|    SNPEFF_HGVS: HGVS nomenclatures from snpEff annotation
+> #    INFO|    TRANSCRIPTS_ANNOTATIONS: Perform transcripts annotations and generate a transcripts table/view (using JSON parameters file)
+> #    INFO|    TRANSCRIPTS_JSON: Perform transcripts annotations and export into INFO field in JSON format (field 'transcripts_json')
+> #    INFO|    TRANSCRIPTS_ANN: Perform transcripts annotations and export into INFO field in structured format (field 'transcripts_ann')
+> #    INFO|    TRANSCRIPTS_EXPORT: Export transcripts table/view as a file (using JSON parameters file)
+> #    INFO|    TRANSCRIPTS_PRIORITIZATION: Prioritize transcripts with a prioritization profile (using JSON parameters file)
+> #    INFO|    TRANSCRIPTS_PRIORITIZATION_STRICT: Prioritize transcripts with a prioritization profile (using JSON parameters file)
+> #    INFO|    TRIO: Inheritance for a trio family
+> #    INFO|    VAF: Variant Allele Frequency (VAF) harmonization
+> #    INFO|    VAF_STATS: Variant Allele Frequency (VAF) statistics
+> #    INFO|    VARIANT_CHR_POS_ALT_REF: Create a variant ID with chromosome, position, alt and ref
+> #    INFO|    VARIANT_FILTER: Filter variants based on specified criteria (using SQL parameters and sample list)
+> #    INFO|    VARIANT_ID: Variant ID generated from variant position and type
+> #    INFO|    VARIANT_ID_VARID: Variant ID generated from variant position and type, using 'varid' as INFO tag
+> #    INFO|    VARTYPE: Variant type (e.g. SNV, INDEL, MNV, BND...)
+> #    INFO|    VEP_EXTRACT: HGVS nomenclatures from VEP annotation
+> #    INFO|    VEP_EXTRACT_REFSEQ: HGVS nomenclatures from VEP annotation unsing RefSeq transcripts
 > ```
 
 ### Calculation configuration JSON file
@@ -1953,10 +2058,10 @@ annotations.
 
 In order to fine tune process, all tools can be defined in a [HOWARD
 Parameters JSON](docs/help.parameters.md). This allows to add specific
-options, such as selecting specific fields (and rename them) for
-annotation, defining options for external tools, specifying a list of
-transcripts of preference for NOMEN calculation. This Parameters JSON
-file can be combine with options.
+options, such as pipeline definitions, and selecting specific fields
+(and rename them) for annotation, defining options for external tools,
+specifying a list of transcripts of preference for NOMEN calculation.
+This Parameters JSON file can be combine with options.
 
 > Example: Full process command with [Parameters JSON file
 > example](#parameters) and a query as option

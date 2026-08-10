@@ -19,7 +19,7 @@ import vcf  # type: ignore
 from howard.objects.variants import Variants
 from howard.functions.commons import remove_if_exists
 
-from test_needed import tests_folder, tests_data_folder, tests_config
+from test_needed import tests_folder, tests_data_folder, tests_config, database_files
 
 
 def test_calculation_transcript_annotations():
@@ -3174,3 +3174,258 @@ def test_calculation_variant_filter(
             vcf.Reader(filename=output_vcf)
         except:
             assert False
+
+def test_calculation_annotation():
+    """
+    This is a test function for the calculation of annotation in a VCF file using the Variants class in Python.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.vcf.gz"
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+
+        # Annotation databases
+        annotation1 = database_files.get("parquet")
+        annotation2 = database_files.get("example_vcf_gz")
+        annotation3 = database_files.get("refgene_gz")
+
+        # Param annotation dict
+        # Construct param dict
+        param_annotation = {
+            "parquet": {
+                "annotations": {
+                    annotation1: {"INFO": None},
+                    annotation2: {"CLNSIG": "CLNSIG_new"},
+                },
+            },
+            "bcftools": {
+                "annotations": {
+                    annotation2: {"CLNSIG": "CLNSIG_new_bcftools"},
+                    annotation3: {"symbol": "gene"},
+                },
+            },
+        }
+
+        # Construct param dict
+        param = {
+            "calculation": {
+                "calculations": {
+                    "annotation": param_annotation
+                }
+            }
+        }
+
+        # Create object
+        variants = Variants(
+            conn=None, input=input_vcf, output=output_vcf, param=param, load=True
+        )
+
+        # Remove if output file exists
+        remove_if_exists([output_vcf])
+
+        # Calculation
+        variants.calculation()
+
+        result = variants.get_query_to_df(
+            """ SELECT INFO FROM variants """
+        )
+        assert len(result) == 7, f"Expected 7 variants, but got {len(result)}"
+
+        result = variants.get_query_to_df(
+            """ SELECT INFO FROM variants WHERE INFO LIKE '%CLNSIG_new=%' """
+        )
+        assert len(result) == 2, f"Expected 2 variants with INFO LIKE '%CLNSIG_new=%', but got {len(result)}"
+
+        result = variants.get_query_to_df(
+            """ SELECT INFO FROM variants WHERE INFO LIKE '%CLNSIG_new_bcftools=%' """
+        )
+        assert len(result) == 2, f"Expected 2 variants with INFO LIKE '%CLNSIG_new_bcftools=%', but got {len(result)}"
+
+        result = variants.get_query_to_df(
+            """ SELECT INFO FROM variants WHERE INFO LIKE '%gene=%' """
+        )
+        assert len(result) == 3, f"Expected 3 variants with INFO LIKE '%gene=%', but got {len(result)}"
+
+        # Check if VCF is in correct format with pyVCF
+        remove_if_exists([output_vcf])
+        variants.export_output()
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
+
+
+def test_calculation_prioritization():
+    """
+    This is a test function for the calculation of prioritization in a VCF file using the Variants class in Python.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.vcf.gz"
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+
+        # Construct config dict
+        config = {}
+
+        # Construct param prioritization dict
+        param_prioritization = {
+            "prioritization_config": tests_data_folder
+            + "/prioritization_profiles.json",
+            "profiles": ["default", "GERMLINE", "sql_class"],
+            "pzfields": [
+                "PZFlag",
+                "PZScore",
+                "PZClass",
+                "PZComment",
+                "PZInfos",
+                "PZTags",
+            ],
+        }
+
+        # Construct param dict
+        param = {
+            "calculation": {
+                "calculations": {
+                    "prioritization": param_prioritization
+                }
+            }
+        }
+
+        # Create object
+        variants = Variants(
+            input=input_vcf, output=output_vcf, load=True, config=config, param=param
+        )
+
+        # Remove if output file exists
+        remove_if_exists([output_vcf])
+
+        # Calculation
+        variants.calculation()
+
+        # Check if all variants have INFO field
+        result = variants.get_query_to_df(
+            """ SELECT INFO FROM variants"""
+        )
+        assert len(result) == 7, f"Expected 7 variants, but got {len(result)}"
+
+        # Check all priorized default profile
+        result = variants.get_query_to_df(
+            """
+            SELECT * FROM variants
+            WHERE INFO LIKE '%PZFlag_default=%'
+            AND INFO LIKE '%PZScore_default=%'
+            AND INFO LIKE '%PZClass_default=%'
+            AND INFO LIKE '%PZComment_default=%'
+            AND INFO LIKE '%PZInfos_default=%'
+            AND INFO LIKE '%PZTags_default=%'
+            """
+        )
+        assert len(result) == 4, f"Expected 4 variants with default profile, but got {len(result)}"
+
+        # Check all priorized GERMLINE profile
+        result = variants.get_query_to_df(
+            """
+            SELECT * FROM variants
+            WHERE INFO LIKE '%PZFlag_GERMLINE=%'
+            AND INFO LIKE '%PZScore_GERMLINE=%'
+            AND INFO LIKE '%PZClass_GERMLINE=%'
+            AND INFO LIKE '%PZComment_GERMLINE=%'
+            AND INFO LIKE '%PZInfos_GERMLINE=%'
+            AND INFO LIKE '%PZTags_GERMLINE=%'
+            """
+        )
+        assert len(result) == 2, f"Expected 2 variants with GERMLINE profile, but got {len(result)}"
+
+        # Check all priorized sql_class profile
+        result = variants.get_query_to_df(
+            """
+            SELECT * FROM variants
+            WHERE INFO LIKE '%PZFlag_sql_class=%'
+            AND INFO LIKE '%PZScore_sql_class=%'
+            AND INFO LIKE '%PZClass_sql_class=%'
+            AND INFO LIKE '%PZComment_sql_class=%'
+            AND INFO LIKE '%PZInfos_sql_class=%'
+            """
+        )
+        assert len(result) == 2, f"Expected 2 variants with sql_class profile, but got {len(result)}"
+
+        # Check all priorized default profile (as default)
+        result = variants.get_query_to_df(
+            """
+            SELECT * FROM variants
+            WHERE INFO LIKE '%PZFlag=%'
+            AND INFO LIKE '%PZScore=%'
+            AND INFO LIKE '%PZClass=%'
+            AND INFO LIKE '%PZComment_default=%'
+            AND INFO LIKE '%PZInfos_default=%'
+            AND INFO LIKE '%PZTags_default=%'
+            """
+        )
+        assert len(result) == 4, f"Expected 4 variants with default profile (as default), but got {len(result)}"
+
+        # Check all priorized default profile
+        result = variants.get_query_to_df(
+            """
+            SELECT * FROM variants
+            WHERE INFO LIKE '%PZFlag_default=%'
+            AND INFO LIKE '%PZScore_default=%'
+            """
+        )
+        assert len(result) == 7, f"Expected 7 variants with default profile, but got {len(result)}"
+
+        # Check all priorized GERMLINE profile
+        result = variants.get_query_to_df(
+            """
+            SELECT * FROM variants
+            WHERE INFO LIKE '%PZFlag_GERMLINE=%'
+            AND INFO LIKE '%PZScore_GERMLINE=%'
+            """
+        )
+        assert len(result) == 7, f"Expected 7 variants with GERMLINE profile, but got {len(result)}"
+
+        # Check all priorized default profile (as default)
+        result = variants.get_query_to_df(
+            """
+            SELECT * FROM variants
+            WHERE INFO LIKE '%PZFlag=%'
+            AND INFO LIKE '%PZScore=%'
+            """
+        )
+        assert len(result) == 7, f"Expected 7 variants with default profile (as default), but got {len(result)}"
+
+        # Check annotation default
+        result = variants.get_query_to_df(
+            """ SELECT * FROM variants WHERE "#CHROM" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO LIKE '%PZScore_default=105%' """
+        )
+        assert len(result) == 1, f"Expected 1 variant with PZScore_default=105, but got {len(result)}"
+
+        # Check annotation GERMILNE
+        result = variants.get_query_to_df(
+            """ SELECT * FROM variants WHERE "#CHROM" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO LIKE '%PZScore_GERMLINE=5%' """
+        )
+        assert len(result) == 1, f"Expected 1 variant with PZScore_GERMLINE=5, but got {len(result)}"
+
+        # Check annotation sql_class
+        result = variants.get_query_to_df(
+            """ SELECT * FROM variants WHERE "#CHROM" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO LIKE '%PZScore_sql_class=60%' """
+        )
+        assert len(result) == 1, f"Expected 1 variant with PZScore_sql_class=60, but got {len(result)}"
+
+        # Check FILTERED
+        result = variants.get_query_to_df(
+            """ SELECT INFO FROM variants WHERE INFO LIKE '%FILTERED%' """
+        )
+        assert len(result) == 1, f"Expected 1 variant with FILTERED in INFO, but got {len(result)}"
+
+        # Check if VCF is in correct format with pyVCF
+        remove_if_exists([output_vcf])
+        variants.export_output()
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
+

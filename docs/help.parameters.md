@@ -205,17 +205,17 @@ title: HOWARD Help Parameters
 # Introduction
 
 HOWARD Parameters JSON file defines parameters to process annotations,
-calculations, prioritizations, conversions and queries.
+calculations, prioritizations, conversions, queries and export.
 
 Examples:
 
-> Parameters for annotation, calculation, prioritization, HGVS
-> annotation and export
+> Parameters for annotation (Parquet, Annovar, snpEff, Exomizer and
+> HGVS), calculation and prioritization (Referenced mode pipeline)
 
 > ``` json
 > {
 >    "pipelines": {
->       "default": [
+>       "my_pipeline": [
 >          {
 >             "annotation": null
 >          },
@@ -244,21 +244,6 @@ Examples:
 >                }
 >             },
 >             "/path/to/database5.bed.gz": {
->                "annotation_fields": {
->                   "INFO": null
->                }
->             }
->          }
->       },
->       "bcftools": {
->          "annotations": {
->             "/path/to/database6.vcf.gz": {
->                "annotation_fields": {
->                   "field1": null,
->                   "field2": "field2_renamed"
->                }
->             },
->             "/path/to/database7.bed": {
 >                "annotation_fields": {
 >                   "INFO": null
 >                }
@@ -309,9 +294,6 @@ Examples:
 >          "full_format": true,
 >          "use_exon": true
 >       }
->       "options": {
->          "append": true
->       }
 >    },
 >    "calculation": {
 >       "_tool": "calculation",
@@ -332,46 +314,585 @@ Examples:
 >       "default_profile": "GERMLINE",
 >       "pzfields": ["PZScore", "PZFlag", "PZComment"],
 >       "prioritization_score_mode": "VaRank"
->    },
->    "export": {
->       "include_header": true
 >    }
 > }
 > ```
 
 # pipelines
 
-Dictionary of named pipelines. Each pipeline is a list of ordered steps.
+**Defintions**
 
-A step is a dictionary containing one or multiple operation names (such
-as annotation, calculation, or prioritization tools).
+A pipelines definition is a dictionary of named pipelines.
+
+A pipeline is a list of ordered steps.
+
+A step is a dictionary of ordered operations defined by a name (and a
+specific tool as annotation, calculation, or prioritization).
+
+> Diagram of a pipeline with three steps: frequency, knowledge, and
+> prioritization, each with multiple operations
+
+``` mermaid
+
+     graph LR
+
+       Z@{ shape: tag-rect, label: "pipelines" } --> A@{ shape: procs, label: "My pipeline" }
+
+       A --> B@{ shape: lin-rect, label: "Step 1
+Frequency" }
+
+       B --> E@{ shape: odd, label: "Frequency Annotation
+_annotation_" }
+
+       E --> F@{ shape: odd, label: "Variant filter on frequency
+_calculation_" }
+
+       A --> C@{ shape: lin-rect, label: "Step 2
+Knowledge" }
+
+       C --> G@{ shape: odd, label: "Knowledge Annotation
+_annotation_" }
+
+       G --> H@{ shape: odd, label: "Calculation on annotation
+_calculation_" }
+
+       A --> D@{ shape: lin-rect, label: "Step 3
+Prioritization" }
+
+       D --> I@{ shape: odd, label: "Prioritization of variants
+_prioritization_" }
+```
+
+> Legend of diagrams
+
+``` mermaid
+
+     graph TD
+
+       Z@{ shape: tag-rect, label: "top-level section" }
+
+       A@{ shape: procs, label: "My pipeline" }
+
+       B@{ shape: lin-rect, label: "Step" }
+
+       E@{ shape: odd, label: "Operation name" }
+
+       O3@{ shape: braces, label: "Parameters" }
+```
+
+<br>
+
+**Pipeline definition mode**
 
 Two pipeline declaration modes are available:
 
 - Inline mode (recommended): operation name mapped to an operation
-  object containing '\_tool', optional '\_description', and operation
-  parameters.
+  object
 
-- Referenced mode (alternative): operation name mapped to a tool string
-  (for example {"annotation_frequency": "annotation"}) or null; in this
-  case parameters are read from the top-level section with the same
-  operation name, and '\_tool' can be defined there.
+  An operation object contains
 
-The referenced mode is useful to reuse the same operation configuration
-in multiple pipelines and define shorter or custom execution paths.
+  - '\_tool' defining the tool type ('annotation', 'calculation' or
+    'prioritization'),
+
+  - '\_description' (optional) to describe the operation,
+
+  - operation parameters (see [annotation](#annotation),
+    [calculation](#calculation) and [prioritization](#prioritization)
+    sections).
+
+- Referenced mode (alternative): operation name mapped to a tool type
+
+  Tools string is either:
+
+  - a string that refere to a tool type (for example
+    '{"annotation_frequency": "annotation"}' for an annotation
+    operation),
+
+  - null ('\_tools' is then defined within the top-level section with
+    the same operation name)
+
+  The referenced mode is useful to reuse the same operation
+  configuration in multiple pipelines and define shorter or custom
+  execution paths.
 
 Only tool types 'annotation', 'calculation' and 'prioritization' are
-available.
+available ('calculation' by default).
 
-If 'pipelines' is omitted, the default pipeline is equivalent to
-'{"default": \[{"annotation": "annotation"}, {"calculation":
-"calculation"}, {"prioritization": "prioritization"}\]}' and refers to
-top-level corresponding sections.
+<br>
+
+**Default and quick pipeline definition**
+
+If 'pipelines' is omitted, the default pipeline is equivalent to:
+
+``` json
+
+{
+   "pipelines"
+      "default": [
+         {"annotation": "annotation"},
+         {"calculation": "calculation"},
+         {"prioritization": "prioritization"}
+      ]
+   }
+}
+```
+
+and refers to top-level corresponding sections in the JSON file (if a
+section does not exist, it will not be processed).
+
+The default quick pipeline only needs to define operations in the JSON
+file.
+
+The quick parameters JSON file is then equivalent to:
+
+``` json
+
+{
+   {"annotation": {...},
+   {"calculation": {...},
+   {"prioritization": {...}
+}
+```
+
+> Diagram of a quick pipeline with default steps and operations will be
+> generated as (referenced mode)
+
+``` mermaid
+
+graph LR
+
+   P@{ shape: tag-rect, label: "pipelines" }
+
+   P --> B@{ shape: procs, label: "default" }
+
+   subgraph my_pipeline["default"]
+
+      B --> B1@{ shape: lin-rect, label: "Step 1
+annotation" }
+
+      B --> B3@{ shape: lin-rect, label: "Step 2
+calculation" }
+
+      B --> B4@{ shape: lin-rect, label: "Step 3
+prioritization" }
+
+      B1 --> BO1@{ shape: odd, label: "annotation" }
+
+      B3 --> BO3@{ shape: odd, label: "calculation" }
+
+      B4 --> BO7@{ shape: odd, label: "prioritization" }
+
+   end
+
+   subgraph definition_operations["Operations"]
+
+      O1@{ shape: tag-rect, label: "annotation
+_annotation_" }
+
+      O3@{ shape: tag-rect, label: "calculation
+_calculation_" }
+
+      O7@{ shape: tag-rect, label: "prioritization
+_prioritization_" }
+
+      O1 -.- OD1@{ shape: braces, label: "annotation parameters" }
+
+      O3 -.- OD3@{ shape: braces, label: "calculation parameters" }
+
+      O7 -.- OD7@{ shape: braces, label: "prioritization parameters" }
+
+   end
+
+   BO1 -.- O1
+
+   BO3 -.- O3
+
+   BO7 -.- O7
+
+
+
+   classDef transparent fill:none,stroke:none;
+
+   class definition_operations transparent;
+```
+
+And a quick parameters JSON file for annotations only:
+
+``` json
+
+{
+   {"annotation": {...}
+}
+```
+
+> Diagram of a quick pipeline with default steps and annotations
+> operation only (referenced mode)
+
+``` mermaid
+
+graph LR
+
+   P@{ shape: tag-rect, label: "pipelines" }
+
+   P --> B@{ shape: procs, label: "default" }
+
+   subgraph my_pipeline["default"]
+
+      B --> B1@{ shape: lin-rect, label: "Step 1
+annotation" }
+
+      B --> B3@{ shape: lin-rect, label: "Step 2
+calculation" }
+
+      B --> B4@{ shape: lin-rect, label: "Step 3
+prioritization" }
+
+      B1 --> BO1@{ shape: odd, label: "annotation" }
+
+      B3 --> BO3@{ shape: odd, label: "calculation" }
+
+      B4 --> BO7@{ shape: odd, label: "prioritization" }
+
+   end
+
+   subgraph definition_operations["Operations"]
+
+      O1@{ shape: tag-rect, label: "annotation
+_annotation_" }
+
+      O3@{ shape: cross-circ, label: "calculation
+_calculation_" }
+
+      O7@{ shape: cross-circ, label: "prioritization
+_prioritization_" }
+
+      O1 -.- OD1@{ shape: braces, label: "annotation parameters" }
+
+   end
+
+   BO1 -.- O1
+
+   BO3 -.- O3
+
+   BO7 -.- O7
+
+
+
+   classDef transparent fill:none,stroke:none;
+
+   class definition_operations transparent;
+```
+
+<br>
+
+**Examples of pipeline definitions**
+
+> Diagram of example inline mode inside a single named pipeline with
+> full operation descriptions
+
+``` mermaid
+
+graph LR
+
+   Z@{ shape: tag-rect, label: "pipelines" } --> A@{ shape: procs, label: "My pipeline" }
+
+   subgraph my_pipeline2["My pipeline"]
+
+      direction LR
+
+      A --> B@{ shape: lin-rect, label: "Step 1
+Annotations" }
+
+      B --> E@{ shape: odd, label: "annotation_dbsnp
+_annotation_" }
+
+      E --> F@{ shape: odd, label: "annotation_dbNSFP
+_annotation_" }
+
+      E -.- E1@{ shape: braces, label: "dbSNP + gnomAD
+avsnp150.parquet, gnomad.parquet" }
+
+      F -.- F1@{ shape: braces, label: "dbNSFP + COSMIC
+ dbnsfp42a.parquet, cosmic70.vcf.gz" }
+
+      A --> C@{ shape: lin-rect, label: "Step 2
+Calculations" }
+
+      C --> G@{ shape: odd, label: "calculation_on_variants
+_calculation_" }
+
+      G -.- G1@{ shape: braces, label: "calculations
+vartype, VAF, genotype_stats" }
+
+      A --> D@{ shape: lin-rect, label: "Step 3
+Prioritizations" }
+
+      D --> H@{ shape: odd, label: "prioritization
+_prioritization_" }
+
+      H -.- H1@{ shape: braces, label: "profiles: default, GERMLINE
+pzfields: PZScore, PZFlag...
+score mode: VaRank" }
+
+   end
+```
+
+> Diagram of example with multi pipeline configuration (inline mode)
+
+``` mermaid
+
+graph LR
+
+   Z@{ shape: tag-rect, label: "pipelines" }
+
+   Z --> A@{ shape: procs, label: "My secondary pipeline" }
+
+   subgraph my_pipeline2["My secondary pipeline"]
+
+      direction LR
+
+      A --> B@{ shape: lin-rect, label: "Step 1
+Annotations" }
+
+      B --> E@{ shape: odd, label: "annotation_dbsnp
+_annotation_" }
+
+      E -.- E1@{ shape: braces, label: "dbSNP
+avsnp150.parquet" }
+
+      E --> F@{ shape: odd, label: "annotation_dbNSFP
+_annotation_" }
+
+      F -.- F1@{ shape: braces, label: "dbNSFP
+dbnsfp42a.parquet" }
+
+      A --> C@{ shape: lin-rect, label: "Step 2
+Calculations" }
+
+      C --> G@{ shape: odd, label: "calculation
+_calculation_" }
+
+      G -.- G1@{ shape: braces, label: "calculations
+vartype, VAF" }
+
+      A --> D@{ shape: lin-rect, label: "Step 3
+Prioritizations" }
+
+      D --> H@{ shape: odd, label: "prioritization
+_prioritization_" }
+
+      H -.- H1@{ shape: braces, label: "profiles: default, GERMLINE" }
+
+      A --> I@{ shape: lin-rect, label: "Step 4
+Annotations" }
+
+      I --> J@{ shape: odd, label: "annotation_frequency
+_annotation_" }
+
+      J -.- J1@{ shape: braces, label: "gnomAD
+gnomad.parquet" }
+
+      A --> K@{ shape: lin-rect, label: "Step 5
+Calculation final" }
+
+      K --> L@{ shape: odd, label: "calculation_final
+_calculation_" }
+
+      L -.- L1@{ shape: braces, label: "calculations
+NOMEN" }
+
+   end
+
+   Z --> M@{ shape: procs, label: "My pipeline" }
+
+   subgraph my_pipeline["My pipeline"]
+
+      direction LR
+
+      M --> N@{ shape: lin-rect, label: "Step 1
+Annotations" }
+
+      N --> O@{ shape: odd, label: "annotation_dbsnp
+_annotation_" }
+
+      O -.- O1@{ shape: braces, label: "dbSNP
+avsnp150.parquet" }
+
+      M --> P@{ shape: lin-rect, label: "Step 2
+Annotations" }
+
+      P --> Q@{ shape: odd, label: "annotation_dbNSFP
+_annotation_" }
+
+      Q -.- Q1@{ shape: braces, label: "dbNSFP
+dbnsfp42a.parquet" }
+
+      M --> R@{ shape: lin-rect, label: "Step 3
+Calculations" }
+
+      R --> S@{ shape: odd, label: "calculation
+_calculation_" }
+
+      S -.- S1@{ shape: braces, label: "calculations
+vartype" }
+
+      M --> T@{ shape: lin-rect, label: "Step 4
+Prioritization" }
+
+      T --> U@{ shape: odd, label: "prioritization
+_prioritization_" }
+
+      U -.- U1@{ shape: braces, label: "profiles: GERMLINE" }
+
+   end
+```
+
+> Diagram of example referenced mode with a multi-pipeline configuration
+> and top-level operation definitions
+
+``` mermaid
+
+graph LR
+
+   P@{ shape: tag-rect, label: "pipelines" }
+
+   P --> B@{ shape: procs, label: "My pipeline" }
+
+   subgraph my_pipeline["My pipeline"]
+
+      B --> B1@{ shape: lin-rect, label: "Step 1
+annotations" }
+
+      B --> B3@{ shape: lin-rect, label: "Step 3
+calculation" }
+
+      B --> B4@{ shape: lin-rect, label: "Step 4
+prioritization" }
+
+      B1 --> BO1@{ shape: odd, label: "annotation_core" }
+
+      BO1 --> BO2@{ shape: odd, label: "nannotation_scores" }
+
+      B3 --> BO3@{ shape: odd, label: "calculation" }
+
+      B4 --> BO7@{ shape: odd, label: "prioritization" }
+
+   end
+
+   P --> A@{ shape: procs, label: "My secondary pipeline" }
+
+   subgraph my_secondary_pipeline["My secondary pipeline"]
+
+      A --> A1@{ shape: lin-rect, label: "Step 1
+annotations" }
+
+      A --> A3@{ shape: lin-rect, label: "Step 3
+calculation" }
+
+      A --> A4@{ shape: lin-rect, label: "Step 4
+frequency" }
+
+      A --> A5@{ shape: lin-rect, label: "Step 5
+calculation_final" }
+
+      A --> A6@{ shape: lin-rect, label: "Step 6
+prioritization" }
+
+      A1 --> AO1@{ shape: odd, label: "annotation_core" }
+
+      AO1 --> AO2@{ shape: odd, label: "nannotation_scores" }
+
+      A3 --> AO3@{ shape: odd, label: "calculation" }
+
+      A4 --> AO4@{ shape: odd, label: "annotation_frequency" }
+
+      AO4 --> AO5@{ shape: odd, label: "calculation_frequency" }
+
+      A5 --> AO6@{ shape: odd, label: "calculation_final" }
+
+      A6 --> AO7@{ shape: odd, label: "prioritization" }
+
+   end
+
+   subgraph definition_operations["Operations"]
+
+      O1@{ shape: tag-rect, label: "annotation_core
+_annotation_" }
+
+      O2@{ shape: tag-rect, label: "annotation_scores
+_annotation_" }
+
+      O3@{ shape: tag-rect, label: "calculation
+_calculation_" }
+
+      O4@{ shape: tag-rect, label: "annotation_frequency
+_annotation_" }
+
+      O5@{ shape: tag-rect, label: "calculation_frequency
+_calculation_" }
+
+      O6@{ shape: tag-rect, label: "calculation_final
+_calculation_" }
+
+      O7@{ shape: tag-rect, label: "prioritization
+_prioritization_" }
+
+      O1 -.- O1D@{ shape: braces, label: "Core annotations
+dbSNP, dbNSFP" }
+
+      O2 -.- O2D@{ shape: braces, label: "Scores annotations
+SIFT, PolyPhen" }
+
+      O3 -.- O3D@{ shape: braces, label: "Main calculations
+vartype, VAF" }
+
+      O4 -.- O4D@{ shape: braces, label: "Frequency calculations
+Max and min frequency" }
+
+      O5 -.- O5D@{ shape: braces, label: "Frequency annotations
+gnomAD, 1000g" }
+
+      O6 -.- O6D@{ shape: braces, label: "Final calculations
+HGVS and NOMEN" }
+
+      O7 -.- O7D@{ shape: braces, label: "Prioritizations
+PZScores, PZFlags" }
+
+   end
+
+   AO1 -.- O1
+
+   AO2 -.- O2
+
+   AO3 -.- O3
+
+   AO4 -.- O4
+
+   AO5 -.- O5
+
+   AO6 -.- O6
+
+   AO7 -.- O7
+
+   BO1 -.- O1
+
+   BO2 -.- O2
+
+   BO3 -.- O3
+
+   BO7 -.- O7
+
+   classDef transparent fill:none,stroke:none;
+
+   class definition_operations transparent;
+
+
+```
 
 Type: `dict`
 
 Default:
-`{"default": [{"annotation": "annotation"}, {"calculation": "calculation"}, {"prioritization": "prioritization"}]}`
+`{"default":[{"annotation": "annotation"}, {"calculation": "calculation"}, {"prioritization": "prioritization"}]}`
 
 Examples:
 
@@ -381,14 +902,15 @@ Examples:
 > ``` json
 > {
 >    "pipelines": {
->      "default": [
+>      "my_pipeline": [
 >        {
 >          "annotation_dbsnp": {
 >            "_tool": "annotation",
->            "_description": "Annotate variants with dbSNP annotation.",
+>            "_description": "Annotate variants with dbSNP and gnomAD annotation.",
 >            "parquet": {
 >              "annotations": {
->                "tests/databases/annotations/current/hg19/avsnp150.parquet": {"INFO": null}
+>                "tests/databases/annotations/current/hg19/avsnp150.parquet": {"INFO": null},
+>                "tests/databases/annotations/current/hg19/gnomad.parquet": {"INFO": null}
 >              }
 >            }
 >          },
@@ -411,7 +933,11 @@ Examples:
 >          "calculation_on_variants": {
 >            "_tool": "calculation",
 >            "_description": "Compute variant and genotype metrics such as vartype and VAF.",
->            "calculations": {"vartype": null, "VAF": ""},
+>            "calculations": {
+>               "vartype": null,
+>               "VAF": null,
+>               "genotype_stats": "VAF"
+>            },
 >            "calculation_config": "config/calculations_config.json"
 >          }
 >        },
@@ -435,7 +961,43 @@ Examples:
 > ``` json
 > {
 >    "pipelines": {
->      "default": [
+>      "my_pipeline": [
+>        {
+>          "annotation_dbsnp": {
+>            "_tool": "annotation",
+>            "parquet": {
+>              "annotations": {
+>                "tests/databases/annotations/current/hg19/avsnp150.parquet": {"INFO": null}
+>              }
+>            }
+>          }
+>        },
+>        {
+>          "annotation_dbNSFP": {
+>            "_tool": "annotation",
+>            "parquet": {
+>              "annotations": {
+>                "tests/databases/annotations/current/hg19/dbnsfp42a.parquet": {"INFO": null}
+>              }
+>            }
+>          }
+>        },
+>        {
+>          "calculation": {
+>            "_tool": "calculation",
+>            "calculations": {
+>              "vartype": null
+>            }
+>          }
+>        },
+>        {
+>          "prioritization": {
+>            "_tool": "prioritization",
+>            "profiles": ["GERMLINE"]
+>          }
+>        }
+>      ],
+>      "my_secondary_pipeline": [
 >        {
 >          "annotation_dbsnp": {
 >            "_tool": "annotation",
@@ -492,42 +1054,6 @@ Examples:
 >            }
 >          }
 >        }
->      ],
->      "default2": [
->        {
->          "annotation_dbsnp": {
->            "_tool": "annotation",
->            "parquet": {
->              "annotations": {
->                "tests/databases/annotations/current/hg19/avsnp150.parquet": {"INFO": null}
->              }
->            }
->          }
->        },
->        {
->          "annotation_dbNSFP": {
->            "_tool": "annotation",
->            "parquet": {
->              "annotations": {
->                "tests/databases/annotations/current/hg19/dbnsfp42a.parquet": {"INFO": null}
->              }
->            }
->          }
->        },
->        {
->          "calculation": {
->            "_tool": "calculation",
->            "calculations": {
->              "vartype": null
->            }
->          }
->        },
->        {
->          "prioritization": {
->            "_tool": "prioritization",
->            "profiles": ["GERMLINE"]
->          }
->        }
 >      ]
 >    },
 > }
@@ -538,7 +1064,7 @@ Examples:
 > ``` json
 > {
 >    "pipelines": {
->      "default": [
+>      "my_pipeline": [
 >        {
 >          "annotation_step": "annotation"
 >        },
@@ -587,27 +1113,23 @@ Examples:
 > }
 > ```
 
-> Referenced mode with a multi-pipeline configuration and '\_tool'
-> defined in referenced sections
+> Referenced mode with a multi-pipeline configuration and top-level
+> operation definitions
 
 > ``` json
 > {
 >    "pipelines": {
->      "default": [
+>      "my_pipeline": [
 >        {
->          "annotation_core": null
->        },
->        {
+>          "annotation_core": null,
 >          "annotation_scores": null
 >        },
 >        {
 >          "calculation": null
 >        },
 >        {
+>          "annotation_frequency": null,
 >          "calculation_frequency": null
->        },
->        {
->          "annotation_frequency": null
 >        },
 >        {
 >          "calculation_final": null
@@ -616,11 +1138,9 @@ Examples:
 >          "prioritization": null
 >        }
 >      ],
->      "secondary": [
+>      "my_pipeline2": [
 >        {
->          "annotation_core": null
->        },
->        {
+>          "annotation_core": null,
 >          "annotation_scores": null
 >        },
 >        {
@@ -684,6 +1204,9 @@ order.
 A comma-separated string is also accepted (for example from CLI
 overrides): 'default,default2'.
 
+Parameter 'pipelines_list' is also available in CLI overrides (for
+example: '--pipelines_list=my_pipeline,my_secondary_pipeline').
+
 Type: `list`
 
 Default: `None`
@@ -702,7 +1225,7 @@ Examples:
 
 > ``` json
 > {
->    "pipelines_list": ["default"]
+>    "pipelines_list": ["my_pipeline"]
 > }
 > ```
 
@@ -710,7 +1233,7 @@ Examples:
 
 > ``` json
 > {
->    "pipelines_list": ["default", "secondary"]
+>    "pipelines_list": ["my_pipeline", "my_secondary_pipeline"]
 > }
 > ```
 
@@ -718,7 +1241,7 @@ Examples:
 
 > ``` json
 > {
->    "pipelines_list": "default,secondary"
+>    "pipelines_list": "my_pipeline,my_secondary_pipeline"
 > }
 > ```
 
@@ -2381,10 +2904,11 @@ Examples:
 
 # calculation
 
-Calculation process operations that are defiend in a Calculation
-Configuration JSON file. List available calculation operations with
-possible options (see [Calculation JSON file](help.calculation.md)
-help).
+Calculation process operations. See the list of already [configured and
+available calculations](help.calculation.md) in HOWARD for more
+information. A [Calculation Configuration
+JSON](help.configuration.calculation.md) help file describe how to add
+custom calculations.
 
 Examples:
 
@@ -2410,23 +2934,34 @@ Examples:
 
 ## calculations
 
-List of operations to process with possible options (see [Calculation
-JSON file](help.calculation.md) help).
+List of operations to process with options (see [configured and
+available calculations](help.calculation.md) for more information on
+operations).
 
 Examples:
 
-> Calculation with operations for generate variant_id and variant type,
-> extract HGVS from snpEff annotation, calculate number of samples and
-> list of samples for each variant, select NOMEN from snpEff HGVS with a
-> prioritized transcript (from prioritization transcript calculation)
-> and list of transcripts of preference, a list of NOMEN fields, with
-> two specific NOMEN patterns
+> Calculation with operations to calculate variant_id and variant type,
+> annotate variants, extract HGVS from snpEff annotation, calculate
+> number of samples and list of samples for each variant, select NOMEN
+> from snpEff HGVS with a prioritized transcript (from prioritization
+> transcript calculation) and list of transcripts of preference, a list
+> of NOMEN fields, with two specific NOMEN patterns
 
 > ``` json
 > {
 >    "calculations": {
 >      "variant_id": null,
 >      "vartype": null,
+>      "annotation": {
+>         "annotations": {
+>            "parquet": {
+>               "annotations": {
+>                  "my.database.parquet": {...},
+>                  "my.other.database.parquet": {...}
+>               }
+>            }
+>         }
+>      },
 >      "snpeff_hgvs": null,
 >      "find_samples": {
 >        "tags": {

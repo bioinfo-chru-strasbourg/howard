@@ -552,6 +552,53 @@ class variants_calculation:
                 "function_name": "calculation_variant_filter",
                 "function_params": {},
             },
+            "annotation": {
+                "type": "python",
+                "name": "annotation",
+                "description": "Annotation of variants based on specified databases and tools",
+                "comment": [
+                    "Annotate variants based on specified databases and tools. This calculation allows for the annotation of variants using parameters specified in the JSON parameter file in the annotation parameters (see help.annotation.md), including options on tools to use (HOWARD parquet algorithm, Annovar, snpEff, BCFTools...).\n"
+                    "Example that annotate variants with database in parquet format, annovar, snpEff and BCFTools with databases in VCF or BED format:\n",
+                    "```json",
+                    """{""",
+                    """   "annotation": {""",
+                    """      "parquet": {""",
+                    """         "annotations": {""",
+                    """            "my.database.parquet": {...},""",
+                    """            "my.other.database.parquet": {...}""",
+                    """         }""",
+                    """      },""",
+                    """      "annovar": {...}""",
+                    """      "snpeff": {...}""",
+                    """      "bcftools": {...}""",
+                    """   }""",
+                    """}""",
+                    "```",
+                ],
+                "available": True,
+                "function_name": "calculation_annotation",
+                "function_params": {},
+            },
+            "prioritization": {
+                "type": "python",
+                "name": "prioritization",
+                "description": "Prioritization of variants based on specified profiles",
+                "comment": [
+                    "Prioritize variants based on specified profiles. This calculation allows for the prioritization of variants using parameters specified in the JSON parameter file in the prioritization parameters (see help.prioritization.md), including options on profiles to use and scoring methods.\n"
+                    "Example that prioritize variants using default and GERMLINE profiles:\n",
+                    "```json",
+                    """{""",
+                    """   "prioritization": {""",
+                    """      "profiles": ["default", "GERMLINE"],""",
+                    """      "pzfields": ["PZFlag", "PZScore", "PZClass", "PZComment", "PZInfos", "PZTags"]""",
+                    """   }""",
+                    """}""",
+                    "```",
+                ],
+                "available": True,
+                "function_name": "calculation_prioritization",
+                "function_params": {},
+            },
         }
 
         return config_default
@@ -3732,3 +3779,93 @@ class variants_calculation:
             self.execute_query(query_replace_variants)
 
         return None
+
+
+    def calculation_annotation(
+        self,
+        section="calculation",
+        **kwargs
+    ) -> None:
+        """
+        Annotate variants based on specified databases and tools
+
+        :param section: The `section` parameter is a string that specifies the section of the configuration file to use for the calculation. It is used to retrieve the relevant parameters for the operation, defaults to "calculation"
+        :type section: str (optional)
+
+        :return: The function does not return anything. It modifies the variants table in the database by applying the specified filters and updating the table accordingly.
+        """
+
+        import copy
+
+        log.debug("Calculation annotation...")
+
+        operation_params, _ = self.get_operation_params(
+            section=section, operation_params=kwargs, operation_name="annotation"
+        )
+
+        ### Parameters for annotation calculation
+
+        # Operation parameters for annotation calculation into. top level parameters
+        param = self.get_param()
+        param_for_calculation_annotation = copy.deepcopy(param)
+        param_for_calculation_annotation_section_id = "calculation_annotation_" + str(get_random(10))
+        param_for_calculation_annotation.update(
+            {
+                param_for_calculation_annotation_section_id: operation_params
+            }
+        )
+        self.set_param(param_for_calculation_annotation)
+
+        # Launch annotation calculation
+        self.annotation(
+            section=param_for_calculation_annotation_section_id,
+            param=param_for_calculation_annotation,
+        )
+
+        # Remove the temporary section from param by restoring the original param
+        self.set_param(param)
+
+    def calculation_prioritization(
+            self,
+            section="calculation",
+            **kwargs
+        ) -> None:
+            """
+            Prioritize variants based on specified criteria
+    
+            :param section: The `section` parameter is a string that specifies the section of the configuration file to use for the calculation. It is used to retrieve the relevant parameters for the operation, defaults to "calculation"
+            :type section: str (optional)
+    
+            :return: The function does not return anything. It modifies the variants table in the database by applying the specified filters and updating the table accordingly.
+            """
+    
+            import copy
+    
+            log.debug("Calculation prioritization...")
+    
+            operation_params, _ = self.get_operation_params(
+                section=section, operation_params=kwargs, operation_name="prioritization"
+            )
+    
+            ### Parameters for prioritization calculation
+
+            # Operation parameters for prioritization calculation into. top level parameters
+            param = self.get_param()
+            param_for_calculation_prioritization = copy.deepcopy(param)
+            param_for_calculation_prioritization_section_id = "calculation_prioritization_" + str(get_random(10))
+            param_for_calculation_prioritization.update(
+                {
+                    param_for_calculation_prioritization_section_id: operation_params
+                }
+            )
+            self.set_param(param_for_calculation_prioritization)
+
+            # Launch prioritization calculation
+            self.prioritization(
+                section=param_for_calculation_prioritization_section_id,
+                param=param_for_calculation_prioritization,
+            )
+
+            # Remove the temporary section from param by restoring the original param
+            self.set_param(param)
+

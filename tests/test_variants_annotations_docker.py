@@ -97,7 +97,7 @@ def base_config(genome_folder: Path) -> dict:
                 "docker": {
                     "image": "ensemblorg/vep:latest",
                     "command": "vep",
-                    "annotation": {
+                    "parameters": {
                         "primary": {
                             "input": "--input_file",
                             "output": "--output_file",
@@ -118,7 +118,7 @@ def base_config(genome_folder: Path) -> dict:
                 "docker": {
                     "image": "custom/tool:latest",
                     "command": "custom-tool",
-                    "annotation": {
+                    "parameters": {
                         "primary": {
                             "input": "--vcf",
                             "output": "--out",
@@ -266,10 +266,10 @@ def test_run_entry_adds_rw_genome_directory_mount(monkeypatch, base_config: dict
                             }
                         ],
                     },
-                    "annotation": {
-                        **base_config["tools"]["vep"]["docker"]["annotation"],
+                    "parameters": {
+                        **base_config["tools"]["vep"]["docker"]["parameters"],
                         "primary": {
-                            **base_config["tools"]["vep"]["docker"]["annotation"]["primary"],
+                            **base_config["tools"]["vep"]["docker"]["parameters"]["primary"],
                             "genome": {
                                 "flag": "--fasta",
                                 "source": "howard",

@@ -961,7 +961,7 @@ def _resolve_entry_spec(
 		)
 
 	docker_cfg = tool_config.get("docker", {})
-	annotation_cfg = docker_cfg.get("annotation", {})
+	annotation_cfg = docker_cfg.get("parameters", {})
 	runtime_cfg = docker_cfg.get("runtime", {})
 	vcf_update_cfg = annotation_cfg.get("vcf_update", {})
 	defaults_cfg = annotation_cfg.get("defaults", {})
@@ -1045,7 +1045,7 @@ def _resolve_entry_spec(
 		"update_existing_fields": update_existing_fields,
 		"output_pattern": entry.get(
 			"output_pattern",
-			defaults_cfg.get("output_pattern", annotation_cfg.get("output_pattern", None)),
+			defaults_cfg.get("output_pattern", annotation_cfg.get("output_pattern", "*.vcf.gz")),
 		),
 		"mounts": mounts,
 		"databases": databases,

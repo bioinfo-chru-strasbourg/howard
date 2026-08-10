@@ -59,7 +59,7 @@
                 "entrypoint": "vep",
                 "options": null,
                 "command": null,
-                "annotation": {
+                "parameters": {
                     "primary": {
                         "input": "--input_file",
                         "output": "--output_file",

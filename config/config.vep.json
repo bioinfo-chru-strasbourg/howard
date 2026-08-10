@@ -59,7 +59,7 @@
                 "entrypoint": "vep",
                 "options": null,
                 "command": null,
-                "annotation": {
+                "parameters": {
                     "primary": {
                         "input": "--input_file",
                         "output": "--output_file",
@@ -127,9 +127,7 @@
             "docker": {
                 "image": "ensemblorg/ensembl-vep",
                 "entrypoint": "vep",
-                "options": null,
-                "command": null,
-                "annotation": {
+                "parameters": {
                     "primary": {
                         "input": "--input_file",
                         "output": "--output_file",
@@ -139,53 +137,12 @@
                             "source": "GRCH"
                         }
                     },
-                    "vcf_update": {
-                        "remove_info": true,
-                        "add_samples": true,
-                        "update_header": true,
-                        "update_existing_fields": false
-                    },
                     "defaults": {
                         "parameters": [
                             "--vcf",
-                            "--database",
-                            {
-                                "key": "--compress_output",
-                                "value": "bgzip"
-                            }
-                        ],
-                        "resources": {
-                            "threads": 4,
-                            "memory": null
-                        },
-                        "output_pattern": "*.vcf.gz"
+                            "--database"
+                        ]
                     }
-                },
-                "runtime": {
-                    "databases": [
-                        {
-                            "name": "vep",
-                            "container_path": "/opt/vep/.vep",
-                            "mode": "ro"
-                        },
-                        {
-                            "name": "genomes",
-                            "container_path": "/opt/vep/.genomes",
-                            "mode": "ro"
-                        },
-                        {
-                            "name": "refseq",
-                            "container_path": "/opt/vep/.refseq",
-                            "mode": "ro"
-                        }
-                    ],
-                    "mounts": [],
-                    "paths": []
-                },
-                "config": {
-                    "automount": true,
-                    "notremove": false,
-                    "tmp": false
                 }
             }
         }

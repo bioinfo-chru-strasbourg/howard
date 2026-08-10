@@ -131,7 +131,7 @@ class variants_annotation(variants_annotation_docker):
 
         return databases_infos_dict
 
-    def annotation(self, section:str = "annotation") -> None:
+    def annotation(self, section:str = "annotation", param: dict = None) -> None:
         """
         It annotates the VCF file with the annotations specified in the config file.
         """
@@ -140,7 +140,8 @@ class variants_annotation(variants_annotation_docker):
         config = self.get_config()
 
         # Param
-        param = self.get_param()
+        if param is None:
+            param = self.get_param()
 
         # Param - Assembly
         assembly = param.get("assembly", config.get("assembly", None))
