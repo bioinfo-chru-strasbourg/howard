@@ -1,0 +1,92 @@
+{
+  "pipelines_list": ["pipeline_test_with_calculation_annotation_and_prioritization"],
+  "pipelines": {
+    "pipeline_test_with_calculation_annotation_and_prioritization":[
+        {
+          "calculation_with_first_calculation_and_annotation": {
+            "_description": "Perform calculations on variants with annotation",
+            "calculations": {
+              "vartype": null,
+              "vaf_normalization": null,
+              "genotype_stats": {
+                "info": "DP"
+              },
+              "annotation": {
+                "parquet": {
+                  "annotations": {
+                    "tests/databases/annotations/current/hg19/avsnp150.parquet": {
+                      "INFO": null
+                    },
+                    "tests/databases/annotations/current/hg19/gnomad211_genome.parquet": {
+                      "INFO": null
+                    }
+                  }
+                },
+                "hgvs": {
+                  "full_format": true,
+                  "use_exon": true
+                }
+              }
+            }
+          },
+          "calculation_for_filter_variants_and_HGVS_and_NOMEN": {
+            "_description": "Perform filtering on variants and HGVS calculations with NOMEN",
+            "calculations": {
+              "variant_filter": {
+                "where_clause": "VARTYPE='SNV'"
+              },
+              "annotation_extract": {
+                "annotation_field": "ANN",
+                "annotation_hgvs": "snpeff_hgvs",
+                "annotation_explode": "snpeff_"
+              },
+              "NOMEN": {
+                "options": {
+                  "hgvs_field": "snpeff_hgvs",
+                  "transcripts": "tests/data/transcripts.tsv"
+                }
+              }
+            }
+          }
+        },
+        {
+          "supplementary_annotation": {
+            "_tool": "annotation",
+            "_description": "Perform supplementary annotation",
+              "parquet": {
+                "annotations": {
+                  "tests/databases/annotations/current/hg19/nci60.vcf.gz": {
+                    "INFO": null
+                  },
+                  "tests/databases/annotations/current/hg19/dbnsfp42a.parquet": {
+                    "INFO": null
+                  }
+                }
+              },
+              "bcftools": {
+                "annotations": {
+                  "tests/databases/annotations/current/hg19/cosmic70.vcf.gz": {
+                    "INFO": null
+                  }
+                }
+              },
+              "hgvs": {
+                "full_format": true,
+                "use_exon": true
+              }
+          },
+          "calculation_with_prioritization": {
+            "_description": "Perform calculations on variants with final prioritization",
+            "calculations": {
+              "prioritization": {
+                "profiles": ["default", "GERMLINE"],
+                "prioritization_config": "config/prioritization_profiles.json",
+                "pzfields": ["PZScore", "PZFlag", "PZComment"],
+                "prioritization_score_mode": "VaRank"
+              }
+            }
+          }
+        }
+    ]
+  }
+}

@@ -140,9 +140,9 @@
       "function_name": "calculation_find_samples",
       "function_params": {}
     },
-    "GENOTYPECONCORDANCE": {
+    "GENOTYPE_CONCORDANCE": {
       "type": "python",
-      "name": "GENOTYPECONCORDANCE",
+      "name": "GENOTYPE_CONCORDANCE",
       "description": "Concordance of genotype for multi caller VCF",
       "available": true,
       "function_name": "calculation_genotype_concordance",
@@ -174,9 +174,9 @@
       "function_name": "calculation_trio",
       "function_params": []
     },
-    "VAF": {
+    "VAF_NORMALIZATION": {
       "type": "python",
-      "name": "VAF",
+      "name": "VAF_NORMALIZATION",
       "description": "Variant Allele Frequency (VAF) harmonization",
       "available": true,
       "function_name": "calculation_vaf_normalization",

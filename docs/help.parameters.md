@@ -136,6 +136,7 @@ title: HOWARD Help Parameters
       prioritization_transcripts_force](#prioritization_transcripts_force)
     - [<span class="toc-section-number">7.11.11</span>
       prioritization_transcripts_version_force](#prioritization_transcripts_version_force)
+    - [<span class="toc-section-number">7.11.12</span> strict](#strict)
   - [<span class="toc-section-number">7.12</span> export](#export)
     - [<span class="toc-section-number">7.12.1</span> output](#output)
     - [<span class="toc-section-number">7.12.2</span>
@@ -2953,12 +2954,10 @@ Examples:
 >      "variant_id": null,
 >      "vartype": null,
 >      "annotation": {
->         "annotations": {
->            "parquet": {
->               "annotations": {
->                  "my.database.parquet": {...},
->                  "my.other.database.parquet": {...}
->               }
+>         "parquet": {
+>            "annotations": {
+>               "my.database.parquet": {...},
+>               "my.other.database.parquet": {...}
 >            }
 >         }
 >      },
@@ -2977,7 +2976,7 @@ Examples:
 >          "transcripts": "tests/data/transcripts.tsv",
 >          "transcripts_table": "variants",
 >          "transcripts_column": "PZTTranscript",
->          "transcripts_order", ["column", "file"],
+>          "transcripts_order": ["column", "file"],
 >          "fields": ["GNOMEN", "TVNOMEN", "ENOMEN", "CNOMEN"],
 >          "pattern": {
 >            "NOMEN": "GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN",
@@ -3278,7 +3277,7 @@ Examples:
 >         "prioritization_transcripts_order": {
 >              "PZTFlag": "DESC",
 >              "PZTScore": "DESC"
->         }
+>         },
 >         "prioritization_score_mode": "HOWARD",
 >         "prioritization_transcripts_file": null,
 >         "prioritization_transcripts_columns": null,
@@ -3870,6 +3869,27 @@ Examples:
 > ``` json
 > {
 >    "prioritization_transcripts_version_force": true
+> }
+> ```
+
+### strict
+
+Only for transcript prioritization.
+
+If true, all annotation for transcripts prioritization must be present.
+If false, missing annotation is allowed and will be ignored.
+
+Type: `Boolean`
+
+Default: `False`
+
+Examples:
+
+> Strict mode for transcripts prioritization:
+
+> ``` json
+> {
+>    "strict": true
 > }
 > ```
 

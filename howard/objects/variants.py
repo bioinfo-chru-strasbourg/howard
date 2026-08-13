@@ -2858,6 +2858,8 @@ class Variants(
         output_header: str | None = None,
         export_header: bool = True,
         explode_infos: bool = True,
+        explode_infos_prefix: list = None,
+        explode_infos_fields: list = None,
         header_in_output: bool = None,
         query: str | None = None,
         parquet_partitions: list | None = None,
@@ -2868,6 +2870,7 @@ class Variants(
         order_by: str | None = None,
         fields_to_rename: dict | None = None,
         force_cast_as_flat: bool = False,
+        **kwargs
     ) -> bool:
         """
         The `export_output` function exports data from a VCF file to various formats, including VCF,
@@ -2892,6 +2895,12 @@ class Variants(
         If `explode_infos` is set to True, the INFO fields will be exploded. If `explode_infos` is set
         to False, the INFO fields will not be exploded. By default, the INFO fields are exploded
         :type explode_infos: bool (optional)
+        :param explode_infos_prefix: The `explode_infos_prefix` parameter is a string that specifies a
+        prefix to be added to the names of the exploded INFO fields in the output file. This allows for better organization and identification of the INFO fields in the exported data. If not provided, a default prefix will be used
+        :type explode_infos_prefix: str | None
+        :param explode_infos_fields: The `explode_infos_fields` parameter is a list of specific INFO fields that you want to explode into individual columns in the output file. If this parameter is provided, only the specified INFO fields will be exploded. If it is not provided or is set to None
+        , all INFO fields will be exploded by default. This allows for selective extraction of relevant information from the VCF file during the export process
+        :type explode_infos_fields: list | None
         :param query: The `query` parameter in the `export_output` function is an optional SQL query
         that can be used to filter and select specific data from the VCF file before exporting it. If
         provided, only the data that matches the query will be exported. This allows you to customize
@@ -3022,8 +3031,8 @@ class Variants(
         # Explode infos
         if self.get_explode_infos() and explode_infos:
             self.explode_infos(
-                prefix=self.get_explode_infos_prefix(),
-                fields=self.get_explode_infos_fields(),
+                prefix=explode_infos_prefix or self.get_explode_infos_prefix(),
+                fields=explode_infos_fields or self.get_explode_infos_fields(),
                 force=False,
                 fields_forced_as_varchar=True,
             )
@@ -5648,9 +5657,11 @@ class Variants(
 
     def calculation_rename_info_fields(
         self,
+        section: str = "calculation",
         fields_to_rename: dict = None,
         table: str = None,
         operation_name: str = "RENAME_INFO_FIELDS",
+        **kwargs
     ) -> None:
         """
         The `calculation_rename_info_fields` function retrieves parameters from a dictionary, updates
@@ -5671,24 +5682,23 @@ class Variants(
         :type operation_name: str (optional)
         """
 
-        # Param
-        param = self.get_param()
-
-        # Get param fields to rename
-        param_fields_to_rename = (
-            param.get("calculation", {})
-            .get("calculations", {})
-            .get(operation_name, {})
-            .get("fields_to_rename", None)
+        param_fields_to_rename = None
+        param_table = None
+        operation_params, _ = self.get_operation_params(
+            section=section, operation_params=kwargs, operation_name=operation_name
         )
 
-        # Get param table
-        param_table = (
-            param.get("calculation", {})
-            .get("calculations", {})
-            .get(operation_name, {})
-            .get("table", None)
-        )
+        # param_fields_to_rename
+        if param_fields_to_rename is None:
+            param_fields_to_rename = (
+                operation_params.get("fields_to_rename")
+                or fields_to_rename
+                or {}
+            )
+
+        # param_table
+        if param_table is None:
+            param_table = operation_params.get("table") or table or None
 
         # Init fields_to_rename
         if fields_to_rename is None:
@@ -5706,9 +5716,11 @@ class Variants(
 
     def calculation_recreate_info_fields(
         self,
+        section: str = "calculation",
         fields_to_rename: dict = None,
         table: str = None,
-        operation_name: str = "RENAME_INFO_FIELDS",
+        operation_name: str = "RECREATE_INFO_FIELDS",
+        **kwargs
     ) -> None:
         """
         The `calculation_recreate_info_fields` function retrieves parameters from a dictionary, recreate
@@ -5725,28 +5737,29 @@ class Variants(
         :param operation_name: The `operation_name` parameter in the `calculation_recreate_info_fields`
         method is a string that specifies the name of the operation being performed. In this context, it
         is used as a default value for the operation name if not explicitly provided when calling the
-        function, defaults to RENAME_INFO_FIELDS
+        function, defaults to RECREATE_INFO_FIELDS
         :type operation_name: str (optional)
         """
 
-        # Param
-        param = self.get_param()
-
-        # Get param fields to rename
-        param_fields_to_rename = (
-            param.get("calculation", {})
-            .get("calculations", {})
-            .get(operation_name, {})
-            .get("fields_to_rename", None)
+        param_fields_to_rename = None
+        param_table = None
+        operation_params, _ = self.get_operation_params(
+            section=section, operation_params=kwargs, operation_name=operation_name
         )
 
-        # Get param table
-        param_table = (
-            param.get("calculation", {})
-            .get("calculations", {})
-            .get(operation_name, {})
-            .get("table", None)
-        )
+        ### Parameters for genotype stats calculation
+
+        # param_fields_to_rename
+        if param_fields_to_rename is None:
+            param_fields_to_rename = (
+                operation_params.get("fields_to_rename")
+                or fields_to_rename
+                or {}
+            )
+
+        # param_table
+        if param_table is None:
+            param_table = operation_params.get("table") or table or None
 
         # Init fields_to_rename
         if fields_to_rename is None:

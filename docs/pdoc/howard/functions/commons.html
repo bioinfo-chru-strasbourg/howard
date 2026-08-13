@@ -310,7 +310,7 @@
                     <a class="function" href="#findbypipeline">findbypipeline</a>
             </li>
             <li>
-                    <a class="function" href="#genotypeconcordance">genotypeconcordance</a>
+                    <a class="function" href="#genotype_concordance">genotype_concordance</a>
             </li>
             <li>
                     <a class="function" href="#genotype_compression">genotype_compression</a>
@@ -2234,7 +2234,7 @@
 </span><span id="L-1668"><a href="#L-1668"><span class="linenos">1668</span></a>    <span class="c1"># return f&quot;{nb_pipeline_find}/{nb_pipeline}&quot;, &quot;,&quot;.join(list_pipeline_find)</span>
 </span><span id="L-1669"><a href="#L-1669"><span class="linenos">1669</span></a>
 </span><span id="L-1670"><a href="#L-1670"><span class="linenos">1670</span></a>
-</span><span id="L-1671"><a href="#L-1671"><span class="linenos">1671</span></a><span class="k">def</span><span class="w"> </span><span class="nf">genotypeconcordance</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="p">[]):</span>
+</span><span id="L-1671"><a href="#L-1671"><span class="linenos">1671</span></a><span class="k">def</span><span class="w"> </span><span class="nf">genotype_concordance</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="p">[]):</span>
 </span><span id="L-1672"><a href="#L-1672"><span class="linenos">1672</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="L-1673"><a href="#L-1673"><span class="linenos">1673</span></a><span class="sd">    The function checks the genotype concordance of a given list of samples in a dataframe.</span>
 </span><span id="L-1674"><a href="#L-1674"><span class="linenos">1674</span></a>
@@ -9518,62 +9518,62 @@ is set to "count", the function will return a string in the format of "nb_pipeli
 
 
                 </section>
-                <section id="genotypeconcordance">
-                            <input id="genotypeconcordance-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+                <section id="genotype_concordance">
+                            <input id="genotype_concordance-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
             
         <span class="def">def</span>
-        <span class="name">genotypeconcordance</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">df</span>, </span><span class="param"><span class="n">samples</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="p">[]</span></span><span class="return-annotation">):</span></span>
+        <span class="name">genotype_concordance</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">df</span>, </span><span class="param"><span class="n">samples</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="p">[]</span></span><span class="return-annotation">):</span></span>
 
-                <label class="view-source-button" for="genotypeconcordance-view-source"><span>View Source</span></label>
+                <label class="view-source-button" for="genotype_concordance-view-source"><span>View Source</span></label>
 
     </div>
-    <a class="headerlink" href="#genotypeconcordance"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="genotypeconcordance-1672"><a href="#genotypeconcordance-1672"><span class="linenos">1672</span></a><span class="k">def</span><span class="w"> </span><span class="nf">genotypeconcordance</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="p">[]):</span>
-</span><span id="genotypeconcordance-1673"><a href="#genotypeconcordance-1673"><span class="linenos">1673</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="genotypeconcordance-1674"><a href="#genotypeconcordance-1674"><span class="linenos">1674</span></a><span class="sd">    The function checks the genotype concordance of a given list of samples in a dataframe.</span>
-</span><span id="genotypeconcordance-1675"><a href="#genotypeconcordance-1675"><span class="linenos">1675</span></a>
-</span><span id="genotypeconcordance-1676"><a href="#genotypeconcordance-1676"><span class="linenos">1676</span></a><span class="sd">    :param df: The input dataframe containing genetic variant information, including genotype</span>
-</span><span id="genotypeconcordance-1677"><a href="#genotypeconcordance-1677"><span class="linenos">1677</span></a><span class="sd">    information for each sample/pipeline</span>
-</span><span id="genotypeconcordance-1678"><a href="#genotypeconcordance-1678"><span class="linenos">1678</span></a><span class="sd">    :param samples: The parameter &quot;samples&quot; is a list of sample/pipeline names that are present in the</span>
-</span><span id="genotypeconcordance-1679"><a href="#genotypeconcordance-1679"><span class="linenos">1679</span></a><span class="sd">    input dataframe &quot;df&quot;. These samples/pipelines have genotype information that will be used to</span>
-</span><span id="genotypeconcordance-1680"><a href="#genotypeconcordance-1680"><span class="linenos">1680</span></a><span class="sd">    calculate genotype concordance</span>
-</span><span id="genotypeconcordance-1681"><a href="#genotypeconcordance-1681"><span class="linenos">1681</span></a><span class="sd">    :type samples: list</span>
-</span><span id="genotypeconcordance-1682"><a href="#genotypeconcordance-1682"><span class="linenos">1682</span></a><span class="sd">    :return: a string that indicates whether the genotypes of the specified samples in the input</span>
-</span><span id="genotypeconcordance-1683"><a href="#genotypeconcordance-1683"><span class="linenos">1683</span></a><span class="sd">    dataframe are concordant or not. The string is either &quot;TRUE&quot; or &quot;FALSE&quot;, depending on whether all</span>
-</span><span id="genotypeconcordance-1684"><a href="#genotypeconcordance-1684"><span class="linenos">1684</span></a><span class="sd">    the specified samples have the same genotype or not.</span>
-</span><span id="genotypeconcordance-1685"><a href="#genotypeconcordance-1685"><span class="linenos">1685</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="genotypeconcordance-1686"><a href="#genotypeconcordance-1686"><span class="linenos">1686</span></a>
-</span><span id="genotypeconcordance-1687"><a href="#genotypeconcordance-1687"><span class="linenos">1687</span></a>    <span class="c1"># format</span>
-</span><span id="genotypeconcordance-1688"><a href="#genotypeconcordance-1688"><span class="linenos">1688</span></a>    <span class="n">format_fields</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;FORMAT&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)</span>
-</span><span id="genotypeconcordance-1689"><a href="#genotypeconcordance-1689"><span class="linenos">1689</span></a>
-</span><span id="genotypeconcordance-1690"><a href="#genotypeconcordance-1690"><span class="linenos">1690</span></a>    <span class="c1"># no sample/pipeline</span>
-</span><span id="genotypeconcordance-1691"><a href="#genotypeconcordance-1691"><span class="linenos">1691</span></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">samples</span><span class="p">:</span>
-</span><span id="genotypeconcordance-1692"><a href="#genotypeconcordance-1692"><span class="linenos">1692</span></a>        <span class="k">return</span> <span class="s2">&quot;0/0&quot;</span>
-</span><span id="genotypeconcordance-1693"><a href="#genotypeconcordance-1693"><span class="linenos">1693</span></a>
-</span><span id="genotypeconcordance-1694"><a href="#genotypeconcordance-1694"><span class="linenos">1694</span></a>    <span class="c1"># init</span>
-</span><span id="genotypeconcordance-1695"><a href="#genotypeconcordance-1695"><span class="linenos">1695</span></a>    <span class="n">genotype_list</span> <span class="o">=</span> <span class="p">{}</span>
-</span><span id="genotypeconcordance-1696"><a href="#genotypeconcordance-1696"><span class="linenos">1696</span></a>
-</span><span id="genotypeconcordance-1697"><a href="#genotypeconcordance-1697"><span class="linenos">1697</span></a>    <span class="c1"># For each sample/pipeline</span>
-</span><span id="genotypeconcordance-1698"><a href="#genotypeconcordance-1698"><span class="linenos">1698</span></a>    <span class="k">for</span> <span class="n">sample</span> <span class="ow">in</span> <span class="n">samples</span><span class="p">:</span>
-</span><span id="genotypeconcordance-1699"><a href="#genotypeconcordance-1699"><span class="linenos">1699</span></a>
-</span><span id="genotypeconcordance-1700"><a href="#genotypeconcordance-1700"><span class="linenos">1700</span></a>        <span class="k">if</span> <span class="n">sample</span> <span class="ow">in</span> <span class="n">df</span><span class="p">:</span>
-</span><span id="genotypeconcordance-1701"><a href="#genotypeconcordance-1701"><span class="linenos">1701</span></a>
-</span><span id="genotypeconcordance-1702"><a href="#genotypeconcordance-1702"><span class="linenos">1702</span></a>            <span class="c1"># Split snpeff ann values</span>
-</span><span id="genotypeconcordance-1703"><a href="#genotypeconcordance-1703"><span class="linenos">1703</span></a>            <span class="n">sample_infos</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">sample</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)</span>
-</span><span id="genotypeconcordance-1704"><a href="#genotypeconcordance-1704"><span class="linenos">1704</span></a>
-</span><span id="genotypeconcordance-1705"><a href="#genotypeconcordance-1705"><span class="linenos">1705</span></a>            <span class="c1"># Create Dataframe</span>
-</span><span id="genotypeconcordance-1706"><a href="#genotypeconcordance-1706"><span class="linenos">1706</span></a>            <span class="n">sample_dict</span> <span class="o">=</span> <span class="p">{}</span>
-</span><span id="genotypeconcordance-1707"><a href="#genotypeconcordance-1707"><span class="linenos">1707</span></a>            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">format_fields</span><span class="p">)):</span>
-</span><span id="genotypeconcordance-1708"><a href="#genotypeconcordance-1708"><span class="linenos">1708</span></a>                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sample_infos</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">i</span><span class="p">:</span>
-</span><span id="genotypeconcordance-1709"><a href="#genotypeconcordance-1709"><span class="linenos">1709</span></a>                    <span class="n">sample_dict</span><span class="p">[</span><span class="n">format_fields</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span> <span class="o">=</span> <span class="n">sample_infos</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
-</span><span id="genotypeconcordance-1710"><a href="#genotypeconcordance-1710"><span class="linenos">1710</span></a>
-</span><span id="genotypeconcordance-1711"><a href="#genotypeconcordance-1711"><span class="linenos">1711</span></a>            <span class="c1"># Check if GT not null</span>
-</span><span id="genotypeconcordance-1712"><a href="#genotypeconcordance-1712"><span class="linenos">1712</span></a>            <span class="c1"># genotype_list[sample_dict[&quot;GT&quot;]] = 1</span>
-</span><span id="genotypeconcordance-1713"><a href="#genotypeconcordance-1713"><span class="linenos">1713</span></a>            <span class="k">if</span> <span class="n">sample_dict</span><span class="p">[</span><span class="s2">&quot;GT&quot;</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="s2">&quot;./.&quot;</span><span class="p">,</span> <span class="s2">&quot;.|.&quot;</span><span class="p">]:</span>
-</span><span id="genotypeconcordance-1714"><a href="#genotypeconcordance-1714"><span class="linenos">1714</span></a>                <span class="n">genotype_list</span><span class="p">[</span><span class="n">sample_dict</span><span class="p">[</span><span class="s2">&quot;GT&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="mi">1</span>
-</span><span id="genotypeconcordance-1715"><a href="#genotypeconcordance-1715"><span class="linenos">1715</span></a>
-</span><span id="genotypeconcordance-1716"><a href="#genotypeconcordance-1716"><span class="linenos">1716</span></a>    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">genotype_list</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+    <a class="headerlink" href="#genotype_concordance"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="genotype_concordance-1672"><a href="#genotype_concordance-1672"><span class="linenos">1672</span></a><span class="k">def</span><span class="w"> </span><span class="nf">genotype_concordance</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="p">[]):</span>
+</span><span id="genotype_concordance-1673"><a href="#genotype_concordance-1673"><span class="linenos">1673</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="genotype_concordance-1674"><a href="#genotype_concordance-1674"><span class="linenos">1674</span></a><span class="sd">    The function checks the genotype concordance of a given list of samples in a dataframe.</span>
+</span><span id="genotype_concordance-1675"><a href="#genotype_concordance-1675"><span class="linenos">1675</span></a>
+</span><span id="genotype_concordance-1676"><a href="#genotype_concordance-1676"><span class="linenos">1676</span></a><span class="sd">    :param df: The input dataframe containing genetic variant information, including genotype</span>
+</span><span id="genotype_concordance-1677"><a href="#genotype_concordance-1677"><span class="linenos">1677</span></a><span class="sd">    information for each sample/pipeline</span>
+</span><span id="genotype_concordance-1678"><a href="#genotype_concordance-1678"><span class="linenos">1678</span></a><span class="sd">    :param samples: The parameter &quot;samples&quot; is a list of sample/pipeline names that are present in the</span>
+</span><span id="genotype_concordance-1679"><a href="#genotype_concordance-1679"><span class="linenos">1679</span></a><span class="sd">    input dataframe &quot;df&quot;. These samples/pipelines have genotype information that will be used to</span>
+</span><span id="genotype_concordance-1680"><a href="#genotype_concordance-1680"><span class="linenos">1680</span></a><span class="sd">    calculate genotype concordance</span>
+</span><span id="genotype_concordance-1681"><a href="#genotype_concordance-1681"><span class="linenos">1681</span></a><span class="sd">    :type samples: list</span>
+</span><span id="genotype_concordance-1682"><a href="#genotype_concordance-1682"><span class="linenos">1682</span></a><span class="sd">    :return: a string that indicates whether the genotypes of the specified samples in the input</span>
+</span><span id="genotype_concordance-1683"><a href="#genotype_concordance-1683"><span class="linenos">1683</span></a><span class="sd">    dataframe are concordant or not. The string is either &quot;TRUE&quot; or &quot;FALSE&quot;, depending on whether all</span>
+</span><span id="genotype_concordance-1684"><a href="#genotype_concordance-1684"><span class="linenos">1684</span></a><span class="sd">    the specified samples have the same genotype or not.</span>
+</span><span id="genotype_concordance-1685"><a href="#genotype_concordance-1685"><span class="linenos">1685</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="genotype_concordance-1686"><a href="#genotype_concordance-1686"><span class="linenos">1686</span></a>
+</span><span id="genotype_concordance-1687"><a href="#genotype_concordance-1687"><span class="linenos">1687</span></a>    <span class="c1"># format</span>
+</span><span id="genotype_concordance-1688"><a href="#genotype_concordance-1688"><span class="linenos">1688</span></a>    <span class="n">format_fields</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;FORMAT&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)</span>
+</span><span id="genotype_concordance-1689"><a href="#genotype_concordance-1689"><span class="linenos">1689</span></a>
+</span><span id="genotype_concordance-1690"><a href="#genotype_concordance-1690"><span class="linenos">1690</span></a>    <span class="c1"># no sample/pipeline</span>
+</span><span id="genotype_concordance-1691"><a href="#genotype_concordance-1691"><span class="linenos">1691</span></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">samples</span><span class="p">:</span>
+</span><span id="genotype_concordance-1692"><a href="#genotype_concordance-1692"><span class="linenos">1692</span></a>        <span class="k">return</span> <span class="s2">&quot;0/0&quot;</span>
+</span><span id="genotype_concordance-1693"><a href="#genotype_concordance-1693"><span class="linenos">1693</span></a>
+</span><span id="genotype_concordance-1694"><a href="#genotype_concordance-1694"><span class="linenos">1694</span></a>    <span class="c1"># init</span>
+</span><span id="genotype_concordance-1695"><a href="#genotype_concordance-1695"><span class="linenos">1695</span></a>    <span class="n">genotype_list</span> <span class="o">=</span> <span class="p">{}</span>
+</span><span id="genotype_concordance-1696"><a href="#genotype_concordance-1696"><span class="linenos">1696</span></a>
+</span><span id="genotype_concordance-1697"><a href="#genotype_concordance-1697"><span class="linenos">1697</span></a>    <span class="c1"># For each sample/pipeline</span>
+</span><span id="genotype_concordance-1698"><a href="#genotype_concordance-1698"><span class="linenos">1698</span></a>    <span class="k">for</span> <span class="n">sample</span> <span class="ow">in</span> <span class="n">samples</span><span class="p">:</span>
+</span><span id="genotype_concordance-1699"><a href="#genotype_concordance-1699"><span class="linenos">1699</span></a>
+</span><span id="genotype_concordance-1700"><a href="#genotype_concordance-1700"><span class="linenos">1700</span></a>        <span class="k">if</span> <span class="n">sample</span> <span class="ow">in</span> <span class="n">df</span><span class="p">:</span>
+</span><span id="genotype_concordance-1701"><a href="#genotype_concordance-1701"><span class="linenos">1701</span></a>
+</span><span id="genotype_concordance-1702"><a href="#genotype_concordance-1702"><span class="linenos">1702</span></a>            <span class="c1"># Split snpeff ann values</span>
+</span><span id="genotype_concordance-1703"><a href="#genotype_concordance-1703"><span class="linenos">1703</span></a>            <span class="n">sample_infos</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">sample</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)</span>
+</span><span id="genotype_concordance-1704"><a href="#genotype_concordance-1704"><span class="linenos">1704</span></a>
+</span><span id="genotype_concordance-1705"><a href="#genotype_concordance-1705"><span class="linenos">1705</span></a>            <span class="c1"># Create Dataframe</span>
+</span><span id="genotype_concordance-1706"><a href="#genotype_concordance-1706"><span class="linenos">1706</span></a>            <span class="n">sample_dict</span> <span class="o">=</span> <span class="p">{}</span>
+</span><span id="genotype_concordance-1707"><a href="#genotype_concordance-1707"><span class="linenos">1707</span></a>            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">format_fields</span><span class="p">)):</span>
+</span><span id="genotype_concordance-1708"><a href="#genotype_concordance-1708"><span class="linenos">1708</span></a>                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sample_infos</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">i</span><span class="p">:</span>
+</span><span id="genotype_concordance-1709"><a href="#genotype_concordance-1709"><span class="linenos">1709</span></a>                    <span class="n">sample_dict</span><span class="p">[</span><span class="n">format_fields</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span> <span class="o">=</span> <span class="n">sample_infos</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+</span><span id="genotype_concordance-1710"><a href="#genotype_concordance-1710"><span class="linenos">1710</span></a>
+</span><span id="genotype_concordance-1711"><a href="#genotype_concordance-1711"><span class="linenos">1711</span></a>            <span class="c1"># Check if GT not null</span>
+</span><span id="genotype_concordance-1712"><a href="#genotype_concordance-1712"><span class="linenos">1712</span></a>            <span class="c1"># genotype_list[sample_dict[&quot;GT&quot;]] = 1</span>
+</span><span id="genotype_concordance-1713"><a href="#genotype_concordance-1713"><span class="linenos">1713</span></a>            <span class="k">if</span> <span class="n">sample_dict</span><span class="p">[</span><span class="s2">&quot;GT&quot;</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="s2">&quot;./.&quot;</span><span class="p">,</span> <span class="s2">&quot;.|.&quot;</span><span class="p">]:</span>
+</span><span id="genotype_concordance-1714"><a href="#genotype_concordance-1714"><span class="linenos">1714</span></a>                <span class="n">genotype_list</span><span class="p">[</span><span class="n">sample_dict</span><span class="p">[</span><span class="s2">&quot;GT&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="mi">1</span>
+</span><span id="genotype_concordance-1715"><a href="#genotype_concordance-1715"><span class="linenos">1715</span></a>
+</span><span id="genotype_concordance-1716"><a href="#genotype_concordance-1716"><span class="linenos">1716</span></a>    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">genotype_list</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
 </span></pre></div>
 
 

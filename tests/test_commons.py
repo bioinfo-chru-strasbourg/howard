@@ -1971,7 +1971,7 @@ def test_findbypipeline():
     assert findbypipeline(row, ["S1", "S2", "S3"]) == expected_result
 
 
-def test_genotypeconcordance():
+def test_genotype_concordance():
     """
     The function tests the concordance of genotypes between a given variant and a list of samples.
     """
@@ -1995,19 +1995,19 @@ def test_genotypeconcordance():
     )
 
     # Test case 1: No samples
-    assert genotypeconcordance(test_dataframe.iloc[0], []) == "0/0"
+    assert genotype_concordance(test_dataframe.iloc[0], []) == "0/0"
 
     # Test case 2: All samples have the same genotype
-    assert genotypeconcordance(test_dataframe.iloc[0], ["Sample2", "Sample2"]) == "TRUE"
+    assert genotype_concordance(test_dataframe.iloc[0], ["Sample2", "Sample2"]) == "TRUE"
 
     # Test case 3: At least one sample has a different genotype
     assert (
-        genotypeconcordance(test_dataframe.iloc[0], ["Sample1", "Sample3"]) == "FALSE"
+        genotype_concordance(test_dataframe.iloc[0], ["Sample1", "Sample3"]) == "FALSE"
     )
 
     # Test case 4: Some samples have null or unknown genotypes
     assert (
-        genotypeconcordance(
+        genotype_concordance(
             test_dataframe.iloc[0], ["Sample1", "Sample2", "Sample3", "Sample4"]
         )
         == "FALSE"
@@ -2015,12 +2015,12 @@ def test_genotypeconcordance():
 
     # Test case 5: All samples have null or unknown genotypes
     assert (
-        genotypeconcordance(test_dataframe.iloc[0], ["Sample4", "Sample5"]) == "FALSE"
+        genotype_concordance(test_dataframe.iloc[0], ["Sample4", "Sample5"]) == "FALSE"
     )
 
     # Test case 6: All samples have the same null or unknown genotype
     assert (
-        genotypeconcordance(test_dataframe.iloc[0], ["Sample2", "Sample4", "Sample5"])
+        genotype_concordance(test_dataframe.iloc[0], ["Sample2", "Sample4", "Sample5"])
         == "TRUE"
     )
 

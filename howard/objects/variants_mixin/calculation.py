@@ -15,7 +15,7 @@ from howard.functions.commons import (
     findbypipeline,
     full_path,
     genotype_stats,
-    genotypeconcordance,
+    genotype_concordance,
     transcripts_file_to_df,
     trio,
     vaf_normalization,
@@ -40,524 +40,12 @@ class variants_calculation:
         """
 
         config_default = {
-            "variant_chr_pos_alt_ref": {
-                "type": "sql",
-                "name": "variant_chr_pos_alt_ref",
-                "description": "Create a variant ID with chromosome, position, alt and ref",
-                "comment": "This calculation generates a variant ID with chromosome, position, alt and ref, with format '#CHROM_POS_REF_ALT'. Useful for variant identification and comparison across datasets",
-                "available": True,
-                "output_column_name": "variant_chr_pos_alt_ref",
-                "output_column_number": 1,
-                "output_column_type": "String",
-                "output_column_description": "variant ID with chromosome, position, alt and ref",
-                "operation_query": """ concat("#CHROM", '_', "POS", '_', "REF", '_', "ALT") """,
-                "operation_info": True,
-            },
-            "VARTYPE": {
-                "type": "sql",
-                "name": "VARTYPE",
-                "description": "Variant type (e.g. SNV, INDEL, MNV, BND...)",
-                "comment": "Determine the type of variant based on its characteristics, such as the length of the reference and alternate alleles, and the presence of structural variant information. This calculation classifies variants into types like SNV, INDEL, MNV, BND, etc., which is essential for downstream analysis and interpretation.",
-                "available": True,
-                "table": "variants",
-                "output_column_name": "VARTYPE",
-                "output_column_number": 1,
-                "output_column_type": "String",
-                "output_column_description": "Variant type: SNV if X>Y, MOSAIC if X>Y,Z or X,Y>Z, INDEL if XY>Z or X>YZ",
-                "operation_query": """
-                        CASE
-                            WHEN "SVTYPE" NOT NULL THEN "SVTYPE"
-                            WHEN LENGTH(REF) = 1 AND LENGTH(ALT) = 1 THEN 'SNV'
-                            WHEN REF LIKE '%,%' OR ALT LIKE '%,%' THEN 'MOSAIC'
-                            WHEN LENGTH(REF) == LENGTH(ALT) AND LENGTH(REF) > 1 THEN 'MNV'
-                            WHEN LENGTH(REF) <> LENGTH(ALT) THEN 'INDEL'
-                            ELSE 'UNDEFINED'
-                        END
-                        """,
-                "info_fields": ["SVTYPE"],
-                "operation_info": True,
-            },
-            "MERGED_HGVS": {
-                "type": "sql",
-                "name": "merged_hgvs",
-                "description": "Merge HGVS nomenclatures from snpEff (snpeff_hgvs) and ANNOVAR (AAChange_refGene) into merged_hgvs field",
-                "comment": "This calculation merges HGVS nomenclatures from snpEff (snpeff_hgvs) and ANNOVAR (AAChange_refGene) into a single field called merged_hgvs. It aggregates distinct HGVS annotations from both sources, concatenating them with a comma separator. This unified field allows for easier access to HGVS information regardless of the annotation source, facilitating downstream analysis and interpretation.",
-                "available": True,
-                "table": "variants",
-                "output_column_name": "merged_hgvs",
-                "output_column_number": ".",
-                "output_column_type": "String",
-                "output_column_description": "Merge HGVS nomenclatures from snpEff (snpeff_hgvs) and ANNOVAR (AAChange_refGene) into merged_hgvs field",
-                "operation_query": """
-                        list_aggregate(
-                            list_sort(
-                                list_distinct(
-                                    list_reduce(
-                                        [
-                                            "snpeff_hgvs",
-                                            "AAChange_refGene",
-                                        ],
-                                        (a, b) -> list_concat(a, b)
-                                    )
-                                )
-                            ),
-                            'string_agg',
-                            ','
-                        )
-                        """,
-                "info_fields": ["snpeff_hgvs", "AAChange_refGene"],
-                "operation_info": True,
-            },
-            "snpeff_extract": {
+            "ANNOTATION": {
                 "type": "python",
-                "name": "snpeff_extract",
-                "description": "HGVS nomenclatures from snpEff annotation",
-                "comment": "Extract HGVS nomenclatures from snpEff annotation (field ANN) and create new INFO fields with prefix 'snpeff_' (e.g. snpeff_hgvs, snpeff_impact, snpeff_gene_name...). This calculation parses the ANN field from snpEff annotations, extracting relevant information such as HGVS nomenclatures, impact, gene name, etc., and creates new INFO fields with a 'snpeff_' prefix for easier access and downstream analysis.",
-                "available": True,
-                "function_name": "calculation_snpeff_extract",
-                "function_params": {
-                    "snpeff_field": "ANN",
-                    "snpeff_hgvs": "snpeff_hgvs",
-                    "snpeff_explode": "snpeff_",
-                    "snpeff_json": "snpeff_json",
-                    "uniquify": False
-                },
-            },
-            "vep_extract": {
-                "type": "python",
-                "name": "vep_extract",
-                "description": "HGVS nomenclatures from VEP annotation",
-                "comment": "Extract HGVS nomenclatures from VEP annotation (field CSQ) and create new INFO fields with prefix 'vep_' (e.g. vep_hgvs, vep_impact, vep_gene_name...). This calculation parses the CSQ field from VEP annotations, extracting relevant information such as HGVS nomenclatures, impact, gene name, etc., and creates new INFO fields with a 'vep_' prefix for easier access and downstream analysis.",
-                "available": True,
-                "function_name": "calculation_annotation_with_format_extract",
-                "function_params": {
-                    "annotation_field": "CSQ",
-                    "annotation_hgvs": "vep_hgvs",
-                    "annotation_explode": "vep_",
-                    "annotation_json": "vep_json",
-                    "uniquify": False,
-                    "annotation_id": "Feature",
-                    "hgvs_columns": {"gene": "Gene", "transcript": "Feature", "rank": "EXON", "HGVSc": "HGVSc", "HGVSp": "HGVSp"}, # RefSeq
-                    "hgvs_columns_contain_transcript_id": True,
-                },
-            },
-            "vep_extract_refseq": {
-                "type": "python",
-                "name": "vep_extract_refseq",
-                "description": "HGVS nomenclatures from VEP annotation unsing RefSeq transcripts",
-                "comment": "Extract HGVS nomenclatures from VEP annotation (field CSQ) and create new INFO fields with prefix 'vep_' (e.g. vep_hgvs, vep_impact, vep_gene_name...). This calculation parses the CSQ field from VEP annotations, extracting relevant information such as HGVS nomenclatures (with refSeq), impact, gene name, etc., and creates new INFO fields with a 'vep_' prefix for easier access and downstream analysis.",
-                "available": True,
-                "function_name": "calculation_annotation_with_format_extract",
-                "function_params": {
-                    "annotation_field": "CSQ",
-                    "annotation_hgvs": "vep_hgvs",
-                    "annotation_explode": "vep_",
-                    "annotation_json": "vep_json",
-                    "uniquify": False,
-                    "annotation_id": "Feature",
-                    "hgvs_columns": {"gene": "SYMBOL", "transcript": "RefSeq", "rank": "EXON", "HGVSc": "HGVSc", "HGVSp": "HGVSp"}, # RefSeq
-                    "hgvs_columns_contain_transcript_id": True,
-                },
-            },
-            "snpeff_hgvs": {
-                "type": "python",
-                "name": "snpeff_hgvs",
-                "description": "HGVS nomenclatures from snpEff annotation",
-                "comment": "Extract HGVS nomenclatures from snpEff annotation (field ANN) and create new INFO field 'snpeff_hgvs'. This calculation specifically targets the extraction of HGVS nomenclatures from the ANN field of snpEff annotations, creating a new INFO field named 'snpeff_hgvs' that contains the extracted HGVS information for easier access and downstream analysis.",
-                "available": True,
-                "function_name": "calculation_snpeff_extract",
-                "function_params": {
-                    "snpeff_field": "ANN",
-                    "snpeff_hgvs": "snpeff_hgvs",
-                    "snpeff_explode": None,
-                    "snpeff_json": None,
-                    "uniquify": False,
-                }
-            },
-            "snpeff_ann_explode": {
-                "type": "python",
-                "name": "snpeff_ann_explode",
-                "description": "Explode snpEff annotations",
-                "comment": "Explode snpEff annotations from the ANN field, creating new INFO fields with prefix 'snpeff_' for each annotation. This calculation takes the ANN field from snpEff annotations, which may contain multiple annotations for a single variant, and explodes it so that each annotation is represented in separate INFO fields with a 'snpeff_' prefix. This allows for easier access to individual annotations and facilitates downstream analysis.",
-                "available": True,
-                "function_name": "calculation_snpeff_extract",
-                "function_params": {
-                    "snpeff_field": "ANN",
-                    "snpeff_hgvs": None,
-                    "snpeff_explode": "snpeff_",
-                    "snpeff_json": None,
-                    "uniquify": False,
-                }
-            },
-            "snpeff_ann_explode_uniquify": {
-                "type": "python",
-                "name": "snpeff_ann_explode_uniquify",
-                "description": "Explode snpEff annotations with uniquify values",
-                "comment": "Explode snpEff annotations from the ANN field, creating new INFO fields with prefix 'snpeff_uniquify_' for each annotation and ensuring unique values. This calculation takes the ANN field from snpEff annotations, which may contain multiple annotations for a single variant, and explodes it so that each annotation is represented in separate INFO fields with a 'snpeff_uniquify_' prefix, ensuring that only unique values are retained. This allows for easier access to individual annotations and facilitates downstream analysis.",
-                "available": True,
-                "function_name": "calculation_snpeff_extract",
-                "function_params": {
-                    "snpeff_field": "ANN",
-                    "snpeff_hgvs": None,
-                    "snpeff_explode": "snpeff_uniquify_",
-                    "snpeff_json": None,
-                    "uniquify": True,
-                }
-            },
-            "snpeff_ann_explode_json": {
-                "type": "python",
-                "name": "snpeff_ann_explode_json",
-                "description": "Explode snpEff annotations in JSON format",
-                "comment": "Explode snpEff annotations from the ANN field, creating a new INFO field 'snpeff_json' in JSON format that contains all annotations. This calculation takes the ANN field from snpEff annotations, which may contain multiple annotations for a single variant, and explodes it into a structured JSON format stored in a new INFO field named 'snpeff_json'. This allows for easier access to all annotations in a single field and facilitates downstream analysis.",
-                "available": True,
-                "function_name": "calculation_snpeff_extract",
-                "function_params": {
-                    "snpeff_field": "ANN",
-                    "snpeff_hgvs": None,
-                    "snpeff_explode": None,
-                    "snpeff_json": "snpeff_json",
-                    "uniquify": True,
-                },
-            },
-            "NOMEN": {
-                "type": "python",
-                "name": "NOMEN",
-                "description": "NOMEN information (e.g. NOMEN, CNOMEN, PNOMEN...) from HGVS nomenclature field (see parameters help)",
-                "comment": "Extract NOMEN information (e.g. NOMEN, CNOMEN, PNOMEN...) from HGVS nomenclature field (see parameters help). This calculation parses the HGVS nomenclature field to extract specific NOMEN information such as NOMEN, CNOMEN, PNOMEN, etc., based on the parameters provided. It creates new INFO fields with the extracted NOMEN information for easier access and downstream analysis.",
-                "available": True,
-                "function_name": "calculation_extract_nomen",
-                "function_params": {}
-            },
-            "NOMEN_SNPEFF": {
-                "type": "python",
-                "name": "NOMEN_SNPEFF",
-                "description": "NOMEN information (e.g. NOMEN, CNOMEN, PNOMEN...) from HGVS nomenclature field (see parameters help)",
-                "comment": "Extract NOMEN information (e.g. NOMEN, CNOMEN, PNOMEN...) from HGVS nomenclature field (see parameters help). This calculation parses the HGVS nomenclature field to extract specific NOMEN information such as NOMEN, CNOMEN, PNOMEN, etc., specifically based on snpEff HGVS annotations field 'snpeff_hgvs'. It creates new INFO fields with the extracted NOMEN information for easier access and downstream analysis.",
-                "available": True,
-                "function_name": "calculation_extract_nomen",
-                "function_params": {"hgvs_field": "snpeff_hgvs"},
-            },
-            "RECREATE_INFO_FIELDS": {
-                "type": "python",
-                "name": "RECREATE_INFO_FIELDS",
-                "description": "Recreate INFO_tags, rename or remove tags",
-                "comment": "Recreate INFO_tags, rename or remove tags. This calculation allows for the recreation of INFO fields by renaming existing tags or removing them based on specified parameters. It provides flexibility in managing INFO fields, enabling users to customize their VCF annotations according to their analysis needs.",
-                "available": True,
-                "function_name": "calculation_recreate_info_fields",
-                "function_params": [],
-            },
-            "RENAME_INFO_FIELDS": {
-                "type": "python",
-                "name": "RENAME_INFO_FIELDS",
-                "description": "Rename or remove INFO/tags",
-                "comment": [
-                    "Rename or remove INFO/tags. This calculation allows for the renaming of existing INFO fields or the removal of specific tags based on provided parameters. It helps in standardizing or customizing INFO fields in the VCF according to user requirements and facilitates downstream analysis. Use paramter section 'calculation_RENAME_INFO_FIELDS' in param.json to specify the INFO fields to rename or remove.",
-                    "",
-                    "This example will rename INFO field 'ENOMEN' to 'exon' and remove INFO fields 'SPiP', 'SPiP_Alt' and 'SPiP_distSS' from the 'variants' table:",
-                    "",
-                    "```json",
-                    """{"fields_to_rename": {"ENOMEN": "exon", "SPiP": null, "SPiP_Alt": null, "SPiP_distSS": null }, "table": "variants"}""",
-                    "```",
-                ],
-                "available": True,
-                "function_name": "calculation_rename_info_fields",
-                "function_params": [],
-            },
-            "FIND_SAMPLES": {
-                "type": "python",
-                "name": "FIND_SAMPLES",
-                "description": "Number of sample that have a genotype for the variant (for multi sample VCF)",
-                "comment": [
-                    "This calculation counts the number of samples that have a genotype for a given variant in a multi-sample VCF file. It helps in assessing the presence of the variant across different samples.\n",
-                    "Options for this calculation can be specified in the JSON parameter file, directly in the calculation parameters (see help.parameters.md). The parameter 'tags' allows for the specification of the INFO tags to be created, with the key being the tag name and the value being either 'count' or 'list' to indicate whether to count the samples or list them. For example, to create an INFO tag 'count_samples' that counts the number of samples and an INFO tag 'list_samples' that lists the samples, you can specify:\n",
-                    "```json",
-                    """{ "tags": {"count_samples": "count", "list_samples": "list"} }""",
-                    "```\n",
-                    "Otherwise, change the default tags in the parameter file, like in this example:\n", 
-                    "```json",
-                    """{ "tags": {"count_samples_for_variants": "count", "list_samples_for_variants": "list", "another_list_samples_tag": "list"} }""",
-                    "```",
-                ],
-                "available": True,
-                "function_name": "calculation_find_samples",
-                "function_params": {},
-            },
-            
-            "COUNT_SAMPLES": {
-                "type": "python",
-                "name": "COUNT_SAMPLES",
-                "description": "Number of sample that have a genotype for the variant (for multi sample VCF)",
-                "comment": "Number of sample that have a genotype for the variant (for multi sample VCF). This calculation counts the number of samples (fixed 'count_samples' field) that have a genotype for a given variant in a multi-sample VCF file. It helps in assessing the presence of the variant across different samples.",
-                "available": True,
-                "function_name": "calculation_find_samples",
-                "function_params": {"tags": {"count_samples": "count"}},
-            },
-            "LIST_SAMPLES": {
-                "type": "python",
-                "name": "LIST_SAMPLES",
-                "description": "List of samples that have a genotype for the variant (for multi sample VCF)",
-                "comment": "List of samples that have a genotype for the variant (for multi sample VCF). This calculation provides a list of samples (fixed 'list_samples' field) that have a genotype for a given variant in a multi-sample VCF file. It helps in understanding which samples support the presence of the variant.",
-                "available": True,
-                "function_name": "calculation_find_samples",
-                "function_params": {"tags": {"list_samples": "list"}},
-            },
-            "GENOTYPECONCORDANCE": {
-                "type": "python",
-                "name": "GENOTYPECONCORDANCE",
-                "description": "Concordance of genotype for multi caller VCF",
-                "comment": "Concordance of genotype for multi caller VCF. This calculation assesses the concordance of genotypes for a given variant across multiple callers in a multi-caller VCF file. It helps in evaluating the consistency of genotype calls and can be used to identify variants with high confidence based on agreement among different callers.",
-                "available": True,
-                "function_name": "calculation_genotype_concordance",
-                "function_params": [],
-            },
-            "BARCODE": {
-                "type": "python",
-                "name": "BARCODE",
-                "description": "BARCODE as VaRank tool",
-                "comment": "BARCODE as VaRank tool. This calculation generates a BARCODE for each sample based on sample genotype (0 for reference, 1 for heterozygous, 2 for homozygous alternate).",
-                "available": True,
-                "function_name": "calculation_barcode",
-                "function_params": [],
-                "output_column_number": "1",
-                "output_column_type": "Integer",
-            },
-            "BARCODEFAMILY": {
-                "type": "python",
-                "name": "BARCODEFAMILY",
-                "description": "BARCODEFAMILY as VaRank tool",
-                "comment": "BARCODEFAMILY as VaRank tool. This calculation generates a BARCODE for each family based on sample genotype (0 for reference, 1 for heterozygous, 2 for homozygous alternate) and family relationships.",
-                "available": True,
-                "function_name": "calculation_barcode_family",
-                "function_params": ["BCF"],
-            },
-            "TRIO": {
-                "type": "python",
-                "name": "TRIO",
-                "description": "Inheritance for a trio family",
-                "comment": [
-                    "Inheritance for a trio family. This calculation assesses the inheritance pattern of a variant within a trio family pedigree (father, mother, and child). It helps in understanding the transmission of genetic variants and identifying potential de novo mutations.",
-                    "Options for this calculation can be specified in the JSON parameter file, directly in the calculation parameters (see help.parameters.md). The parameter 'trio_samples' allows for the specification of the sample names for father, mother, and child:\n",
-                    "```json",
-                    """{"father": "sample_father", "mother": "sample_mother", "child": "sample_child"}""",
-                    "```",
-                    "This parameter can also be specified in a JSON file (containing the trio sample names):\n",
-                    "```bash",
-                    """ "/path/to/trio_samples.json" """,
-                    "```",
-                    "If no pedigree information is provided, the calculation will use the first 3 samples in the VCF file."
-                ],
-                "available": True,
-                "function_name": "calculation_trio",
-                "function_params": [],
-            },
-            "VAF": {
-                "type": "python",
-                "name": "VAF",
-                "description": "Variant Allele Frequency (VAF) harmonization",
-                "comment": "Variant Allele Frequency (VAF) harmonization. This calculation normalizes the Variant Allele Frequency (VAF) across different samples and callers to ensure consistency in VAF representation. It helps in comparing VAF values across samples and callers by applying a harmonization process.",
-                "available": True,
-                "function_name": "calculation_vaf_normalization",
-                "function_params": [],
-            },
-            "VAF_stats": {
-                "type": "python",
-                "name": "VAF_stats",
-                "description": "Variant Allele Frequency (VAF) statistics",
-                "comment": "Variant Allele Frequency (VAF) statistics. This calculation provides statistical measures for the Variant Allele Frequency (VAF) across different samples. It helps in understanding the distribution and variability of VAF values.",
-                "available": True,
-                "function_name": "calculation_genotype_stats",
-                "function_params": {"info": "VAF"},
-            },
-            "DP_stats": {
-                "type": "python",
-                "name": "DP_stats",
-                "description": "Depth (DP) statistics",
-                "comment": "Depth (DP) statistics. This calculation provides statistical measures for the sequencing depth (DP) across different samples. It helps in understanding the coverage and reliability of variant calls.",
-                "available": True,
-                "function_name": "calculation_genotype_stats",
-                "function_params": {"info": "DP"},
-            },
-            "genotype_stats": {
-                "type": "python",
-                "name": "GENOTYPE_STATS",
-                "description": "Calculate genotype statistics on a specific genotype field (e.g. VAF, DP, GQ...)",
-                "comment": [
-                    "Calculate genotype statistics on a specific genotype field (e.g. VAF, DP, GQ...). This calculation computes statistical measures for a specified genotype field across different samples, providing insights into the distribution and variability of the chosen genotype metric.\n",
-                    "Options for this calculation can be specified in the JSON parameter file, directly in the calculation parameters (see help.parameters.md). The parameter 'info' allows for the specification of the genotype field to be analyzed. For example, to calculate statistics for the GQ field, you can specify:\n",
-                    "```json",
-                    """{ "info": "GQ" }""",
-                    "```",
-                    "If no 'info' parameter is provided, the calculation will default to analyzing the VAF field. Other genotype fields can be specified as needed, such as DP (Depth), GQ (Genotype Quality), etc., by providing the appropriate field name in the 'info' parameter."
-                ],
-                "available": True,
-                "function_name": "calculation_genotype_stats",
-                "function_params": {}
-            },
-            "INFO_TO_FORMAT": {
-                "type": "python",
-                "name": "INFO_TO_FORMAT",
-                "description": "INFO to FORMAT conversion",
-                "comment": [
-                    "INFO to FORMAT conversion. This calculation converts INFO fields to FORMAT fields in the VCF file.\n",
-                    "Options for this calculation can be specified in the JSON parameter file, directly in the calculation parameters (see help.parameters.md):\n",
-                    "- 'annotation_fields': allows for the specification of the INFO fields to be converted to FORMAT fields, with the key being the INFO field name and the value being the FORMAT field name. For example, to convert INFO field 'count_samples' to FORMAT field 'CS', INFO field 'list_samples' to FORMAT field 'LS', and INFO field 'calling_quality' to FORMAT field 'CQ', you can specify:\n",
-                    "- 'samples': allows for the specification of the samples to be included in the conversion. If not specified, all samples will be included.\n",
-                    "- 'remove_info_fields': allows for the removal of the original INFO fields after conversion to FORMAT fields. If set to true, the original INFO fields will be removed from the VCF file.\n",
-                    "Options example: \n",
-                    "```json",
-                    "{",
-                    "    \"annotation_fields\": {",
-                    "        \"count_samples\": null,",
-                    "        \"list_samples\": \"LS\",",
-                    "        \"calling_quality\": \"CQ\"",
-                    "    },",
-                    "    \"samples\": [\"sample1\", \"sample2\"],",
-                    "    \"remove_info_fields\": true",
-                    "}",
-                    "```"
-                    ],
-                "available": True,
-                "function_name": "calculation_info_to_format",
-                "function_params": {},
-            },
-            "variant_id": {
-                "type": "python",
-                "name": "variant_id",
-                "description": "Variant ID generated from variant position and type",
-                "comment": [
-                    "Variant ID generated from variant position and variation (ref and alt) and type (SVTYPE). This calculation creates a unique identifier for each variant, facilitating variant tracking and comparison across datasets.",
-                    "Options for this calculation can be specified in the JSON parameter file, directly in the calculation parameters (see help.parameters.md). The parameter 'variant_id_tag' allows for the specification of the INFO tag to be used for the variant ID. By default, it uses 'variant_id', but it can be changed to any other INFO tag name as needed. For example, to use 'varid' as the INFO tag for the variant ID, you can specify:\n",
-                    "```json",
-                    """{ "variant_id_tag": "varid" }""",
-                    "```",
-                    "Other options as 'variant_id_tag_info' allows for the specification of the description in the VCF header, and 'keep_variant_id_tag_column' allows for keeping the variant ID tag column in the 'variants' table for further analysis.\n",
-                    "As an axample of the JSON parameter file, you can specify:\n",
-                    "```json",
-                    """{ "variant_id_tag": "varid", "variant_id_tag_info": "Variant ID generated from variant position and type", "keep_variant_id_tag_column": true }""",
-                    "```",
-                ],
-                "available": True,
-                "function_name": "calculation_variant_id",
-                "function_params": {},
-            },
-            "variant_id_varid": {
-                "type": "python",
-                "name": "variant_id_varid",
-                "description": "Variant ID generated from variant position and type, using 'varid' as INFO tag",
-                "comment": "Variant ID generated from variant position and variation (ref and alt) and type (SVTYPE). This calculation creates a unique identifier for each variant, facilitating variant tracking and comparison across datasets.",
-                "available": True,
-                "function_name": "calculation_variant_id",
-                "function_params": {"variant_id_tag": "varid"},
-            },
-            # "transcripts_annotations": {
-            #     "type": "python",
-            #     "name": "transcripts_annotations",
-            #     "description": "Perform transcripts annotations and generate a transcripts table/view (using JSON parameters file)",
-            #     "comment": "Perform transcripts annotations and generate a transcripts table/view. This calculation allows for the inclusion of transcript annotations in both JSON and structured formats, providing flexibility in how transcript information is stored and accessed within the variant analysis pipeline. The specific format(s) used can be determined based on parameters specified in the JSON parameter file in 'transcripts' section (see help.parameters.md), or directly in the calculation parameters.",
-            #     "available": True,
-            #     "function_name": "calculation_transcripts_annotation",
-            #     "function_params": [None, None],
-            # },
-            # "transcripts_annotations_json_format": {
-            #     "type": "python",
-            #     "name": "transcripts_json",
-            #     "description": "Perform transcripts annotations and export into INFO field in JSON format (field 'transcripts_json')",
-            #     "comment": "Perform transcripts annotations and generate a transcripts table/view. This calculation allows for the inclusion of transcript annotations in both JSON and structured formats, providing flexibility in how transcript information is stored and accessed within the variant analysis pipeline. The specific format(s) used can be determined based on parameters specified in the JSON parameter file in 'transcripts' section (see help.parameters.md). Then and add transcripts fields into INFO fields in structured format (field 'transcripts_ann'). This calculation allows for the inclusion of transcript annotations in a JSON format, facilitating the integration of transcript information into the variant analysis pipeline.",
-            #     "available": True,
-            #     "function_name": "calculation_transcripts_annotation",
-            #     "function_params": ["transcripts_json", None],
-            # },
-            # "transcripts_annotations_struct_format": {
-            #     "type": "python",
-            #     "name": "transcripts_ann",
-            #     "description": "Perform transcripts annotations and export into INFO field in structured format (field 'transcripts_ann')",
-            #     "comment": "Perform transcripts annotations and generate a transcripts table/view. This calculation allows for the inclusion of transcript annotations in both JSON and structured formats, providing flexibility in how transcript information is stored and accessed within the variant analysis pipeline. The specific format(s) used can be determined based on parameters specified in the JSON parameter file in 'transcripts' section (see help.parameters.md). Then and add transcripts fields into INFO fields in structured format (field 'transcripts_ann'). This calculation allows for the inclusion of transcript annotations in a structured format, facilitating the integration of transcript information into the variant analysis pipeline.",
-            #     "available": True,
-            #     "function_name": "calculation_transcripts_annotation",
-            #     "function_params": [None, "transcripts_ann"],
-            # },
-            "transcripts_annotations": {
-                "type": "python",
-                "name": "transcripts_annotations",
-                "description": "Perform transcripts annotations and generate a transcripts table/view (using JSON parameters file)",
-                "comment": "Perform transcripts annotations and generate a transcripts table/view. This calculation allows for the inclusion of transcript annotations in both JSON and structured formats, providing flexibility in how transcript information is stored and accessed within the variant analysis pipeline. The specific format(s) used can be determined based on parameters specified in the JSON parameter file in 'transcripts' section (see help.parameters.md), or directly in the calculation parameters.",
-                "available": True,
-                "function_name": "calculation_transcripts_annotation",
-                "function_params": {},
-            },
-            "transcripts_annotations_json_format": {
-                "type": "python",
-                "name": "transcripts_json",
-                "description": "Perform transcripts annotations and export into INFO field in JSON format (field 'transcripts_json')",
-                "comment": "Perform transcripts annotations and generate a transcripts table/view. This calculation allows for the inclusion of transcript annotations in both JSON and structured formats, providing flexibility in how transcript information is stored and accessed within the variant analysis pipeline. The specific format(s) used can be determined based on parameters specified in the JSON parameter file in 'transcripts' section (see help.parameters.md). Then and add transcripts fields into INFO fields in structured format (field 'transcripts_ann'). This calculation allows for the inclusion of transcript annotations in a JSON format, facilitating the integration of transcript information into the variant analysis pipeline.",
-                "available": True,
-                "function_name": "calculation_transcripts_annotation",
-                "function_params": {"info_json": "transcripts_json", "info_format": None},
-            },
-            "transcripts_annotations_struct_format": {
-                "type": "python",
-                "name": "transcripts_ann",
-                "description": "Perform transcripts annotations and export into INFO field in structured format (field 'transcripts_ann')",
-                "comment": "Perform transcripts annotations and generate a transcripts table/view. This calculation allows for the inclusion of transcript annotations in both JSON and structured formats, providing flexibility in how transcript information is stored and accessed within the variant analysis pipeline. The specific format(s) used can be determined based on parameters specified in the JSON parameter file in 'transcripts' section (see help.parameters.md). Then and add transcripts fields into INFO fields in structured format (field 'transcripts_ann'). This calculation allows for the inclusion of transcript annotations in a structured format, facilitating the integration of transcript information into the variant analysis pipeline.",
-                "available": True,
-                "function_name": "calculation_transcripts_annotation",
-                "function_params": {"info_json": None, "info_format": "transcripts_ann"},
-            },
-            "transcripts_prioritization": {
-                "type": "python",
-                "name": "transcripts_prioritization",
-                "description": "Prioritize transcripts with a prioritization profile (using JSON parameters file)",
-                "comment": "Prioritize transcripts with a prioritization profile. This calculation allows for the prioritization of transcripts based on a predefined profile specified in the JSON parameter file, either in 'transcripts' section or directly in the calculation parameters (see help.parameters.md), helping to identify the most relevant transcripts for further analysis.",
-                "available": True,
-                "function_name": "calculation_transcripts_prioritization",
-                "function_params": {"strict": False},
-            },
-            "transcripts_prioritization_strict": {
-                "type": "python",
-                "name": "transcripts_prioritization_strict",
-                "description": "Prioritize transcripts with a prioritization profile (using JSON parameters file)",
-                "comment": "Prioritize transcripts with a prioritization profile, ensuring that all needed annotations are present and considered. This calculation allows for the prioritization of transcripts based on a predefined profile specified in the JSON parameter file, either in 'transcripts' section or directly in the calculation parameters (see help.parameters.md), helping to identify the most relevant transcripts for further analysis.",
-                "available": True,
-                "function_name": "calculation_transcripts_prioritization",
-                "function_params": {"strict": True},
-            },
-            "transcripts_export": {
-                "type": "python",
-                "name": "transcripts_export",
-                "description": "Export transcripts table/view as a file (using JSON parameters file)",
-                "comment": [
-                    "Export transcripts table/view as a file. This calculation allows for the export of the transcripts table or view generated from transcript annotations to an external file format such as TSV or CSV. The parameters for this calculation can be specified in the JSON parameter file, either in 'transcripts' section or directly in the calculation parameters (see help.parameters.md), including options for the output file path, format, and any filters to apply during export."
-                ],
-                "available": True,
-                "function_name": "calculation_transcripts_export",
-                "function_params": {},
-            },
-            "variant_filter": {
-                "type": "python",
-                "name": "variant_filter",
-                "description": "Filter variants based on specified criteria (using SQL parameters and sample list)",
-                "comment": [
-                    "Filter variants based on specified criteria. This calculation allows for the filtering of variants using SQL-like parameters specified in the JSON parameter file in the calculation parameters (see help.parameters.md), including options for the filtering conditions and any additional criteria (such as a list of samples) to apply during the filtering process.\n"
-                    "Example that filter variants on ClinVar pathogenic, on DP >= 100 for 'sample1', selection of only 2 samples, and ensure only not null genotypes:\n",
-                    "```json",
-                    """{""",
-                    """   "filter_name": "Filter on ClinVar pathogenic, DP for sample1, select only 2 samples, and ensure only not null genotypes",""",
-                    """   "where_clause": "INFOS.CLNSIG = 'pathogenic' AND SAMPLES.sample1.DP >= 100",""",
-                    """   "sample_list": ["sample1", "sample2"],""",
-                    """   "genotype_filter": true""",
-                    """}""",
-                    "```",
-                ],
-                "available": True,
-                "function_name": "calculation_variant_filter",
-                "function_params": {},
-            },
-            "annotation": {
-                "type": "python",
-                "name": "annotation",
+                "name": "ANNOTATION",
                 "description": "Annotation of variants based on specified databases and tools",
                 "comment": [
-                    "Annotate variants based on specified databases and tools. This calculation allows for the annotation of variants using parameters specified in the JSON parameter file in the annotation parameters (see help.annotation.md), including options on tools to use (HOWARD parquet algorithm, Annovar, snpEff, BCFTools...).\n"
+                    "Annotate variants based on specified databases and tools. This calculation allows for the annotation of variants using parameters specified in the JSON parameter file in the annotation parameters (see '[Annotation section](help.parameters.md#annotation)' in help.parameters.md), including options on tools to use (HOWARD parquet algorithm, Annovar, snpEff, BCFTools...).\n"
                     "Example that annotate variants with database in parquet format, annovar, snpEff and BCFTools with databases in VCF or BED format:\n",
                     "```json",
                     """{""",
@@ -579,9 +67,341 @@ class variants_calculation:
                 "function_name": "calculation_annotation",
                 "function_params": {},
             },
-            "prioritization": {
+            "ANNOTATION_EXTRACT": {
                 "type": "python",
-                "name": "prioritization",
+                "name": "ANNOTATION_EXTRACT",
+                "description": "Extract annotation from structured INFO field (e.g. snpEff, VEP...)",
+                "comment": [
+                    "Extract annotation and HGVS nomenclatures from structured annotation and create new INFO fields with a prefix (e.g. 'snpeff_' for 'snpeff_hgvs', 'snpeff_impact', 'vep_gene_name'...). This calculation parses the annotation field from an annotation (e.g. 'ANN' for snpEff, 'CSQ' for VEP), extracting relevant information such as HGVS nomenclatures, impact, gene name, etc., and explode new INFO fields with the appropriate prefix for easier access and downstream analysis.\n",
+                    "Example with snpEff annotation (field ANN), extract HGVS nomenclature, explode information with prefix 'snpeff_',and create a JSON field 'snpeff_json':\n",
+                    """```json""",
+                    """{""",
+                    """    "annotation_field": "ANN",""",
+                    """    "annotation_hgvs": "snpeff_hgvs",""",
+                    """    "annotation_explode": "snpeff_",""",
+                    """    "annotation_json": "snpeff_json",""",
+                    """    "uniquify": false""",
+                    """}""",
+                    """```""",
+                    "Example with VEP annotation (field CSQ), extract HGVS nomenclature, explode information with prefix 'vep_', and create a JSON field 'vep_json':\n",
+                    """```json""",
+                    """{""",
+                    """    "annotation_field": "CSQ",""",
+                    """    "annotation_hgvs": "vep_hgvs",""",
+                    """    "annotation_explode": "vep_",""",
+                    """    "annotation_json": "vep_json",""",
+                    """    "uniquify": false,""",
+                    """    "annotation_id": "Feature",""",
+                    """    "hgvs_columns": {""",
+                    """       "gene": "Gene",""",
+                    """       "transcript": "Feature",""",
+                    """       "rank": "EXON",""",
+                    """       "HGVSc": "HGVSc",""",
+                    """       "HGVSp": "HGVSp" """,
+                    """    },""",
+                    """    "hgvs_columns_contain_transcript_id": True""",
+                    """}""",
+                    """```""",
+                    "Example with VEP annotation (field CSQ), extract HGVS nomenclature using RefSeq (specific HGVS identifier column 'SYMBOL'), explode information with prefix 'vep_refseq_', and create a JSON field 'vep_refseq_json':\n",
+                    """```json""",
+                    """{""",
+                    """    "annotation_field": "CSQ",""",
+                    """    "annotation_hgvs": "vep_refseq_hgvs",""",
+                    """    "annotation_explode": "vep_refseq_",""",
+                    """    "annotation_json": "vep_refseq_json",""",
+                    """    "uniquify": false,""",
+                    """    "annotation_id": "Feature",""",
+                    """    "hgvs_columns": {""",
+                    """       "gene": "SYMBOL",""",
+                    """       "transcript": "Feature",""",
+                    """       "rank": "EXON",""",
+                    """       "HGVSc": "HGVSc",""",
+                    """       "HGVSp": "HGVSp" """,
+                    """    },""",
+                    """    "hgvs_columns_contain_transcript_id": True""",
+                    """}""",
+                    """```"""
+                ],
+                "available": True,
+                "function_name": "calculation_annotation_with_format_extract",
+                "function_params": {}
+            },
+            "BARCODE": {
+                "type": "python",
+                "name": "BARCODE",
+                "description": "BARCODE as VaRank tool",
+                "comment": [
+                    "BARCODE as VaRank tool. This calculation generates a BARCODE for each sample based on sample genotype (0 for reference, 1 for heterozygous, 2 for homozygous alternate).\n",
+                    "Example of barcode calculation parameters for a variant with genotypes:\n",
+                    """```json""",
+                    """{""",
+                    """   "tag": "barcode", """,
+                    """   "tag_description": "BARCODE as VaRank tool" """,
+                    """}""",
+                    """```"""
+                ],
+                "available": True,
+                "function_name": "calculation_barcode",
+                "function_params": [],
+                "output_column_number": "1",
+                "output_column_type": "Integer",
+            },
+            "BARCODE_FAMILY": {
+                "type": "python",
+                "name": "BARCODE_FAMILY",
+                "description": "BARCODE_FAMILY as VaRank tool",
+                "comment": [
+                    "BARCODE_FAMILY as VaRank tool. This calculation generates a BARCODE for each family based on sample genotype (0 for reference, 1 for heterozygous, 2 for homozygous alternate) and family relationships (within genotype information on each sample).\n",
+                    "Example of barcode family calculation parameters for a list of samples as a family:\n",
+                    """```json""",
+                    """{""",
+                    """   "tag": "BCF", """,
+                    """   "tag_description": "BARCODE_FAMILY as VaRank tool" """,
+                    """   "tag_samples": "BCFS", """,
+                    """   "tag_samples_description": "Description of tag samples", """,
+                    """   "family_pedigree": "sample1,sample2,sample4" """,
+                    """}""",
+                    """```""",
+                    "",
+                    "Example of barcode family calculation parameters for a list of samples in a JSON file:\n",
+                    """```json""",
+                    """{""",
+                    """   "tag": "BCF", """,
+                    """   "tag_description": "BARCODE_FAMILY as VaRank tool" """,
+                    """   "tag_samples": "BCFS", """,
+                    """   "tag_samples_description": "Description of tag samples", """,
+                    """   "family_pedigree": "path/to/family_pedigree.json" """,
+                    """}""",
+                    """```""",
+                    """With family_pedigree.json content example:""",
+                    """```json""",
+                    """{""",
+                    """   "father": "sample1", """,
+                    """   "mother": "sample2", """,
+                    """   "child": "sample4" """,
+                    """}""",
+                    """```"""
+                ],
+                "available": True,
+                "function_name": "calculation_barcode_family",
+                "function_params": {},
+            },
+            "EXPORT_STATS": {
+                "type": "python",
+                "name": "EXPORT_STATS",
+                "description": "Export statistics of variants to a file",
+                "comment": [
+                    "Export statistics of variants to a JSON file. Define the output file and whether to include annotation statistics. See '[Stats section](help.parameters.md#stats-1)' in Parameters JSON Help for more information.\n",
+                    "Example of a statistics files (Markdown and JSON format) including annotation statistics and two queries:\n",
+                    """```json""",
+                    """{""",
+                    """   "stats_md": "my.stats.md", """,
+                    """   "stats_json": "my.stats.json", """,
+                    """   "annotations_stats": true, """,
+                    """   "queries": {""",
+                    """      "First 10 variants": "SELECT \\\"#CHROM\\\", POS, REF, ALT FROM variants_view LIMIT 10", """,
+                    """      "First 10 INFO tags": "SELECT INFOS.* FROM variants_view LIMIT 10" """,
+                    """   }""",
+                    """}""",
+                    """```""",
+                ],
+                "available": True,
+                "function_name": "calculation_export_stats",
+                "function_params": {},
+            },
+            "EXPORT_VARIANTS": {
+                "type": "python",
+                "name": "EXPORT_VARIANTS",
+                "description": "Export variants to a file",
+                "comment": [
+                    "Export variants to a VCF file. Define the output file and format will depend on the extension. Options to explode fields and export them are available. See [Parameters JSON Help](help.parameters.md) for more information.\n",
+                    "Example of a variant file in VCF (compressed):\n",
+                    """```json""",
+                    """{""",
+                    """   "file": "my.variants.vcf.gz", """,
+                    """}""",
+                    """```""",
+                    "Example of a variant file in TSV (uncompressed) with exploded fields, an header, and ordered by DP values, and filtered by specific query:\n",
+                    """```json""",
+                    """{""",
+                    """   "file": "my.variants.tsv", """,
+                    """   "explode": {""",
+                    """      "explode_infos": true, """,
+                    """      "explode_infos_prefix": "test_", """,
+                    """      "explode_infos_fields": ["CLNSIG", "SIFT", "DP"] """,
+                    """   }, """,
+                    """   "export": {""",
+                    """      "fields_to_rename": {""",
+                    """         "CLNSIG": "CLNSIG_renamed", """,
+                    """         "SIFT": null """,
+                    """      },""",
+                    """      "order_by": "DP DESC", """,
+                    """      "include_header": true """,
+                    """   }, """,            
+                    """   "query": "SELECT * FROM variants WHERE INFO LIKE '%CLNSIG%'" """,
+                    """}""",
+                    """```""",
+                ],
+                "available": True,
+                "function_name": "calculation_export_variants",
+                "function_params": {},
+            },
+            "FIND_SAMPLES": {
+                "type": "python",
+                "name": "FIND_SAMPLES",
+                "description": "Number of sample that have a genotype for the variant (for multi sample VCF)",
+                "comment": [
+                    "This calculation counts the number of samples that have a genotype for a given variant in a multi-sample VCF file. It helps in assessing the presence of the variant across different samples.\n",
+                    "Options for this calculation can be specified in the JSON parameter file, directly in the calculation parameters (see help.parameters.md). The parameter 'tags' allows for the specification of the INFO tags to be created, with the key being the tag name and the value being either 'count' or 'list' to indicate whether to count the samples or list them. For example, to create an INFO tag 'count_samples' that counts the number of samples and an INFO tag 'list_samples' that lists the samples, you can specify:\n",
+                    """```json""",
+                    """{""",
+                    """   "tags": {""",
+                    """      "count_samples": "count",""",
+                    """      "list_samples": "list" """,
+                    """   }""",
+                    """}""",
+                    "```\n",
+                    "Otherwise, change the default tags in the parameter file, like in this example:\n", 
+                    """```json""",
+                    """{""",
+                    """   "tags": {""",
+                    """      "count_samples_for_variants": "count",""",
+                    """      "list_samples_for_variants": "list",""",
+                    """      "another_list_samples_tag": "list" """,
+                    """   }""",
+                    """}""",
+                    "```",
+                ],
+                "available": True,
+                "function_name": "calculation_find_samples",
+                "function_params": {},
+            },
+            "GENOTYPE_CONCORDANCE": {
+                "type": "python",
+                "name": "GENOTYPE_CONCORDANCE",
+                "description": "Concordance of genotype for multi caller VCF",
+                "comment": [
+                    "Concordance of genotype for multi caller VCF. This calculation assesses the concordance of genotypes for a given variant across multiple callers in a multi-caller VCF file. It helps in evaluating the consistency of genotype calls and can be used to identify variants with high confidence based on agreement among different callers.\n",
+                    "Exemple of concordance calculation parameters for a variant with genotypes:\n",
+                    """```json""",
+                    """{""",
+                    """   "tag": "genotype_concordance", """,
+                    """   "tag_description": "Concordance of genotype for multi caller VCF" """,
+                    """}""",
+                    """```"""
+                ],
+                "available": True,
+                "function_name": "calculation_genotype_concordance",
+                "function_params": {},
+            },
+            "GENOTYPE_STATS": {
+                "type": "python",
+                "name": "GENOTYPE_STATS",
+                "description": "Calculate genotype statistics on a specific genotype field (e.g. VAF, DP, GQ...)",
+                "comment": [
+                    "Calculate genotype statistics on a specific genotype field (e.g. VAF, DP, GQ...). This calculation computes statistical measures for a specified genotype field across different samples, providing insights into the distribution and variability of the chosen genotype metric.\n",
+                    "Options for this calculation can be specified in the JSON parameter file, directly in the calculation parameters (see help.parameters.md). The parameter 'infos' specify the genotype fields (either a string or a list of strings) to be analyzed.\n",
+                    " Example of VAF statistics calculation:\n",
+                    "```json",
+                    """{""",
+                    """   "infos": "VAF" """,
+                    """}""",
+                    "```",
+                    " Example of VAF and GQ statistics calculation:\n",
+                    "```json",
+                    """{""",
+                    """   "infos": ["VAF", "GQ"] """,
+                    """}""",
+                    "```",
+                    "If no 'infos' parameter is provided, the calculation will default to analyzing the VAF field. Other genotype fields (with Integer values) can be specified as needed, such as DP (Depth), GQ (Genotype Quality), etc., by providing the appropriate field name in the 'infos' parameter."
+                ],
+                "available": True,
+                "function_name": "calculation_genotype_stats",
+                "function_params": {}
+            },
+            "INFO_TO_FORMAT": {
+                "type": "python",
+                "name": "INFO_TO_FORMAT",
+                "description": "INFO to FORMAT conversion",
+                "comment": [
+                    "INFO to FORMAT conversion. This calculation converts INFO fields to FORMAT fields in the VCF file.\n",
+                    "Options for this calculation can be specified in the JSON parameter file, directly in the calculation parameters (see help.parameters.md):\n",
+                    "- 'annotation_fields': allows for the specification of the INFO fields to be converted to FORMAT fields, with the key being the INFO field name and the value being the FORMAT field name. For example, to convert INFO field 'count_samples' to FORMAT field 'CS', INFO field 'list_samples' to FORMAT field 'LS', and INFO field 'calling_quality' to FORMAT field 'CQ', you can specify:\n",
+                    "- 'samples': allows for the specification of the samples to be included in the conversion. If not specified, all samples will be included.\n",
+                    "- 'remove_info_fields': allows for the removal of the original INFO fields after conversion to FORMAT fields. If set to true, the original INFO fields will be removed from the VCF file.\n",
+                    "Options example: \n",
+                    "```json",
+                    """{""",
+                    """    "annotation_fields": {""",
+                    """        "count_samples": null,""",
+                    """        "list_samples": "LS",""",
+                    """        "calling_quality": "CQ" """,
+                    """    },""",
+                    """    "samples": ["sample1", "sample2"],""",
+                    """    "remove_info_fields": true""",
+                    """}""",
+                    """```"""
+                    ],
+                "available": True,
+                "function_name": "calculation_info_to_format",
+                "function_params": {},
+            },
+            # "MERGED_HGVS": { # Keep it for information or later use, but not used for now because it is not used in the pipeline and it is not well tested
+            #     "type": "sql",
+            #     "name": "merged_hgvs",
+            #     "description": "Merge HGVS nomenclatures from snpEff (snpeff_hgvs) and ANNOVAR (AAChange_refGene) into merged_hgvs field",
+            #     "comment": "This calculation merges HGVS nomenclatures from snpEff (snpeff_hgvs) and ANNOVAR (AAChange_refGene) into a single field called merged_hgvs. It aggregates distinct HGVS annotations from both sources, concatenating them with a comma separator. This unified field allows for easier access to HGVS information regardless of the annotation source, facilitating downstream analysis and interpretation.",
+            #     "available": True,
+            #     "table": "variants",
+            #     "output_column_name": "merged_hgvs",
+            #     "output_column_number": ".",
+            #     "output_column_type": "String",
+            #     "output_column_description": "Merge HGVS nomenclatures from snpEff (snpeff_hgvs) and ANNOVAR (AAChange_refGene) into merged_hgvs field",
+            #     "operation_query": """
+            #             list_aggregate(
+            #                 list_sort(
+            #                     list_distinct(
+            #                         list_reduce(
+            #                             [
+            #                                 "snpeff_hgvs",
+            #                                 "AAChange_refGene",
+            #                             ],
+            #                             (a, b) -> list_concat(a, b)
+            #                         )
+            #                     )
+            #                 ),
+            #                 'string_agg',
+            #                 ','
+            #             )
+            #             """,
+            #     "info_fields": ["snpeff_hgvs", "AAChange_refGene"],
+            #     "operation_info": True,
+            # },
+            "NOMEN": {
+                "type": "python",
+                "name": "NOMEN",
+                "description": "NOMEN information (e.g. NOMEN, CNOMEN, PNOMEN...) from HGVS nomenclature field (see parameters help)",
+                "comment": [
+                    "Extract NOMEN information (e.g. NOMEN, CNOMEN, PNOMEN...) from HGVS nomenclature fields (see parameters help). This calculation parses the HGVS nomenclature fields to extract specific NOMEN information such as NOMEN, CNOMEN, PNOMEN, etc., based on the parameters provided. Multiple annotation fields are allowed (e.g. 'snpeff_hgvs', 'snpeff_hgvs,vep_hgvs'). It creates new INFO fields with the extracted NOMEN information for easier access and downstream analysis (i.e. 'NOMEN', 'CNOMEN', 'PNOMEN', etc.).\n",
+                    "Example of NOMEN extraction from snpeff_hgvs field with default NOMEN patterns:\n",
+                    """```json""",
+                    """{""",
+                    """   "hgvs_fields": "snpeff_hgvs",""",
+                    """   "uniquify_hgvs": false,""",
+                    """   "nomen_pattern": "GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN",""",
+                    """   "transcripts_column": "PZTTranscript",""",
+                    """   "transcripts": "my.transcripts.tsv",""",
+                    """   "transcripts_order": ["column", "file"],""",
+                    """}""",
+                    """```"""
+                ],
+                "available": True,
+                "function_name": "calculation_extract_nomen",
+                "function_params": {}
+            },
+            "PRIORITIZATION": {
+                "type": "python",
+                "name": "PRIORITIZATION",
                 "description": "Prioritization of variants based on specified profiles",
                 "comment": [
                     "Prioritize variants based on specified profiles. This calculation allows for the prioritization of variants using parameters specified in the JSON parameter file in the prioritization parameters (see help.prioritization.md), including options on profiles to use and scoring methods.\n"
@@ -599,6 +419,300 @@ class variants_calculation:
                 "function_name": "calculation_prioritization",
                 "function_params": {},
             },
+            "RECREATE_INFO_FIELDS": {
+                "type": "python",
+                "name": "RECREATE_INFO_FIELDS",
+                "description": "Recreate INFO_tags, rename or remove tags",
+                "comment": [
+                    "Recreate INFO_tags, rename or remove tags. This calculation allows for the recreation of INFO fields by renaming existing tags or removing them based on specified parameters. It provides flexibility in managing INFO fields, enabling users to customize their VCF annotations according to their analysis needs.\n",
+                    "This example will rename INFO field 'ENOMEN' to 'exon' and remove INFO fields 'SPiP', 'SPiP_Alt' and 'SPiP_distSS' from the 'variants' table:",
+                    "",
+                    """```json""",
+                    """{""",
+                    """   "fields_to_rename": {""",
+                    """      "ENOMEN": "exon",""",
+                    """      "SPiP": null,""",
+                    """      "SPiP_Alt": null,""",
+                    """      "SPiP_distSS": null""",
+                    """   },""",
+                    """  "table": "variants" """,
+                    """}""",
+                    "```",
+                ],
+                "available": True,
+                "function_name": "calculation_recreate_info_fields",
+                "function_params": {},
+            },
+            "RENAME_INFO_FIELDS": {
+                "type": "python",
+                "name": "RENAME_INFO_FIELDS",
+                "description": "Rename or remove INFO/tags",
+                "comment": [
+                    "Rename or remove INFO/tags. This calculation allows for the renaming of existing INFO fields or the removal of specific tags (use 'null') based on provided parameters. It helps in standardizing or customizing INFO fields in the VCF according to user requirements and facilitates downstream analysis. Use parameter section 'calculation_RENAME_INFO_FIELDS' in param.json to specify the INFO fields to rename or remove.",
+                    "",
+                    "This example will rename INFO field 'ENOMEN' to 'exon' and remove INFO fields 'SPiP', 'SPiP_Alt' and 'SPiP_distSS' from the 'variants' table:",
+                    "",
+                    """```json""",
+                    """{""",
+                    """   "fields_to_rename": {""",
+                    """      "ENOMEN": "exon",""",
+                    """      "SPiP": null,""",
+                    """      "SPiP_Alt": null,""",
+                    """      "SPiP_distSS": null""",
+                    """   },""",
+                    """  "table": "variants" """,
+                    """}""",
+                    "```",
+                ],
+                "available": True,
+                "function_name": "calculation_rename_info_fields",
+                "function_params": [],
+            },
+            "TRANSCRIPTS_ANNOTATIONS": {
+                "type": "python",
+                "name": "TRANSCRIPTS_ANNOTATIONS",
+                "description": "Perform transcripts annotations and generate a transcripts table/view (using JSON parameters file)",
+                "comment": [
+                    "Perform transcripts annotations and generate a transcripts table/view. This calculation allows for the inclusion of transcript annotations in both JSON and structured formats, providing flexibility in how transcript information is stored and accessed within the variant analysis pipeline. The specific format(s) used can be determined based on parameters specified in the JSON parameter file in '[transcripts](help.parameters.md#transcripts)' section (see help.parameters.md), or directly in the calculation parameters.\n",
+                    "Example that configure transcripts table with JSON parameters, defined by existing annotations on variants:\n",
+                    "```json",
+                    """{""",
+                    """    "table": "transcripts",""",
+                    """    "transcripts_info_field_json": "transcripts_json",""",
+                    """    "transcripts_info_field_format": "transcripts_ann",""",
+                    """    "transcripts_info_json": "transcripts_json",""",
+                    """    "transcripts_info_format": "transcripts_format",""",
+                    """    "transcript_id_remove_version": true,""",
+                    """    "transcript_id_mapping_file": "transcripts.for_mapping.tsv",""",
+                    """    "transcript_id_mapping_force": false,""",
+                    """    "struct": {""",
+                    """    "from_column_format": [""",
+                    """            {""",
+                    """                "transcripts_column": "ANN",""",
+                    """                "transcripts_infos_column": "Feature_ID",""",
+                    """                "column_clean": true,""",
+                    """                "column_case": "lower" """,
+                    """            }""",
+                    """        ],""",
+                    """        "from_columns_map": [""",
+                    """            {""",
+                    """                "transcripts_column": "Ensembl_transcriptid",""",
+                    """                "transcripts_infos_columns": [""",
+                    """                    "genename",""",
+                    """                    \"Ensembl_geneid\",""",
+                    """                    \"LIST_S2_score\",""",
+                    """                    \"LIST_S2_pred\" """,
+                    """                ],""",
+                    """                \"column_rename\": {""",
+                    """                    \"LIST_S2_score\": \"LISTScore\",""",
+                    """                    \"LIST_S2_pred\": \"LISTPred\" """,
+                    """               },""",
+                    """            },""",
+                    """            {""",
+                    """                "transcripts_column": "Ensembl_transcriptid",""",
+                    """                "transcripts_infos_columns": [""",
+                    """                    "genename",""",
+                    """                    "VARITY_R_score",""",
+                    """                    "Aloft_pred""",
+                    """                ]""",
+                    """            }""",
+                    """        ]""",
+                    """    }""",
+                    """}""",
+                    "```",
+                ],
+                "available": True,
+                "function_name": "calculation_transcripts_annotation",
+                "function_params": {},
+            },
+            "TRANSCRIPTS_EXPORT": {
+                "type": "python",
+                "name": "TRANSCRIPTS_EXPORT",
+                "description": "Export transcripts table/view as a file (using JSON parameters file)",
+                "comment": [
+                    "Export transcripts table/view as a file. This calculation allows for the export of the transcripts table or view generated from transcript annotations to an external file format such as TSV or CSV. The parameters for this calculation can be specified in the JSON parameter file, either in '[transcripts](help.parameters.md#transcripts)' section or directly in the calculation parameters (see help.parameters.md), including options for the output file path, format, and any filters to apply during export.\n",
+                    "Example that export transcripts table to a TSV file, with all INFO annotations, and supplementary exploded INFO fields:\n",
+                    "```json",
+                    """{""",
+                    """   "export": {""",
+                    """       "output": "transcripts_export.tsv",""",
+                    """       "export_header": true,""",
+                    """       "add_info": true""",
+                    """   },""",
+                    """   "explode": {""",
+                    """       "explode_infos": true,""",
+                    """       "export_info_prefix": '',""",
+                    """       "explode_infos_fields": 'HGVS,.*_score,Clinvar' """,
+                    """   },""",             
+                    """}""",
+                    "```",
+                ],
+                "available": True,
+                "function_name": "calculation_transcripts_export",
+                "function_params": {},
+            },
+            "TRANSCRIPTS_PRIORITIZATION": {
+                "type": "python",
+                "name": "TRANSCRIPTS_PRIORITIZATION",
+                "description": "Prioritize transcripts with a prioritization profile (using JSON parameters file)",
+                "comment": [
+                    "Prioritize transcripts with a prioritization profile. This calculation allows for the prioritization of transcripts based on a predefined profile specified in the JSON parameter file, either in '[transcripts](help.parameters.md#transcripts)' section or directly in the calculation parameters (see help.parameters.md), helping to identify the most relevant transcripts for further analysis.\n",
+                    "Example that configure transcript prioritization with already existing transcripts table with JSON parameters:\n",
+                    "```json",
+                    """{""",
+                    """    "prioritization": {""",
+                    """        "profiles": ["transcripts"],""",
+                    """        "prioritization_config": "config/prioritization_transcripts_profiles.json",""",
+                    """        "pzprefix": "PZT",""",
+                    """        "pzfields": ["Score", "Flag", "LISTScore", "LISTPred"],""",
+                    """        "prioritization_transcripts_order": {""",
+                    """            "PZTFlag": "DESC",""",
+                    """            "PZTScore": "DESC" """,
+                    """        },""",
+                    """        "prioritization_score_mode": "HOWARD",""",
+                    """        "prioritization_transcripts_file": null,""",
+                    """        "prioritization_transcripts_columns": null,""",
+                    """        "prioritization_transcripts_force": false,""",
+                    """        "prioritization_transcripts_version_force": false,""",
+                    """        "strict": false""",
+                    """    }""",
+                    """}""",
+                    "```",
+                ],
+                "available": True,
+                "function_name": "calculation_transcripts_prioritization",
+                "function_params": {},
+            },
+            "TRIO": {
+                "type": "python",
+                "name": "TRIO",
+                "description": "Inheritance for a trio family",
+                "comment": [
+                    "Inheritance for a trio family. This calculation assesses the inheritance pattern of a variant within a trio family pedigree (father, mother, and child). It helps in understanding the transmission of genetic variants and identifying potential de novo mutations.\n",
+                    "Example of trio calculation parameters for a variant with genotypes:\n",
+                    """```json""",
+                    """{""",
+                    """   "tag": "trio", """,
+                    """   "tag_description": "Inheritance for a trio family" """,
+                    """   "trio_pedigree": {""",
+                    """      "father": "sample_father", """,
+                    """      "mother": "sample_mother", """,
+                    """      "child": "sample_child" """,
+                    """   }""",
+                    """}""",
+                    """```""",
+                    "",
+                    "Options for these parameteres can be specified in the JSON parameter file, directly in the calculation parameters (see help.parameters.md).\n",
+                    "The parameter 'trio_pedigree' allows for the specification of the sample names for father, mother, and child:\n",
+                    "```json",
+                    """{""",
+                    """   "father": "sample_father",""",
+                    """   "mother": "sample_mother",""",
+                    """   "child": "sample_child" """,
+                    """}""",
+                    "```",
+                    "This parameter can also be specified in a JSON file (containing the trio sample names):\n",
+                    "```bash",
+                    """ "/path/to/trio_samples.json" """,
+                    "```",
+                    "If no pedigree information is provided, the calculation will use the first 3 samples in the VCF file."
+                ],
+                "available": True,
+                "function_name": "calculation_trio",
+                "function_params": {},
+            },
+            "VAF_NORMALIZATION": {
+                "type": "python",
+                "name": "VAF_NORMALIZATION",
+                "description": "Variant Allele Frequency (VAF) normalization",
+                "comment": "Variant Allele Frequency (VAF) normalization. This calculation normalizes the Variant Allele Frequency (VAF) across different samples and callers to ensure consistency in VAF representation. It helps in comparing VAF values across samples and callers by applying a harmonization process.",
+                "available": True,
+                "function_name": "calculation_vaf_normalization",
+                "function_params": [],
+            },
+            "VARIANT_CHROM_POS_REF_ALT": {
+                "type": "sql",
+                "name": "VARIANT_CHROM_POS_REF_ALT",
+                "description": "Create a variant ID with chromosome, position, ref and alt, with format '#CHROM_POS_REF_ALT'",
+                "comment": "This calculation generates a variant ID with chromosome, position, ref and alt, with format '#CHROM_POS_REF_ALT'. Useful for variant identification and comparison across datasets",
+                "available": True,
+                "output_column_name": "VARIANT_CHROM_POS_REF_ALT",
+                "output_column_number": 1,
+                "output_column_type": "String",
+                "output_column_description": "variant ID with chromosome, position, ref and alt",
+                "operation_query": """ concat("#CHROM", '_', "POS", '_', "REF", '_', "ALT") """,
+                "operation_info": True,
+            },
+            "VARIANT_FILTER": {
+                "type": "python",
+                "name": "VARIANT_FILTER",
+                "description": "Filter variants based on specified criteria (using SQL parameters and sample list)",
+                "comment": [
+                    "Filter variants based on specified criteria. This calculation allows for the filtering of variants using SQL-like parameters specified in the JSON parameter file in the calculation parameters (see help.parameters.md), including options for the filtering conditions and any additional criteria (such as a list of samples) to apply during the filtering process.\n"
+                    "Example that filter variants on ClinVar pathogenic, on DP >= 100 for 'sample1', selection of only 2 samples, and ensure only not null genotypes:\n",
+                    "```json",
+                    """{""",
+                    """   "filter_name": "Filter on ClinVar pathogenic, DP for sample1, select only 2 samples, and ensure only not null genotypes",""",
+                    """   "where_clause": "INFOS.CLNSIG = 'pathogenic' AND SAMPLES.sample1.DP >= 100",""",
+                    """   "sample_list": ["sample1", "sample2"],""",
+                    """   "genotype_filter": true""",
+                    """}""",
+                    "```",
+                ],
+                "available": True,
+                "function_name": "calculation_variant_filter",
+                "function_params": {},
+            },
+            "VARIANT_ID": {
+                "type": "python",
+                "name": "VARIANT_ID",
+                "description": "Variant ID generated from variant position and type",
+                "comment": [
+                    "Variant ID generated from variant position and variation (ref and alt) and type (SVTYPE). This calculation creates a unique identifier for each variant, facilitating variant tracking and comparison across datasets.",
+                    "Options for this calculation can be specified in the JSON parameter file, directly in the calculation parameters (see help.parameters.md). The parameter 'variant_id_tag' allows for the specification of the INFO tag to be used for the variant ID. By default, it uses 'variant_id', but it can be changed to any other INFO tag name as needed. For example, to use 'varid' as the INFO tag for the variant ID, you can specify:\n",
+                    "```json",
+                    """{""",
+                    """   "variant_id_tag": "varid" """,
+                    """}""",
+                    "```",
+                    "Other options as 'variant_id_tag_info' allows for the specification of the description in the VCF header, and 'keep_variant_id_tag_column' allows for keeping the variant ID tag column in the 'variants' table for further analysis.\n",
+                    "As an axample of the JSON parameter file, you can specify:\n",
+                    "```json",
+                    """{""",
+                    """   "variant_id_tag": "varid",""",
+                    """   "variant_id_tag_info": "Variant ID generated from variant position and type",""",
+                    """   "keep_variant_id_tag_column": true """,
+                    """}""",
+                    "```",
+                ],
+                "available": True,
+                "function_name": "calculation_variant_id",
+                "function_params": {},
+            },
+            "VARTYPE": {
+                "type": "sql",
+                "name": "VARTYPE",
+                "description": "Variant type (e.g. SNV, INDEL, MNV, BND...)",
+                "comment": "Determine the type of variant based on its characteristics, such as the length of the reference and alternate alleles, and the presence of structural variant information. This calculation classifies variants into types like SNV, INDEL, MNV, BND, etc., which is essential for downstream analysis and interpretation.",
+                "available": True,
+                "table": "variants",
+                "output_column_name": "VARTYPE",
+                "output_column_number": 1,
+                "output_column_type": "String",
+                "output_column_description": "Variant type: SNV if X>Y, MOSAIC if X>Y,Z or X,Y>Z, INDEL if XY>Z or X>YZ, MNV if X=Y>1, BND if SVTYPE=BND, UNDEFINED otherwise",
+                "operation_query": """
+                        CASE
+                            WHEN "SVTYPE" IS NOT NULL THEN "SVTYPE"
+                            WHEN LENGTH(REF) = 1 AND LENGTH(ALT) = 1 THEN 'SNV'
+                            WHEN REF LIKE '%,%' OR ALT LIKE '%,%' THEN 'MOSAIC'
+                            WHEN LENGTH(REF) == LENGTH(ALT) AND LENGTH(REF) > 1 THEN 'MNV'
+                            WHEN LENGTH(REF) <> LENGTH(ALT) THEN 'INDEL'
+                            ELSE 'UNDEFINED'
+                        END
+                        """,
+                "info_fields": ["SVTYPE"],
+                "operation_info": True,
+            }
         }
 
         return config_default
@@ -625,8 +739,9 @@ class variants_calculation:
         # Init
         operations_help = []
         operations_help_md = [
-            "# Calculations",
-            "List of available calculations",
+            "# HOWARD Calculations",
+            "List of available calculations in HOWARD. For each calculation, the name, description, and comment are provided. The comment may include additional information, examples, or references to help understand the calculation and its usage.",
+            "See [Parameters JSON help](help.parameters.md) for more details on how to specify calculation parameters in the JSON parameter file.",
         ]
 
         # operations
@@ -639,6 +754,21 @@ class variants_calculation:
         # Sort operations by key
         operations = dict(sorted(operations.items(), key=lambda x: x[0].upper()))
 
+        # # List of operations help
+        # for op in operations:
+        #     op_name = operations[op].get("name", op).upper()
+        #     op_description = operations[op].get("description", op_name)
+        #     op_comment = operations[op].get("comment", op_name)
+        #     op_available = operations[op].get("available", False)
+        #     if op_available:
+        #         if isinstance(op_comment, list):
+        #             op_comment = "\n".join(op_comment).strip()
+        #         operations_help.append(f"   {op_name}: {op_description}")
+        #         operations_help_md.append(f"- [{op_name}](#{op_name.lower()}): {op_description}")
+        #         #operations_help_md.append(f"{op_description}")
+        #         #operations_help_md.append(f"{op_comment}")
+
+        # Detailed operations help
         for op in operations:
             op_name = operations[op].get("name", op).upper()
             op_description = operations[op].get("description", op_name)
@@ -650,7 +780,10 @@ class variants_calculation:
                 operations_help.append(f"   {op_name}: {op_description}")
                 operations_help_md.append(f"## {op_name}")
                 operations_help_md.append(f"{op_description}")
+                operations_help_md.append(f"<details>")
+                operations_help_md.append(f"<summary>Description</summary>")
                 operations_help_md.append(f"{op_comment}")
+                operations_help_md.append(f"</details>")
 
         # insert header
         operations_help.insert(0, "Available calculation operations:")
@@ -1235,30 +1368,6 @@ class variants_calculation:
                 self.drop_column(column=added_column)
 
 
-    def calculation_snpeff_extract(
-        self,
-        section: str = "calculation",
-        snpeff_field: str = "ANN",
-        snpeff_hgvs: str = "snpeff_hgvs",
-        snpeff_explode: str = "snpeff_",
-        snpeff_json: str = None, #"snpeff_json",
-        uniquify: bool = True,
-        **kwargs
-        ) -> None:
-        """
-
-        """
-
-        return self.calculation_annotation_with_format_extract(
-            section=section,
-            annotation_field=snpeff_field,
-            annotation_hgvs=snpeff_hgvs,
-            annotation_explode=snpeff_explode,
-            annotation_json=snpeff_json,
-            uniquify=uniquify,
-            **kwargs
-        )
-
 
     def calculation_annotation_with_format_extract(
         self,
@@ -1733,6 +1842,12 @@ class variants_calculation:
         hgvs_field: str = None,
         hgvs_fields: list = None,
         uniquify_hgvs: bool = None,
+        nomen_pattern: str = None,
+        nomen_fields: list = None,
+        transcripts: str = None,
+        transcripts_table: str = None,
+        transcripts_column: str = None,
+        transcripts_order: str = None,
         **kwargs
     ) -> None:
         """
@@ -1750,6 +1865,13 @@ class variants_calculation:
             hgvs_field (str, optional): The field containing the HGVS nomenclature to be extracted. Defaults to None.
             hgvs_fields (list, optional): A list of fields containing HGVS nomenclature to be extracted. Defaults to None.
             uniquify_hgvs (bool, optional): Whether to order the HGVS nomenclature in the output. Defaults to False.
+            nomen_pattern (str, optional): The NOMEN pattern to be used for extraction. Defaults to None.
+            nomen_fields (list, optional): A list of fields to be extracted from the NOMEN pattern. Defaults to None.
+            transcripts (str, optional): Path to a file containing transcript information for NOMEN extraction. Defaults to None.
+            transcripts_table (str, optional): Name of the table containing transcript information for NOMEN extraction. Defaults to None.
+            transcripts_column (str, optional): Name of the column in the transcripts table containing transcript information. Defaults to None.
+            transcripts_order (str, optional): Order of preference for transcript information extraction. Defaults to None
+            **kwargs: Additional keyword arguments that may be passed to the function for further customization of the extraction process.
 
         Returns:
             None
@@ -1780,55 +1902,93 @@ class variants_calculation:
             "GNOMEN": "GNOMEN hgvs gene nomenclature related to a transcript (TNOMEN)",
         }
 
+        # NOMEN pattern default
+        nomen_pattern_default = "GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN"
+
+        operation_params, _ = self.get_operation_params(
+            section=section, operation_params=kwargs, operation_name="NOMEN"
+        )
+
+        ### Parameters for genotype stats calculation
+
+        # hgvs_field
+        if hgvs_field is None:
+            hgvs_field = (
+                operation_params.get("options",{}).get("hgvs_field")
+                or hgvs_field
+                or "hgvs"
+            )
+
+        # hgvs_fields
+        if hgvs_fields is None:
+            hgvs_fields = (
+                operation_params.get("options",{}).get("hgvs_fields")
+                or hgvs_fields
+                or hgvs_field
+            )
+
+        # uniquify_hgvs
+        if uniquify_hgvs is None:
+            uniquify_hgvs = (
+                operation_params.get("options",{}).get("uniquify_hgvs")
+                or uniquify_hgvs
+                or False
+            )
+
+        # nomen_pattern
+        if nomen_pattern is None:
+            nomen_pattern = (
+                operation_params.get("options",{}).get("pattern")
+                or nomen_pattern_default
+                or None
+            )
+
+        # nomen_fields
+        nomen_fields = (
+            operation_params.get("options",{}).get("fields")
+            or list(nomen_dict.keys())
+            or None
+        )
+
+        # nomen_transcripts
+        transcripts = (
+            operation_params.get("options",{}).get("transcripts")
+            or transcripts
+            or None
+        )
+
+        # transcripts_table
+        transcripts_table = (
+            operation_params.get("options",{}).get("transcripts_table")
+            or self.get_table_variants()
+            or None
+        )
+
+        # trancripts_column
+        transcripts_column = (
+            operation_params.get("options",{}).get("transcripts_column")
+            or None
+        )
+
+        # transcripts_order
+        transcripts_order = (
+            operation_params.get("options",{}).get("transcripts_order")
+            or ["column", "file"]
+            or None
+        )
+
+
         # Param
         param = self.get_param()
 
         # Header
         vcf_reader = self.get_header()
 
-        # Get HGVS fields
-        # Keep compatibility with previous versions of Howard where only one hgvs_field could be specified
-        if hgvs_field is None:
-            hgvs_field = (
-                param.get(section, {})
-                .get("calculations", {})
-                .get("NOMEN", {})
-                .get("options", {})
-                .get("hgvs_field", "hgvs")
-            )
-        if hgvs_fields is None:
-            hgvs_fields = (
-                param.get(section, {})
-                .get("calculations", {})
-                .get("NOMEN", {})
-                .get("options", {})
-                .get("hgvs_fields", hgvs_field)
-            )
+        # Clean HGVS fields
         if isinstance(hgvs_fields, str):
             hgvs_fields = hgvs_fields.split(",")
 
-        # Get uniquify_hgvs option
-        if uniquify_hgvs is None:
-            uniquify_hgvs = (
-                param.get(section, {})
-                .get("calculations", {})
-                .get("NOMEN", {})
-                .get("options", {})
-                .get("uniquify_hgvs", False)
-            )
-
-        # Get NOMEN pattern
-        nomen_pattern = (
-            param.get(section, {})
-            .get("calculations", {})
-            .get("NOMEN", {})
-            .get("options", {})
-            .get("pattern", None)
-        )
-        # default NOMEN pattern
-        if nomen_pattern is None:
-            nomen_pattern = "GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN"
-
+        # Pattern option
         if isinstance(nomen_pattern, str):
             nomen_patterns = {"NOMEN": nomen_pattern}
         elif isinstance(nomen_pattern, dict):
@@ -1838,19 +1998,6 @@ class variants_calculation:
             log.error(msg_err)
             raise ValueError(msg_err)
 
-        # Get NOMEN pattern
-        nomen_fields = (
-            param.get(section, {})
-            .get("calculations", {})
-            .get("NOMEN", {})
-            .get("options", {})
-            .get("fields", None)
-        )
-
-        # default NOMEN pattern
-        if nomen_fields is None:  # or nomen_fields == []:
-            nomen_fields = list(nomen_dict.keys())
-
         # Remove "NOMEN" as patterns as separetly processed
         for nomen_pattern in nomen_patterns.keys():
             if nomen_pattern in nomen_fields:
@@ -1859,15 +2006,8 @@ class variants_calculation:
         # transcripts list of preference sources
         transcripts_sources = {}
 
-        # Get transcripts
-        transcripts_file = (
-            param.get(section, {})
-            .get("calculations", {})
-            .get("NOMEN", {})
-            .get("options", {})
-            .get("transcripts", None)
-        )
-        transcripts_file = full_path(transcripts_file)
+        # Transcripts file
+        transcripts_file = full_path(transcripts)
         if transcripts_file:
             if os.path.exists(transcripts_file):
                 transcripts_dataframe = transcripts_file_to_df(transcripts_file)
@@ -1877,32 +2017,6 @@ class variants_calculation:
                 msg_err = f"Transcript file '{transcripts_file}' does NOT exist"
                 log.error(msg_err)
                 raise ValueError(msg_err)
-
-        # Get transcripts table
-        transcripts_table = (
-            param.get(section, {})
-            .get("calculations", {})
-            .get("NOMEN", {})
-            .get("options", {})
-            .get("transcripts_table", self.get_table_variants())
-        )
-        # Get transcripts column
-        transcripts_column = (
-            param.get(section, {})
-            .get("calculations", {})
-            .get("NOMEN", {})
-            .get("options", {})
-            .get("transcripts_column", None)
-        )
-
-        # Transcripts of preference source order
-        transcripts_order = (
-            param.get(section, {})
-            .get("calculations", {})
-            .get("NOMEN", {})
-            .get("options", {})
-            .get("transcripts_order", ["column", "file"])
-        )
 
         # Transcripts from file
         transcripts = transcripts_sources.get("file", [])
@@ -2444,11 +2558,38 @@ class variants_calculation:
                 del dataframe_findbypipeline
                 gc.collect()
 
-    def calculation_genotype_concordance(self) -> None:
+    def calculation_genotype_concordance(
+            self,
+            section: str="calculation",
+            tag: str=None,
+            tag_description: str=None,
+            **kwargs
+        ) -> None:
         """
         The function `calculation_genotype_concordance` calculates the genotype concordance for
         multi-caller VCF files and updates the variant information in the database.
         """
+
+        # Get operation parameters
+        operation_params, _ = self.get_operation_params(
+            section=section, operation_params=kwargs, operation_name="genotype_concordance"
+        )
+
+        ### Parameters for find samples calculation
+
+        # find tag
+        if tag is None:
+            tag = (
+                operation_params.get("tag", None)
+                or "genotype_concordance"
+            )
+
+        # find tag_description
+        if tag_description is None:
+            tag_description = (
+                operation_params.get("tag_description", None)
+                or "Concordance of genotype for multi caller VCF"
+            )
 
         # if FORMAT and samples
         if (
@@ -2456,19 +2597,19 @@ class variants_calculation:
             and self.get_header_sample_list()
         ):
 
-            # genotypeconcordance annotation field
-            genotypeconcordance_tag = "genotypeconcordance"
+            # genotype_concordance annotation field
+            genotype_concordance_tag = tag
 
             # VCF infos tags
             vcf_infos_tags = {
-                genotypeconcordance_tag: "Concordance of genotype for multi caller VCF",
+                genotype_concordance_tag: tag_description,
             }
 
             # Prefix
             prefix = self.get_explode_infos_prefix()
 
             # Field
-            genotypeconcordance_infos = prefix + genotypeconcordance_tag
+            genotype_concordance_infos = prefix + genotype_concordance_tag
 
             # Variants table
             table_variants = self.get_table_variants()
@@ -2486,26 +2627,26 @@ class variants_calculation:
             )
 
             # Create dataframe
-            dataframe_genotypeconcordance = self.get_query_to_df(
+            dataframe_genotype_concordance = self.get_query_to_df(
                 f""" SELECT {samples_fields} FROM {table_variants} """
             )
 
-            # Create genotypeconcordance column
-            dataframe_genotypeconcordance[genotypeconcordance_infos] = (
-                dataframe_genotypeconcordance.apply(
-                    lambda row: genotypeconcordance(
+            # Create genotype_concordance column
+            dataframe_genotype_concordance[genotype_concordance_infos] = (
+                dataframe_genotype_concordance.apply(
+                    lambda row: genotype_concordance(
                         row, samples=self.get_header_sample_list()
                     ),
                     axis=1,
                 )
             )
 
-            # Add genotypeconcordance to header
-            vcf_reader.infos[genotypeconcordance_tag] = vcf.parser._Info(
-                genotypeconcordance_tag,
+            # Add genotype_concordance to header
+            vcf_reader.infos[genotype_concordance_tag] = vcf.parser._Info(
+                genotype_concordance_tag,
                 ".",
                 "String",
-                vcf_infos_tags.get(genotypeconcordance_tag, "snpEff hgvs annotations"),
+                vcf_infos_tags.get(genotype_concordance_tag, "snpEff hgvs annotations"),
                 "howard calculation",
                 "0",
                 self.code_type_map.get("String"),
@@ -2522,17 +2663,17 @@ class variants_calculation:
                             ELSE concat("INFO", ';')
                         END,
                         CASE
-                            WHEN dataframe_genotypeconcordance."{genotypeconcordance_infos}" NOT IN ('','.')
-                                AND dataframe_genotypeconcordance."{genotypeconcordance_infos}" NOT NULL
+                            WHEN dataframe_genotype_concordance."{genotype_concordance_infos}" NOT IN ('','.')
+                                AND dataframe_genotype_concordance."{genotype_concordance_infos}" NOT NULL
                             THEN concat(
-                                    '{genotypeconcordance_tag}=',
-                                    dataframe_genotypeconcordance."{genotypeconcordance_infos}"
+                                    '{genotype_concordance_tag}=',
+                                    dataframe_genotype_concordance."{genotype_concordance_infos}"
                                 )
                             ELSE ''
                         END
                     )
-                FROM dataframe_genotypeconcordance
-                WHERE variants."{variant_id_column}" = dataframe_genotypeconcordance."{variant_id_column}"
+                FROM dataframe_genotype_concordance
+                WHERE variants."{variant_id_column}" = dataframe_genotype_concordance."{variant_id_column}"
             """
             self.conn.execute(sql_update)
 
@@ -2541,10 +2682,16 @@ class variants_calculation:
                 self.drop_column(column=added_column)
 
             # Delete dataframe
-            del dataframe_genotypeconcordance
+            del dataframe_genotype_concordance
             gc.collect()
 
-    def calculation_barcode(self, tag: str = "barcode") -> None:
+    def calculation_barcode(
+            self,
+            section: str="calculation",
+            tag: str = None,
+            tag_description: str = None,
+            **kwargs
+        ) -> None:
         """
         The `calculation_barcode` function calculates barcode values for variants in a VCF file and
         updates the INFO field in the file with the calculated barcode values.
@@ -2555,15 +2702,32 @@ class variants_calculation:
         :type tag: str (optional)
         """
 
+        # Get operation parameters
+        operation_params, _ = self.get_operation_params(
+            section=section, operation_params=kwargs, operation_name="barcode"
+        )
+
+        ### Parameters for find samples calculation
+
+        # find tag
+        if tag is None:
+            tag = (
+                operation_params.get("tag", None)
+                or "barcode"
+            )
+
+        # find tag_description
+        if tag_description is None:
+            tag_description = (
+                operation_params.get("tag_description", None)
+                or "barcode calculation (VaRank)"
+            )
+
         # if FORMAT and samples
         if (
             "FORMAT" in self.get_header_columns_as_list()
             and self.get_header_sample_list()
         ):
-
-            # barcode annotation field
-            if not tag:
-                tag = "barcode"
 
             # VCF infos tags
             vcf_infos_tags = {
@@ -2646,7 +2810,14 @@ class variants_calculation:
             gc.collect()
 
     def calculation_barcode_family(
-        self, section: str = "calculation", tag: str = None, tag_samples: str = None
+        self,
+        section: str = "calculation",
+        tag: str = None,
+        tag_description: str = None,
+        tag_samples: str = None,
+        tag_samples_description: str = None,
+        family_pedigree: str = None,
+        **kwargs
     ) -> None:
         """
         The `calculation_barcode_family` function calculates barcode values for variants in a VCF file
@@ -2662,6 +2833,48 @@ class variants_calculation:
         used is "BCFS", defaults to BCFS
 
         """
+
+        # Get operation parameters
+        operation_params, _ = self.get_operation_params(
+            section=section, operation_params=kwargs, operation_name="barcode_family"
+        )
+
+        ### Parameters for find samples calculation
+
+        # find tag
+        if tag is None:
+            tag = (
+                operation_params.get("tag", None)
+                or "BCF"
+            )
+
+        # find tag_description
+        if tag_description is None:
+            tag_description = (
+                operation_params.get("tag_description", None)
+                or "barcode family calculation"
+            )
+
+        # find tag_samples
+        if tag_samples is None:
+            tag_samples = (
+                operation_params.get("tag_samples", None)
+                or f"{tag}S"
+            )
+
+        # find tag_samples_description
+        if tag_samples_description is None:
+            tag_samples_description = (
+                operation_params.get("tag_samples_description", None)
+                or "barcode family samples"
+            )
+
+        # PED
+        if family_pedigree is None:
+            family_pedigree = (
+                operation_params.get("family_pedigree", None)
+                or None
+            )
 
         # if FORMAT and samples
         if (
@@ -2679,8 +2892,8 @@ class variants_calculation:
 
             # VCF infos tags
             vcf_infos_tags = {
-                "tag": "barcode family calculation",
-                "tag_samples": "barcode family samples",
+                "tag": tag_description,
+                "tag_samples": tag_samples_description,
             }
 
             # Param
@@ -2691,12 +2904,7 @@ class variants_calculation:
             prefix = self.get_explode_infos_prefix()
 
             # PED param
-            ped = (
-                param.get(section, {})
-                .get("calculations", {})
-                .get("BARCODEFAMILY", {})
-                .get("family_pedigree", None)
-            )
+            ped = family_pedigree
             log.debug(f"ped={ped}")
 
             # Load PED
@@ -2902,11 +3110,48 @@ class variants_calculation:
             del dataframe_barcode
             gc.collect()
 
-    def calculation_trio(self, section: str = "calculation") -> None:
+    def calculation_trio(
+            self,
+            section: str = "calculation",
+            tag: str = None,
+            tag_description: str = None,
+            trio_pedigree: str = None,
+            **kwargs
+        ) -> None:
         """
         The `calculation_trio` function performs trio calculations on a VCF file by adding trio
         information to the INFO field of each variant.
         """
+
+
+        # Get operation parameters
+        operation_params, _ = self.get_operation_params(
+            section=section, operation_params=kwargs, operation_name="trio"
+        )
+
+        ### Parameters for find samples calculation
+
+        # find tag
+        if tag is None:
+            tag = (
+                operation_params.get("tag", None)
+                or "trio"
+            )
+
+        # find tag_description
+        if tag_description is None:
+            tag_description = (
+                operation_params.get("tag_description", None)
+                or "trio calculation"
+            )
+
+        # PED
+        if trio_pedigree is None:
+            trio_pedigree = (
+                operation_params.get("trio_pedigree", None)
+                or None
+            )
+
 
         # if FORMAT and samples
         if (
@@ -2915,11 +3160,11 @@ class variants_calculation:
         ):
 
             # trio annotation field
-            trio_tag = "trio"
+            trio_tag = tag
 
             # VCF infos tags
             vcf_infos_tags = {
-                "trio": "trio calculation",
+                tag: tag_description,
             }
 
             # Param
@@ -2929,12 +3174,7 @@ class variants_calculation:
             prefix = self.get_explode_infos_prefix()
 
             # Trio param
-            trio_ped = (
-                param.get(section, {})
-                .get("calculations", {})
-                .get("TRIO", {})
-                .get("trio_pedigree", None)
-            )
+            trio_ped = trio_pedigree
 
             # Load trio
             if trio_ped:
@@ -2976,10 +3216,30 @@ class variants_calculation:
                     raise ValueError(msg_error)
 
                 # Construct trio list
+
+                # Member aliases for father, mother, and child to handle different naming conventions
+                member_aliases = [
+                    {"father", "dad", "papa"},
+                    {"mother", "mom", "maman"},
+                    {"child", "kid", "son", "daughter"},
+                ]
+
+                # Get the values of the trio_ped dictionary in the order of father, mother, and child
+                values_trio_ped = list(trio_ped.values())
+
+                # Create a list of trio samples based on the member aliases and the values in the trio_ped dictionary
+                # This will ensure that the correct samples are assigned to father, mother, and child based on the provided aliases.
+                # Strategy: For each set of aliases (father, mother, child), find the corresponding value in the trio_ped dictionary. If no match is found, use the value from values_trio_ped if available; otherwise, use an empty string.
                 trio_samples = [
-                    trio_ped.get("father", ""),
-                    trio_ped.get("mother", ""),
-                    trio_ped.get("child", ""),
+                    next(
+                        (
+                            value
+                            for key, value in trio_ped.items()
+                            if key.strip().lower() in keywords
+                        ),
+                        values_trio_ped[i] if i < len(values_trio_ped) else "",
+                    )
+                    for i, keywords in enumerate(member_aliases)
                 ]
 
             else:
@@ -3346,7 +3606,7 @@ class variants_calculation:
                     )
 
 
-    def calculation_genotype_stats(self, section: str = "calculation", info: str = None, **kwargs) -> None:
+    def calculation_genotype_stats(self, section: str = "calculation", info: str = None, infos: list = None, **kwargs) -> None:
         """
         The `calculation_genotype_stats` function calculates genotype statistics for a given information
         field in a VCF file and updates the INFO column of the variants table with the calculated
@@ -3355,17 +3615,22 @@ class variants_calculation:
         :param info: The `info` parameter is a string that represents the type of information for which
         genotype statistics are calculated. It is used to generate various VCF info tags for the
         statistics, such as the number of occurrences, the list of values, the minimum value, the
-        maximum value, the mean, the median, defaults to VAF
+        maximum value, the mean, the median, defaults to ["VAF"] if not specified otherwise.
+        :param infos: The `infos` parameter is a list of strings that represents the list of information
+        for which genotype statistics are calculated. It is used to generate various VCF info tags for the
+        statistics, defaults to ["VAF"]
+        :type infos: list of str (optional)
         :type info: str (optional)
         """
 
         operation_params, _ = self.get_operation_params(
-            section=section, operation_params=kwargs, operation_name="calculation_genotype_stats"
+            section=section, operation_params=kwargs, operation_name="genotype_stats"
         )
 
         ### Parameters for genotype stats calculation
 
-        # variant_id annotation field
+        # info uniq (for retrocompatibility)
+
         if info is None:
             info = (
                 operation_params.get("info")
@@ -3373,130 +3638,143 @@ class variants_calculation:
                 or "VAF"
             )
 
+        # infos parameter for list of genotype information to calculate statistics on
+        if infos is None:
+            infos = (
+                operation_params.get("infos")
+                or infos
+                or [info] if info is not None else ["VAF"]
+            )
+
+        if isinstance(infos, str):
+            infos = infos.split(",")
+
         # if FORMAT and samples
         if (
             "FORMAT" in self.get_header_columns_as_list()
             and self.get_header_sample_list()
         ):
 
-            # vaf_stats annotation field
-            vaf_stats_tag = info + "_stats"
+            for info in infos:
 
-            # VCF infos tags
-            vcf_infos_tags = {
-                info + "_stats_nb": f"genotype {info} Statistics - number of {info}",
-                info + "_stats_list": f"genotype {info} Statistics - list of {info}",
-                info + "_stats_min": f"genotype {info} Statistics - min {info}",
-                info + "_stats_max": f"genotype {info} Statistics - max {info}",
-                info + "_stats_mean": f"genotype {info} Statistics - mean {info}",
-                info + "_stats_mediane": f"genotype {info} Statistics - mediane {info}",
-                info
-                + "_stats_stdev": f"genotype {info} Statistics - standard deviation {info}",
-            }
+                # vaf_stats annotation field
+                vaf_stats_tag = info + "_stats"
 
-            # Prefix
-            prefix = self.get_explode_infos_prefix()
+                # VCF infos tags
+                vcf_infos_tags = {
+                    info + "_stats_nb": f"genotype {info} Statistics - number of {info}",
+                    info + "_stats_list": f"genotype {info} Statistics - list of {info}",
+                    info + "_stats_min": f"genotype {info} Statistics - min {info}",
+                    info + "_stats_max": f"genotype {info} Statistics - max {info}",
+                    info + "_stats_mean": f"genotype {info} Statistics - mean {info}",
+                    info + "_stats_mediane": f"genotype {info} Statistics - mediane {info}",
+                    info
+                    + "_stats_stdev": f"genotype {info} Statistics - standard deviation {info}",
+                }
 
-            # Field
-            vaf_stats_infos = prefix + vaf_stats_tag
+                # Prefix
+                prefix = self.get_explode_infos_prefix()
 
-            # Variants table
-            table_variants = self.get_table_variants()
+                # Field
+                vaf_stats_infos = prefix + vaf_stats_tag
 
-            # Header
-            vcf_reader = self.get_header()
+                # Variants table
+                table_variants = self.get_table_variants()
 
-            # Create variant id
-            variant_id_column = self.get_variant_id_column()
-            added_columns = [variant_id_column]
+                # Header
+                vcf_reader = self.get_header()
 
-            # variant_id, FORMAT and samples
-            samples_fields = f" {variant_id_column}, FORMAT , " + " , ".join(
-                [f""" "{sample}" """ for sample in self.get_header_sample_list()]
-            )
+                # Create variant id
+                variant_id_column = self.get_variant_id_column()
+                added_columns = [variant_id_column]
 
-            # Create dataframe
-            dataframe_vaf_stats = self.get_query_to_df(
-                f""" SELECT {samples_fields} FROM {table_variants} """
-            )
-
-            # Create vaf_stats column
-            dataframe_vaf_stats[vaf_stats_infos] = dataframe_vaf_stats.apply(
-                lambda row: genotype_stats(
-                    row, samples=self.get_header_sample_list(), info=info
-                ),
-                axis=1,
-            )
-
-            # List of vcf tags
-            sql_vaf_stats_fields = []
-
-            # Check all VAF stats infos
-            for stat in vcf_infos_tags:
-
-                # Extract stats
-                dataframe_vaf_stats[stat] = dataframe_vaf_stats[vaf_stats_infos].apply(
-                    lambda x: dict(x).get(stat, "")
+                # variant_id, FORMAT and samples
+                samples_fields = f" {variant_id_column}, FORMAT , " + " , ".join(
+                    [f""" "{sample}" """ for sample in self.get_header_sample_list()]
                 )
 
-                # Add snpeff_hgvs to header
-                vcf_reader.infos[stat] = vcf.parser._Info(
-                    stat,
-                    ".",
-                    "String",
-                    vcf_infos_tags.get(stat, "genotype statistics"),
-                    "howard calculation",
-                    "0",
-                    self.code_type_map.get("String"),
+                # Create dataframe
+                dataframe_vaf_stats = self.get_query_to_df(
+                    f""" SELECT {samples_fields} FROM {table_variants} """
                 )
 
-                if len(sql_vaf_stats_fields):
-                    sep = ";"
-                else:
-                    sep = ""
-
-                # Create fields to add in INFO
-                sql_vaf_stats_fields.append(
-                    f"""
-                        CASE
-                            WHEN dataframe_vaf_stats."{stat}" NOT NULL
-                            THEN concat(
-                                    '{sep}{stat}=',
-                                    dataframe_vaf_stats."{stat}"
-                                )
-                            ELSE ''
-                        END
-                    """
+                # Create vaf_stats column
+                dataframe_vaf_stats[vaf_stats_infos] = dataframe_vaf_stats.apply(
+                    lambda row: genotype_stats(
+                        row, samples=self.get_header_sample_list(), info=info
+                    ),
+                    axis=1,
                 )
 
-            # SQL set for update
-            sql_vaf_stats_fields_set = ",  ".join(sql_vaf_stats_fields)
+                # List of vcf tags
+                sql_vaf_stats_fields = []
 
-            # Update
-            sql_update = f"""
-                UPDATE {table_variants}
-                SET "INFO" = 
-                    concat(
-                        CASE
-                            WHEN "INFO" IS NULL OR "INFO" IN ('','.')
-                            THEN ''
-                            ELSE concat("INFO", ';')
-                        END,
-                        {sql_vaf_stats_fields_set}
+                # Check all VAF stats infos
+                for stat in vcf_infos_tags:
+
+                    # Extract stats
+                    dataframe_vaf_stats[stat] = dataframe_vaf_stats[vaf_stats_infos].apply(
+                        lambda x: dict(x).get(stat, "")
                     )
-                FROM dataframe_vaf_stats
-                WHERE {table_variants}."{variant_id_column}" = dataframe_vaf_stats."{variant_id_column}"
 
-            """
-            self.conn.execute(sql_update)
+                    # Add snpeff_hgvs to header
+                    vcf_reader.infos[stat] = vcf.parser._Info(
+                        stat,
+                        ".",
+                        "String",
+                        vcf_infos_tags.get(stat, "genotype statistics"),
+                        "howard calculation",
+                        "0",
+                        self.code_type_map.get("String"),
+                    )
 
-            # Remove added columns
-            for added_column in added_columns:
-                self.drop_column(column=added_column)
+                    if len(sql_vaf_stats_fields):
+                        sep = ";"
+                    else:
+                        sep = ""
 
-            # Delete dataframe
-            del dataframe_vaf_stats
-            gc.collect()
+                    # Create fields to add in INFO
+                    sql_vaf_stats_fields.append(
+                        f"""
+                            CASE
+                                WHEN dataframe_vaf_stats."{stat}" NOT NULL
+                                THEN concat(
+                                        '{sep}{stat}=',
+                                        dataframe_vaf_stats."{stat}"
+                                    )
+                                ELSE ''
+                            END
+                        """
+                    )
+
+                # SQL set for update
+                sql_vaf_stats_fields_set = ",  ".join(sql_vaf_stats_fields)
+
+                # Update
+                sql_update = f"""
+                    UPDATE {table_variants}
+                    SET "INFO" = 
+                        concat(
+                            CASE
+                                WHEN "INFO" IS NULL OR "INFO" IN ('','.')
+                                THEN ''
+                                ELSE concat("INFO", ';')
+                            END,
+                            {sql_vaf_stats_fields_set}
+                        )
+                    FROM dataframe_vaf_stats
+                    WHERE {table_variants}."{variant_id_column}" = dataframe_vaf_stats."{variant_id_column}"
+
+                """
+                self.conn.execute(sql_update)
+
+                # Remove added columns
+                for added_column in added_columns:
+                    self.drop_column(column=added_column)
+
+                # Delete dataframe
+                del dataframe_vaf_stats
+                gc.collect()
 
     def calculation_transcripts_annotation(
         self, section: str = "calculation", info_json: str = None, info_format: str = None, **kwargs
@@ -3869,3 +4147,129 @@ class variants_calculation:
             # Remove the temporary section from param by restoring the original param
             self.set_param(param)
 
+
+    def calculation_export_stats(
+            self,
+            section="calculation",
+            **kwargs
+        ) -> None:
+            """
+            Export statistics for variants
+    
+            :param section: The `section` parameter is a string that specifies the section of the configuration file to use for the calculation. It is used to retrieve the relevant parameters for the operation, defaults to "calculation"
+            :type section: str (optional)
+    
+            :return: The function does not return anything. It modifies the variants table in the database by applying the specified filters and updating the table accordingly.
+            """
+    
+            import copy
+    
+            log.debug("Calculation export stats...")
+    
+            operation_params, _ = self.get_operation_params(
+                section=section, operation_params=kwargs, operation_name="export_stats"
+            )
+    
+            ### Parameters for prioritization calculation
+
+            # Parameters
+            stats_stdout = operation_params.get("stats_stdout", False)
+            stats_md = operation_params.get("stats_md", None)
+            stats_json = operation_params.get("stats_json", None)
+            stats_html = operation_params.get("stats_html", None)
+            stats_pdf = operation_params.get("stats_pdf", None)
+            annotations_stats = operation_params.get("annotations_stats", False)
+            queries = operation_params.get("queries", None)
+            queries_view = operation_params.get("queries_view", None)
+
+            # Stats
+            self.print_stats(
+                stdout=stats_stdout,
+                output_file=stats_md,
+                json_file=stats_json,
+                html_file=stats_html,
+                pdf_file=stats_pdf,
+                annotations_stats=annotations_stats,
+                queries=queries,
+                queries_view=queries_view,
+            )
+
+
+    def calculation_export_variants(
+            self,
+            section="calculation",
+            file: str = None,
+            query: str = None,
+            export: dict = None,
+            explode: dict = None,
+            **kwargs
+        ) -> None:
+            """
+            Export variants to a file based on specified parameters
+    
+            :param section: The `section` parameter is a string that specifies the section of the configuration file to use for the calculation. It is used to retrieve the relevant parameters for the operation, defaults to "calculation"
+            :type section: str (optional)
+            :param file: The `file` parameter is a string that specifies the path to the output file where the exported variants will be saved. It is used to determine the destination of the exported data, defaults to None
+            :type file: str (optional)
+            :param query: The `query` parameter is a string that represents a SQL query used to filter the variants before exporting them. It allows the user to specify conditions for selecting specific variants based on their attributes, defaults to None
+            :type query: str (optional)
+            :param export: The `export` parameter is a dictionary that contains additional parameters for exporting variants. It allows the user to specify options such as the output format, compression, and other export settings. If not provided, it defaults to an empty dictionary
+            :type export: dict (optional)
+            :param explode: The `explode` parameter is a dictionary that contains additional parameters for exploding the variants during export. It allows the user to specify options for expanding certain fields or attributes of the variants into separate rows or columns in the exported file. If not provided, it defaults to an empty dictionary
+            :type explode: dict (optional)
+    
+            :return: The function does not return anything. It modifies the variants table in the database by applying the specified filters and updating the table accordingly.
+            """
+    
+            import copy
+    
+            log.debug("Calculation export variants...")
+    
+            operation_params, _ = self.get_operation_params(
+                section=section, operation_params=kwargs, operation_name="export_variants"
+            )
+    
+            ### Parameters for prioritization calculation
+
+            # Export parameters to export variants
+            file = (
+                operation_params.get("file")
+                or file
+                or None
+            )
+
+            # Export with a query
+            query = (
+                operation_params.get("query")
+                or query
+                or None
+            )
+
+            # Export parameters to export variants
+            export = (
+                operation_params.get("export")
+                or export
+                or {}
+            )
+
+            # Explode parameters to export variants
+            explode = (
+                operation_params.get("explode")
+                or explode
+                or {}
+            )
+
+            # Prepare param json file
+            param = self.get_param()
+            param_export = copy.deepcopy(param)
+
+            # Set export and explode parameters in param_export
+            param_export["export"] = export
+            param_export["explode"] = explode
+            self.set_param(param_export)
+
+            # Export variants to file
+            self.export_output(output_file=file, query=query, **kwargs)
+
+            # Remove the temporary section from param by restoring the original param
+            self.set_param(param)
