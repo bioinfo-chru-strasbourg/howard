@@ -18,7 +18,7 @@ def annotation(args: argparse) -> None:
     """
 
     # Load args, param, config and vcfdata_obj
-    #arguments_dict, config, param, vcfdata_obj = load_param_and_config(args=args, command="annotation", strict=False, load_data=False)
+    #_, _, _, _ = load_param_and_config(args=args, command="annotation", strict=False, load_data=False)
 
     vcfdata_obj = process(args=args, tools=["annotation"])
 
