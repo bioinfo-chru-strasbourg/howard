@@ -428,8 +428,8 @@ def load_param_and_config(args: argparse, command: str, strict: bool = False, lo
             "config_yaml": os.path.join(export_param_config_folder, "config.yaml"),
             "param_json": os.path.join(export_param_config_folder, "param.json"),
             "param_yaml": os.path.join(export_param_config_folder, "param.yaml"),
-            "args_json": os.path.join(export_param_config_folder, "args.json"),
-            "args_yaml": os.path.join(export_param_config_folder, "args.yaml"),
+            # "args_json": os.path.join(export_param_config_folder, "args.json"),
+            # "args_yaml": os.path.join(export_param_config_folder, "args.yaml"),
         }
 
         # Export files
