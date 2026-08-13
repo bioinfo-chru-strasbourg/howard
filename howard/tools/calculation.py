@@ -40,6 +40,20 @@ def calculation(args: argparse) -> None:
             ):
                 log.info(help_line)
 
+        # Show calculation in JSON
+        if param.get("calculation", {}).get("show_calculations_json", None):
+            for help_line in vcfdata_obj.get_operations_help(
+                operations_config_file=operations_config_file, format="json"
+            ):
+                log.info(help_line)
+
+        # Show calculation in YAML
+        if param.get("calculation", {}).get("show_calculations_yaml", None):
+            for help_line in vcfdata_obj.get_operations_help(
+                operations_config_file=operations_config_file, format="yaml"
+            ):
+                log.info(help_line)
+
     elif param.get("input", None) and param.get("output", None):
 
         # Calculation

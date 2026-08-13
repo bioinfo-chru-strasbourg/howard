@@ -724,6 +724,8 @@ class variants_calculation:
         operations_config_dict: dict = {},
         operations_config_file: str = None,
         show_calculations_md: str = None,
+        show_calculations_json: str = None,
+        show_calculations_yaml: str = None,
         format: str = "text",
     ) -> list:
 
@@ -734,6 +736,14 @@ class variants_calculation:
         if show_calculations_md is None:
             show_calculations_md = param.get(section, {}).get(
                 "show_calculations_md", None
+            )
+        if show_calculations_json is None:
+            show_calculations_json = param.get(section, {}).get(
+                "show_calculations_json", None
+            )
+        if show_calculations_yaml is None:
+            show_calculations_yaml = param.get(section, {}).get(
+                "show_calculations_yaml", None
             )
 
         # Init
@@ -793,12 +803,30 @@ class variants_calculation:
             with open(show_calculations_md, "w") as f:
                 f.write("\n\n".join(operations_help_md))
 
+        # Write operations help in json file
+        if show_calculations_json is not None:
+            with open(show_calculations_json, "w") as f:
+                json.dump(operations, f, indent=4)
+
+        # Write operations help in yaml file
+        if show_calculations_yaml is not None:
+            with open(show_calculations_yaml, "w") as f:
+                yaml.dump(operations, f, indent=4, sort_keys=False)
+
         # Return
         if format == "text":
             return operations_help
         elif format == "markdown":
             return [
                 f"Markdown file generated with operations help: {show_calculations_md}"
+            ]
+        elif format == "json":
+            return [
+                f"JSON file generated with operations help: {show_calculations_json}"
+            ]
+        elif format == "yaml":
+            return [
+                f"YAML file generated with operations help: {show_calculations_yaml}"
             ]
         else:
             return None

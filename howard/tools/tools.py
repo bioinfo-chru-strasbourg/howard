@@ -854,6 +854,34 @@ arguments = {
             },
         },
     },
+    "show_calculations_json": {
+        "metavar": "show_calculations_json",
+        "help": """Show available calculation operations into a JSON configuration file.\n""",
+        "required": False,
+        "default": None,
+        "type": PathType(exists=None, type=None),
+        "gooey": {"widget": "FileSaver"},
+        "extra": {
+            "param_section": "calculation",
+            "examples": {
+                "Calculation configuration JSON file as an option": """"show_calculations_json": "/tmp/calculations.json" """
+            },
+        },
+    },
+    "show_calculations_yaml": {
+        "metavar": "show_calculations_yaml",
+        "help": """Show available calculation operations into a YAML configuration file.\n""",
+        "required": False,
+        "default": None,
+        "type": PathType(exists=None, type=None),
+        "gooey": {"widget": "FileSaver"},
+        "extra": {
+            "param_section": "calculation",
+            "examples": {
+                "Calculation configuration YAML file as an option": """"show_calculations_yaml": "/tmp/calculations.yaml" """
+            },
+        },
+    },
     "hgvs_field": {
         "metavar": "HGVS field",
         "help": """HGVS INFO/tag containing a list o HGVS annotations.\n""",
@@ -1704,6 +1732,20 @@ arguments = {
         "action": "store_true",
         "default": False,
     },
+    "export_param_config": {
+        "metavar": "Folder for parameters and configurations files",
+        "help": """Export parameters and configurations to JSON and YAML files.\n"""
+            """Use a string to define the pattern path (e.g. '/path/to/config_and_param').\n""",
+        "required": False,
+        "default": None,
+        "type": PathType(exists=None, type="dir"),
+        "gooey": {
+            "widget": "DirChooser",
+            "options": {
+                "message": "Path to folder for export parameters and configurations files",
+            },
+        },
+    },
     # Help
     "help_md": {
         "metavar": "help markdown",
@@ -1714,7 +1756,7 @@ arguments = {
         "gooey": {
             "widget": "FileSaver",
             "options": {
-                "wildcard": "HTML file (*.md)|*.md",
+                "wildcard": "Markdown file (*.md)|*.md",
             },
         },
     },
@@ -2025,6 +2067,7 @@ arguments = {
 # Shared arguments
 shared_arguments = [
     "config",
+    "export_param_config",
     "threads",
     "memory",
     "chunk_size",
@@ -2253,7 +2296,7 @@ commands_arguments = {
         """   howard calculation --input=tests/data/example.vcf.gz --output=/tmp/example.calculated.tsv --calculations='BARCODEFAMILY' --family_pedigree='sample1,sample2,sample4' \n"""
         """   howard calculation --input=tests/data/example.ann.transcripts.vcf.gz --output=/tmp/example.calculation.transcripts.tsv --param=config/param.transcripts.json --calculations='TRANSCRIPTS_ANNOTATIONS,TRANSCRIPTS_PRIORITIZATION,TRANSCRIPTS_EXPORT' \n"""
         """   howard calculation --input=tests/data/example.ann.vcf.gz --output=/tmp/example.ann.tsv --param=config/param.json \n"""
-        """   howard calculation --show_calculations --show_calculations_md=/tmp/calculations.md\n"""
+        """   howard calculation --show_calculations --show_calculations_md=/tmp/calculations.md  --show_calculations_json=/tmp/calculations.json --show_calculations_yaml=/tmp/calculations.yaml\n"""
         """    \n""",
         "groups": {
             "main": {
@@ -2267,6 +2310,8 @@ commands_arguments = {
                 "calculation_config": False,
                 "show_calculations": False,
                 "show_calculations_md": False,
+                "show_calculations_json": False,
+                "show_calculations_yaml": False,
             },
             "NOMEN": {
                 "hgvs_field": False,

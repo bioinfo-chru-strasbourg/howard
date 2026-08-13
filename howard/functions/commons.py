@@ -409,6 +409,61 @@ def load_param_and_config(args: argparse, command: str, strict: bool = False, lo
     if load_data and vcfdata_obj.get_input():
         vcfdata_obj.load_data()
 
+    # Export parameters and configuration to JSON files if requested
+    if "export_param_config" in args:
+
+        # Get export folder
+        export_param_config_folder = full_path(args.export_param_config)
+
+        # Create folder if not exists
+        if not os.path.exists(export_param_config_folder):
+            Path(export_param_config_folder).mkdir(parents=True, exist_ok=True)
+
+        # Log
+        log.info("Exporting parameters and configuration to JSON files...")
+
+        # Files to generate
+        files_to_generate = {
+            "config_json": os.path.join(export_param_config_folder, "config.json"),
+            "config_yaml": os.path.join(export_param_config_folder, "config.yaml"),
+            "param_json": os.path.join(export_param_config_folder, "param.json"),
+            "param_yaml": os.path.join(export_param_config_folder, "param.yaml"),
+            "args_json": os.path.join(export_param_config_folder, "args.json"),
+            "args_yaml": os.path.join(export_param_config_folder, "args.yaml"),
+        }
+
+        # Export files
+        try:
+            for key, file_path in files_to_generate.items():
+                log.debug(f"Exporting {key} to {file_path}...")
+                if key.startswith("config"):
+                    if "json" in key:
+                        with open(file_path, "w") as f:
+                            json.dump(config, f, indent=4)
+                    elif "yaml" in key:
+                        with open(file_path, "w") as f:
+                            yaml.dump(config, f, default_flow_style=False, sort_keys=False)
+                elif key.startswith("param"):
+                    if "json" in key:
+                        with open(file_path, "w") as f:
+                            json.dump(param, f, indent=4)
+                    elif "yaml" in key:
+                        with open(file_path, "w") as f:
+                            yaml.dump(param, f, default_flow_style=False, sort_keys=False)
+                elif key.startswith("args"):
+                    if "json" in key:
+                        with open(file_path, "w") as f:
+                            json.dump(dict(vars(args)), f, indent=4, default=str)
+                    elif "yaml" in key:
+                        with open(file_path, "w") as f:
+                            yaml.dump(dict(vars(args)), f, default_flow_style=False, sort_keys=False)
+        except Exception as e:
+            log.error(f"Error exporting parameters and configuration to JSON files: {e}")
+            raise e
+
+        log.info("Export completed successfully.")
+        #exit(0)
+
     return arguments_dict, config, param, vcfdata_obj
 
 
