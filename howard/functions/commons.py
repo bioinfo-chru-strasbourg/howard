@@ -1668,7 +1668,7 @@ def findbypipeline(df, samples: list = [], method: str = "count"):
     # return f"{nb_pipeline_find}/{nb_pipeline}", ",".join(list_pipeline_find)
 
 
-def genotypeconcordance(df, samples: list = []):
+def genotype_concordance(df, samples: list = []):
     """
     The function checks the genotype concordance of a given list of samples in a dataframe.
 

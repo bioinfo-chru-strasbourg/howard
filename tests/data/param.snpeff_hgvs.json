@@ -1,7 +1,10 @@
 {
   "calculation": {
     "calculations": {
-      "snpeff_hgvs": null,
+      "annotation_extract": {
+          "annotation_field": "ANN",
+          "annotation_hgvs": "snpeff_hgvs"
+      },
       "NOMEN": {
           "options": {
               "hgvs_field": "snpeff_hgvs",

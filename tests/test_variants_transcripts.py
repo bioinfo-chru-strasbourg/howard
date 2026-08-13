@@ -3142,7 +3142,13 @@ def test_transcripts_create_view_prioritize_nomen(nomen_options, tnomen_expected
         variants.transcripts_prioritization(param=param)
 
         # SNPEFF HGVS
-        variants.calculation_snpeff_extract()
+        #variants.calculation_snpeff_extract()
+        log.debug(f""" nomen_options={nomen_options} """)
+        variants.calculation_annotation_with_format_extract(
+            annotation_field="ANN",
+            annotation_hgvs="snpeff_hgvs",
+            annotation_explode="hgvs_",
+        )
 
         # NOMEN
         variants.calculation_extract_nomen()

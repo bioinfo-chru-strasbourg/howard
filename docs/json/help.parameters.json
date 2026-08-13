@@ -1755,12 +1755,10 @@
         "  \"variant_id\": null,",
         "  \"vartype\": null,",
         "  \"annotation\": {",
-        "     \"annotations\": {",
-        "        \"parquet\": {",
-        "           \"annotations\": {",
-        "              \"my.database.parquet\": {...},",
-        "              \"my.other.database.parquet\": {...}",
-        "           }",
+        "     \"parquet\": {",
+        "        \"annotations\": {",
+        "           \"my.database.parquet\": {...},",
+        "           \"my.other.database.parquet\": {...}",
         "        }",
         "     }",
         "  },",
@@ -1779,7 +1777,7 @@
         "      \"transcripts\": \"tests/data/transcripts.tsv\",",
         "      \"transcripts_table\": \"variants\",",
         "      \"transcripts_column\": \"PZTTranscript\",",
-        "      \"transcripts_order\", [\"column\", \"file\"],",
+        "      \"transcripts_order\": [\"column\", \"file\"],",
         "      \"fields\": [\"GNOMEN\", \"TVNOMEN\", \"ENOMEN\", \"CNOMEN\"],",
         "      \"pattern\": {",
         "        \"NOMEN\": \"GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN\",",
@@ -1943,7 +1941,7 @@
       "     \"prioritization_transcripts_order\": {",
       "          \"PZTFlag\": \"DESC\",",
       "          \"PZTScore\": \"DESC\"",
-      "     }",
+      "     },",
       "     \"prioritization_score_mode\": \"HOWARD\",",
       "     \"prioritization_transcripts_file\": null,",
       "     \"prioritization_transcripts_columns\": null,",
@@ -2295,6 +2293,19 @@
         "__examples_code": [
           "# Force using transcripts version:",
           "\"prioritization_transcripts_version_force\": true"
+        ]
+      },
+      "strict": {
+        "__help": [
+          "Only for transcript prioritization.",
+          "If true, all annotation for transcripts prioritization must be present. If false, missing annotation is allowed and will be ignored."
+        ],
+        "__type": "Boolean",
+        "__default": false,
+        "__code_type": "json",
+        "__examples_code": [
+          "# Strict mode for transcripts prioritization:",
+          "\"strict\": true"
         ]
       }
     },

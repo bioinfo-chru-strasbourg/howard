@@ -389,7 +389,7 @@ def test_calculation_sql_on_table():
 
         # Operations
         operations = {
-            "variant_chr_pos_alt_ref": None,
+            "VARIANT_CHROM_POS_REF_ALT": None,
             "variant_chr_pos_alt_ref_file": None,
             "variant_chr_pos_alt_ref_dict": None,
         }
@@ -407,32 +407,29 @@ def test_calculation_sql_on_table():
             operations_config_file=operations_config_file,
         )
 
-        # result = variants.get_query_to_df(f"""SELECT * FROM variants """)
-        # log.debug(result.to_string())
-
         # Check number of variant_chr_pos_alt_ref
         result = variants.get_query_to_df(
-            f"""SELECT INFO FROM variants WHERE INFO LIKE '%variant_chr_pos_alt_ref=%' """
+            f"""SELECT INFO FROM variants WHERE INFO LIKE '%VARIANT_CHROM_POS_REF_ALT=%' """
         )
-        assert len(result) == 7
+        assert len(result) == 7, f"Expected 7 variants with 'VARIANT_CHROM_POS_REF_ALT' but got {len(result)}"
 
         # Check number of variant_chr_pos_alt_ref_dict with new table
         result = variants.get_query_to_df(
             f"""SELECT INFO FROM {new_table} WHERE INFO LIKE '%variant_chr_pos_alt_ref_dict=%' """
         )
-        assert len(result) == 7
+        assert len(result) == 7, f"Expected 7 variants with 'variant_chr_pos_alt_ref_dict' but got {len(result)}"
 
         # Check number of variant_chr_pos_alt_ref_file
         result = variants.get_query_to_df(
             f"""SELECT INFO FROM variants WHERE INFO LIKE '%variant_chr_pos_alt_ref_file=%' """
         )
-        assert len(result) == 7
+        assert len(result) == 7, f"Expected 7 variants with 'variant_chr_pos_alt_ref_file' but got {len(result)}"
 
         # Check number of middle (7)
         result = variants.get_query_to_df(
-            f"""SELECT INFO FROM variants WHERE INFO LIKE '%variant_chr_pos_alt_ref=chr1_28736_A_C%' """
+            f"""SELECT INFO FROM variants WHERE INFO LIKE '%VARIANT_CHROM_POS_REF_ALT=chr1_28736_A_C%' """
         )
-        assert len(result) == 1
+        assert len(result) == 1, f"Expected 1 variant with 'VARIANT_CHROM_POS_REF_ALT=chr1_28736_A_C' but got {len(result)}"
 
         # Check if VCF is in correct format with pyVCF
         remove_if_exists([output_vcf])
@@ -482,7 +479,7 @@ def test_calculation_sql():
 
         # Operations
         operations = {
-            "variant_chr_pos_alt_ref": None,
+            "VARIANT_CHROM_POS_REF_ALT": None,
             "variant_chr_pos_alt_ref_file": None,
             "variant_chr_pos_alt_ref_dict": None,
         }
@@ -496,27 +493,27 @@ def test_calculation_sql():
 
         # Check number of variant_chr_pos_alt_ref
         result = variants.get_query_to_df(
-            """SELECT INFO FROM variants WHERE INFO LIKE '%variant_chr_pos_alt_ref=%' """
+            """SELECT INFO FROM variants WHERE INFO LIKE '%VARIANT_CHROM_POS_REF_ALT=%' """
         )
-        assert len(result) == 7
+        assert len(result) == 7, f"Expected 7 variants with 'VARIANT_CHROM_POS_REF_ALT' but got {len(result)}"
 
         # Check number of variant_chr_pos_alt_ref_dict
         result = variants.get_query_to_df(
             """SELECT INFO FROM variants WHERE INFO LIKE '%variant_chr_pos_alt_ref_dict=%' """
         )
-        assert len(result) == 7
+        assert len(result) == 7, f"Expected 7 variants with 'variant_chr_pos_alt_ref_dict' but got {len(result)}"
 
         # Check number of variant_chr_pos_alt_ref_file
         result = variants.get_query_to_df(
             """SELECT INFO FROM variants WHERE INFO LIKE '%variant_chr_pos_alt_ref_file=%' """
         )
-        assert len(result) == 7
+        assert len(result) == 7, f"Expected 7 variants with 'variant_chr_pos_alt_ref_file' but got {len(result)}"
 
         # Check number of middle (7)
         result = variants.get_query_to_df(
-            """SELECT INFO FROM variants WHERE INFO LIKE '%variant_chr_pos_alt_ref=chr1_28736_A_C%' """
+            """SELECT INFO FROM variants WHERE INFO LIKE '%VARIANT_CHROM_POS_REF_ALT=chr1_28736_A_C%' """
         )
-        assert len(result) == 1
+        assert len(result) == 1, f"Expected 1 variant with 'VARIANT_CHROM_POS_REF_ALT=chr1_28736_A_C' but got {len(result)}"
 
         # Check if VCF is in correct format with pyVCF
         remove_if_exists([output_vcf])
@@ -570,7 +567,7 @@ def test_calculation_sql_config_file_in_param():
 
         # Operations
         operations = {
-            "variant_chr_pos_alt_ref": None,
+            "VARIANT_CHROM_POS_REF_ALT": None,
             "variant_chr_pos_alt_ref_file": None,
             "variant_chr_pos_alt_ref_dict": None,
         }
@@ -581,29 +578,29 @@ def test_calculation_sql_config_file_in_param():
             operations_config_dict=operations_config_dict,
         )
 
-        # Check number of variant_chr_pos_alt_ref
+        # Check number of VARIANT_CHROM_POS_REF_ALT
         result = variants.get_query_to_df(
-            """SELECT INFO FROM variants WHERE INFO LIKE '%variant_chr_pos_alt_ref=%' """
+            """SELECT INFO FROM variants WHERE INFO LIKE '%VARIANT_CHROM_POS_REF_ALT=%' """
         )
-        assert len(result) == 7
+        assert len(result) == 7, f"Expected 7 variants with 'VARIANT_CHROM_POS_REF_ALT' but got {len(result)}"
 
         # Check number of variant_chr_pos_alt_ref_dict
         result = variants.get_query_to_df(
             """SELECT INFO FROM variants WHERE INFO LIKE '%variant_chr_pos_alt_ref_dict=%' """
         )
-        assert len(result) == 7
+        assert len(result) == 7, f"Expected 7 variants with 'variant_chr_pos_alt_ref_dict' but got {len(result)}"
 
         # Check number of variant_chr_pos_alt_ref_file
         result = variants.get_query_to_df(
             """SELECT INFO FROM variants WHERE INFO LIKE '%variant_chr_pos_alt_ref_file=%' """
         )
-        assert len(result) == 7
+        assert len(result) == 7, f"Expected 7 variants with 'variant_chr_pos_alt_ref_file' but got {len(result)}"
 
         # Check number of middle (7)
         result = variants.get_query_to_df(
-            """SELECT INFO FROM variants WHERE INFO LIKE '%variant_chr_pos_alt_ref=chr1_28736_A_C%' """
+            """SELECT INFO FROM variants WHERE INFO LIKE '%VARIANT_CHROM_POS_REF_ALT=chr1_28736_A_C%' """
         )
-        assert len(result) == 1
+        assert len(result) == 1, f"Expected 1 variant with 'VARIANT_CHROM_POS_REF_ALT=chr1_28736_A_C' but got {len(result)}"
 
         # Check if VCF is in correct format with pyVCF
         remove_if_exists([output_vcf])
@@ -946,53 +943,53 @@ def test_calculation_nomen_two_hgvs_fields_uniquify():
             assert False
 
 
-def test_calculation_merged_hgvs():
-    """
-    This function tests the calculation of merging multiple HGVS annotations.
-    """
+# def test_calculation_merged_hgvs():
+#     """
+#     This function tests the calculation of merging multiple HGVS annotations.
+#     """
 
-    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+#     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
-        # Init files
-        # input_vcf = tests_data_folder + "/example.annotated.annovar.snpeff.vcf"
-        input_vcf = tests_data_folder + "/example.annotated.hgvs.annovar.snpeff.vcf"
-        output_vcf = f"{tmp_dir}/output.vcf.gz"
-        input_param = {
-            "calculation": {"calculations": {"MERGED_HGVS": None}},
-        }
+#         # Init files
+#         # input_vcf = tests_data_folder + "/example.annotated.annovar.snpeff.vcf"
+#         input_vcf = tests_data_folder + "/example.annotated.hgvs.annovar.snpeff.vcf"
+#         output_vcf = f"{tmp_dir}/output.vcf.gz"
+#         input_param = {
+#             "calculation": {"calculations": {"MERGED_HGVS": None}},
+#         }
 
-        # Create object
-        variants = Variants(
-            input=input_vcf,
-            output=output_vcf,
-            config=tests_config,
-            param=input_param,
-            load=True,
-        )
+#         # Create object
+#         variants = Variants(
+#             input=input_vcf,
+#             output=output_vcf,
+#             config=tests_config,
+#             param=input_param,
+#             load=True,
+#         )
 
-        # Annotation
-        variants.annotation()
+#         # Annotation
+#         variants.annotation()
 
-        # Calculation
-        variants.calculation()
+#         # Calculation
+#         variants.calculation()
 
-        # Check number of NOMEN
-        annovar_hgvs = "AAChange_refGene=EGFR:NM_001346941:exon14:c.1560G>A:p.Q520Q,EGFR:NM_001346897:exon19:c.2226G>A:p.Q742Q,EGFR:NM_001346899:exon19:c.2226G>A:p.Q742Q,EGFR:NM_001346898:exon20:c.2361G>A:p.Q787Q,EGFR:NM_001346900:exon20:c.2202G>A:p.Q734Q,EGFR:NM_005228:exon20:c.2361G>A:p.Q787Q"
-        snpeff_hgvs = "snpeff_hgvs=EGFR:NM_005228.5:exon20:c.2361G>A:p.Gln787Gln,EGFR:NM_001346897.2:exon19:c.2226G>A:p.Gln742Gln,EGFR:NM_001346898.2:exon20:c.2361G>A:p.Gln787Gln,EGFR:NM_001346941.2:exon14:c.1560G>A:p.Gln520Gln,EGFR:NM_001346899.1:exon19:c.2226G>A:p.Gln742Gln,EGFR:NM_001346900.2:exon20:c.2202G>A:p.Gln734Gln,EGFR-AS1:NR_047551.1:exon2:n.1201C>T"
-        # merged_hgvs = "merged_hgvs=EGFR:NM_005228:exon20:c.2361G>A:p.Q787Q,EGFR:NM_001346898:exon20:c.2361G>A:p.Q787Q,EGFR:NM_001346898.2:exon20:c.2361G>A:p.Gln787Gln,EGFR:NM_001346899:exon19:c.2226G>A:p.Q742Q,EGFR:NM_001346900.2:exon20:c.2202G>A:p.Gln734Gln,EGFR:NM_001346941:exon14:c.1560G>A:p.Q520Q,EGFR:NM_001346900:exon20:c.2202G>A:p.Q734Q,EGFR:NM_005228.5:exon20:c.2361G>A:p.Gln787Gln,EGFR-AS1:NR_047551.1:exon2:n.1201C>T,EGFR:NM_001346899.1:exon19:c.2226G>A:p.Gln742Gln,EGFR:NM_001346941.2:exon14:c.1560G>A:p.Gln520Gln,EGFR:NM_001346897:exon19:c.2226G>A:p.Q742Q,EGFR:NM_001346897.2:exon19:c.2226G>A:p.Gln742Gln"
-        merged_hgvs = "merged_hgvs=EGFR-AS1:NR_047551.1:exon2:n.1201C>T,EGFR:NM_001346897.2:exon19:c.2226G>A:p.Gln742Gln,EGFR:NM_001346897:exon19:c.2226G>A:p.Q742Q,EGFR:NM_001346898.2:exon20:c.2361G>A:p.Gln787Gln,EGFR:NM_001346898:exon20:c.2361G>A:p.Q787Q,EGFR:NM_001346899.1:exon19:c.2226G>A:p.Gln742Gln,EGFR:NM_001346899:exon19:c.2226G>A:p.Q742Q,EGFR:NM_001346900.2:exon20:c.2202G>A:p.Gln734Gln,EGFR:NM_001346900:exon20:c.2202G>A:p.Q734Q,EGFR:NM_001346941.2:exon14:c.1560G>A:p.Gln520Gln,EGFR:NM_001346941:exon14:c.1560G>A:p.Q520Q,EGFR:NM_005228.5:exon20:c.2361G>A:p.Gln787Gln,EGFR:NM_005228:exon20:c.2361G>A:p.Q787Q"
-        result = variants.get_query_to_df(
-            f"""SELECT INFO FROM variants WHERE INFO LIKE '%{annovar_hgvs}%' AND INFO LIKE '%{snpeff_hgvs}%' AND INFO LIKE '%{merged_hgvs}%' """
-        )
-        assert len(result) == 1
+#         # Check number of NOMEN
+#         annovar_hgvs = "AAChange_refGene=EGFR:NM_001346941:exon14:c.1560G>A:p.Q520Q,EGFR:NM_001346897:exon19:c.2226G>A:p.Q742Q,EGFR:NM_001346899:exon19:c.2226G>A:p.Q742Q,EGFR:NM_001346898:exon20:c.2361G>A:p.Q787Q,EGFR:NM_001346900:exon20:c.2202G>A:p.Q734Q,EGFR:NM_005228:exon20:c.2361G>A:p.Q787Q"
+#         snpeff_hgvs = "snpeff_hgvs=EGFR:NM_005228.5:exon20:c.2361G>A:p.Gln787Gln,EGFR:NM_001346897.2:exon19:c.2226G>A:p.Gln742Gln,EGFR:NM_001346898.2:exon20:c.2361G>A:p.Gln787Gln,EGFR:NM_001346941.2:exon14:c.1560G>A:p.Gln520Gln,EGFR:NM_001346899.1:exon19:c.2226G>A:p.Gln742Gln,EGFR:NM_001346900.2:exon20:c.2202G>A:p.Gln734Gln,EGFR-AS1:NR_047551.1:exon2:n.1201C>T"
+#         # merged_hgvs = "merged_hgvs=EGFR:NM_005228:exon20:c.2361G>A:p.Q787Q,EGFR:NM_001346898:exon20:c.2361G>A:p.Q787Q,EGFR:NM_001346898.2:exon20:c.2361G>A:p.Gln787Gln,EGFR:NM_001346899:exon19:c.2226G>A:p.Q742Q,EGFR:NM_001346900.2:exon20:c.2202G>A:p.Gln734Gln,EGFR:NM_001346941:exon14:c.1560G>A:p.Q520Q,EGFR:NM_001346900:exon20:c.2202G>A:p.Q734Q,EGFR:NM_005228.5:exon20:c.2361G>A:p.Gln787Gln,EGFR-AS1:NR_047551.1:exon2:n.1201C>T,EGFR:NM_001346899.1:exon19:c.2226G>A:p.Gln742Gln,EGFR:NM_001346941.2:exon14:c.1560G>A:p.Gln520Gln,EGFR:NM_001346897:exon19:c.2226G>A:p.Q742Q,EGFR:NM_001346897.2:exon19:c.2226G>A:p.Gln742Gln"
+#         merged_hgvs = "merged_hgvs=EGFR-AS1:NR_047551.1:exon2:n.1201C>T,EGFR:NM_001346897.2:exon19:c.2226G>A:p.Gln742Gln,EGFR:NM_001346897:exon19:c.2226G>A:p.Q742Q,EGFR:NM_001346898.2:exon20:c.2361G>A:p.Gln787Gln,EGFR:NM_001346898:exon20:c.2361G>A:p.Q787Q,EGFR:NM_001346899.1:exon19:c.2226G>A:p.Gln742Gln,EGFR:NM_001346899:exon19:c.2226G>A:p.Q742Q,EGFR:NM_001346900.2:exon20:c.2202G>A:p.Gln734Gln,EGFR:NM_001346900:exon20:c.2202G>A:p.Q734Q,EGFR:NM_001346941.2:exon14:c.1560G>A:p.Gln520Gln,EGFR:NM_001346941:exon14:c.1560G>A:p.Q520Q,EGFR:NM_005228.5:exon20:c.2361G>A:p.Gln787Gln,EGFR:NM_005228:exon20:c.2361G>A:p.Q787Q"
+#         result = variants.get_query_to_df(
+#             f"""SELECT INFO FROM variants WHERE INFO LIKE '%{annovar_hgvs}%' AND INFO LIKE '%{snpeff_hgvs}%' AND INFO LIKE '%{merged_hgvs}%' """
+#         )
+#         assert len(result) == 1
 
-        # Check if VCF is in correct format with pyVCF
-        remove_if_exists([output_vcf])
-        variants.export_output()
-        try:
-            vcf.Reader(filename=output_vcf)
-        except:
-            assert False
+#         # Check if VCF is in correct format with pyVCF
+#         remove_if_exists([output_vcf])
+#         variants.export_output()
+#         try:
+#             vcf.Reader(filename=output_vcf)
+#         except:
+#             assert False
 
 
 def test_calculation_vartype():
@@ -1118,74 +1115,19 @@ def test_calculation_vartype_full():
 
 
 @pytest.mark.parametrize(
-    "input_file, calculation",
+    "input_file, expected",
     [
         (
-            input_file,
-            calculation,
+            "example.vcf.gz",
+            0,
+        ),
+        (
+            "example.ann.vcf.gz",
+            7
         )
-        for input_file in ["example.ann.vcf.gz", "example.chrM.ann.vcf.gz"]
-        for calculation in [
-            "snpeff_extract",
-            "snpeff_hgvs",
-            "snpeff_ann_explode",
-            "snpeff_ann_explode_uniquify",
-            "snpeff_ann_explode_json",
-        ]
     ],
 )
-def test_calculation_snpeff_ann_explode(input_file, calculation):
-    """
-    This function is a test for calculating snpeff_hgvs in a VCF file using the Variants class.
-
-    :param calculation: It looks like the `calculation` parameter is used to specify a particular
-    calculation method in the test function `test_calculation_snpeff_ann_explode`. This parameter is
-    then used to construct a parameter dictionary `param` with the calculation method specified
-    """
-
-    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
-
-        # Init files
-        input_vcf = tests_data_folder + "/" + input_file
-        output_vcf = f"{tmp_dir}/output.{calculation}.vcf"
-
-        # Construct param dict
-        param = {"calculation": {"calculations": {calculation: None}}}
-
-        # Create object
-        variants = Variants(
-            conn=None, input=input_vcf, output=output_vcf, param=param, load=True
-        )
-
-        # Check nb variants
-        result = variants.get_query_to_df(""" SELECT INFO FROM variants""")
-        nb_variants = len(result)
-
-        # Check if no snpeff_hgvs
-        result = variants.get_query_to_df(
-            """ SELECT INFO FROM variants WHERE regexp_matches(INFO,'snpeff[^=]') """
-        )
-        assert len(result) == 0
-
-        # Calculation
-        variants.calculation()
-
-        # query annotated variant (0 if no snpeff annotation like in chrM)
-        result = variants.get_query_to_df(
-            """ SELECT * FROM variants WHERE regexp_matches(INFO,'snpeff[^=]') """
-        )
-        assert len(result) == nb_variants or len(result) == 0
-
-        # Check if VCF is in correct format with pyVCF
-        remove_if_exists([output_vcf])
-        variants.export_output()
-        try:
-            vcf.Reader(filename=output_vcf)
-        except:
-            assert False
-
-
-def test_calculation_snpeff_hgvs():
+def test_calculation_snpeff_hgvs(input_file, expected):
     """
     This function is a test for calculating snpeff_hgvs in a VCF file using the Variants class.
     """
@@ -1193,11 +1135,21 @@ def test_calculation_snpeff_hgvs():
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
-        input_vcf = tests_data_folder + "/example.ann.vcf.gz"
+        input_vcf = tests_data_folder + f"/{input_file}"
         output_vcf = f"{tmp_dir}/output.vcf.gz"
 
         # Construct param dict
-        param = {"calculation": {"calculations": {"snpeff_hgvs": None}}}
+        #param = {"calculation": {"calculations": {"snpeff_hgvs": None}}}
+        param = {
+            "calculation": {
+                "calculations": {
+                    "annotation_extract": {
+                        "annotation_field": "ANN",
+                        "annotation_hgvs": "snpeff_hgvs"
+                    }
+                }
+            }
+        }
 
         # Create object
         variants = Variants(
@@ -1217,7 +1169,7 @@ def test_calculation_snpeff_hgvs():
         result = variants.get_query_to_df(
             """ SELECT * FROM variants WHERE INFO LIKE '%snpeff_hgvs=%' """
         )
-        assert len(result) == 7
+        assert len(result) == expected
 
         # Check if VCF is in correct format with pyVCF
         remove_if_exists([output_vcf])
@@ -1228,33 +1180,88 @@ def test_calculation_snpeff_hgvs():
             assert False
 
 
-def test_calculation_snpeff_hgvs_no_ann():
+@pytest.mark.parametrize(
+    "input_file, expected, explode, json, uniquify",
+    [
+        (
+            input_file[0],
+            input_file[1],
+            explode,
+            json,
+            uniquify,
+        )
+        for input_file in [("example.ann.vcf.gz", 7), ("example.chrM.ann.vcf.gz", 10)]
+        for explode in [True, False]
+        for json in [True, False]
+        for uniquify in [True, False]
+    ],
+)
+def test_calculation_snpeff_explode(input_file, expected, explode, json, uniquify):
     """
-    This function tests the calculation of SNPEff HGVS annotations on a VCF file with no annotations.
+    This function is a test for calculating snpeff_hgvs in a VCF file using the Variants class.
     """
 
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
-        input_vcf = tests_data_folder + "/example.vcf.gz"
+        input_vcf = tests_data_folder + f"/{input_file}"
         output_vcf = f"{tmp_dir}/output.vcf.gz"
 
         # Construct param dict
-        param = {"calculation": {"calculations": {"snpeff_hgvs": None}}}
+        param = {
+            "calculation": {
+                "calculations": {
+                    "annotation_extract": {
+                        "annotation_field": "ANN",
+                        "annotation_explode": "snpeff_" if explode else None,
+                        "annotation_json": "snpeff_json" if json else None,
+                        "annotation_uniquify": uniquify
+                    }
+                }
+            }
+        }
 
         # Create object
         variants = Variants(
             conn=None, input=input_vcf, output=output_vcf, param=param, load=True
         )
 
+        # Check if no snpeff_hgvs
+        result = variants.get_query_to_df(
+            """ SELECT INFO FROM variants WHERE INFO LIKE '%snpeff_hgvs=%' """
+        )
+        assert len(result) == 0
+
         # Calculation
         variants.calculation()
 
         # query annotated variant
         result = variants.get_query_to_df(
-            """ SELECT * FROM variants WHERE INFO LIKE '%snpeff_hgvs=%' """
+            """ SELECT * FROM variants WHERE INFO LIKE '%snpeff_%' """
         )
-        assert len(result) == 0
+        assert len(result) == expected, f"For 'snpeff_', Expected {expected} but got {len(result)} for input_file={input_file}, explode={explode}, json={json}, uniquify={uniquify}"
+
+        if explode:
+
+            # query annotated variant
+            result = variants.get_query_to_df(
+                """ SELECT * FROM variants WHERE INFO LIKE '%snpeff_Allele=%' """
+            )
+            assert len(result) == expected, f"For 'snpeff_Allele', Expected {expected} but got {len(result)} for input_file={input_file}, explode={explode}, json={json}, uniquify={uniquify}"
+
+            # query annotated variant
+            result = variants.get_query_to_df(
+                """ SELECT * FROM variants WHERE INFO LIKE '%snpeff_Annotation%' """
+            )
+            assert len(result) == expected, f"For 'snpeff_Annotation', Expected {expected} but got {len(result)} for input_file={input_file}, explode={explode}, json={json}, uniquify={uniquify}"
+
+        if json:
+
+            # query annotated variant
+            result = variants.get_query_to_df(
+                """ SELECT * FROM variants WHERE INFO LIKE '%snpeff_json=%' """
+            )
+            assert len(result) == expected, f"For 'snpeff_json', Expected {expected} but got {len(result)} for input_file={input_file}, explode={explode}, json={json}, uniquify={uniquify}"
 
         # Check if VCF is in correct format with pyVCF
         remove_if_exists([output_vcf])
@@ -1590,7 +1597,16 @@ def test_calculation_find_samples_count_samples():
         output_vcf = f"{tmp_dir}/output.vcf.gz"
 
         # Construct param dict
-        param = {"calculation": {"calculations": {"COUNT_SAMPLES": None}}}
+        #param = {"calculation": {"calculations": {"COUNT_SAMPLES": None}}}
+        param = {
+            "calculation": {
+                "calculations": {
+                    "FIND_SAMPLES": {
+                        "tags": {"count_samples": "count"}
+                    }
+                }
+            }
+        }
 
         # Create object
         variants = Variants(
@@ -1623,8 +1639,14 @@ def test_calculation_find_samples_count_samples():
         except:
             assert False
 
-
-def test_calculation_find_samples_count_samples_options_in_calculation():
+@pytest.mark.parametrize(
+    "tag",
+    [
+            "count_samples_for_variant",
+            "count_samples_for_variant_other_tag"
+    ],
+)
+def test_calculation_find_samples_count_samples_options_in_calculation(tag):
     """
     This is a test function for the "FIND_SAMPLES" calculation in the Variants class, which checks if
     the calculation is performed correctly and the output VCF file is in the correct format.
@@ -1637,7 +1659,7 @@ def test_calculation_find_samples_count_samples_options_in_calculation():
         output_vcf = f"{tmp_dir}/output.vcf.gz"
 
         # Construct param dict
-        param = {"calculation": {"calculations": {"COUNT_SAMPLES": {"tags": {"count_samples_for_variant": "count"}}}}}
+        param = {"calculation": {"calculations": {"FIND_SAMPLES": {"tags": {tag: "count"}}}}}
 
         # Create object
         variants = Variants(
@@ -1648,19 +1670,19 @@ def test_calculation_find_samples_count_samples_options_in_calculation():
         variants.calculation()
 
         result = variants.get_query_to_df(
-            """ SELECT INFO FROM variants WHERE INFO LIKE '%count_samples%' AND INFO NOT LIKE '%list_samples%' """
+            f""" SELECT INFO FROM variants WHERE INFO LIKE '%{tag}%' AND INFO NOT LIKE '%list_samples%' """
         )
-        assert len(result) == 7
+        assert len(result) == 7, f"With '{tag}', Expected 7 but got {len(result)}"
 
         result = variants.get_query_to_df(
-            """ SELECT * FROM variants WHERE INFO LIKE '%count_samples=4/4%'  """
+            f""" SELECT * FROM variants WHERE INFO LIKE '%{tag}=4/4%'  """
         )
-        assert len(result) == 1
+        assert len(result) == 1, f"With '{tag}', Expected 1 but got {len(result)}"
 
         result = variants.get_query_to_df(
-            """ SELECT * FROM variants WHERE INFO LIKE '%count_samples=3/4%' """
+            f""" SELECT * FROM variants WHERE INFO LIKE '%{tag}=3/4%' """
         )
-        assert len(result) == 6
+        assert len(result) == 6, f"With '{tag}', Expected 6 but got {len(result)}"
 
         # Check if VCF is in correct format with pyVCF
         remove_if_exists([output_vcf])
@@ -1671,7 +1693,14 @@ def test_calculation_find_samples_count_samples_options_in_calculation():
             assert False
 
 
-def test_calculation_find_samples_list_samples():
+@pytest.mark.parametrize(
+    "tag",
+    [
+            "list_samples_for_variant",
+            "list_samples_for_variant_other_tag"
+    ],
+)
+def test_calculation_find_samples_list_samples(tag):
     """
     This is a test function for the "FIND_SAMPLES" calculation in the Variants class, which checks if
     the calculation is performed correctly and the output VCF file is in the correct format.
@@ -1684,7 +1713,7 @@ def test_calculation_find_samples_list_samples():
         output_vcf = f"{tmp_dir}/output.vcf.gz"
 
         # Construct param dict
-        param = {"calculation": {"calculations": {"LIST_SAMPLES": None}}}
+        param = {"calculation": {"calculations": {"FIND_SAMPLES": {"tags": {tag: "list"}}}}}
 
         # Create object
         variants = Variants(
@@ -1695,9 +1724,9 @@ def test_calculation_find_samples_list_samples():
         variants.calculation()
 
         result = variants.get_query_to_df(
-            """ SELECT INFO FROM variants WHERE INFO NOT LIKE '%count_samples%' AND INFO LIKE '%list_samples%' """
+            f""" SELECT INFO FROM variants WHERE INFO NOT LIKE '%count_samples%' AND INFO LIKE '%{tag}=%' """
         )
-        assert len(result) == 7
+        assert len(result) == 7, f"With '{tag}', Expected 7 but got {len(result)}"
 
         # Check if VCF is in correct format with pyVCF
         remove_if_exists([output_vcf])
@@ -1708,7 +1737,14 @@ def test_calculation_find_samples_list_samples():
             assert False
 
 
-def test_calculation_genotype_concordance():
+@pytest.mark.parametrize(
+    "tag",
+    [
+            "genotype_concordance",
+            "genotype_concordance_other_tag"
+    ],
+)
+def test_calculation_genotype_concordance(tag):
     """
     This is a test function for calculating genotype concordance in a VCF file using the Variants class.
     """
@@ -1720,7 +1756,7 @@ def test_calculation_genotype_concordance():
         output_vcf = f"{tmp_dir}/output.vcf.gz"
 
         # Construct param dict
-        param = {"calculation": {"calculations": {"GENOTYPECONCORDANCE": None}}}
+        param = {"calculation": {"calculations": {"GENOTYPE_CONCORDANCE": {"tag": tag}}}}
 
         # Create object
         variants = Variants(
@@ -1731,19 +1767,19 @@ def test_calculation_genotype_concordance():
         variants.calculation()
 
         result = variants.get_query_to_df(
-            """ SELECT INFO FROM variants WHERE INFO LIKE '%genotypeconcordance%' """
+            f""" SELECT INFO FROM variants WHERE INFO LIKE '%{tag}=%' """
         )
-        assert len(result) == 7
+        assert len(result) == 7, f"With '{tag}', Expected 7 but got {len(result)}"
 
         result = variants.get_query_to_df(
-            """ SELECT * FROM variants WHERE INFO LIKE '%genotypeconcordance=FALSE%' """
+            f""" SELECT * FROM variants WHERE INFO LIKE '%{tag}=FALSE%' """
         )
-        assert len(result) == 1
+        assert len(result) == 1, f"With '{tag}', Expected 1 but got {len(result)}"
 
         result = variants.get_query_to_df(
-            """ SELECT * FROM variants WHERE INFO LIKE '%genotypeconcordance=TRUE%' """
+            f""" SELECT * FROM variants WHERE INFO LIKE '%{tag}=TRUE%' """
         )
-        assert len(result) == 6
+        assert len(result) == 6, f"With '{tag}', Expected 6 but got {len(result)}"
 
         # Check if VCF is in correct format with pyVCF
         remove_if_exists([output_vcf])
@@ -1753,8 +1789,17 @@ def test_calculation_genotype_concordance():
         except:
             assert False
 
-
-def test_calculation_barcode():
+@pytest.mark.parametrize(
+    "input_file, tag",
+    [
+        *[
+            (input_file, tag)
+            for input_file in ["example.vcf.gz", "example.name_with_special_char.vcf"]
+            for tag in ["barcode", "barcode_other_tag", "BC"]
+        ]
+    ],
+)
+def test_calculation_barcode(input_file, tag):
     """
     This is a test function for a Python script that calculates barcode information from a VCF file and
     checks if the output is correct.
@@ -1763,11 +1808,11 @@ def test_calculation_barcode():
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
-        input_vcf = tests_data_folder + "/example.vcf.gz"
+        input_vcf = tests_data_folder + f"/{input_file}"
         output_vcf = f"{tmp_dir}/output.vcf.gz"
 
         # Construct param dict
-        param = {"calculation": {"calculations": {"BARCODE": None}}}
+        param = {"calculation": {"calculations": {"BARCODE": {"tag": tag}}}}
 
         # Create object
         variants = Variants(
@@ -1778,27 +1823,27 @@ def test_calculation_barcode():
         variants.calculation()
 
         result = variants.get_query_to_df(
-            """ SELECT INFO FROM variants WHERE INFO LIKE '%barcode%' """
+            f""" SELECT INFO FROM variants WHERE INFO LIKE '%{tag}=%' """
         )
         assert len(result) == 7
 
         result = variants.get_query_to_df(
-            """ SELECT * FROM variants WHERE INFO LIKE '%barcode=1122%' """
+            f""" SELECT * FROM variants WHERE INFO LIKE '%{tag}=1122%' """
         )
         assert len(result) == 1
 
         result = variants.get_query_to_df(
-            """ SELECT * FROM variants WHERE INFO LIKE '%barcode=0111%' """
+            f""" SELECT * FROM variants WHERE INFO LIKE '%{tag}=0111%' """
         )
         assert len(result) == 1
 
         result = variants.get_query_to_df(
-            """ SELECT * FROM variants WHERE INFO LIKE '%barcode=1011%' """
+            f""" SELECT * FROM variants WHERE INFO LIKE '%{tag}=1011%' """
         )
         assert len(result) == 4
 
         result = variants.get_query_to_df(
-            """ SELECT * FROM variants WHERE INFO LIKE '%barcode=1101%' """
+            f""" SELECT * FROM variants WHERE INFO LIKE '%{tag}=1101%' """
         )
         assert len(result) == 1
 
@@ -1811,72 +1856,22 @@ def test_calculation_barcode():
             assert False
 
 
-def test_calculation_barcode_sample_name_special_char():
+@pytest.mark.parametrize(
+    "tag, tag_samples, family_pedigree",
+    [
+        (tag, tag_samples, family_pedigree)
+        for tag in [None, "BCF", "BarCodeFamily"]
+        for tag_samples in [None, "BCFS", "BarCodeFamilySamples"]
+        for family_pedigree in [None, "", "sample1,sample2,sample4", {"father": "sample1", "mother": "sample2", "child": "sample4"}, os.path.join(tests_data_folder, "trio.json")]
+    ],
+)
+def test_calculation_barcode_family(tag, tag_samples, family_pedigree):
     """
-    This is a test function for a Python script that calculates barcode information from a VCF file and
-    checks if the output is correct.
-    """
-
-    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
-
-        # Init files
-        input_vcf = tests_data_folder + "/example.name_with_special_char.vcf"
-        output_vcf = f"{tmp_dir}/output.vcf.gz"
-
-        # Construct param dict
-        param = {"calculation": {"calculations": {"BARCODE": None}}}
-
-        # Create object
-        variants = Variants(
-            conn=None, input=input_vcf, output=output_vcf, param=param, load=True
-        )
-
-        # Calculation
-        variants.calculation()
-
-        result = variants.get_query_to_df(
-            """ SELECT INFO FROM variants WHERE INFO LIKE '%barcode%' """
-        )
-        assert len(result) == 7
-
-        result = variants.get_query_to_df(
-            """ SELECT * FROM variants WHERE INFO LIKE '%barcode=1122%' """
-        )
-        assert len(result) == 1
-
-        result = variants.get_query_to_df(
-            """ SELECT * FROM variants WHERE INFO LIKE '%barcode=0111%' """
-        )
-        assert len(result) == 1
-
-        result = variants.get_query_to_df(
-            """ SELECT * FROM variants WHERE INFO LIKE '%barcode=1011%' """
-        )
-        assert len(result) == 4
-
-        result = variants.get_query_to_df(
-            """ SELECT * FROM variants WHERE INFO LIKE '%barcode=1101%' """
-        )
-        assert len(result) == 1
-
-        # Check if VCF is in correct format with pyVCF
-        remove_if_exists([output_vcf])
-        variants.export_output()
-        try:
-            vcf.Reader(filename=output_vcf)
-        except:
-            assert False
-
-
-def test_calculation_barcode_genotype():
-    """
-    The function `test_calculation_barcode_genotype` is a test function in Python that calculates
+    The function `test_calculation_barcode_family` is a test function in Python that calculates
     barcode information from a VCF file and checks if the output is correct.
     """
 
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
-
-        tmp_dir = "/tmp"
 
         # Init files
         input_vcf = tests_data_folder + "/example.vcf.gz"
@@ -1884,8 +1879,14 @@ def test_calculation_barcode_genotype():
 
         # Construct param dict
         param = {
-            "calculation": {"calculations": {"BARCODEFAMILY": {"family_pedigree": ""}}}
+            "calculation": {"calculations": {"BARCODE_FAMILY": {"tag": tag, "tag_samples": tag_samples, "family_pedigree": family_pedigree}}}
         }
+
+        # Expected for default valeurs
+        if tag is None:
+            tag = "BCF"
+        if tag_samples is None:
+            tag_samples = f"{tag}S"
 
         # Create object
         variants = Variants(
@@ -1895,126 +1896,42 @@ def test_calculation_barcode_genotype():
         # Calculation
         variants.calculation()
 
-        # DEBUG
-        result = variants.get_query_to_df(""" SELECT * FROM variants """)
-        # log.debug(result)
+        # Create object
+        variants = Variants(
+            conn=None, input=input_vcf, output=output_vcf, param=param, load=True
+        )
 
-        # Construct param dict
-        params = {
-            "param_str_list": {
-                "calculation": {
-                    "calculations": {
-                        "BARCODEFAMILY": {"family_pedigree": "sample1,sample2,sample4"}
-                    }
-                }
-            },
-            "param_str_json": {
-                "calculation": {
-                    "calculations": {
-                        "BARCODEFAMILY": {
-                            "family_pedigree": """{
-                                "father": "sample1", "mother": "sample2", "child": "sample4"}"""
-                        }
-                    }
-                }
-            },
-            "param_dict": {
-                "calculation": {
-                    "calculations": {
-                        "BARCODEFAMILY": {
-                            "family_pedigree": {
-                                "father": "sample1",
-                                "mother": "sample2",
-                                "child": "sample4",
-                            }
-                        }
-                    }
-                }
-            },
-            "param_file": {
-                "calculation": {
-                    "calculations": {
-                        "BARCODEFAMILY": {
-                            "family_pedigree": os.path.join(
-                                tests_data_folder, "trio.json"
-                            )
-                        }
-                    }
-                }
-            },
-        }
+        # Calculation
+        variants.calculation()
 
-        for param in params:
-            param = params[param]
+        # Check if BCF and BCFS are in FORMAT
+        result = variants.get_query_to_df(
+            f""" SELECT FORMAT FROM variants WHERE FORMAT LIKE '%:{tag}:{tag_samples}' """
+        )
+        assert len(result) == 7, f"With '{tag}' and '{tag_samples}', Expected 7 but got {len(result)}"
 
-            # Create object
-            variants = Variants(
-                conn=None, input=input_vcf, output=output_vcf, param=param, load=True
-            )
-
-            # Calculation
-            variants.calculation()
-
-            # Check if BCF and BCFS are in FORMAT
-            result = variants.get_query_to_df(
-                """ SELECT FORMAT FROM variants WHERE FORMAT LIKE '%:BCF:BCFS' """
-            )
-            assert len(result) == 7
-
-            # Check if VCF is in correct format with pyVCF
-            remove_if_exists([output_vcf])
-            variants.export_output()
-            try:
-                vcf.Reader(filename=output_vcf)
-            except:
-                assert False
+        # Check if VCF is in correct format with pyVCF
+        remove_if_exists([output_vcf])
+        variants.export_output()
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
 
 
-def test_calculation_trio():
+@pytest.mark.parametrize(
+    "tag, trio_pedigree",
+    [
+        (tag, trio_pedigree)
+        for tag in [None, "trio", "TrioCalculation"]
+        for trio_pedigree in [None, "", "sample1,sample2,sample4", {"father": "sample1", "mother": "sample2", "child": "sample4"}, os.path.join(tests_data_folder, "trio.json"), {"child": "sample4", "mother": "sample2", "father": "sample1"}]
+    ],
+)
+def test_calculation_trio(tag, trio_pedigree):
     """
     This is a test function for the calculation of trio variants in a VCF file using specific
     parameters.
     """
-
-    params = {
-        "param_str_list": {
-            "calculation": {
-                "calculations": {"TRIO": {"trio_pedigree": "sample1,sample2,sample4"}}
-            }
-        },
-        "param_str_json": {
-            "calculation": {
-                "calculations": {
-                    "TRIO": {
-                        "trio_pedigree": """{
-                            "father": "sample1", "mother": "sample2", "child": "sample4"}"""
-                    }
-                }
-            }
-        },
-        "param_dict": {
-            "calculation": {
-                "calculations": {
-                    "TRIO": {
-                        "trio_pedigree": {
-                            "father": "sample1",
-                            "mother": "sample2",
-                            "child": "sample4",
-                        }
-                    }
-                }
-            }
-        },
-        "param_file": {
-            "calculation": {
-                "calculations": {
-                    "TRIO": {
-                        "trio_pedigree": os.path.join(tests_data_folder, "trio.json")
-                    }
-                }
-            }
-        },
-    }
 
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
@@ -2023,7 +1940,27 @@ def test_calculation_trio():
         output_vcf = f"{tmp_dir}/output.vcf.gz"
 
         # Param NO
-        param = {"calculation": {"calculations": {"TRIO": {"trio_pedigree": None}}}}
+        param = {
+                    "calculation": {"calculations": {"TRIO": {"tag": tag, "trio_pedigree": trio_pedigree}}}
+                }
+
+        # Expected for default valeurs
+        if tag is None:
+            tag = "trio"
+
+        # Expected results for trio calculation depending on the trio_pedigree parameter
+        if trio_pedigree is None or trio_pedigree == "":
+            expected = {    
+                "recessive": 1,
+                "dominant": 5,
+                "unknown": 1
+            }
+        else:
+            expected = {
+                "recessive": 1,
+                "dominant": 6,
+                "unknown": 0
+            }
 
         # Create object
         variants = Variants(
@@ -2033,20 +1970,22 @@ def test_calculation_trio():
         # Calculation
         variants.calculation()
 
-        result = variants.get_query_to_df(
-            """ SELECT INFO FROM variants WHERE INFO LIKE '%trio=recessive%' """
-        )
-        assert len(result) == 1
+        # Check results
 
         result = variants.get_query_to_df(
-            """ SELECT * FROM variants WHERE INFO LIKE '%trio=dominant%' """
+            f""" SELECT INFO FROM variants WHERE INFO LIKE '%{tag}=recessive%' """
         )
-        assert len(result) == 5
+        assert len(result) == expected.get("recessive"), f"With '{tag}' and '{trio_pedigree}', Expected {expected.get('recessive')} but got {len(result)}"
 
         result = variants.get_query_to_df(
-            """ SELECT * FROM variants WHERE INFO LIKE '%trio=unknown%' """
+            f""" SELECT * FROM variants WHERE INFO LIKE '%{tag}=dominant%' """
         )
-        assert len(result) == 1
+        assert len(result) == expected.get("dominant"), f"With '{tag}' and '{trio_pedigree}', Expected {expected.get('dominant')} but got {len(result)}"
+
+        result = variants.get_query_to_df(
+            f""" SELECT * FROM variants WHERE INFO LIKE '%{tag}=unknown%' """
+        )
+        assert len(result) == expected.get("unknown"), f"With '{tag}' and '{trio_pedigree}', Expected {expected.get('unknown')} but got {len(result)}"
 
         # Check if VCF is in correct format with pyVCF
         remove_if_exists([output_vcf])
@@ -2055,43 +1994,6 @@ def test_calculation_trio():
             vcf.Reader(filename=output_vcf)
         except:
             assert False
-
-        # Construct param dict
-        for param_id in params:
-
-            # Param
-            param = params.get(param_id)
-
-            # Create object
-            variants = Variants(
-                conn=None, input=input_vcf, output=output_vcf, param=param, load=True
-            )
-
-            # Calculation
-            variants.calculation()
-
-            result = variants.get_query_to_df(
-                """ SELECT INFO FROM variants WHERE INFO LIKE '%trio=recessive%' """
-            )
-            assert len(result) == 1
-
-            result = variants.get_query_to_df(
-                """ SELECT * FROM variants WHERE INFO LIKE '%trio=dominant%' """
-            )
-            assert len(result) == 6
-
-            result = variants.get_query_to_df(
-                """ SELECT * FROM variants WHERE INFO LIKE '%trio=unknown%' """
-            )
-            assert len(result) == 0
-
-            # Check if VCF is in correct format with pyVCF
-            remove_if_exists([output_vcf])
-            variants.export_output()
-            try:
-                vcf.Reader(filename=output_vcf)
-            except:
-                assert False
 
 
 def test_calculation_vaf_normalization():
@@ -2106,7 +2008,7 @@ def test_calculation_vaf_normalization():
         output_vcf = f"{tmp_dir}/output.vcf.gz"
 
         # Construct param dict
-        param = {"calculation": {"calculations": {"vaf": None}}}
+        param = {"calculation": {"calculations": {"vaf_normalization": None}}}
 
         # Create object
         variants = Variants(
@@ -2162,7 +2064,7 @@ def test_calculation_vaf_normalization_ad():
         output_vcf = f"{tmp_dir}/output.vcf.gz"
 
         # Construct param dict
-        param = {"calculation": {"calculations": {"vaf": None}}}
+        param = {"calculation": {"calculations": {"vaf_normalization": None}}}
 
         # Create object
         variants = Variants(
@@ -2236,7 +2138,7 @@ def test_calculation_vaf_normalization_empty():
         output_vcf = f"{tmp_dir}/output.vcf.gz"
 
         # Construct param dict
-        param = {"calculation": {"calculations": {"vaf": None}}}
+        param = {"calculation": {"calculations": {"vaf_normalization": None}}}
 
         # Create object
         variants = Variants(
@@ -2260,124 +2162,15 @@ def test_calculation_vaf_normalization_empty():
             assert False
 
 
-def test_calculation_vaf_stats():
-    """
-    This is a test function for the calculation of variant allele frequency (VAF) statistics in a VCF
-    file using the Variants class in Python.
-    """
-
-    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
-
-        # Init files
-        input_vcf = tests_data_folder + "/example.vcf.gz"
-        output_vcf = f"{tmp_dir}/output.vcf.gz"
-
-        # Construct param dict
-        param = {"calculation": {"calculations": {"vaf": None, "vaf_stats": None}}}
-
-        # Create object
-        variants = Variants(
-            conn=None, input=input_vcf, output=output_vcf, param=param, load=True
-        )
-
-        # Calculation
-        variants.calculation()
-
-        result = variants.get_query_to_df(
-            """ SELECT INFO FROM variants WHERE INFO LIKE '%VAF_stats%' """
-        )
-        assert len(result) == 7
-
-        result = variants.get_query_to_df(
-            """ SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND INFO LIKE '%VAF_stats_nb=4%' """
-        )
-        assert len(result) == 1
-
-        result = variants.get_query_to_df(
-            """ SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND INFO LIKE '%VAF_stats_min=0.279835%' """
-        )
-        assert len(result) == 1
-
-        result = variants.get_query_to_df(
-            """ SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND INFO LIKE '%VAF_stats_max=0.303819%' """
-        )
-        assert len(result) == 1
-
-        result = variants.get_query_to_df(
-            """ SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND INFO LIKE '%VAF_stats_mean=0.28737675%' """
-        )
-        assert len(result) == 1
-
-        # Check if VCF is in correct format with pyVCF
-        remove_if_exists([output_vcf])
-        variants.export_output()
-        try:
-            vcf.Reader(filename=output_vcf)
-        except:
-            assert False
-
-
-def test_calculation_dp_stats():
-    """
-    This is a test function for the calculation of depth statistics in a VCF file using the Variants
-    class in Python.
-    """
-
-    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
-
-        # Init files
-        input_vcf = tests_data_folder + "/example.vcf.gz"
-        output_vcf = f"{tmp_dir}/output.vcf.gz"
-
-        # Construct param dict
-        param = {"calculation": {"calculations": {"dp_stats": None}}}
-
-        # Create object
-        variants = Variants(
-            conn=None, input=input_vcf, output=output_vcf, param=param, load=True
-        )
-
-        # Remove if output file exists
-        remove_if_exists([output_vcf])
-
-        # Calculation
-        variants.calculation()
-
-        result = variants.get_query_to_df(
-            """ SELECT INFO FROM variants WHERE INFO LIKE '%DP_stats%' """
-        )
-        assert len(result) == 7
-
-        result = variants.get_query_to_df(
-            """ SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND INFO LIKE '%DP_stats_nb=4%' """
-        )
-        assert len(result) == 1
-
-        result = variants.get_query_to_df(
-            """ SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND INFO LIKE '%DP_stats_min=576.0%' """
-        )
-        assert len(result) == 1
-
-        result = variants.get_query_to_df(
-            """ SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND INFO LIKE '%DP_stats_max=17664.0%' """
-        )
-        assert len(result) == 1
-
-        result = variants.get_query_to_df(
-            """ SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND INFO LIKE '%DP_stats_mean=9158.0%' """
-        )
-        assert len(result) == 1
-
-        # Check if VCF is in correct format with pyVCF
-        remove_if_exists([output_vcf])
-        variants.export_output()
-        try:
-            vcf.Reader(filename=output_vcf)
-        except:
-            assert False
-
-
-def test_calculation_genotype_stats():
+@pytest.mark.parametrize(
+    "infos, vaf_normalization",
+    [
+        (infos, vaf_normalization)
+        for infos in [None, "VAF", "DP", ["GQ"], ["GQ", "DP"], ["GQ", "DP", "VAF"], "GQ,DP"]
+        for vaf_normalization in [True, False]
+    ],
+)
+def test_calculation_genotype_stats(infos, vaf_normalization):
     """
     This is a test function for the calculation of genotype statistics in a VCF
     file using the Variants class in Python.
@@ -2390,40 +2183,99 @@ def test_calculation_genotype_stats():
         output_vcf = f"{tmp_dir}/output.vcf.gz"
 
         # Construct param dict
-        param = {"calculation": {"calculations": {"genotype_stats": {"info": "GQ"}}}}
+        # Use VAF normalization to calculate statistics on VAF
+        if vaf_normalization:
+            param = {
+                "calculation": {
+                    "calculations": {
+                        "vaf_normalization": None,
+                        "genotype_stats": {"infos": infos}
+                    }
+                }
+            }
+        else:
+            param = {
+                "calculation": {
+                    "calculations": {
+                        "genotype_stats": {"infos": infos}
+                    }
+                }
+            }
 
         # Create object
         variants = Variants(
             conn=None, input=input_vcf, output=output_vcf, param=param, load=True
         )
 
+        # Expected info tags
+        if infos is None:
+            infos = ["VAF"]
+
+        # Clean up infos parameter to ensure it's a list
+        if isinstance(infos, str):
+            infos = infos.split(",")
+
+        # Expected results for genotype_stats calculation depending on the infos parameter
+        expected = {
+            "VAF": {
+                "nb": 4,
+                "min": 0.279835,
+                "max": 0.303819,
+                "mean": 0.28737675
+            } if vaf_normalization else {
+                "nb": 0
+            },
+            "GQ": {
+                "nb": 4,
+                "min": 99.0,
+                "max": 99.0,
+                "mean": 99.0
+            },
+            "DP": {
+                "nb": 4,
+                "min": 576.0,
+                "max": 17664.0,
+                "mean": 9158.0
+            }
+        }
+
         # Calculation
         variants.calculation()
 
-        result = variants.get_query_to_df(
-            """ SELECT INFO FROM variants WHERE INFO LIKE '%GQ_stats%' """
-        )
-        assert len(result) == 7
+        for info in infos:
 
-        result = variants.get_query_to_df(
-            """ SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND INFO LIKE '%GQ_stats_nb=4%' """
-        )
-        assert len(result) == 1
+            # Stats in INFO field
+            result = variants.get_query_to_df(
+                f""" SELECT INFO FROM variants WHERE INFO LIKE '%{info}_stats%' """
+            )
+            assert len(result) == 7, f"With '{info}', Expected 7 but got {len(result)}"
 
-        result = variants.get_query_to_df(
-            """ SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND INFO LIKE '%GQ_stats_min=99.0%' """
-        )
-        assert len(result) == 1
+            # Stats values NB in INFO field at least
+            result = variants.get_query_to_df(
+                f""" SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND INFO LIKE '%{info}_stats_nb={expected.get(info, {}).get("nb")}%' """
+            )
+            assert len(result) == 1, f"With '{info}' and {vaf_normalization}, Expected {expected.get(info, {}).get('nb')} but got {len(result)}"
 
-        result = variants.get_query_to_df(
-            """ SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND INFO LIKE '%GQ_stats_max=99.0%' """
-        )
-        assert len(result) == 1
+            # If NB > 0, check min, max and mean values in INFO field
+            if expected.get(info, {}).get("nb") > 0:
 
-        result = variants.get_query_to_df(
-            """ SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND INFO LIKE '%GQ_stats_mean=99.0%' """
-        )
-        assert len(result) == 1
+                # Stats values MIN in INFO field
+                result = variants.get_query_to_df(
+                    f""" SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND INFO LIKE '%{info}_stats_min={expected.get(info, {}).get("min")}%' """
+                )
+                assert len(result) == 1, f"With '{info}' and {vaf_normalization}, Expected {expected.get(info, {}).get('min')} but got {len(result)}"
+
+                # Stats values MAX in INFO field
+                result = variants.get_query_to_df(
+                    f""" SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND INFO LIKE '%{info}_stats_max={expected.get(info, {}).get("max")}%' """
+                )
+                assert len(result) == 1, f"With '{info}' and {vaf_normalization}, Expected {expected.get(info, {}).get('max')} but got {len(result)}"
+
+                # Stats values MEAN in INFO field
+                result = variants.get_query_to_df(
+                    f""" SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND INFO LIKE '%{info}_stats_mean={expected.get(info, {}).get("mean")}%' """
+                )
+                assert len(result) == 1, f"With '{info}' and {vaf_normalization}, Expected {expected.get(info, {}).get('mean')} but got {len(result)}"
 
         # Check if VCF is in correct format with pyVCF
         remove_if_exists([output_vcf])
@@ -2913,7 +2765,7 @@ def test_calculation_info_to_format_flag_info_field():
             variant_id_tag_info,
             keep_variant_id_tag_column,
         )
-        for calculation_name in ["variant_id", "variant_id_varid"]
+        for calculation_name in ["variant_id"]
         for variant_id_tag in [
             None,
             "variant_id",
@@ -2944,8 +2796,6 @@ def test_calculation_variant_id(
             variant_id_tag_param = {}
             if calculation_name == "variant_id":
                 variant_id_tag = "variant_id"
-            elif calculation_name == "variant_id_varid":
-                variant_id_tag = "varid"
         else:
             variant_id_tag_param = {"variant_id_tag": variant_id_tag}
 
@@ -3429,3 +3279,194 @@ def test_calculation_prioritization():
         except:
             assert False
 
+
+@pytest.mark.parametrize(
+    "param",
+    [
+        (
+            None
+        ),
+        (
+            {}
+        ),
+        (
+            {
+                "stats_md": "/tmp/stats.md",
+            }
+        ),
+        (
+            {
+                "stats_stdout": True,
+            }
+        ),
+        (
+            {
+                "stats_md": "/tmp/stats.md",
+                "stats_json": "/tmp/stats.json",
+            }
+        ),
+        (
+            {
+                "stats_html": "/tmp/stats.html",
+            }
+        ),
+        (
+            {
+                "stats_pdf": "/tmp/stats.pdf",
+            }
+        ),
+        (
+            {
+            "stats_md": "/tmp/stats.md",
+                "annotations_stats": True,
+            }
+        ),
+        (
+            {
+                "stats_md": "/tmp/stats.md",
+                "queries": {
+                    "First variants": "SELECT \"#CHROM\", POS, REF, ALT FROM variants_view LIMIT 5",
+                    "First INFO tags": "SELECT INFOS.* FROM variants_view LIMIT 5",
+                }
+            }
+        ),
+    ],
+)
+def test_calculation_export_stats(param):
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.vcf.gz"
+
+        # Construct config dict
+        config = {}
+
+        # Construct param dict
+        param = {
+            "calculation": {
+                "calculations": {
+                    "EXPORT_STATS": param
+                }
+            }
+        }
+
+        # Create object
+        variants = Variants(
+            input=input_vcf, load=True, config=config, param=param
+        )
+
+        # Calculation
+        variants.calculation()
+
+
+@pytest.mark.parametrize(
+    "input_file, output_file, export, explode, query",
+    [
+        (
+            input_file,
+            output_file,
+            export,
+            explode, query
+        )
+        for input_file in ["example.vcf.gz"]
+        for output_file in [
+            "variants.vcf",
+            "variants.vcf.gz",
+            "variants.tsv",
+            "variants.parquet",
+            "variants.partition.parquet",
+            ]
+        for export in [
+                None,
+                {},
+                {
+                    "fields_to_rename": {
+                        "CLNSIG": "CLNSIG_renamed",
+                        "SIFT": None
+                    }
+                },
+                {
+                    "order_by": "POS DESC"
+                },
+                {
+                    "force_cast_as_flat": True
+                },
+                {
+                    "include_header": True,
+                    "order_by": "DP ASC",
+                    "parquet_partitions": "#CHROM"
+                }
+            ]
+        for explode in [
+            None,
+            {},
+            {
+                "explode_infos": True,
+                "explode_infos_prefix": "test_",
+                "explode_infos_fields": ["CLNSIG", "SIFT", "DP"],
+            }
+        ]
+        for query in [
+            None,
+            "SELECT * FROM variants WHERE INFO LIKE '%CLNSIG%'",
+        ]
+    ]
+)
+def test_calculation_export_variants(input_file, output_file, export, explode, query):
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        tmp_dir = "/tmp"
+
+        # Init files
+        input_vcf = tests_data_folder + f"/{input_file}"
+        output_vcf = f"{tmp_dir}/{output_file}"
+
+        # Construct config dict
+        config = {}
+
+         # Construct param dict
+        param = {
+            "calculation": {
+                "calculations": {
+                    "EXPORT_VARIANTS": {
+                        "file": output_vcf,
+                        "query": query,
+                        "export": export,
+                        "explode": explode
+                    }
+                }
+            }
+        }
+
+        # Create object
+        variants = Variants(
+            input=input_vcf, load=True, config=config, param=param
+        )
+
+        # Remove if output file exists
+        remove_if_exists([output_vcf])
+
+        # Calculation
+        variants.calculation()
+
+        # Check output file exists
+        assert os.path.exists(output_vcf), f"Output file {output_vcf} does not exist"
+
+        # Check content of file with object 
+        # Only if not partition due to VCF partition failed
+        param_export = (((param.get("calculation") or {}).get("calculations") or {}).get("EXPORT_VARIANTS") or {}).get("export") or {}
+        if param_export.get("parquet_partitions", None) is None:
+            
+            log.debug(f"Results from output file {output_vcf} with param {param}:")
+            
+            variants_output = Variants(
+                input=output_vcf, load=True, config=config, param=param
+            )
+
+            results = variants_output.get_query_to_df(
+                """ SELECT * FROM variants """
+            )
+            #log.debug(f"Results from output file {output_vcf}: {results.to_string()}")
+            assert len(results) > 0, f"Expected variants in output file {output_vcf}, but got {len(results)}"

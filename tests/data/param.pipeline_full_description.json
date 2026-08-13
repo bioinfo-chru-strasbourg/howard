@@ -46,8 +46,11 @@
             "_tool": "calculation",
             "_description": "Perform HGVS calculations on variants, including SnpEff extraction and HGVS nomenclature.",
             "calculations": {
-              "snpeff_extract": null,
-              "snpeff_hgvs": null,
+              "annotation_extract": {
+                "annotation_field": "ANN",
+                "annotation_hgvs": "snpeff_hgvs",
+                "annotation_explode": "snpeff_"
+              },
               "NOMEN": {
                 "options": {
                   "hgvs_field": "snpeff_hgvs",
@@ -64,7 +67,7 @@
             "_description": "Perform calculations on variants, including variant type, and on genotypes, including VAF calculation.",
             "calculations": {
               "vartype": null,
-              "VAF": ""
+              "vaf_normalization": null
             },
             "calculation_config": "config/calculations_config.json"
           }

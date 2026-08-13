@@ -509,15 +509,18 @@ arguments = {
         """as a list of operations (e.g. 'VARTYPE,variant_id').\n"""
         """List of available calculations by default\n"""
         """ (unsensitive case, see doc for more information):\n"""
+        """ ANNOTATION """
+        """ PRIORITIZATION """
         """ VARTYPE """
-        """ snpeff_hgvs """
+        """ ANNOTATION_EXTRACT """
         """ FIND_SAMPLES """
-        """ GENOTYPECONCORDANCE """
+        """ GENOTYPE_CONCORDANCE """
         """ BARCODE """
         """ TRIO """
         """ VAF """
-        """ VAF_STATS """
-        """ DP_STATS """
+        """ GENOTYPE_STATS """
+        """ EXPORT_VARIANTS """
+        """ EXPORT_STATS """
         """\n""",
         "default": None,
         "type": str,

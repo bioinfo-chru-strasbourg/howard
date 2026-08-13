@@ -66,15 +66,18 @@
   "calculation": {
     "calculations": {
       "vartype": null,
-      "snpeff_extract": null,
-      "snpeff_hgvs": null,
+      "annotation_extract": {
+        "annotation_field": "ANN",
+        "annotation_hgvs": "snpeff_hgvs",
+        "annotation_explode": "snpeff_"
+      },
       "NOMEN": {
         "options": {
           "hgvs_field": "snpeff_hgvs",
           "transcripts": "tests/data/transcripts.tsv"
         }
       },
-      "VAF": ""
+      "vaf_normalization": null
     },
     "calculation_config": "config/calculations_config.json"
   },

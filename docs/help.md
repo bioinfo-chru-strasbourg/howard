@@ -1166,7 +1166,7 @@ Usage examples:
 >     as a list of operations (e.g. 'VARTYPE,variant_id').
 >     List of available calculations by default
 >      (unsensitive case, see doc for more information):
->      VARTYPE  snpeff_hgvs  FIND_SAMPLES  GENOTYPECONCORDANCE  BARCODE  TRIO  VAF  VAF_STATS  DP_STATS
+>      ANNOTATION  PRIORITIZATION  VARTYPE  ANNOTATION_EXTRACT  FIND_SAMPLES  GENOTYPE_CONCORDANCE  BARCODE  TRIO  VAF  GENOTYPE_STATS  EXPORT_VARIANTS  EXPORT_STATS
 
 </small>
 
@@ -1490,7 +1490,7 @@ Usage examples:
 >     as a list of operations (e.g. 'VARTYPE,variant_id').
 >     List of available calculations by default
 >      (unsensitive case, see doc for more information):
->      VARTYPE  snpeff_hgvs  FIND_SAMPLES  GENOTYPECONCORDANCE  BARCODE  TRIO  VAF  VAF_STATS  DP_STATS
+>      ANNOTATION  PRIORITIZATION  VARTYPE  ANNOTATION_EXTRACT  FIND_SAMPLES  GENOTYPE_CONCORDANCE  BARCODE  TRIO  VAF  GENOTYPE_STATS  EXPORT_VARIANTS  EXPORT_STATS
 
 </small>
 

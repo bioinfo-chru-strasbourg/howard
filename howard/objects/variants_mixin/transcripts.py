@@ -971,7 +971,7 @@ class variants_transcripts:
         )
 
     def transcripts_prioritization(
-        self, transcripts_table: str = None, param: dict = {}, strict: bool = False
+        self, transcripts_table: str = None, param: dict = {}, strict: bool = None
     ) -> bool:
         """
         Prioritizes transcripts based on specified parameters and updates the variants table with the prioritized information.
@@ -982,7 +982,7 @@ class variants_transcripts:
             param (dict, optional): A dictionary containing various configuration settings for the prioritization process of transcripts.
                 It is used to customize the behavior of the prioritization algorithm and includes settings such as the prefix for prioritization fields,
                 default profiles, and other relevant configurations.
-            strict (bool, optional): A flag indicating whether to enforce strict prioritization criteria. Defaults to False.
+            strict (bool, optional): A flag indicating whether to enforce strict prioritization criteria. Defaults to None (False).
 
         Returns:
             bool: True if the transcripts prioritization process is successfully completed, and False if there are any issues or if no profile is defined
@@ -1022,6 +1022,10 @@ class variants_transcripts:
                 ALTER TABLE {transcripts_table} ADD COLUMN INFO STRING DEFAULT '';
             """
             self.execute_query(query_add_info)
+
+        # Prioritization strict mode
+        if strict is None:
+            strict = param.get("transcripts", {}).get("prioritization", {}).get("strict", None) or False
 
         # Prioritization param and Force only PZ Score and Flag
         pz_param = param.get("transcripts", {}).get("prioritization", {})

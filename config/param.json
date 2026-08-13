@@ -47,7 +47,7 @@
           "transcripts": "tests/data/transcripts.tsv"
         }
       },
-      "VAF": ""
+      "VAF_NORMALIZATINO": ""
     },
     "calculation_config": "config/calculations_config.json"
   },
