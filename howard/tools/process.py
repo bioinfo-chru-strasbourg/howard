@@ -14,7 +14,8 @@ from howard.functions.commons import (
     get_tmp,
     get_random,
     remove_if_exists,
-    launch_pipeline
+    launch_pipeline,
+    load_param_and_config,
 )
 from howard.objects.variants import Variants
 
@@ -37,6 +38,9 @@ def process(args: argparse, tools=None) -> None:
     """
 
     log.info("Start")
+
+    # Load args, param, config and vcfdata_obj
+    _, _, _, _ = load_param_and_config(args=args, command=None, strict=False, load_data=False)
 
     # Load config args
     arguments_dict, _, config, param = load_config_args(args)
