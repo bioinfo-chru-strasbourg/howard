@@ -410,7 +410,7 @@ def load_param_and_config(args: argparse, command: str, strict: bool = False, lo
         vcfdata_obj.load_data()
 
     # Export parameters and configuration to JSON files if requested
-    if "export_param_config" in args:
+    if "export_param_config" in args and args.export_param_config is not None:
 
         # Get export folder
         export_param_config_folder = full_path(args.export_param_config)
