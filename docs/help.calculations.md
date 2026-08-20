@@ -295,7 +295,11 @@ Calculate genotype statistics on a specific genotype field (e.g. VAF, DP, GQ...)
 
 Calculate genotype statistics on a specific genotype field (e.g. VAF, DP, GQ...). This calculation computes statistical measures for a specified genotype field across different samples, providing insights into the distribution and variability of the chosen genotype metric.
 
-Options for this calculation can be specified in the JSON parameter file, directly in the calculation parameters (see help.parameters.md). The parameter 'infos' specify the genotype fields (either a string or a list of strings) to be analyzed.
+Options for this calculation can be specified in the JSON parameter file, directly in the calculation parameters (see help.parameters.md).
+
+The parameter 'infos' specify the genotype fields (either a string or a list of strings) to be analyzed.
+
+The parameter 'stats' specify the statistics to be calculated (from ['nb', 'list', 'min', 'max', 'mean', 'mediane', 'stdev']) for each information field.
 
  Example of VAF statistics calculation:
 
@@ -304,11 +308,12 @@ Options for this calculation can be specified in the JSON parameter file, direct
    "infos": "VAF" 
 }
 ```
- Example of VAF and GQ statistics calculation:
+ Example of VAF and GQ statistics calculation (only 'min', 'max' and 'mean'):
 
 ```json
 {
-   "infos": ["VAF", "GQ"] 
+   "infos": ["VAF", "GQ"],
+   "stats": ["min", "max", "mean"]
 }
 ```
 If no 'infos' parameter is provided, the calculation will default to analyzing the VAF field. Other genotype fields (with Integer values) can be specified as needed, such as DP (Depth), GQ (Genotype Quality), etc., by providing the appropriate field name in the 'infos' parameter.

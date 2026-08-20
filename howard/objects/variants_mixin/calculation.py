@@ -300,17 +300,20 @@ class variants_calculation:
                 "description": "Calculate genotype statistics on a specific genotype field (e.g. VAF, DP, GQ...)",
                 "comment": [
                     "Calculate genotype statistics on a specific genotype field (e.g. VAF, DP, GQ...). This calculation computes statistical measures for a specified genotype field across different samples, providing insights into the distribution and variability of the chosen genotype metric.\n",
-                    "Options for this calculation can be specified in the JSON parameter file, directly in the calculation parameters (see help.parameters.md). The parameter 'infos' specify the genotype fields (either a string or a list of strings) to be analyzed.\n",
+                    "Options for this calculation can be specified in the JSON parameter file, directly in the calculation parameters (see help.parameters.md).\n",
+                    "The parameter 'infos' specify the genotype fields (either a string or a list of strings) to be analyzed.\n",
+                    "The parameter 'stats' specify the statistics to be calculated (from ['nb', 'list', 'min', 'max', 'mean', 'mediane', 'stdev']) for each information field.\n",
                     " Example of VAF statistics calculation:\n",
                     "```json",
                     """{""",
                     """   "infos": "VAF" """,
                     """}""",
                     "```",
-                    " Example of VAF and GQ statistics calculation:\n",
+                    " Example of VAF and GQ statistics calculation (only 'min', 'max' and 'mean'):\n",
                     "```json",
                     """{""",
-                    """   "infos": ["VAF", "GQ"] """,
+                    """   "infos": ["VAF", "GQ"],""",
+                    """   "stats": ["min", "max", "mean"]""",
                     """}""",
                     "```",
                     "If no 'infos' parameter is provided, the calculation will default to analyzing the VAF field. Other genotype fields (with Integer values) can be specified as needed, such as DP (Depth), GQ (Genotype Quality), etc., by providing the appropriate field name in the 'infos' parameter."
@@ -3634,7 +3637,7 @@ class variants_calculation:
                     )
 
 
-    def calculation_genotype_stats(self, section: str = "calculation", info: str = None, infos: list = None, **kwargs) -> None:
+    def calculation_genotype_stats(self, section: str = "calculation", info: str = None, infos: list = None, stats: list = None, **kwargs) -> None:
         """
         The `calculation_genotype_stats` function calculates genotype statistics for a given information
         field in a VCF file and updates the INFO column of the variants table with the calculated
@@ -3644,11 +3647,16 @@ class variants_calculation:
         genotype statistics are calculated. It is used to generate various VCF info tags for the
         statistics, such as the number of occurrences, the list of values, the minimum value, the
         maximum value, the mean, the median, defaults to ["VAF"] if not specified otherwise.
+        :type info: str (optional)
         :param infos: The `infos` parameter is a list of strings that represents the list of information
         for which genotype statistics are calculated. It is used to generate various VCF info tags for the
         statistics, defaults to ["VAF"]
         :type infos: list of str (optional)
-        :type info: str (optional)
+        :param stats: The `stats` parameter is a list of strings that represents the list of statistics to be calculated for each information field. It is used to generate various VCF info tags for the statistics, defaults to ["nb", "list", "min", "max", "mean", "mediane", "stdev"]
+        :type stats: list of str (optional)
+        :param kwargs: Additional keyword arguments that may be passed to the function.
+        :type kwargs: dict (optional)
+        
         """
 
         operation_params, _ = self.get_operation_params(
@@ -3674,6 +3682,14 @@ class variants_calculation:
                 or [info] if info is not None else ["VAF"]
             )
 
+        # list of stats mesures to calculate for each info field
+        if stats is None:
+            stats = (
+                operation_params.get("stats")
+                or stats
+                or ["nb", "list", "min", "max", "mean", "mediane", "stdev"]
+            )
+
         if isinstance(infos, str):
             infos = infos.split(",")
 
@@ -3690,14 +3706,13 @@ class variants_calculation:
 
                 # VCF infos tags
                 vcf_infos_tags = {
-                    info + "_stats_nb": f"genotype {info} Statistics - number of {info}",
-                    info + "_stats_list": f"genotype {info} Statistics - list of {info}",
-                    info + "_stats_min": f"genotype {info} Statistics - min {info}",
-                    info + "_stats_max": f"genotype {info} Statistics - max {info}",
-                    info + "_stats_mean": f"genotype {info} Statistics - mean {info}",
-                    info + "_stats_mediane": f"genotype {info} Statistics - mediane {info}",
-                    info
-                    + "_stats_stdev": f"genotype {info} Statistics - standard deviation {info}",
+                    info + "_stats_nb": {"number": 1, "type": "Integer", "description": f"genotype {info} Statistics - number of {info}"},
+                    info + "_stats_list": {"number": ".", "type": "String", "description": f"genotype {info} Statistics - list of {info}"},
+                    info + "_stats_min": {"number": 1, "type": "Float", "description": f"genotype {info} Statistics - min {info}"},
+                    info + "_stats_max": {"number": 1, "type": "Float", "description": f"genotype {info} Statistics - max {info}"},
+                    info + "_stats_mean": {"number": 1, "type": "Float", "description": f"genotype {info} Statistics - mean {info}"},
+                    info + "_stats_mediane": {"number": 1, "type": "Float", "description": f"genotype {info} Statistics - mediane {info}"},
+                    info + "_stats_stdev": {"number": 1, "type": "Float", "description": f"genotype {info} Statistics - standard deviation {info}"},
                 }
 
                 # Prefix
@@ -3740,40 +3755,42 @@ class variants_calculation:
                 # Check all VAF stats infos
                 for stat in vcf_infos_tags:
 
-                    # Extract stats
-                    dataframe_vaf_stats[stat] = dataframe_vaf_stats[vaf_stats_infos].apply(
-                        lambda x: dict(x).get(stat, "")
-                    )
+                    if stat in [f"{info}_stats_{s}" for s in stats]:
 
-                    # Add snpeff_hgvs to header
-                    vcf_reader.infos[stat] = vcf.parser._Info(
-                        stat,
-                        ".",
-                        "String",
-                        vcf_infos_tags.get(stat, "genotype statistics"),
-                        "howard calculation",
-                        "0",
-                        self.code_type_map.get("String"),
-                    )
+                        # Extract stats
+                        dataframe_vaf_stats[stat] = dataframe_vaf_stats[vaf_stats_infos].apply(
+                            lambda x: dict(x).get(stat, "")
+                        )
 
-                    if len(sql_vaf_stats_fields):
-                        sep = ";"
-                    else:
-                        sep = ""
+                        # Add snpeff_hgvs to header
+                        vcf_reader.infos[stat] = vcf.parser._Info(
+                            stat,
+                            vcf_infos_tags.get(stat, {}).get("number", "."),
+                            vcf_infos_tags.get(stat, {}).get("type", "String"),
+                            vcf_infos_tags.get(stat, {}).get("description", "genotype statistics"),
+                            "howard calculation",
+                            "0",
+                            self.code_type_map.get(vcf_infos_tags.get(stat, {}).get("type", "String")),
+                        )
 
-                    # Create fields to add in INFO
-                    sql_vaf_stats_fields.append(
-                        f"""
-                            CASE
-                                WHEN dataframe_vaf_stats."{stat}" NOT NULL
-                                THEN concat(
-                                        '{sep}{stat}=',
-                                        dataframe_vaf_stats."{stat}"
-                                    )
-                                ELSE ''
-                            END
-                        """
-                    )
+                        if len(sql_vaf_stats_fields):
+                            sep = ";"
+                        else:
+                            sep = ""
+
+                        # Create fields to add in INFO
+                        sql_vaf_stats_fields.append(
+                            f"""
+                                CASE
+                                    WHEN dataframe_vaf_stats."{stat}" IS NOT NULL
+                                    THEN concat(
+                                            '{sep}{stat}=',
+                                            dataframe_vaf_stats."{stat}"
+                                        )
+                                    ELSE ''
+                                END
+                            """
+                        )
 
                 # SQL set for update
                 sql_vaf_stats_fields_set = ",  ".join(sql_vaf_stats_fields)

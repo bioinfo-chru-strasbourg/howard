@@ -1334,7 +1334,9 @@ VaRank format barcode, identify trio inheritance.</p>
 </blockquote>
 <blockquote>
 <p>howard calculation &#x2013;show_calculations
-&#x2013;show_calculations_md=/tmp/calculations.md</p>
+&#x2013;show_calculations_md=/tmp/calculations.md
+&#x2013;show_calculations_json=/tmp/calculations.json
+&#x2013;show_calculations_yaml=/tmp/calculations.yaml</p>
 </blockquote>
 <blockquote>
 
@@ -1407,6 +1409,20 @@ Show available calculation operations.</code></pre>
 <pre><code>    --show_calculations_md=&lt;show_calculations_md&gt;
 
 Show available calculation operations into a Markdown file.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --show_calculations_json=&lt;show_calculations_json&gt;
+
+Show available calculation operations into a JSON configuration file.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --show_calculations_yaml=&lt;show_calculations_yaml&gt;
+
+Show available calculation operations into a YAML configuration file.</code></pre>
 </blockquote>
 <p></small></p>
 <h2 data-number="9.3" id="nomen"><span
@@ -3381,6 +3397,14 @@ resources (e.g. threads, memory),
 settings (e.g. verbosity, temporary files),
 default folders (e.g. for databases)
 and paths to external tools.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --export_param_config=&lt;Folder for parameters and configurations files&gt;
+
+Export parameters and configurations to JSON and YAML files.
+Use a string to define the pattern path (e.g. &#39;/path/to/config_and_param&#39;).</code></pre>
 </blockquote>
 <p></small></p>
 <p><small></p>
