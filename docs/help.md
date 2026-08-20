@@ -1115,6 +1115,8 @@ Usage examples:
 
 > howard calculation --show_calculations
 > --show_calculations_md=/tmp/calculations.md
+> --show_calculations_json=/tmp/calculations.json
+> --show_calculations_yaml=/tmp/calculations.yaml
 
 > 
 
@@ -1193,6 +1195,22 @@ Usage examples:
 >     --show_calculations_md=<show_calculations_md>
 >
 >     Show available calculation operations into a Markdown file.
+
+</small>
+
+<small>
+
+>     --show_calculations_json=<show_calculations_json>
+>
+>     Show available calculation operations into a JSON configuration file.
+
+</small>
+
+<small>
+
+>     --show_calculations_yaml=<show_calculations_yaml>
+>
+>     Show available calculation operations into a YAML configuration file.
 
 </small>
 
@@ -3334,6 +3352,15 @@ Usage examples:
 >     settings (e.g. verbosity, temporary files),
 >     default folders (e.g. for databases)
 >     and paths to external tools.
+
+</small>
+
+<small>
+
+>     --export_param_config=<Folder for parameters and configurations files>
+>
+>     Export parameters and configurations to JSON and YAML files.
+>     Use a string to define the pattern path (e.g. '/path/to/config_and_param').
 
 </small>
 

@@ -530,19 +530,25 @@ DP, GQ&#x2026;). This calculation computes statistical measures for a specified
 genotype field across different samples, providing insights into the
 distribution and variability of the chosen genotype metric.</p>
 <p>Options for this calculation can be specified in the JSON parameter
-file, directly in the calculation parameters (see help.parameters.html).
-The parameter &#x2018;infos&#x2019; specify the genotype fields (either a string or a
-list of strings) to be analyzed.</p>
+file, directly in the calculation parameters (see
+help.parameters.html).</p>
+<p>The parameter &#x2018;infos&#x2019; specify the genotype fields (either a string or
+a list of strings) to be analyzed.</p>
+<p>The parameter &#x2018;stats&#x2019; specify the statistics to be calculated (from
+[&#x2018;nb&#x2019;, &#x2018;list&#x2019;, &#x2018;min&#x2019;, &#x2018;max&#x2019;, &#x2018;mean&#x2019;, &#x2018;mediane&#x2019;, &#x2018;stdev&#x2019;]) for each
+information field.</p>
 <p>Example of VAF statistics calculation:</p>
 <div class="sourceCode" id="cb15"><pre
 class="sourceCode json"><code class="sourceCode json"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;infos&quot;</span><span class="fu">:</span> <span class="st">&quot;VAF&quot;</span> </span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
-<p>Example of VAF and GQ statistics calculation:</p>
+<p>Example of VAF and GQ statistics calculation (only &#x2018;min&#x2019;, &#x2018;max&#x2019; and
+&#x2018;mean&#x2019;):</p>
 <div class="sourceCode" id="cb16"><pre
 class="sourceCode json"><code class="sourceCode json"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;infos&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;VAF&quot;</span><span class="ot">,</span> <span class="st">&quot;GQ&quot;</span><span class="ot">]</span> </span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;infos&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;VAF&quot;</span><span class="ot">,</span> <span class="st">&quot;GQ&quot;</span><span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;stats&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;min&quot;</span><span class="ot">,</span> <span class="st">&quot;max&quot;</span><span class="ot">,</span> <span class="st">&quot;mean&quot;</span><span class="ot">]</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 <p>If no &#x2018;infos&#x2019; parameter is provided, the calculation will default to
 analyzing the VAF field. Other genotype fields (with Integer values) can
 be specified as needed, such as DP (Depth), GQ (Genotype Quality), etc.,
