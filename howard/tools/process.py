@@ -54,6 +54,17 @@ def process(args: argparse, tools=None) -> None:
         strict=False,
     )
 
+    # Load args into param for all tools and merge param dictionaries
+    if tools is not None:
+        for tool in tools:
+            param = load_args(
+                param=param,
+                args=args,
+                arguments_dict=arguments_dict,
+                command=tool,
+                strict=False,
+            )
+
     # Get chunking parameters from the dedicated "chunking" section in param
     chunking_config_config = config.get("chunking", {})
     chunking_config_param = param.get("chunking", {})
