@@ -1190,7 +1190,7 @@ def test_calculation_snpeff_hgvs(input_file, expected):
             json,
             uniquify,
         )
-        for input_file in [("example.ann.vcf.gz", 7), ("example.chrM.ann.vcf.gz", 10)]
+        for input_file in [("example.ann.vcf.gz", 7), ("example.chrM.bad_ann.vcf", 10), ("example.chrM.ann.vcf", 10)]
         for explode in [True, False]
         for json in [True, False]
         for uniquify in [True, False]
@@ -1215,7 +1215,7 @@ def test_calculation_snpeff_explode(input_file, expected, explode, json, uniquif
                         "annotation_field": "ANN",
                         "annotation_explode": "snpeff_" if explode else None,
                         "annotation_json": "snpeff_json" if json else None,
-                        "annotation_uniquify": uniquify
+                        "uniquify": uniquify
                     }
                 }
             }
@@ -1262,6 +1262,22 @@ def test_calculation_snpeff_explode(input_file, expected, explode, json, uniquif
                 """ SELECT * FROM variants WHERE INFO LIKE '%snpeff_json=%' """
             )
             assert len(result) == expected, f"For 'snpeff_json', Expected {expected} but got {len(result)} for input_file={input_file}, explode={explode}, json={json}, uniquify={uniquify}"
+
+        # Uniquify check: For the variant chr1:28736, there are 5 annotations with snpeff_Allele=C,C,C,C,C. If uniquify is True, we should only have one entry for this variant.
+        check_variant_exists = variants.get_query_to_df(
+            """ SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736"""
+        )
+        if len(check_variant_exists) == 1:
+            if uniquify:
+                result = variants.get_query_to_df(
+                    """ SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND INFO LIKE '%snpeff_Allele=C;%' """
+                )
+                assert len(result) == 1, f"For 'snpeff_Allele=C;', Expected 1 but got {len(result)} for input_file={input_file}, explode={explode}, json={json}, uniquify={uniquify}"
+            else:
+                result = variants.get_query_to_df(
+                    """ SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND INFO LIKE '%snpeff_Allele=C,C,C,C,C;%' """
+                )
+                assert len(result) == 1, f"For 'snpeff_Allele=C,C,C,C,C;', Expected 1 but got {len(result)} for input_file={input_file}, explode={explode}, json={json}, uniquify={uniquify}"
 
         # Check if VCF is in correct format with pyVCF
         remove_if_exists([output_vcf])
