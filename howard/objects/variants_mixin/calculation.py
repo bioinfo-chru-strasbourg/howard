@@ -13,6 +13,7 @@ from howard.functions.commons import (
     barcode,
     clean_annotation_field,
     findbypipeline,
+    first_not_none,
     full_path,
     genotype_stats,
     genotype_concordance,
@@ -767,21 +768,7 @@ class variants_calculation:
         # Sort operations by key
         operations = dict(sorted(operations.items(), key=lambda x: x[0].upper()))
 
-        # # List of operations help
-        # for op in operations:
-        #     op_name = operations[op].get("name", op).upper()
-        #     op_description = operations[op].get("description", op_name)
-        #     op_comment = operations[op].get("comment", op_name)
-        #     op_available = operations[op].get("available", False)
-        #     if op_available:
-        #         if isinstance(op_comment, list):
-        #             op_comment = "\n".join(op_comment).strip()
-        #         operations_help.append(f"   {op_name}: {op_description}")
-        #         operations_help_md.append(f"- [{op_name}](#{op_name.lower()}): {op_description}")
-        #         #operations_help_md.append(f"{op_description}")
-        #         #operations_help_md.append(f"{op_comment}")
-
-        # Detailed operations help
+        # List of operations help
         for op in operations:
             op_name = operations[op].get("name", op).upper()
             op_description = operations[op].get("description", op_name)
@@ -793,10 +780,10 @@ class variants_calculation:
                 operations_help.append(f"   {op_name}: {op_description}")
                 operations_help_md.append(f"## {op_name}")
                 operations_help_md.append(f"{op_description}")
-                operations_help_md.append(f"<details>")
-                operations_help_md.append(f"<summary>Description</summary>")
+                operations_help_md.append("<details>")
+                operations_help_md.append("<summary>Description</summary>")
                 operations_help_md.append(f"{op_comment}")
-                operations_help_md.append(f"</details>")
+                operations_help_md.append("</details>")
 
         # insert header
         operations_help.insert(0, "Available calculation operations:")
@@ -1407,7 +1394,10 @@ class variants_calculation:
         annotation_hgvs: str = None,
         annotation_explode: str = "snpeff_",
         annotation_json: str = None,
-        uniquify: bool = True,
+        uniquify: bool = None,
+        annotation_id: str = None,
+        hgvs_columns: dict = None,
+        hgvs_columns_contain_transcript_id: bool = False,
         **kwargs
     ) -> None:
         """
@@ -1437,61 +1427,63 @@ class variants_calculation:
         ### Parameters for annotations extraction
 
         # annotation field
-        annotation_field = (
-            operation_params.get("annotation_field")
-            or annotation_field
-            or "ANN"
+        annotation_field = first_not_none(
+            operation_params.get("annotation_field", None),
+            annotation_field,
+            "ANN"
         )
 
         # annotation_hgvs
-        annotation_hgvs = (
-            operation_params.get("annotation_hgvs")
-            or annotation_hgvs
-            or None
+        annotation_hgvs = first_not_none(
+            operation_params.get("annotation_hgvs", None),
+            annotation_hgvs,
+            None
         )
 
         # annotation_explode
-        annotation_explode = (
-            operation_params.get("annotation_explode")
-            or annotation_explode
-            or None
+        annotation_explode = first_not_none(
+            operation_params.get("annotation_explode", None),
+            annotation_explode,
+            None
         )
 
         # annotation_json
-        annotation_json = (
-            operation_params.get("annotation_json")
-            or annotation_json
-            or None
+        annotation_json = first_not_none(
+            operation_params.get("annotation_json", None),
+            annotation_json,
+            None
         )
 
         # uniquify
-        uniquify = (
-            operation_params.get("uniquify")
-            or uniquify
-            or True
+        uniquify = first_not_none(
+            operation_params.get("uniquify", None),
+            uniquify,
+            True
         )
 
         # annotation_id
-        annotation_id = (
-            operation_params.get("annotation_id")
-            or "Feature_ID"
+        annotation_id = first_not_none(
+            operation_params.get("annotation_id", None),
+            annotation_id,
+            "Feature_ID"
         )
 
         # hgvs_columns
-        
-        hgvs_columns = (
-            operation_params.get("hgvs_columns")
-            or {"gene": "Gene_ID", "transcript": "Feature_ID", "rank": "Rank", "HGVSc": "HGVS.c", "HGVSp": "HGVS.p"}
+        hgvs_columns = first_not_none(
+            operation_params.get("hgvs_columns", None),
+            hgvs_columns,
+            {"gene": "Gene_ID", "transcript": "Feature_ID", "rank": "Rank", "HGVSc": "HGVS.c", "HGVSp": "HGVS.p"}
         )
 
         # hgvs_columns_contain_transcript_id
-        hgvs_columns_contain_transcript_id = (
-            operation_params.get("hgvs_columns_contain_transcript_id")
-            or False
+        hgvs_columns_contain_transcript_id = first_not_none(
+            operation_params.get("hgvs_columns_contain_transcript_id", None),
+            hgvs_columns_contain_transcript_id,
+            False
         )
 
         # Log 
-        log.debug(f"annotation_field={annotation_field}, annotation_hgvs={annotation_hgvs}, annotation_explode={annotation_explode}, annotation_json={annotation_json}, uniquify={uniquify}, annotation_id={annotation_id}, hgvs_columns={hgvs_columns}, hgvs_columns_contain_transcript_id={hgvs_columns_contain_transcript_id}")
+        #log.debug(f"annotation_field={annotation_field}, annotation_hgvs={annotation_hgvs}, annotation_explode={annotation_explode}, annotation_json={annotation_json}, uniquify={uniquify}, annotation_id={annotation_id}, hgvs_columns={hgvs_columns}, hgvs_columns_contain_transcript_id={hgvs_columns_contain_transcript_id}")
 
         # Variants table
         table_variants = self.get_table_variants()
@@ -1943,69 +1935,70 @@ class variants_calculation:
         ### Parameters for genotype stats calculation
 
         # hgvs_field
-        if hgvs_field is None:
-            hgvs_field = (
-                operation_params.get("options",{}).get("hgvs_field")
-                or hgvs_field
-                or "hgvs"
-            )
-
-        # hgvs_fields
-        if hgvs_fields is None:
-            hgvs_fields = (
-                operation_params.get("options",{}).get("hgvs_fields")
-                or hgvs_fields
-                or hgvs_field
-            )
-
-        # uniquify_hgvs
-        if uniquify_hgvs is None:
-            uniquify_hgvs = (
-                operation_params.get("options",{}).get("uniquify_hgvs")
-                or uniquify_hgvs
-                or False
-            )
-
-        # nomen_pattern
-        if nomen_pattern is None:
-            nomen_pattern = (
-                operation_params.get("options",{}).get("pattern")
-                or nomen_pattern_default
-                or None
-            )
-
-        # nomen_fields
-        nomen_fields = (
-            operation_params.get("options",{}).get("fields")
-            or list(nomen_dict.keys())
-            or None
+        hgvs_field = first_not_none(
+            operation_params.get("options",{}).get("hgvs_field", None),
+            hgvs_field,
+            "hgvs"
         )
 
-        # nomen_transcripts
-        transcripts = (
-            operation_params.get("options",{}).get("transcripts")
-            or transcripts
-            or None
+        # hgvs_fields
+        hgvs_fields = first_not_none(
+            operation_params.get("options",{}).get("hgvs_fields", None),
+            hgvs_fields,
+            hgvs_field
+        )
+
+        # uniquify_hgvs
+        uniquify_hgvs = first_not_none(
+            operation_params.get("options",{}).get("uniquify_hgvs", None),
+            uniquify_hgvs,
+            False
+        )
+
+        # nomen_pattern
+        nomen_pattern = first_not_none(
+            operation_params.get("options",{}).get("pattern", None),
+            nomen_pattern,
+            nomen_pattern_default,
+            None
+        )
+
+        # nomen_fields
+        nomen_fields = first_not_none(
+            operation_params.get("options",{}).get("fields", None),
+            nomen_fields,
+            list(nomen_dict.keys()),
+            None
+        )
+
+        # transcripts
+        transcripts = first_not_none(
+            operation_params.get("options",{}).get("transcripts", None),
+            transcripts,
+            None
         )
 
         # transcripts_table
-        transcripts_table = (
-            operation_params.get("options",{}).get("transcripts_table")
-            or self.get_table_variants()
-            or None
+        transcripts_table = first_not_none(
+            operation_params.get("options",{}).get("transcripts_table", None),
+            transcripts_table,
+            self.get_table_variants(),
+            None
         )
 
         # trancripts_column
-        transcripts_column = (
-            operation_params.get("options",{}).get("transcripts_column")
-            or None
+        transcripts_column = first_not_none(
+            operation_params.get("options",{}).get("transcripts_column", None),
+            transcripts_column,
+            None
         )
 
         # transcripts_order
-        transcripts_order = (
-            operation_params.get("options",{}).get("transcripts_order")
-            or ["column", "file"]
-            or None
+        transcripts_order = first_not_none(
+            operation_params.get("options",{}).get("transcripts_order", None),
+            transcripts_order,
+            ["column", "file"],
+            None
         )
 
 
@@ -2483,11 +2476,11 @@ class variants_calculation:
         ### Parameters for find samples calculation
 
         # find samples tags config
-        if tags is None or tags == {}:
-            tags = (
-                operation_params.get("tags", None)
-                or {"count_samples": "count", "list_samples": "list"}
-            )
+        tags = first_not_none(
+            operation_params.get("tags", None),
+            tags,
+            {"count_samples": "count", "list_samples": "list"}
+        )
 
         # Process each tag in the find_samples_tags_config
         for tag in tags:
@@ -2609,18 +2602,18 @@ class variants_calculation:
         ### Parameters for find samples calculation
 
         # find tag
-        if tag is None:
-            tag = (
-                operation_params.get("tag", None)
-                or "genotype_concordance"
-            )
+        tag = first_not_none(
+            operation_params.get("tag", None),
+            tag,
+            "genotype_concordance"
+        )
 
         # find tag_description
-        if tag_description is None:
-            tag_description = (
-                operation_params.get("tag_description", None)
-                or "Concordance of genotype for multi caller VCF"
-            )
+        tag_description = first_not_none(
+            operation_params.get("tag_description", None),
+            tag_description,
+            "Concordance of genotype for multi caller VCF"
+        )
 
         # if FORMAT and samples
         if (
@@ -2741,18 +2734,18 @@ class variants_calculation:
         ### Parameters for find samples calculation
 
         # find tag
-        if tag is None:
-            tag = (
-                operation_params.get("tag", None)
-                or "barcode"
-            )
+        tag = first_not_none(
+            operation_params.get("tag", None),
+            tag,
+            "barcode"
+        )
 
         # find tag_description
-        if tag_description is None:
-            tag_description = (
-                operation_params.get("tag_description", None)
-                or "barcode calculation (VaRank)"
-            )
+        tag_description = first_not_none(
+            operation_params.get("tag_description", None),
+            tag_description,
+            "barcode calculation (VaRank)"
+        )
 
         # if FORMAT and samples
         if (
@@ -2873,39 +2866,39 @@ class variants_calculation:
         ### Parameters for find samples calculation
 
         # find tag
-        if tag is None:
-            tag = (
-                operation_params.get("tag", None)
-                or "BCF"
-            )
+        tag = first_not_none(
+            operation_params.get("tag", None),
+            tag,
+            "BCF"
+        )
 
         # find tag_description
-        if tag_description is None:
-            tag_description = (
-                operation_params.get("tag_description", None)
-                or "barcode family calculation"
-            )
+        tag_description = first_not_none(
+            operation_params.get("tag_description", None),
+            tag_description,
+            "barcode family calculation"
+        )
 
         # find tag_samples
-        if tag_samples is None:
-            tag_samples = (
-                operation_params.get("tag_samples", None)
-                or f"{tag}S"
-            )
+        tag_samples = first_not_none(
+            operation_params.get("tag_samples", None),
+            tag_samples,
+            f"{tag}S"
+        )
 
         # find tag_samples_description
-        if tag_samples_description is None:
-            tag_samples_description = (
-                operation_params.get("tag_samples_description", None)
-                or "barcode family samples"
-            )
+        tag_samples_description = first_not_none(
+            operation_params.get("tag_samples_description", None),
+            tag_samples_description,
+            "barcode family samples"
+        )
 
         # PED
-        if family_pedigree is None:
-            family_pedigree = (
-                operation_params.get("family_pedigree", None)
-                or None
-            )
+        family_pedigree = first_not_none(
+            operation_params.get("family_pedigree", None),
+            family_pedigree,
+            None
+        )
 
         # if FORMAT and samples
         if (
@@ -2927,16 +2920,11 @@ class variants_calculation:
                 "tag_samples": tag_samples_description,
             }
 
-            # Param
-            param = self.get_param()
-            log.debug(f"param={param}")
-
             # Prefix
             prefix = self.get_explode_infos_prefix()
 
             # PED param
             ped = family_pedigree
-            log.debug(f"ped={ped}")
 
             # Load PED
             if ped:
@@ -3163,25 +3151,25 @@ class variants_calculation:
         ### Parameters for find samples calculation
 
         # find tag
-        if tag is None:
-            tag = (
-                operation_params.get("tag", None)
-                or "trio"
-            )
+        tag = first_not_none(
+            operation_params.get("tag", None),
+            tag,
+            "trio"
+        )
 
         # find tag_description
-        if tag_description is None:
-            tag_description = (
-                operation_params.get("tag_description", None)
-                or "trio calculation"
-            )
+        tag_description = first_not_none(
+            operation_params.get("tag_description", None),
+            tag_description,
+            "trio calculation"
+        )
 
         # PED
-        if trio_pedigree is None:
-            trio_pedigree = (
-                operation_params.get("trio_pedigree", None)
-                or None
-            )
+        trio_pedigree = first_not_none(
+            operation_params.get("trio_pedigree", None),
+            trio_pedigree,
+            None
+        )
 
 
         # if FORMAT and samples
@@ -3515,29 +3503,29 @@ class variants_calculation:
 
             ### Parameters for variant ID calculation
 
-            # variant_id annotation field
-            if annotation_fields is None:
-                annotation_fields = (
-                    operation_params.get("annotation_fields")
-                    or annotation_fields
-                    or {}
-                )
+            # annotation fields
+            annotation_fields = first_not_none(
+                operation_params.get("annotation_fields", None),
+                annotation_fields,
+                {}
+            )
 
-            # variant_id_tag_info
-            if samples is None:
-                samples = (
-                    operation_params.get("samples")
-                    or samples
-                    or self.get_header_sample_list()
-                )
+            # samples
+            samples = first_not_none(
+                operation_params.get("samples", None),
+                samples,
+                self.get_header_sample_list()
+            )
+            # Check if samples is empty, if so, get the header sample list
+            if samples is None or len(samples) == 0:
+                samples = self.get_header_sample_list()
 
-            # keep_variant_id_tag_column
-            if remove_info_fields is None: 
-                remove_info_fields = (
-                    operation_params.get("remove_info_fields")
-                    or remove_info_fields
-                    or False
-                )
+            # remove_info_fields
+            remove_info_fields = first_not_none(
+                operation_params.get("remove_info_fields", None),
+                remove_info_fields,
+                False
+            )
 
             # Variants table
             table_variants = self.get_table_variants()
@@ -3666,29 +3654,25 @@ class variants_calculation:
         ### Parameters for genotype stats calculation
 
         # info uniq (for retrocompatibility)
-
-        if info is None:
-            info = (
-                operation_params.get("info")
-                or info
-                or "VAF"
-            )
+        info = first_not_none(
+            operation_params.get("info", None),
+            info,
+            "VAF"
+        )
 
         # infos parameter for list of genotype information to calculate statistics on
-        if infos is None:
-            infos = (
-                operation_params.get("infos")
-                or infos
-                or [info] if info is not None else ["VAF"]
-            )
+        infos = first_not_none(
+            operation_params.get("infos", None),
+            infos,
+            [info] if info is not None else ["VAF"]
+        )
 
-        # list of stats mesures to calculate for each info field
-        if stats is None:
-            stats = (
-                operation_params.get("stats")
-                or stats
-                or ["nb", "list", "min", "max", "mean", "mediane", "stdev"]
-            )
+        # stats - list of stats mesures to calculate for each info field
+        stats = first_not_none(
+            operation_params.get("stats", None),
+            stats,
+            ["nb", "list", "min", "max", "mean", "mediane", "stdev"]
+        )
 
         if isinstance(infos, str):
             infos = infos.split(",")
@@ -3991,34 +3975,34 @@ class variants_calculation:
         ### Parameters for variant filter calculation
 
         # variant filter where_clause
-        where_clause = (
-            operation_params.get("where_clause")
-            or where_clause
-            or None
+        where_clause = first_not_none(
+            operation_params.get("where_clause", None),
+            where_clause,
+            None
         )
 
         # variant filter sample_list
-        sample_list = (
-            operation_params.get("sample_list")
-            or sample_list
-            or []
+        sample_list = first_not_none(
+            operation_params.get("sample_list", None),
+            sample_list,
+            []
         )
         if sample_list and isinstance(sample_list, str):
             sample_list = [s.strip() for s in sample_list.split(",")]
 
         # variant filter filter_name
-        filter_name = (
-            operation_params.get("filter_name")
-            or filter_name
-            or "Unknown"
+        filter_name = first_not_none(
+            operation_params.get("filter_name", None),
+            filter_name,
+            "Unknown"
         )
 
         # variant filter genotype_filter
-        genotype_filter = (
-            operation_params.get("genotype_filter", None) is True
-            or kwargs.get("genotype_filter", None) is True
-            or genotype_filter is True
-            or False
+        genotype_filter = first_not_none(
+            operation_params.get("genotype_filter", None),
+            #kwargs.get("genotype_filter", None),
+            genotype_filter,
+            False
         )
 
         # Check where_clause
@@ -4276,32 +4260,32 @@ class variants_calculation:
     
             ### Parameters for prioritization calculation
 
-            # Export parameters to export variants
-            file = (
-                operation_params.get("file")
-                or file
-                or None
+            # File
+            file = first_not_none(
+                operation_params.get("file", None),
+                file,
+                None
             )
 
             # Export with a query
-            query = (
-                operation_params.get("query")
-                or query
-                or None
+            query = first_not_none(
+                operation_params.get("query", None),
+                query,
+                None
             )
 
             # Export parameters to export variants
-            export = (
-                operation_params.get("export")
-                or export
-                or {}
+            export = first_not_none(
+                operation_params.get("export", None),
+                export,
+                {}
             )
 
             # Explode parameters to export variants
-            explode = (
-                operation_params.get("explode")
-                or explode
-                or {}
+            explode = first_not_none(
+                operation_params.get("explode", None),
+                explode,
+                {}
             )
 
             # Prepare param json file

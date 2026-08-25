@@ -5993,3 +5993,23 @@ def duckdb_has_spilled(temp_dir: str) -> bool:
 
     # Check if there are any files in the temp_dir
     return any(os.listdir(temp_dir))
+
+def first_not_none(*values):
+    """
+    Return the first value that is not None from the provided values.
+
+    :param values: A variable number of values to check.
+    :return: The first value that is not None, or None if all values are None.
+    :rtype: Any
+
+    Example:
+    >>> first_not_none(None, None, 3, None)
+    3
+    >>> first_not_none(None, None, None)
+    None
+    """
+    for v in values:
+        if v is not None:
+            return v
+    return None
+
