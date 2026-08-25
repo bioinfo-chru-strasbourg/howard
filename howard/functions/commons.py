@@ -6013,3 +6013,103 @@ def first_not_none(*values):
             return v
     return None
 
+class ChromMapping:
+    """
+    Mapping of contigs between the internal naming and that of an external tool,
+    via regex rules applied in sequence. Both directions (to_tool / from_tool)
+    are declared explicitly — no automatic inversion, as a regex is generally
+    not reversible.
+    """
+
+    def __init__(
+        self,
+        mapping: dict = None,
+        to_tool_rules: list[tuple[str, str]] = None,
+        from_tool_rules: list[tuple[str, str]] = None,
+    ):
+        """
+        Initialize a ChromMapping instance.
+
+        :param mapping: A dictionary containing "to_tool" and "from_tool" keys with lists of regex rules.
+        :type mapping: dict, optional
+        :param to_tool_rules: A list of tuples where each tuple contains a regex pattern and its replacement for mapping to the tool's naming convention.
+        :type to_tool_rules: list[tuple[str, str]], optional
+        :param from_tool_rules: A list of tuples where each tuple contains a regex pattern and its replacement for mapping from the tool's naming convention back to the internal naming convention.
+        :type from_tool_rules: list[tuple[str, str]], optional
+
+        """
+
+        self.to_tool_rules = None
+        self.from_tool_rules = None
+
+        # Init mapping rules
+        if mapping is not None:
+            # mapping can be a dict with "to_tool" and "from_tool" keys, or a list of tuples
+
+            # mapping configuration with dict keys "to_tool" and "from_tool"
+            if isinstance(mapping, dict):
+                #log.debug(f"Initializing ChromMapping from mapping dict: {mapping}")
+                self.to_tool_rules = mapping.get("to_tool", [])
+                self.from_tool_rules = mapping.get("from_tool", [])
+
+            # mapping configuration with list of tuples
+            elif isinstance(mapping, list) or isinstance(mapping, tuple):
+
+                #log.debug(f"Initializing ChromMapping from mapping list/tuple: {mapping}")
+
+                # Check if the first element is a list/tuple or a string
+
+                # If the first element is a list or tuple, we assume it's a list of tuples
+                if isinstance(mapping[0], list) or isinstance(mapping[0], tuple):
+                    #log.debug(f"Initializing ChromMapping from mapping list: {mapping}")
+                    self.to_tool_rules = mapping
+
+                # If the first element is a string, we assume it's a single mapping rule
+                elif isinstance(mapping[0], str):
+                    #log.debug(f"Initializing ChromMapping from mapping list of strings: {mapping}")
+                    self.to_tool_rules = [mapping]
+
+            # If the mapping is neither a dict nor a list/tuple, raise an error
+            else:
+                raise ValueError(
+                    "Invalid mapping type. Must be a dict or a list of tuples."
+                )
+
+        # Init rules directly
+        else:
+            self.to_tool_rules = to_tool_rules
+            self.from_tool_rules = from_tool_rules
+
+        # Validate rules from_tool_rules: if not provided or length mismatch, invert to_tool_rules
+        if self.from_tool_rules is None or len(self.from_tool_rules) == 0 or len(self.from_tool_rules) != len(self.to_tool_rules):
+            if self.to_tool_rules is not None:
+                self.from_tool_rules = [(b, a) for a, b in self.to_tool_rules]
+
+        #log.debug(f"ChromMapping initialized with: to_tool_rules={self.to_tool_rules}, from_tool_rules={self.from_tool_rules}")
+
+    def to_tool_sql(self, column: str = '"#CHROM"') -> str:
+        return self._build_sql(column, self.to_tool_rules)
+
+    def from_tool_sql(self, column: str = '"#CHROM"') -> str:
+        return self._build_sql(column, self.from_tool_rules)
+
+    @staticmethod
+    def _build_sql(column: str, rules: list[tuple[str, str]]) -> str:
+        """
+        Build a SQL expression to apply regex replacements on a column based on the provided rules.
+
+        :param column: The name of the column to apply the regex replacements on.
+        :type column: str
+        :param rules: A list of tuples where each tuple contains a regex pattern and its replacement.
+        :type rules: list[tuple[str, str]]
+
+        :return: A SQL expression string that applies the regex replacements in sequence.
+        :rtype: str
+        """
+        expr = column
+        if rules is not None:
+            for pattern, replacement in rules:
+                p = pattern.replace("'", "''")
+                r = replacement.replace("'", "''")
+                expr = f"regexp_replace({expr}, '{p}', '{r}')"
+        return expr

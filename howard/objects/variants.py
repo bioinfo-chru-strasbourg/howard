@@ -3298,6 +3298,7 @@ class Variants(
         add_samples: bool = True,
         list_samples: list = [],
         where_clause: str = "",
+        chrom_mapping_sql: str = None,
         sort: bool = True,
         index: bool = False,
         threads: int | None = None,
@@ -3328,6 +3329,8 @@ class Variants(
         must meet in order to be included in the output VCF file. If no `where_clause` is provided, all
         variants will be exported
         :type where_clause: str
+        :param chrom_mapping_sql: The `chrom_mapping_sql` parameter in the `export_variant_vcf` function is a SQL string that is used to map chromosome names in the `#CHROM` column of the VCF file. If no `chrom_mapping_sql` is provided, the `#CHROM` column will remain unchanged. This allows for customization of chromosome naming conventions in the output VCF file
+        :type chrom_mapping_sql: str | None
         :param sort: The `sort` parameter in the `export_variant_vcf` function is a boolean flag that
         determines whether the output VCF file should be sorted based on genomic coordinates of the variants.
         If `sort` is set to `True`, the output VCF file will be sorted. If `sort` is set to `False`, the output VCF file
@@ -3398,19 +3401,23 @@ class Variants(
             "QUAL": "'0'",
             "FILTER": "'PASS'",
         }
+
         select_fields_list = []
         for column in ["#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER"]:
             if column not in existing_columns:
                 select_fields_list.append(
                     f"{columns_default_values.get(column, '')} AS '{column}'"
                 )
+            elif column == "#CHROM" and chrom_mapping_sql:
+                chrom_expr = chrom_mapping_sql
+                select_fields_list.append(f'{chrom_expr} AS "#CHROM"')
             else:
                 select_fields_list.append(f'"{column}"')
         select_fields = ", ".join(select_fields_list)
 
         # Query
         sql_query_select = f""" SELECT {select_fields}, {info_field} {samples_fields} FROM {table_variants} {where_clause} """
-        log.debug(f"sql_query_select={sql_query_select}")
+        # log.debug(f"sql_query_select={sql_query_select}")
 
         return self.export_output(
             output_file=vcf_file,
@@ -3564,6 +3571,7 @@ class Variants(
         upper_case: bool = True,
         update_header: bool = False,
         annotation_header_fields_override: dict | None = None,
+        chrom_mapping_sql: str = None
     ) -> None:
         """
         > If the database is duckdb, then use the parquet method, otherwise use the sqlite method
@@ -3587,6 +3595,8 @@ class Variants(
         be used to customize the annotation header during the update process. If not provided, the
         default values from the VCF file will be used for the annotation header fields
         :type annotation_header_fields_override: dict | None (optional)
+        :param chrom_mapping_sql: SQL string used to map chromosome names in the `#CHROM` column of the VCF file. If not provided, the `#CHROM` column will remain unchanged.
+        :type chrom_mapping_sql: str | None (optional)
 
         :return: None
         """
@@ -3626,6 +3636,7 @@ class Variants(
                 update_existing_fields=update_existing_fields,
                 remove_vcf_file=remove_vcf_file,
                 upper_case=upper_case,
+                chrom_mapping_sql=chrom_mapping_sql
             )
         elif connexion_format in ["sqlite"]:
             self.update_from_vcf_sqlite(vcf_file)
@@ -3639,6 +3650,7 @@ class Variants(
         update_existing_fields: bool = False,
         remove_vcf_file: bool = True,
         upper_case: bool = True,
+        chrom_mapping_sql: str | None = None,
     ) -> None:
         """
         It takes a VCF file and updates the INFO column of the variants table in the database with the
@@ -3654,6 +3666,9 @@ class Variants(
         :type remove_vcf_file: bool (optional)
         :param upper_case: If True, the ALT and REF fields will be compared in uppercase, defaults to True
         :type upper_case: bool (optional)
+        :param chrom_mapping_sql: SQL string used to map chromosome names in the `#CHROM` column of the VCF file. If not provided, the `#CHROM` column will remain unchanged.
+        :type chrom_mapping_sql: str | None (optional)
+
         :return: None
         """
 
@@ -3731,12 +3746,19 @@ class Variants(
             else:
                 upper_func = ""
 
+            # Chromosome mapping (from_tool -> internal)
+            if chrom_mapping_sql:
+                chrom_expr = chrom_mapping_sql
+                chrom_select = f'{chrom_expr} AS "#CHROM"'
+            else:
+                chrom_select = '"#CHROM"'
+
             # Create table/view from parquet files
             table_source_name = "table_parquet_" + get_random(10)
             sql_query_update = f"""
                 CREATE VIEW {table_source_name}
                 AS (
-                    SELECT "#CHROM", POS, {upper_func}(REF) as REF, {upper_func}(ALT) as ALT, INFO
+                    SELECT {chrom_select}, POS, {upper_func}(REF) as REF, {upper_func}(ALT) as ALT, INFO
                     FROM read_parquet('{vcf_file_parquet_path}')
                     WHERE INFO NOT IN ('','.')
                 )

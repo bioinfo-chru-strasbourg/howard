@@ -54,7 +54,8 @@ from howard.functions.commons import (
     run_parallel_commands,
     folder_config,
     code_type_map,
-    get_random
+    get_random,
+    ChromMapping
 )
 
 from howard.functions.databases import (
@@ -2928,9 +2929,13 @@ class variants_annotation(variants_annotation_docker):
         param = self.get_param()
         log.debug("Param: " + str(param))
 
-        # Param
-        options = param.get(section, {}).get("snpeff", {}).get("options", None)
-        log.debug("Options: " + str(options))
+        # Param - options
+        chrom_mapping_options = param.get(section, {}).get("snpeff", {}).get("chrom_mapping", None)
+        #log.debug("chrom_mapping_options: " + str(chrom_mapping_options))
+
+        chrom_mapping = ChromMapping(
+            mapping=chrom_mapping_options
+        )
 
         # Param - Assembly
         assembly = param.get("assembly", config.get("assembly", DEFAULT_ASSEMBLY))
@@ -2999,7 +3004,7 @@ class variants_annotation(variants_annotation_docker):
         snpeff_java_options = (
             f" -Xmx{memory_limit} -XX:+UseParallelGC -XX:ParallelGCThreads={threads} "
         )
-        log.debug(f"Exomiser java options: {snpeff_java_options}")
+        log.debug(f"snpEff java options: {snpeff_java_options}")
 
         force_update_annotation = True
 
@@ -3012,11 +3017,13 @@ class variants_annotation(variants_annotation_docker):
             )
 
             # Export VCF file
+            #log.debug(f"chrom_mapping.to_tool_sql(): {chrom_mapping.to_tool_sql()}")
             self.export_variant_vcf(
                 vcf_file=tmp_vcf_name,
                 remove_info=True,
                 add_samples=False,
                 index=True,
+                chrom_mapping_sql=chrom_mapping.to_tool_sql()
             )
 
             # Tmp file
@@ -3070,7 +3077,12 @@ class variants_annotation(variants_annotation_docker):
 
             # Update variants
             log.info(f"Annotation - Updating...")
-            self.update_from_vcf(tmp_annotate_vcf_name, update_header=True)
+            #log.debug(f"chrom_mapping.from_tool_sql(): {chrom_mapping.from_tool_sql()}")
+            self.update_from_vcf(
+                tmp_annotate_vcf_name,
+                update_header=True,
+                chrom_mapping_sql=chrom_mapping.from_tool_sql()
+            )
             list_to_remove = [
                 tmp_annotate_vcf_name,
                 tmp_annotate_vcf_name_err,
