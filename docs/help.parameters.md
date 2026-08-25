@@ -21,8 +21,10 @@ title: HOWARD Help Parameters
   - [<span class="toc-section-number">4.4</span> snpeff](#snpeff)
     - [<span class="toc-section-number">4.4.1</span>
       options](#options-1)
-    - [<span class="toc-section-number">4.4.2</span> stats](#stats)
-    - [<span class="toc-section-number">4.4.3</span>
+    - [<span class="toc-section-number">4.4.2</span>
+      chrom_mapping](#chrom_mapping)
+    - [<span class="toc-section-number">4.4.3</span> stats](#stats)
+    - [<span class="toc-section-number">4.4.4</span>
       csvStats](#csvstats)
   - [<span class="toc-section-number">4.5</span> snpsift](#snpsift)
     - [<span class="toc-section-number">4.5.1</span>
@@ -1919,6 +1921,68 @@ Examples:
 > ``` json
 > {
 >    "options": " -hgvs -spliceSiteSize 3 -lof -oicr "
+> }
+> ```
+
+### chrom_mapping
+
+Optional mapping of chromosome names between HOWARD and snpEff.
+
+Rules are applied in sequence as regular expression replacements, using
+\[pattern, replacement\] pairs.
+
+Use 'to_tool' to map names before snpEff annotation and 'from_tool' to
+map them back when importing the annotation results.
+
+If 'from_tool' is omitted, HOWARD derives it by swapping each 'to_tool'
+pattern and replacement; define both directions explicitly when the
+mapping is not reversible (usually when using regex expressions).
+
+Examples:
+
+> Map chromosome names with explicit regular expression rules in both
+> directions, changing chrMT to M and remove 'chr' from chromosomes
+> names
+
+> ``` json
+> {
+>    "chrom_mapping": {
+>       "to_tool": [["^chrMT$", "M"], ["^chr(\\d+|X|Y)$", "\\1"]],
+>       "from_tool": [["^M$", "chrMT"], ["^(\\d+|X|Y)$", "chr\\1"]]
+>    }
+> }
+> ```
+
+> Map chromosome names with one simple replacement and automatically
+> reverse it after annotation
+
+> ``` json
+> {
+>    "chrom_mapping": {"to_tool": [["chrMT", "chrM"]]}
+> }
+> ```
+
+> Apply several simple replacements in sequence, in quick format
+
+> ``` json
+> {
+>    "chrom_mapping": [["chrMT", "chrM"], ["chr1", "1"]]
+> }
+> ```
+
+> Apply one simple replacement
+
+> ``` json
+> {
+>    "chrom_mapping": ["chrMT", "chrM"]
+> }
+> ```
+
+> Disable chromosome mapping (the default).
+
+> ``` json
+> {
+>    "chrom_mapping": null
 > }
 > ```
 

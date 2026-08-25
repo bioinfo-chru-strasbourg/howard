@@ -12,7 +12,9 @@ coverage report --include=howard/* -m
 
 import logging as log
 from tempfile import TemporaryDirectory
+import pytest  # type: ignore
 import vcf  # type: ignore
+import os
 
 from howard.objects.variants import Variants
 from howard.functions.commons import remove_if_exists
@@ -391,3 +393,241 @@ def test_annotation_snpeff_sqlite():
             vcf.Reader(filename=output_vcf)
         except:
             assert False
+
+@pytest.mark.parametrize(
+    "input_vcf, mapping, pattern, expected",
+    [
+        # Test cases for chromosome mapping with regex (python dict, incompatible with JSON)
+        (
+            "example.chrMT.vcf",
+            {
+                "to_tool": [
+                    (r"^chrMT$", "chrM"),
+                    (r"^chr(\d+|X|Y)$", r"\1"),
+                ],
+                "from_tool": [
+                    (r"^chrM$", "chrMT"),
+                    (r"^(\d+|X|Y)$", r"chr\1"),
+                ],
+            },
+            "transcript",
+            10
+        ),
+        # Test cases for chromosome mapping with regex (python list of lists, compatible with JSON)
+        (
+            "example.chrMT.vcf",
+            {
+                "to_tool": [
+                    ["^chrMT$", "chrM"],
+                    ["^chr(\\d+|X|Y)$", "\\1"],
+                ],
+                "from_tool": [
+                    ["^chrM$", "chrMT"],
+                    ["^(\\d+|X|Y)$", "chr\\1"],
+                ],
+            },
+            "transcript",
+            10
+        ),
+        # Test cases for chromosome mapping with simple string replacement (python dict, incompatible with JSON)
+        (
+            "example.chrMT.vcf",
+            {
+                "to_tool": [
+                    ("chrMT", "chrM")
+                ],
+                "from_tool": [
+                    ("chrM", "chrMT")
+                ]
+            },
+            "transcript",
+            10
+        ),
+        # Test cases for chromosome mapping with only "to_tool" section (revert auto) with simple string replacement
+        (
+            "example.chrMT.vcf",
+            {
+                "to_tool": [
+                    ("chrMT", "chrM")
+                ]
+            },
+            "transcript",
+            10
+        ),
+        # Test cases for chromosome mapping with simple string replacement (python list of tuples, incompatible with JSON)
+        (
+            "example.chrMT.vcf",
+            [
+                ("chrMT", "chrM")
+            ],
+            "transcript",
+            10
+        ),
+        # Test cases for chromosome mapping with multiple and simple string replacement (python list of lists, compatible with JSON)
+        (
+            "example.chrMT.vcf",
+            [
+                ("chrMT", "chrM"),
+                ("chr1", "1")
+            ],
+            "transcript",
+            10
+        ),
+        # Test cases for chromosome mapping with unique and simple string replacement (python list, compatible with JSON)
+        (
+            "example.chrMT.vcf",
+            ["chrMT", "chrM"],
+            "transcript",
+            10
+        ),
+        # Test cases for chromosome mapping with multiple and simple string replacement (python list of lists, compatible with JSON)
+        (
+            "example.chrMT.vcf",
+            [["chrMT", "chrM"]],
+            "transcript",
+            10
+        ),
+        # Test cases for empty chromosome mapping (python dict, compatible with JSON)
+        (
+            f"{tests_data_folder}/example.chrMT.vcf",
+            {},
+            "ERROR_OUT_OF_CHROMOSOME_RANGE",
+            10
+        ),
+        # Test cases for None chromosome mapping (python list, compatible with JSON, use null instead of None)
+        (
+            "example.chrMT.vcf",
+            None,
+            "ERROR_OUT_OF_CHROMOSOME_RANGE",
+            10
+        ),
+        # Test cases for empty chromosome mapping (python list, compatible with JSON)
+        (
+            "example.chrM.vcf",
+            {},
+            "transcript",
+            10
+        ),
+        # Test cases for None chromosome mapping (python list, compatible with JSON, use null instead of None)
+        (
+            "example.chrM.vcf",
+            None,
+            "transcript",
+            10
+        ),
+        # Test cases for chromosome mapping with simple string replacement (python list of tuples, incompatible with JSON)
+        (
+            "example.chrM.vcf",
+            [
+                ("chr1", "1")
+            ],
+            "transcript",
+            10
+        ),
+        # Test cases for chromosome mapping with simple string replacement (python list of tuples, incompatible with JSON)
+        (
+            "example.chrM.vcf",
+            [
+                ("chrM", "chrMT")
+            ],
+            "ERROR_OUT_OF_CHROMOSOME_RANGE",
+            10
+        ),
+        # Test cases for chromosome mapping with simple string replacement, unknown chromosome (python list of tuples, incompatible with JSON)
+        (
+            "example.chrM.vcf",
+            [
+                ("chrM", "chrUNKNOWN")
+            ],
+            "ERROR_CHROMOSOME_NOT_FOUND",
+            10
+        ),
+        # Test cases for chromosome mapping with regex, with variants on chr1 and chr7 (python list of lists, compatible with JSON)
+        (
+            "example.vcf",
+            {
+                "to_tool": [
+                    ["^chrMT$", "chrM"],
+                    ["^chr(\\d+|X|Y)$", "\\1"],
+                ],
+                "from_tool": [
+                    ["^chrM$", "chrMT"],
+                    ["^(\\d+|X|Y)$", "chr\\1"],
+                ],
+            },
+            "transcript",
+            7
+        ),
+    ],
+)
+def test_annotation_snpeff_mapping(input_vcf, mapping, pattern, expected):
+    """
+    This function tests the annotation of variants using the snpEff tool.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = os.path.join(tests_data_folder, input_vcf)
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+
+        # Copy config
+        tests_config_snpeff = tests_config.copy()
+
+        # Number of threads
+        tests_config_snpeff["threads"] = 2
+
+        # Memory
+        tests_config_snpeff["memory"] = "4G"
+
+        # Construct param dict
+        param = {
+            "annotation": {
+                "snpeff": {
+                    #"options": " ",
+                    "chrom_mapping": mapping,
+                }
+            }
+        }
+
+        # Create object
+        variants = Variants(
+            conn=None,
+            input=input_vcf,
+            output=output_vcf,
+            config=tests_config_snpeff,
+            param=param,
+            load=True,
+        )
+
+        # Remove if output file exists
+        remove_if_exists([output_vcf])
+
+        # Annotation
+        variants.annotation()
+
+        # # DEVEL
+        # result = variants.get_query_to_df(
+        #     """ SELECT * FROM variants  """
+        # )
+        # log.debug(f"result: {result.to_string()}")
+
+        # query annotated variant
+        result = variants.get_query_to_df(
+            """ SELECT * FROM variants WHERE "INFO" LIKE '%ANN%' """
+        )
+        assert len(result) == expected
+
+        # query annotated variant with specific pattern
+        result = variants.get_query_to_df(
+            f""" SELECT * FROM variants WHERE "INFO" LIKE '%{pattern}%' """
+        )
+        assert len(result) == expected
+
+        # Check if VCF is in correct format with pyVCF
+        variants.export_output()
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
+
