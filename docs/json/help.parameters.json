@@ -1155,6 +1155,29 @@
           "\"options\": \" -hgvs -spliceSiteSize 3 -lof -oicr \""
         ]
       },
+      "chrom_mapping": {
+        "__help": [
+          "Optional mapping of chromosome names between HOWARD and snpEff.",
+          "Rules are applied in sequence as regular expression replacements, using [pattern, replacement] pairs.",
+          "Use 'to_tool' to map names before snpEff annotation and 'from_tool' to map them back when importing the annotation results.",
+          "If 'from_tool' is omitted, HOWARD derives it by swapping each 'to_tool' pattern and replacement; define both directions explicitly when the mapping is not reversible (usually when using regex expressions)."
+        ],
+        "__examples_code": [
+          "# Map chromosome names with explicit regular expression rules in both directions, changing chrMT to M and remove 'chr' from chromosomes names",
+          "\"chrom_mapping\": {",
+          "   \"to_tool\": [[\"^chrMT$\", \"M\"], [\"^chr(\\\\d+|X|Y)$\", \"\\\\1\"]],",
+          "   \"from_tool\": [[\"^M$\", \"chrMT\"], [\"^(\\\\d+|X|Y)$\", \"chr\\\\1\"]]",
+          "}",
+          "# Map chromosome names with one simple replacement and automatically reverse it after annotation",
+          "\"chrom_mapping\": {\"to_tool\": [[\"chrMT\", \"chrM\"]]}",
+          "# Apply several simple replacements in sequence, in quick format",
+          "\"chrom_mapping\": [[\"chrMT\", \"chrM\"], [\"chr1\", \"1\"]]",
+          "# Apply one simple replacement",
+          "\"chrom_mapping\": [\"chrMT\", \"chrM\"]",
+          "# Disable chromosome mapping (the default).",
+          "\"chrom_mapping\": null"
+        ]
+      },
       "stats": {
         "__help": [
           "HTML file for snpEff stats. Use keyword 'OUTPUT' to generate file according to output file."
