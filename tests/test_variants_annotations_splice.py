@@ -19,6 +19,7 @@ from test_needed import (
     tests_databases_release,
 )
 import os
+from howard.functions.databases import databases_download_genomes
 
 """
 Aim: test splice annotation
@@ -51,7 +52,7 @@ CONFIG = {
     "tools": {
         "splice": {
             "docker": {
-                "image": "bioinfochrustrasbourg/splice:0.2.5",
+                "image": "bioinfochrustrasbourg/splice:0.2.6",
                 "entrypoint": "/bin/bash",
             }
         }
@@ -67,7 +68,7 @@ CONFIG_DOCKER = {
     "tools": {
         "splice": {
             "docker": {
-                "image": "bioinfochrustrasbourg/splice:0.2.5",
+                "image": "bioinfochrustrasbourg/splice:0.2.6",
                 "entrypoint": "/bin/bash",
                 "config": {"automount": True, "notremove": True, "tmp": False},
             }
@@ -97,6 +98,19 @@ def test_annotation_splice():
 
         # Param
         param["annotation"]["splice"]["options"]["output_folder"] = tmp_dir
+        
+        # Download genomes if not present
+        if not os.path.exists(f"{tests_databases_folder}/genomes/{tests_databases_release}/hg19.fa"):
+            provider = "UCSC"
+            contig_regex = None
+            threads = 12
+            databases_download_genomes(
+                assemblies=["hg19"],
+                genomes_folder=f"{tests_databases_folder}/genomes/{tests_databases_release}",
+                provider=provider,
+                contig_regex=contig_regex,
+                threads=threads,
+            )
 
         # Init files
         input_vcf = tests_data_folder + "/example.vcf"
