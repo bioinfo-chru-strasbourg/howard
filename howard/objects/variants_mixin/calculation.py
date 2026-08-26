@@ -1535,18 +1535,18 @@ class variants_calculation:
                     annotation_type, "String"
                 )
                 annotation_column = f'"{annotation_name}"'
-                annotation_number = 1
+                annotation_number = "."
                 if annotation_type_vcf in ["Flag"]:
                     annotation_number = 0
                 elif annotation_name in ["Annotation"]:
-                    annotation_number = "."
+                    #annotation_number = "."
                     annotation_column = (
                         f"""replace(CAST("{annotation_name}" AS VARCHAR), '&', ',')"""
                     )
                 elif annotation_name in ["Distance"]:
                     annotation_column = f"""string_split(CAST("{annotation_name}" AS VARCHAR), '.')[1]"""
-
-                    annotation_number = 1
+                    #annotation_number = 1
+                    
                 annotation_desc = f"Annotation '{annotation_name}'"
 
                 # Create dict
