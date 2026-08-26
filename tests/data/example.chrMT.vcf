@@ -1,0 +1,14 @@
+##fileformat=VCFv4.2
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##contig=<ID=chrMT,length=16571>
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	sample1
+chrMT	73	.	A	G	51.5	PASS	.	GT	1/1
+chrMT	152	.	T	C	53.2	PASS	.	GT	1/1
+chrMT	263	.	A	G	51.7	PASS	.	GT	1/1
+chrMT	310	.	T	TC	32.5	PASS	.	GT	1/1
+chrMT	497	.	C	T	50.6	PASS	.	GT	1/1
+chrMT	750	.	A	G	49.7	PASS	.	GT	1/1
+chrMT	1189	.	T	C	56.9	PASS	.	GT	1/1
+chrMT	1438	.	A	G	57.4	PASS	.	GT	1/1
+chrMT	1811	.	A	G	63.9	PASS	.	GT	1/1
+chrMT	2706	.	A	G	59.4	PASS	.	GT	1/1
