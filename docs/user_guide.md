@@ -226,7 +226,7 @@ Configuration file example:
     "docker": "docker",
     "splice": {
       "docker": {
-        "image": "bioinfochrustrasbourg/splice:0.2.4",
+        "image": "bioinfochrustrasbourg/splice:0.2.6",
         "entrypoint": "/bin/bash",
         "options": null,
         "command": null

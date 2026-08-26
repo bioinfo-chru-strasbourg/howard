@@ -543,6 +543,30 @@
             <li>
                     <a class="function" href="#duckdb_has_spilled">duckdb_has_spilled</a>
             </li>
+            <li>
+                    <a class="function" href="#first_not_none">first_not_none</a>
+            </li>
+            <li>
+                    <a class="class" href="#ChromMapping">ChromMapping</a>
+                            <ul class="memberlist">
+                        <li>
+                                <a class="function" href="#ChromMapping.__init__">ChromMapping</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#ChromMapping.to_tool_rules">to_tool_rules</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#ChromMapping.from_tool_rules">from_tool_rules</a>
+                        </li>
+                        <li>
+                                <a class="function" href="#ChromMapping.to_tool_sql">to_tool_sql</a>
+                        </li>
+                        <li>
+                                <a class="function" href="#ChromMapping.from_tool_sql">from_tool_sql</a>
+                        </li>
+                </ul>
+
+            </li>
     </ul>
 
 
@@ -682,7 +706,7 @@
 </span><span id="L-116"><a href="#L-116"><span class="linenos"> 116</span></a>    <span class="s2">&quot;docker&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;bin&quot;</span><span class="p">:</span> <span class="s2">&quot;docker&quot;</span><span class="p">},</span>
 </span><span id="L-117"><a href="#L-117"><span class="linenos"> 117</span></a>    <span class="s2">&quot;splice&quot;</span><span class="p">:</span> <span class="p">{</span>
 </span><span id="L-118"><a href="#L-118"><span class="linenos"> 118</span></a>        <span class="s2">&quot;docker&quot;</span><span class="p">:</span> <span class="p">{</span>
-</span><span id="L-119"><a href="#L-119"><span class="linenos"> 119</span></a>            <span class="s2">&quot;image&quot;</span><span class="p">:</span> <span class="s2">&quot;bioinfochrustrasbourg/splice:0.2.4&quot;</span><span class="p">,</span>
+</span><span id="L-119"><a href="#L-119"><span class="linenos"> 119</span></a>            <span class="s2">&quot;image&quot;</span><span class="p">:</span> <span class="s2">&quot;bioinfochrustrasbourg/splice:0.2.6&quot;</span><span class="p">,</span>
 </span><span id="L-120"><a href="#L-120"><span class="linenos"> 120</span></a>            <span class="s2">&quot;entrypoint&quot;</span><span class="p">:</span> <span class="s2">&quot;/bin/bash&quot;</span><span class="p">,</span>
 </span><span id="L-121"><a href="#L-121"><span class="linenos"> 121</span></a>            <span class="s2">&quot;options&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
 </span><span id="L-122"><a href="#L-122"><span class="linenos"> 122</span></a>            <span class="s2">&quot;command&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
@@ -6559,6 +6583,126 @@
 </span><span id="L-5993"><a href="#L-5993"><span class="linenos">5993</span></a>
 </span><span id="L-5994"><a href="#L-5994"><span class="linenos">5994</span></a>    <span class="c1"># Check if there are any files in the temp_dir</span>
 </span><span id="L-5995"><a href="#L-5995"><span class="linenos">5995</span></a>    <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">temp_dir</span><span class="p">))</span>
+</span><span id="L-5996"><a href="#L-5996"><span class="linenos">5996</span></a>
+</span><span id="L-5997"><a href="#L-5997"><span class="linenos">5997</span></a><span class="k">def</span><span class="w"> </span><span class="nf">first_not_none</span><span class="p">(</span><span class="o">*</span><span class="n">values</span><span class="p">):</span>
+</span><span id="L-5998"><a href="#L-5998"><span class="linenos">5998</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="L-5999"><a href="#L-5999"><span class="linenos">5999</span></a><span class="sd">    Return the first value that is not None from the provided values.</span>
+</span><span id="L-6000"><a href="#L-6000"><span class="linenos">6000</span></a>
+</span><span id="L-6001"><a href="#L-6001"><span class="linenos">6001</span></a><span class="sd">    :param values: A variable number of values to check.</span>
+</span><span id="L-6002"><a href="#L-6002"><span class="linenos">6002</span></a><span class="sd">    :return: The first value that is not None, or None if all values are None.</span>
+</span><span id="L-6003"><a href="#L-6003"><span class="linenos">6003</span></a><span class="sd">    :rtype: Any</span>
+</span><span id="L-6004"><a href="#L-6004"><span class="linenos">6004</span></a>
+</span><span id="L-6005"><a href="#L-6005"><span class="linenos">6005</span></a><span class="sd">    Example:</span>
+</span><span id="L-6006"><a href="#L-6006"><span class="linenos">6006</span></a><span class="sd">    &gt;&gt;&gt; first_not_none(None, None, 3, None)</span>
+</span><span id="L-6007"><a href="#L-6007"><span class="linenos">6007</span></a><span class="sd">    3</span>
+</span><span id="L-6008"><a href="#L-6008"><span class="linenos">6008</span></a><span class="sd">    &gt;&gt;&gt; first_not_none(None, None, None)</span>
+</span><span id="L-6009"><a href="#L-6009"><span class="linenos">6009</span></a><span class="sd">    None</span>
+</span><span id="L-6010"><a href="#L-6010"><span class="linenos">6010</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="L-6011"><a href="#L-6011"><span class="linenos">6011</span></a>    <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
+</span><span id="L-6012"><a href="#L-6012"><span class="linenos">6012</span></a>        <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="L-6013"><a href="#L-6013"><span class="linenos">6013</span></a>            <span class="k">return</span> <span class="n">v</span>
+</span><span id="L-6014"><a href="#L-6014"><span class="linenos">6014</span></a>    <span class="k">return</span> <span class="kc">None</span>
+</span><span id="L-6015"><a href="#L-6015"><span class="linenos">6015</span></a>
+</span><span id="L-6016"><a href="#L-6016"><span class="linenos">6016</span></a><span class="k">class</span><span class="w"> </span><span class="nc">ChromMapping</span><span class="p">:</span>
+</span><span id="L-6017"><a href="#L-6017"><span class="linenos">6017</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="L-6018"><a href="#L-6018"><span class="linenos">6018</span></a><span class="sd">    Mapping of contigs between the internal naming and that of an external tool,</span>
+</span><span id="L-6019"><a href="#L-6019"><span class="linenos">6019</span></a><span class="sd">    via regex rules applied in sequence. Both directions (to_tool / from_tool)</span>
+</span><span id="L-6020"><a href="#L-6020"><span class="linenos">6020</span></a><span class="sd">    are declared explicitly — no automatic inversion, as a regex is generally</span>
+</span><span id="L-6021"><a href="#L-6021"><span class="linenos">6021</span></a><span class="sd">    not reversible.</span>
+</span><span id="L-6022"><a href="#L-6022"><span class="linenos">6022</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="L-6023"><a href="#L-6023"><span class="linenos">6023</span></a>
+</span><span id="L-6024"><a href="#L-6024"><span class="linenos">6024</span></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+</span><span id="L-6025"><a href="#L-6025"><span class="linenos">6025</span></a>        <span class="bp">self</span><span class="p">,</span>
+</span><span id="L-6026"><a href="#L-6026"><span class="linenos">6026</span></a>        <span class="n">mapping</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="L-6027"><a href="#L-6027"><span class="linenos">6027</span></a>        <span class="n">to_tool_rules</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="L-6028"><a href="#L-6028"><span class="linenos">6028</span></a>        <span class="n">from_tool_rules</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="L-6029"><a href="#L-6029"><span class="linenos">6029</span></a>    <span class="p">):</span>
+</span><span id="L-6030"><a href="#L-6030"><span class="linenos">6030</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="L-6031"><a href="#L-6031"><span class="linenos">6031</span></a><span class="sd">        Initialize a ChromMapping instance.</span>
+</span><span id="L-6032"><a href="#L-6032"><span class="linenos">6032</span></a>
+</span><span id="L-6033"><a href="#L-6033"><span class="linenos">6033</span></a><span class="sd">        :param mapping: A dictionary containing &quot;to_tool&quot; and &quot;from_tool&quot; keys with lists of regex rules.</span>
+</span><span id="L-6034"><a href="#L-6034"><span class="linenos">6034</span></a><span class="sd">        :type mapping: dict, optional</span>
+</span><span id="L-6035"><a href="#L-6035"><span class="linenos">6035</span></a><span class="sd">        :param to_tool_rules: A list of tuples where each tuple contains a regex pattern and its replacement for mapping to the tool&#39;s naming convention.</span>
+</span><span id="L-6036"><a href="#L-6036"><span class="linenos">6036</span></a><span class="sd">        :type to_tool_rules: list[tuple[str, str]], optional</span>
+</span><span id="L-6037"><a href="#L-6037"><span class="linenos">6037</span></a><span class="sd">        :param from_tool_rules: A list of tuples where each tuple contains a regex pattern and its replacement for mapping from the tool&#39;s naming convention back to the internal naming convention.</span>
+</span><span id="L-6038"><a href="#L-6038"><span class="linenos">6038</span></a><span class="sd">        :type from_tool_rules: list[tuple[str, str]], optional</span>
+</span><span id="L-6039"><a href="#L-6039"><span class="linenos">6039</span></a>
+</span><span id="L-6040"><a href="#L-6040"><span class="linenos">6040</span></a><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="L-6041"><a href="#L-6041"><span class="linenos">6041</span></a>
+</span><span id="L-6042"><a href="#L-6042"><span class="linenos">6042</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">to_tool_rules</span> <span class="o">=</span> <span class="kc">None</span>
+</span><span id="L-6043"><a href="#L-6043"><span class="linenos">6043</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">from_tool_rules</span> <span class="o">=</span> <span class="kc">None</span>
+</span><span id="L-6044"><a href="#L-6044"><span class="linenos">6044</span></a>
+</span><span id="L-6045"><a href="#L-6045"><span class="linenos">6045</span></a>        <span class="c1"># Init mapping rules</span>
+</span><span id="L-6046"><a href="#L-6046"><span class="linenos">6046</span></a>        <span class="k">if</span> <span class="n">mapping</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="L-6047"><a href="#L-6047"><span class="linenos">6047</span></a>            <span class="c1"># mapping can be a dict with &quot;to_tool&quot; and &quot;from_tool&quot; keys, or a list of tuples</span>
+</span><span id="L-6048"><a href="#L-6048"><span class="linenos">6048</span></a>
+</span><span id="L-6049"><a href="#L-6049"><span class="linenos">6049</span></a>            <span class="c1"># mapping configuration with dict keys &quot;to_tool&quot; and &quot;from_tool&quot;</span>
+</span><span id="L-6050"><a href="#L-6050"><span class="linenos">6050</span></a>            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mapping</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+</span><span id="L-6051"><a href="#L-6051"><span class="linenos">6051</span></a>                <span class="c1">#log.debug(f&quot;Initializing ChromMapping from mapping dict: {mapping}&quot;)</span>
+</span><span id="L-6052"><a href="#L-6052"><span class="linenos">6052</span></a>                <span class="bp">self</span><span class="o">.</span><span class="n">to_tool_rules</span> <span class="o">=</span> <span class="n">mapping</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;to_tool&quot;</span><span class="p">,</span> <span class="p">[])</span>
+</span><span id="L-6053"><a href="#L-6053"><span class="linenos">6053</span></a>                <span class="bp">self</span><span class="o">.</span><span class="n">from_tool_rules</span> <span class="o">=</span> <span class="n">mapping</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;from_tool&quot;</span><span class="p">,</span> <span class="p">[])</span>
+</span><span id="L-6054"><a href="#L-6054"><span class="linenos">6054</span></a>
+</span><span id="L-6055"><a href="#L-6055"><span class="linenos">6055</span></a>            <span class="c1"># mapping configuration with list of tuples</span>
+</span><span id="L-6056"><a href="#L-6056"><span class="linenos">6056</span></a>            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mapping</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mapping</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+</span><span id="L-6057"><a href="#L-6057"><span class="linenos">6057</span></a>
+</span><span id="L-6058"><a href="#L-6058"><span class="linenos">6058</span></a>                <span class="c1">#log.debug(f&quot;Initializing ChromMapping from mapping list/tuple: {mapping}&quot;)</span>
+</span><span id="L-6059"><a href="#L-6059"><span class="linenos">6059</span></a>
+</span><span id="L-6060"><a href="#L-6060"><span class="linenos">6060</span></a>                <span class="c1"># Check if the first element is a list/tuple or a string</span>
+</span><span id="L-6061"><a href="#L-6061"><span class="linenos">6061</span></a>
+</span><span id="L-6062"><a href="#L-6062"><span class="linenos">6062</span></a>                <span class="c1"># If the first element is a list or tuple, we assume it&#39;s a list of tuples</span>
+</span><span id="L-6063"><a href="#L-6063"><span class="linenos">6063</span></a>                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mapping</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mapping</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">tuple</span><span class="p">):</span>
+</span><span id="L-6064"><a href="#L-6064"><span class="linenos">6064</span></a>                    <span class="c1">#log.debug(f&quot;Initializing ChromMapping from mapping list: {mapping}&quot;)</span>
+</span><span id="L-6065"><a href="#L-6065"><span class="linenos">6065</span></a>                    <span class="bp">self</span><span class="o">.</span><span class="n">to_tool_rules</span> <span class="o">=</span> <span class="n">mapping</span>
+</span><span id="L-6066"><a href="#L-6066"><span class="linenos">6066</span></a>
+</span><span id="L-6067"><a href="#L-6067"><span class="linenos">6067</span></a>                <span class="c1"># If the first element is a string, we assume it&#39;s a single mapping rule</span>
+</span><span id="L-6068"><a href="#L-6068"><span class="linenos">6068</span></a>                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mapping</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">str</span><span class="p">):</span>
+</span><span id="L-6069"><a href="#L-6069"><span class="linenos">6069</span></a>                    <span class="c1">#log.debug(f&quot;Initializing ChromMapping from mapping list of strings: {mapping}&quot;)</span>
+</span><span id="L-6070"><a href="#L-6070"><span class="linenos">6070</span></a>                    <span class="bp">self</span><span class="o">.</span><span class="n">to_tool_rules</span> <span class="o">=</span> <span class="p">[</span><span class="n">mapping</span><span class="p">]</span>
+</span><span id="L-6071"><a href="#L-6071"><span class="linenos">6071</span></a>
+</span><span id="L-6072"><a href="#L-6072"><span class="linenos">6072</span></a>            <span class="c1"># If the mapping is neither a dict nor a list/tuple, raise an error</span>
+</span><span id="L-6073"><a href="#L-6073"><span class="linenos">6073</span></a>            <span class="k">else</span><span class="p">:</span>
+</span><span id="L-6074"><a href="#L-6074"><span class="linenos">6074</span></a>                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="L-6075"><a href="#L-6075"><span class="linenos">6075</span></a>                    <span class="s2">&quot;Invalid mapping type. Must be a dict or a list of tuples.&quot;</span>
+</span><span id="L-6076"><a href="#L-6076"><span class="linenos">6076</span></a>                <span class="p">)</span>
+</span><span id="L-6077"><a href="#L-6077"><span class="linenos">6077</span></a>
+</span><span id="L-6078"><a href="#L-6078"><span class="linenos">6078</span></a>        <span class="c1"># Init rules directly</span>
+</span><span id="L-6079"><a href="#L-6079"><span class="linenos">6079</span></a>        <span class="k">else</span><span class="p">:</span>
+</span><span id="L-6080"><a href="#L-6080"><span class="linenos">6080</span></a>            <span class="bp">self</span><span class="o">.</span><span class="n">to_tool_rules</span> <span class="o">=</span> <span class="n">to_tool_rules</span>
+</span><span id="L-6081"><a href="#L-6081"><span class="linenos">6081</span></a>            <span class="bp">self</span><span class="o">.</span><span class="n">from_tool_rules</span> <span class="o">=</span> <span class="n">from_tool_rules</span>
+</span><span id="L-6082"><a href="#L-6082"><span class="linenos">6082</span></a>
+</span><span id="L-6083"><a href="#L-6083"><span class="linenos">6083</span></a>        <span class="c1"># Validate rules from_tool_rules: if not provided or length mismatch, invert to_tool_rules</span>
+</span><span id="L-6084"><a href="#L-6084"><span class="linenos">6084</span></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">from_tool_rules</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">from_tool_rules</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">from_tool_rules</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">to_tool_rules</span><span class="p">):</span>
+</span><span id="L-6085"><a href="#L-6085"><span class="linenos">6085</span></a>            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_tool_rules</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="L-6086"><a href="#L-6086"><span class="linenos">6086</span></a>                <span class="bp">self</span><span class="o">.</span><span class="n">from_tool_rules</span> <span class="o">=</span> <span class="p">[(</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_tool_rules</span><span class="p">]</span>
+</span><span id="L-6087"><a href="#L-6087"><span class="linenos">6087</span></a>
+</span><span id="L-6088"><a href="#L-6088"><span class="linenos">6088</span></a>        <span class="c1">#log.debug(f&quot;ChromMapping initialized with: to_tool_rules={self.to_tool_rules}, from_tool_rules={self.from_tool_rules}&quot;)</span>
+</span><span id="L-6089"><a href="#L-6089"><span class="linenos">6089</span></a>
+</span><span id="L-6090"><a href="#L-6090"><span class="linenos">6090</span></a>    <span class="k">def</span><span class="w"> </span><span class="nf">to_tool_sql</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">column</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&quot;#CHROM&quot;&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="L-6091"><a href="#L-6091"><span class="linenos">6091</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_sql</span><span class="p">(</span><span class="n">column</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_tool_rules</span><span class="p">)</span>
+</span><span id="L-6092"><a href="#L-6092"><span class="linenos">6092</span></a>
+</span><span id="L-6093"><a href="#L-6093"><span class="linenos">6093</span></a>    <span class="k">def</span><span class="w"> </span><span class="nf">from_tool_sql</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">column</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&quot;#CHROM&quot;&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="L-6094"><a href="#L-6094"><span class="linenos">6094</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_sql</span><span class="p">(</span><span class="n">column</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">from_tool_rules</span><span class="p">)</span>
+</span><span id="L-6095"><a href="#L-6095"><span class="linenos">6095</span></a>
+</span><span id="L-6096"><a href="#L-6096"><span class="linenos">6096</span></a>    <span class="nd">@staticmethod</span>
+</span><span id="L-6097"><a href="#L-6097"><span class="linenos">6097</span></a>    <span class="k">def</span><span class="w"> </span><span class="nf">_build_sql</span><span class="p">(</span><span class="n">column</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">rules</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="L-6098"><a href="#L-6098"><span class="linenos">6098</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="L-6099"><a href="#L-6099"><span class="linenos">6099</span></a><span class="sd">        Build a SQL expression to apply regex replacements on a column based on the provided rules.</span>
+</span><span id="L-6100"><a href="#L-6100"><span class="linenos">6100</span></a>
+</span><span id="L-6101"><a href="#L-6101"><span class="linenos">6101</span></a><span class="sd">        :param column: The name of the column to apply the regex replacements on.</span>
+</span><span id="L-6102"><a href="#L-6102"><span class="linenos">6102</span></a><span class="sd">        :type column: str</span>
+</span><span id="L-6103"><a href="#L-6103"><span class="linenos">6103</span></a><span class="sd">        :param rules: A list of tuples where each tuple contains a regex pattern and its replacement.</span>
+</span><span id="L-6104"><a href="#L-6104"><span class="linenos">6104</span></a><span class="sd">        :type rules: list[tuple[str, str]]</span>
+</span><span id="L-6105"><a href="#L-6105"><span class="linenos">6105</span></a>
+</span><span id="L-6106"><a href="#L-6106"><span class="linenos">6106</span></a><span class="sd">        :return: A SQL expression string that applies the regex replacements in sequence.</span>
+</span><span id="L-6107"><a href="#L-6107"><span class="linenos">6107</span></a><span class="sd">        :rtype: str</span>
+</span><span id="L-6108"><a href="#L-6108"><span class="linenos">6108</span></a><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="L-6109"><a href="#L-6109"><span class="linenos">6109</span></a>        <span class="n">expr</span> <span class="o">=</span> <span class="n">column</span>
+</span><span id="L-6110"><a href="#L-6110"><span class="linenos">6110</span></a>        <span class="k">if</span> <span class="n">rules</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="L-6111"><a href="#L-6111"><span class="linenos">6111</span></a>            <span class="k">for</span> <span class="n">pattern</span><span class="p">,</span> <span class="n">replacement</span> <span class="ow">in</span> <span class="n">rules</span><span class="p">:</span>
+</span><span id="L-6112"><a href="#L-6112"><span class="linenos">6112</span></a>                <span class="n">p</span> <span class="o">=</span> <span class="n">pattern</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;&#39;&quot;</span><span class="p">,</span> <span class="s2">&quot;&#39;&#39;&quot;</span><span class="p">)</span>
+</span><span id="L-6113"><a href="#L-6113"><span class="linenos">6113</span></a>                <span class="n">r</span> <span class="o">=</span> <span class="n">replacement</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;&#39;&quot;</span><span class="p">,</span> <span class="s2">&quot;&#39;&#39;&quot;</span><span class="p">)</span>
+</span><span id="L-6114"><a href="#L-6114"><span class="linenos">6114</span></a>                <span class="n">expr</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;regexp_replace(</span><span class="si">{</span><span class="n">expr</span><span class="si">}</span><span class="s2">, &#39;</span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s2">&#39;, &#39;</span><span class="si">{</span><span class="n">r</span><span class="si">}</span><span class="s2">&#39;)&quot;</span>
+</span><span id="L-6115"><a href="#L-6115"><span class="linenos">6115</span></a>        <span class="k">return</span> <span class="n">expr</span>
 </span></pre></div>
 
 
@@ -6809,7 +6953,7 @@
                     <div class="attr variable">
             <span class="name">DEFAULT_TOOLS_BIN</span>        =
 <input id="DEFAULT_TOOLS_BIN-view-value" class="view-value-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
-            <label class="view-value-button pdoc-button" for="DEFAULT_TOOLS_BIN-view-value"></label><span class="default_value">{&#39;bcftools&#39;: {&#39;bin&#39;: &#39;bcftools&#39;}, &#39;bgzip&#39;: {&#39;bin&#39;: &#39;bgzip&#39;}, &#39;java&#39;: {&#39;bin&#39;: &#39;java&#39;}, &#39;snpeff&#39;: {&#39;jar&#39;: &#39;~/howard/tools/snpeff/current/bin/snpEff.jar&#39;}, &#39;annovar&#39;: {&#39;perl&#39;: &#39;~/howard/tools/annovar/current/bin/table_annovar.pl&#39;}, &#39;exomiser&#39;: {&#39;jar&#39;: &#39;~/howard/tools/exomiser/current/bin/exomiser.jar&#39;}, &#39;docker&#39;: {&#39;bin&#39;: &#39;docker&#39;}, &#39;splice&#39;: {&#39;docker&#39;: {&#39;image&#39;: &#39;bioinfochrustrasbourg/splice:0.2.4&#39;, &#39;entrypoint&#39;: &#39;/bin/bash&#39;, &#39;options&#39;: None, &#39;command&#39;: None}}}</span>
+            <label class="view-value-button pdoc-button" for="DEFAULT_TOOLS_BIN-view-value"></label><span class="default_value">{&#39;bcftools&#39;: {&#39;bin&#39;: &#39;bcftools&#39;}, &#39;bgzip&#39;: {&#39;bin&#39;: &#39;bgzip&#39;}, &#39;java&#39;: {&#39;bin&#39;: &#39;java&#39;}, &#39;snpeff&#39;: {&#39;jar&#39;: &#39;~/howard/tools/snpeff/current/bin/snpEff.jar&#39;}, &#39;annovar&#39;: {&#39;perl&#39;: &#39;~/howard/tools/annovar/current/bin/table_annovar.pl&#39;}, &#39;exomiser&#39;: {&#39;jar&#39;: &#39;~/howard/tools/exomiser/current/bin/exomiser.jar&#39;}, &#39;docker&#39;: {&#39;bin&#39;: &#39;docker&#39;}, &#39;splice&#39;: {&#39;docker&#39;: {&#39;image&#39;: &#39;bioinfochrustrasbourg/splice:0.2.6&#39;, &#39;entrypoint&#39;: &#39;/bin/bash&#39;, &#39;options&#39;: None, &#39;command&#39;: None}}}</span>
 
         
     </div>
@@ -16553,6 +16697,338 @@ Returns ("update" | "ctas" | None, explanation).</p>
 </div>
 
 
+                </section>
+                <section id="first_not_none">
+                            <input id="first_not_none-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+<div class="attr function">
+            
+        <span class="def">def</span>
+        <span class="name">first_not_none</span><span class="signature pdoc-code condensed">(<span class="param"><span class="o">*</span><span class="n">values</span></span><span class="return-annotation">):</span></span>
+
+                <label class="view-source-button" for="first_not_none-view-source"><span>View Source</span></label>
+
+    </div>
+    <a class="headerlink" href="#first_not_none"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="first_not_none-5998"><a href="#first_not_none-5998"><span class="linenos">5998</span></a><span class="k">def</span><span class="w"> </span><span class="nf">first_not_none</span><span class="p">(</span><span class="o">*</span><span class="n">values</span><span class="p">):</span>
+</span><span id="first_not_none-5999"><a href="#first_not_none-5999"><span class="linenos">5999</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="first_not_none-6000"><a href="#first_not_none-6000"><span class="linenos">6000</span></a><span class="sd">    Return the first value that is not None from the provided values.</span>
+</span><span id="first_not_none-6001"><a href="#first_not_none-6001"><span class="linenos">6001</span></a>
+</span><span id="first_not_none-6002"><a href="#first_not_none-6002"><span class="linenos">6002</span></a><span class="sd">    :param values: A variable number of values to check.</span>
+</span><span id="first_not_none-6003"><a href="#first_not_none-6003"><span class="linenos">6003</span></a><span class="sd">    :return: The first value that is not None, or None if all values are None.</span>
+</span><span id="first_not_none-6004"><a href="#first_not_none-6004"><span class="linenos">6004</span></a><span class="sd">    :rtype: Any</span>
+</span><span id="first_not_none-6005"><a href="#first_not_none-6005"><span class="linenos">6005</span></a>
+</span><span id="first_not_none-6006"><a href="#first_not_none-6006"><span class="linenos">6006</span></a><span class="sd">    Example:</span>
+</span><span id="first_not_none-6007"><a href="#first_not_none-6007"><span class="linenos">6007</span></a><span class="sd">    &gt;&gt;&gt; first_not_none(None, None, 3, None)</span>
+</span><span id="first_not_none-6008"><a href="#first_not_none-6008"><span class="linenos">6008</span></a><span class="sd">    3</span>
+</span><span id="first_not_none-6009"><a href="#first_not_none-6009"><span class="linenos">6009</span></a><span class="sd">    &gt;&gt;&gt; first_not_none(None, None, None)</span>
+</span><span id="first_not_none-6010"><a href="#first_not_none-6010"><span class="linenos">6010</span></a><span class="sd">    None</span>
+</span><span id="first_not_none-6011"><a href="#first_not_none-6011"><span class="linenos">6011</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="first_not_none-6012"><a href="#first_not_none-6012"><span class="linenos">6012</span></a>    <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
+</span><span id="first_not_none-6013"><a href="#first_not_none-6013"><span class="linenos">6013</span></a>        <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="first_not_none-6014"><a href="#first_not_none-6014"><span class="linenos">6014</span></a>            <span class="k">return</span> <span class="n">v</span>
+</span><span id="first_not_none-6015"><a href="#first_not_none-6015"><span class="linenos">6015</span></a>    <span class="k">return</span> <span class="kc">None</span>
+</span></pre></div>
+
+
+            <div class="docstring"><p>Return the first value that is not None from the provided values.</p>
+
+<h6 id="parameters">Parameters</h6>
+
+<ul>
+<li><strong>values</strong>:  A variable number of values to check.</li>
+</ul>
+
+<h6 id="returns">Returns</h6>
+
+<blockquote>
+  <p>The first value that is not None, or None if all values are None.</p>
+</blockquote>
+
+<p>Example:</p>
+
+<div class="pdoc-code codehilite">
+<pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">first_not_none</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+<span class="go">3</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">first_not_none</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+<span class="go">None</span>
+</code></pre>
+</div>
+</div>
+
+
+                </section>
+                <section id="ChromMapping">
+                            <input id="ChromMapping-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+<div class="attr class">
+            
+    <span class="def">class</span>
+    <span class="name">ChromMapping</span>:
+
+                <label class="view-source-button" for="ChromMapping-view-source"><span>View Source</span></label>
+
+    </div>
+    <a class="headerlink" href="#ChromMapping"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="ChromMapping-6017"><a href="#ChromMapping-6017"><span class="linenos">6017</span></a><span class="k">class</span><span class="w"> </span><span class="nc">ChromMapping</span><span class="p">:</span>
+</span><span id="ChromMapping-6018"><a href="#ChromMapping-6018"><span class="linenos">6018</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="ChromMapping-6019"><a href="#ChromMapping-6019"><span class="linenos">6019</span></a><span class="sd">    Mapping of contigs between the internal naming and that of an external tool,</span>
+</span><span id="ChromMapping-6020"><a href="#ChromMapping-6020"><span class="linenos">6020</span></a><span class="sd">    via regex rules applied in sequence. Both directions (to_tool / from_tool)</span>
+</span><span id="ChromMapping-6021"><a href="#ChromMapping-6021"><span class="linenos">6021</span></a><span class="sd">    are declared explicitly — no automatic inversion, as a regex is generally</span>
+</span><span id="ChromMapping-6022"><a href="#ChromMapping-6022"><span class="linenos">6022</span></a><span class="sd">    not reversible.</span>
+</span><span id="ChromMapping-6023"><a href="#ChromMapping-6023"><span class="linenos">6023</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="ChromMapping-6024"><a href="#ChromMapping-6024"><span class="linenos">6024</span></a>
+</span><span id="ChromMapping-6025"><a href="#ChromMapping-6025"><span class="linenos">6025</span></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+</span><span id="ChromMapping-6026"><a href="#ChromMapping-6026"><span class="linenos">6026</span></a>        <span class="bp">self</span><span class="p">,</span>
+</span><span id="ChromMapping-6027"><a href="#ChromMapping-6027"><span class="linenos">6027</span></a>        <span class="n">mapping</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="ChromMapping-6028"><a href="#ChromMapping-6028"><span class="linenos">6028</span></a>        <span class="n">to_tool_rules</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="ChromMapping-6029"><a href="#ChromMapping-6029"><span class="linenos">6029</span></a>        <span class="n">from_tool_rules</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="ChromMapping-6030"><a href="#ChromMapping-6030"><span class="linenos">6030</span></a>    <span class="p">):</span>
+</span><span id="ChromMapping-6031"><a href="#ChromMapping-6031"><span class="linenos">6031</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="ChromMapping-6032"><a href="#ChromMapping-6032"><span class="linenos">6032</span></a><span class="sd">        Initialize a ChromMapping instance.</span>
+</span><span id="ChromMapping-6033"><a href="#ChromMapping-6033"><span class="linenos">6033</span></a>
+</span><span id="ChromMapping-6034"><a href="#ChromMapping-6034"><span class="linenos">6034</span></a><span class="sd">        :param mapping: A dictionary containing &quot;to_tool&quot; and &quot;from_tool&quot; keys with lists of regex rules.</span>
+</span><span id="ChromMapping-6035"><a href="#ChromMapping-6035"><span class="linenos">6035</span></a><span class="sd">        :type mapping: dict, optional</span>
+</span><span id="ChromMapping-6036"><a href="#ChromMapping-6036"><span class="linenos">6036</span></a><span class="sd">        :param to_tool_rules: A list of tuples where each tuple contains a regex pattern and its replacement for mapping to the tool&#39;s naming convention.</span>
+</span><span id="ChromMapping-6037"><a href="#ChromMapping-6037"><span class="linenos">6037</span></a><span class="sd">        :type to_tool_rules: list[tuple[str, str]], optional</span>
+</span><span id="ChromMapping-6038"><a href="#ChromMapping-6038"><span class="linenos">6038</span></a><span class="sd">        :param from_tool_rules: A list of tuples where each tuple contains a regex pattern and its replacement for mapping from the tool&#39;s naming convention back to the internal naming convention.</span>
+</span><span id="ChromMapping-6039"><a href="#ChromMapping-6039"><span class="linenos">6039</span></a><span class="sd">        :type from_tool_rules: list[tuple[str, str]], optional</span>
+</span><span id="ChromMapping-6040"><a href="#ChromMapping-6040"><span class="linenos">6040</span></a>
+</span><span id="ChromMapping-6041"><a href="#ChromMapping-6041"><span class="linenos">6041</span></a><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="ChromMapping-6042"><a href="#ChromMapping-6042"><span class="linenos">6042</span></a>
+</span><span id="ChromMapping-6043"><a href="#ChromMapping-6043"><span class="linenos">6043</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">to_tool_rules</span> <span class="o">=</span> <span class="kc">None</span>
+</span><span id="ChromMapping-6044"><a href="#ChromMapping-6044"><span class="linenos">6044</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">from_tool_rules</span> <span class="o">=</span> <span class="kc">None</span>
+</span><span id="ChromMapping-6045"><a href="#ChromMapping-6045"><span class="linenos">6045</span></a>
+</span><span id="ChromMapping-6046"><a href="#ChromMapping-6046"><span class="linenos">6046</span></a>        <span class="c1"># Init mapping rules</span>
+</span><span id="ChromMapping-6047"><a href="#ChromMapping-6047"><span class="linenos">6047</span></a>        <span class="k">if</span> <span class="n">mapping</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="ChromMapping-6048"><a href="#ChromMapping-6048"><span class="linenos">6048</span></a>            <span class="c1"># mapping can be a dict with &quot;to_tool&quot; and &quot;from_tool&quot; keys, or a list of tuples</span>
+</span><span id="ChromMapping-6049"><a href="#ChromMapping-6049"><span class="linenos">6049</span></a>
+</span><span id="ChromMapping-6050"><a href="#ChromMapping-6050"><span class="linenos">6050</span></a>            <span class="c1"># mapping configuration with dict keys &quot;to_tool&quot; and &quot;from_tool&quot;</span>
+</span><span id="ChromMapping-6051"><a href="#ChromMapping-6051"><span class="linenos">6051</span></a>            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mapping</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+</span><span id="ChromMapping-6052"><a href="#ChromMapping-6052"><span class="linenos">6052</span></a>                <span class="c1">#log.debug(f&quot;Initializing ChromMapping from mapping dict: {mapping}&quot;)</span>
+</span><span id="ChromMapping-6053"><a href="#ChromMapping-6053"><span class="linenos">6053</span></a>                <span class="bp">self</span><span class="o">.</span><span class="n">to_tool_rules</span> <span class="o">=</span> <span class="n">mapping</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;to_tool&quot;</span><span class="p">,</span> <span class="p">[])</span>
+</span><span id="ChromMapping-6054"><a href="#ChromMapping-6054"><span class="linenos">6054</span></a>                <span class="bp">self</span><span class="o">.</span><span class="n">from_tool_rules</span> <span class="o">=</span> <span class="n">mapping</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;from_tool&quot;</span><span class="p">,</span> <span class="p">[])</span>
+</span><span id="ChromMapping-6055"><a href="#ChromMapping-6055"><span class="linenos">6055</span></a>
+</span><span id="ChromMapping-6056"><a href="#ChromMapping-6056"><span class="linenos">6056</span></a>            <span class="c1"># mapping configuration with list of tuples</span>
+</span><span id="ChromMapping-6057"><a href="#ChromMapping-6057"><span class="linenos">6057</span></a>            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mapping</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mapping</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+</span><span id="ChromMapping-6058"><a href="#ChromMapping-6058"><span class="linenos">6058</span></a>
+</span><span id="ChromMapping-6059"><a href="#ChromMapping-6059"><span class="linenos">6059</span></a>                <span class="c1">#log.debug(f&quot;Initializing ChromMapping from mapping list/tuple: {mapping}&quot;)</span>
+</span><span id="ChromMapping-6060"><a href="#ChromMapping-6060"><span class="linenos">6060</span></a>
+</span><span id="ChromMapping-6061"><a href="#ChromMapping-6061"><span class="linenos">6061</span></a>                <span class="c1"># Check if the first element is a list/tuple or a string</span>
+</span><span id="ChromMapping-6062"><a href="#ChromMapping-6062"><span class="linenos">6062</span></a>
+</span><span id="ChromMapping-6063"><a href="#ChromMapping-6063"><span class="linenos">6063</span></a>                <span class="c1"># If the first element is a list or tuple, we assume it&#39;s a list of tuples</span>
+</span><span id="ChromMapping-6064"><a href="#ChromMapping-6064"><span class="linenos">6064</span></a>                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mapping</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mapping</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">tuple</span><span class="p">):</span>
+</span><span id="ChromMapping-6065"><a href="#ChromMapping-6065"><span class="linenos">6065</span></a>                    <span class="c1">#log.debug(f&quot;Initializing ChromMapping from mapping list: {mapping}&quot;)</span>
+</span><span id="ChromMapping-6066"><a href="#ChromMapping-6066"><span class="linenos">6066</span></a>                    <span class="bp">self</span><span class="o">.</span><span class="n">to_tool_rules</span> <span class="o">=</span> <span class="n">mapping</span>
+</span><span id="ChromMapping-6067"><a href="#ChromMapping-6067"><span class="linenos">6067</span></a>
+</span><span id="ChromMapping-6068"><a href="#ChromMapping-6068"><span class="linenos">6068</span></a>                <span class="c1"># If the first element is a string, we assume it&#39;s a single mapping rule</span>
+</span><span id="ChromMapping-6069"><a href="#ChromMapping-6069"><span class="linenos">6069</span></a>                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mapping</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">str</span><span class="p">):</span>
+</span><span id="ChromMapping-6070"><a href="#ChromMapping-6070"><span class="linenos">6070</span></a>                    <span class="c1">#log.debug(f&quot;Initializing ChromMapping from mapping list of strings: {mapping}&quot;)</span>
+</span><span id="ChromMapping-6071"><a href="#ChromMapping-6071"><span class="linenos">6071</span></a>                    <span class="bp">self</span><span class="o">.</span><span class="n">to_tool_rules</span> <span class="o">=</span> <span class="p">[</span><span class="n">mapping</span><span class="p">]</span>
+</span><span id="ChromMapping-6072"><a href="#ChromMapping-6072"><span class="linenos">6072</span></a>
+</span><span id="ChromMapping-6073"><a href="#ChromMapping-6073"><span class="linenos">6073</span></a>            <span class="c1"># If the mapping is neither a dict nor a list/tuple, raise an error</span>
+</span><span id="ChromMapping-6074"><a href="#ChromMapping-6074"><span class="linenos">6074</span></a>            <span class="k">else</span><span class="p">:</span>
+</span><span id="ChromMapping-6075"><a href="#ChromMapping-6075"><span class="linenos">6075</span></a>                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="ChromMapping-6076"><a href="#ChromMapping-6076"><span class="linenos">6076</span></a>                    <span class="s2">&quot;Invalid mapping type. Must be a dict or a list of tuples.&quot;</span>
+</span><span id="ChromMapping-6077"><a href="#ChromMapping-6077"><span class="linenos">6077</span></a>                <span class="p">)</span>
+</span><span id="ChromMapping-6078"><a href="#ChromMapping-6078"><span class="linenos">6078</span></a>
+</span><span id="ChromMapping-6079"><a href="#ChromMapping-6079"><span class="linenos">6079</span></a>        <span class="c1"># Init rules directly</span>
+</span><span id="ChromMapping-6080"><a href="#ChromMapping-6080"><span class="linenos">6080</span></a>        <span class="k">else</span><span class="p">:</span>
+</span><span id="ChromMapping-6081"><a href="#ChromMapping-6081"><span class="linenos">6081</span></a>            <span class="bp">self</span><span class="o">.</span><span class="n">to_tool_rules</span> <span class="o">=</span> <span class="n">to_tool_rules</span>
+</span><span id="ChromMapping-6082"><a href="#ChromMapping-6082"><span class="linenos">6082</span></a>            <span class="bp">self</span><span class="o">.</span><span class="n">from_tool_rules</span> <span class="o">=</span> <span class="n">from_tool_rules</span>
+</span><span id="ChromMapping-6083"><a href="#ChromMapping-6083"><span class="linenos">6083</span></a>
+</span><span id="ChromMapping-6084"><a href="#ChromMapping-6084"><span class="linenos">6084</span></a>        <span class="c1"># Validate rules from_tool_rules: if not provided or length mismatch, invert to_tool_rules</span>
+</span><span id="ChromMapping-6085"><a href="#ChromMapping-6085"><span class="linenos">6085</span></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">from_tool_rules</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">from_tool_rules</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">from_tool_rules</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">to_tool_rules</span><span class="p">):</span>
+</span><span id="ChromMapping-6086"><a href="#ChromMapping-6086"><span class="linenos">6086</span></a>            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_tool_rules</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="ChromMapping-6087"><a href="#ChromMapping-6087"><span class="linenos">6087</span></a>                <span class="bp">self</span><span class="o">.</span><span class="n">from_tool_rules</span> <span class="o">=</span> <span class="p">[(</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_tool_rules</span><span class="p">]</span>
+</span><span id="ChromMapping-6088"><a href="#ChromMapping-6088"><span class="linenos">6088</span></a>
+</span><span id="ChromMapping-6089"><a href="#ChromMapping-6089"><span class="linenos">6089</span></a>        <span class="c1">#log.debug(f&quot;ChromMapping initialized with: to_tool_rules={self.to_tool_rules}, from_tool_rules={self.from_tool_rules}&quot;)</span>
+</span><span id="ChromMapping-6090"><a href="#ChromMapping-6090"><span class="linenos">6090</span></a>
+</span><span id="ChromMapping-6091"><a href="#ChromMapping-6091"><span class="linenos">6091</span></a>    <span class="k">def</span><span class="w"> </span><span class="nf">to_tool_sql</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">column</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&quot;#CHROM&quot;&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="ChromMapping-6092"><a href="#ChromMapping-6092"><span class="linenos">6092</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_sql</span><span class="p">(</span><span class="n">column</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_tool_rules</span><span class="p">)</span>
+</span><span id="ChromMapping-6093"><a href="#ChromMapping-6093"><span class="linenos">6093</span></a>
+</span><span id="ChromMapping-6094"><a href="#ChromMapping-6094"><span class="linenos">6094</span></a>    <span class="k">def</span><span class="w"> </span><span class="nf">from_tool_sql</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">column</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&quot;#CHROM&quot;&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="ChromMapping-6095"><a href="#ChromMapping-6095"><span class="linenos">6095</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_sql</span><span class="p">(</span><span class="n">column</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">from_tool_rules</span><span class="p">)</span>
+</span><span id="ChromMapping-6096"><a href="#ChromMapping-6096"><span class="linenos">6096</span></a>
+</span><span id="ChromMapping-6097"><a href="#ChromMapping-6097"><span class="linenos">6097</span></a>    <span class="nd">@staticmethod</span>
+</span><span id="ChromMapping-6098"><a href="#ChromMapping-6098"><span class="linenos">6098</span></a>    <span class="k">def</span><span class="w"> </span><span class="nf">_build_sql</span><span class="p">(</span><span class="n">column</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">rules</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="ChromMapping-6099"><a href="#ChromMapping-6099"><span class="linenos">6099</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="ChromMapping-6100"><a href="#ChromMapping-6100"><span class="linenos">6100</span></a><span class="sd">        Build a SQL expression to apply regex replacements on a column based on the provided rules.</span>
+</span><span id="ChromMapping-6101"><a href="#ChromMapping-6101"><span class="linenos">6101</span></a>
+</span><span id="ChromMapping-6102"><a href="#ChromMapping-6102"><span class="linenos">6102</span></a><span class="sd">        :param column: The name of the column to apply the regex replacements on.</span>
+</span><span id="ChromMapping-6103"><a href="#ChromMapping-6103"><span class="linenos">6103</span></a><span class="sd">        :type column: str</span>
+</span><span id="ChromMapping-6104"><a href="#ChromMapping-6104"><span class="linenos">6104</span></a><span class="sd">        :param rules: A list of tuples where each tuple contains a regex pattern and its replacement.</span>
+</span><span id="ChromMapping-6105"><a href="#ChromMapping-6105"><span class="linenos">6105</span></a><span class="sd">        :type rules: list[tuple[str, str]]</span>
+</span><span id="ChromMapping-6106"><a href="#ChromMapping-6106"><span class="linenos">6106</span></a>
+</span><span id="ChromMapping-6107"><a href="#ChromMapping-6107"><span class="linenos">6107</span></a><span class="sd">        :return: A SQL expression string that applies the regex replacements in sequence.</span>
+</span><span id="ChromMapping-6108"><a href="#ChromMapping-6108"><span class="linenos">6108</span></a><span class="sd">        :rtype: str</span>
+</span><span id="ChromMapping-6109"><a href="#ChromMapping-6109"><span class="linenos">6109</span></a><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="ChromMapping-6110"><a href="#ChromMapping-6110"><span class="linenos">6110</span></a>        <span class="n">expr</span> <span class="o">=</span> <span class="n">column</span>
+</span><span id="ChromMapping-6111"><a href="#ChromMapping-6111"><span class="linenos">6111</span></a>        <span class="k">if</span> <span class="n">rules</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="ChromMapping-6112"><a href="#ChromMapping-6112"><span class="linenos">6112</span></a>            <span class="k">for</span> <span class="n">pattern</span><span class="p">,</span> <span class="n">replacement</span> <span class="ow">in</span> <span class="n">rules</span><span class="p">:</span>
+</span><span id="ChromMapping-6113"><a href="#ChromMapping-6113"><span class="linenos">6113</span></a>                <span class="n">p</span> <span class="o">=</span> <span class="n">pattern</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;&#39;&quot;</span><span class="p">,</span> <span class="s2">&quot;&#39;&#39;&quot;</span><span class="p">)</span>
+</span><span id="ChromMapping-6114"><a href="#ChromMapping-6114"><span class="linenos">6114</span></a>                <span class="n">r</span> <span class="o">=</span> <span class="n">replacement</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;&#39;&quot;</span><span class="p">,</span> <span class="s2">&quot;&#39;&#39;&quot;</span><span class="p">)</span>
+</span><span id="ChromMapping-6115"><a href="#ChromMapping-6115"><span class="linenos">6115</span></a>                <span class="n">expr</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;regexp_replace(</span><span class="si">{</span><span class="n">expr</span><span class="si">}</span><span class="s2">, &#39;</span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s2">&#39;, &#39;</span><span class="si">{</span><span class="n">r</span><span class="si">}</span><span class="s2">&#39;)&quot;</span>
+</span><span id="ChromMapping-6116"><a href="#ChromMapping-6116"><span class="linenos">6116</span></a>        <span class="k">return</span> <span class="n">expr</span>
+</span></pre></div>
+
+
+            <div class="docstring"><p>Mapping of contigs between the internal naming and that of an external tool,
+via regex rules applied in sequence. Both directions (to_tool / from_tool)
+are declared explicitly — no automatic inversion, as a regex is generally
+not reversible.</p>
+</div>
+
+
+                            <div id="ChromMapping.__init__" class="classattr">
+                                        <input id="ChromMapping.__init__-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+<div class="attr function">
+            
+        <span class="name">ChromMapping</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="n">mapping</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">to_tool_rules</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">from_tool_rules</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span></span>)</span>
+
+                <label class="view-source-button" for="ChromMapping.__init__-view-source"><span>View Source</span></label>
+
+    </div>
+    <a class="headerlink" href="#ChromMapping.__init__"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="ChromMapping.__init__-6025"><a href="#ChromMapping.__init__-6025"><span class="linenos">6025</span></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+</span><span id="ChromMapping.__init__-6026"><a href="#ChromMapping.__init__-6026"><span class="linenos">6026</span></a>        <span class="bp">self</span><span class="p">,</span>
+</span><span id="ChromMapping.__init__-6027"><a href="#ChromMapping.__init__-6027"><span class="linenos">6027</span></a>        <span class="n">mapping</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="ChromMapping.__init__-6028"><a href="#ChromMapping.__init__-6028"><span class="linenos">6028</span></a>        <span class="n">to_tool_rules</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="ChromMapping.__init__-6029"><a href="#ChromMapping.__init__-6029"><span class="linenos">6029</span></a>        <span class="n">from_tool_rules</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="ChromMapping.__init__-6030"><a href="#ChromMapping.__init__-6030"><span class="linenos">6030</span></a>    <span class="p">):</span>
+</span><span id="ChromMapping.__init__-6031"><a href="#ChromMapping.__init__-6031"><span class="linenos">6031</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="ChromMapping.__init__-6032"><a href="#ChromMapping.__init__-6032"><span class="linenos">6032</span></a><span class="sd">        Initialize a ChromMapping instance.</span>
+</span><span id="ChromMapping.__init__-6033"><a href="#ChromMapping.__init__-6033"><span class="linenos">6033</span></a>
+</span><span id="ChromMapping.__init__-6034"><a href="#ChromMapping.__init__-6034"><span class="linenos">6034</span></a><span class="sd">        :param mapping: A dictionary containing &quot;to_tool&quot; and &quot;from_tool&quot; keys with lists of regex rules.</span>
+</span><span id="ChromMapping.__init__-6035"><a href="#ChromMapping.__init__-6035"><span class="linenos">6035</span></a><span class="sd">        :type mapping: dict, optional</span>
+</span><span id="ChromMapping.__init__-6036"><a href="#ChromMapping.__init__-6036"><span class="linenos">6036</span></a><span class="sd">        :param to_tool_rules: A list of tuples where each tuple contains a regex pattern and its replacement for mapping to the tool&#39;s naming convention.</span>
+</span><span id="ChromMapping.__init__-6037"><a href="#ChromMapping.__init__-6037"><span class="linenos">6037</span></a><span class="sd">        :type to_tool_rules: list[tuple[str, str]], optional</span>
+</span><span id="ChromMapping.__init__-6038"><a href="#ChromMapping.__init__-6038"><span class="linenos">6038</span></a><span class="sd">        :param from_tool_rules: A list of tuples where each tuple contains a regex pattern and its replacement for mapping from the tool&#39;s naming convention back to the internal naming convention.</span>
+</span><span id="ChromMapping.__init__-6039"><a href="#ChromMapping.__init__-6039"><span class="linenos">6039</span></a><span class="sd">        :type from_tool_rules: list[tuple[str, str]], optional</span>
+</span><span id="ChromMapping.__init__-6040"><a href="#ChromMapping.__init__-6040"><span class="linenos">6040</span></a>
+</span><span id="ChromMapping.__init__-6041"><a href="#ChromMapping.__init__-6041"><span class="linenos">6041</span></a><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="ChromMapping.__init__-6042"><a href="#ChromMapping.__init__-6042"><span class="linenos">6042</span></a>
+</span><span id="ChromMapping.__init__-6043"><a href="#ChromMapping.__init__-6043"><span class="linenos">6043</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">to_tool_rules</span> <span class="o">=</span> <span class="kc">None</span>
+</span><span id="ChromMapping.__init__-6044"><a href="#ChromMapping.__init__-6044"><span class="linenos">6044</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">from_tool_rules</span> <span class="o">=</span> <span class="kc">None</span>
+</span><span id="ChromMapping.__init__-6045"><a href="#ChromMapping.__init__-6045"><span class="linenos">6045</span></a>
+</span><span id="ChromMapping.__init__-6046"><a href="#ChromMapping.__init__-6046"><span class="linenos">6046</span></a>        <span class="c1"># Init mapping rules</span>
+</span><span id="ChromMapping.__init__-6047"><a href="#ChromMapping.__init__-6047"><span class="linenos">6047</span></a>        <span class="k">if</span> <span class="n">mapping</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="ChromMapping.__init__-6048"><a href="#ChromMapping.__init__-6048"><span class="linenos">6048</span></a>            <span class="c1"># mapping can be a dict with &quot;to_tool&quot; and &quot;from_tool&quot; keys, or a list of tuples</span>
+</span><span id="ChromMapping.__init__-6049"><a href="#ChromMapping.__init__-6049"><span class="linenos">6049</span></a>
+</span><span id="ChromMapping.__init__-6050"><a href="#ChromMapping.__init__-6050"><span class="linenos">6050</span></a>            <span class="c1"># mapping configuration with dict keys &quot;to_tool&quot; and &quot;from_tool&quot;</span>
+</span><span id="ChromMapping.__init__-6051"><a href="#ChromMapping.__init__-6051"><span class="linenos">6051</span></a>            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mapping</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+</span><span id="ChromMapping.__init__-6052"><a href="#ChromMapping.__init__-6052"><span class="linenos">6052</span></a>                <span class="c1">#log.debug(f&quot;Initializing ChromMapping from mapping dict: {mapping}&quot;)</span>
+</span><span id="ChromMapping.__init__-6053"><a href="#ChromMapping.__init__-6053"><span class="linenos">6053</span></a>                <span class="bp">self</span><span class="o">.</span><span class="n">to_tool_rules</span> <span class="o">=</span> <span class="n">mapping</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;to_tool&quot;</span><span class="p">,</span> <span class="p">[])</span>
+</span><span id="ChromMapping.__init__-6054"><a href="#ChromMapping.__init__-6054"><span class="linenos">6054</span></a>                <span class="bp">self</span><span class="o">.</span><span class="n">from_tool_rules</span> <span class="o">=</span> <span class="n">mapping</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;from_tool&quot;</span><span class="p">,</span> <span class="p">[])</span>
+</span><span id="ChromMapping.__init__-6055"><a href="#ChromMapping.__init__-6055"><span class="linenos">6055</span></a>
+</span><span id="ChromMapping.__init__-6056"><a href="#ChromMapping.__init__-6056"><span class="linenos">6056</span></a>            <span class="c1"># mapping configuration with list of tuples</span>
+</span><span id="ChromMapping.__init__-6057"><a href="#ChromMapping.__init__-6057"><span class="linenos">6057</span></a>            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mapping</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mapping</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+</span><span id="ChromMapping.__init__-6058"><a href="#ChromMapping.__init__-6058"><span class="linenos">6058</span></a>
+</span><span id="ChromMapping.__init__-6059"><a href="#ChromMapping.__init__-6059"><span class="linenos">6059</span></a>                <span class="c1">#log.debug(f&quot;Initializing ChromMapping from mapping list/tuple: {mapping}&quot;)</span>
+</span><span id="ChromMapping.__init__-6060"><a href="#ChromMapping.__init__-6060"><span class="linenos">6060</span></a>
+</span><span id="ChromMapping.__init__-6061"><a href="#ChromMapping.__init__-6061"><span class="linenos">6061</span></a>                <span class="c1"># Check if the first element is a list/tuple or a string</span>
+</span><span id="ChromMapping.__init__-6062"><a href="#ChromMapping.__init__-6062"><span class="linenos">6062</span></a>
+</span><span id="ChromMapping.__init__-6063"><a href="#ChromMapping.__init__-6063"><span class="linenos">6063</span></a>                <span class="c1"># If the first element is a list or tuple, we assume it&#39;s a list of tuples</span>
+</span><span id="ChromMapping.__init__-6064"><a href="#ChromMapping.__init__-6064"><span class="linenos">6064</span></a>                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mapping</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mapping</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">tuple</span><span class="p">):</span>
+</span><span id="ChromMapping.__init__-6065"><a href="#ChromMapping.__init__-6065"><span class="linenos">6065</span></a>                    <span class="c1">#log.debug(f&quot;Initializing ChromMapping from mapping list: {mapping}&quot;)</span>
+</span><span id="ChromMapping.__init__-6066"><a href="#ChromMapping.__init__-6066"><span class="linenos">6066</span></a>                    <span class="bp">self</span><span class="o">.</span><span class="n">to_tool_rules</span> <span class="o">=</span> <span class="n">mapping</span>
+</span><span id="ChromMapping.__init__-6067"><a href="#ChromMapping.__init__-6067"><span class="linenos">6067</span></a>
+</span><span id="ChromMapping.__init__-6068"><a href="#ChromMapping.__init__-6068"><span class="linenos">6068</span></a>                <span class="c1"># If the first element is a string, we assume it&#39;s a single mapping rule</span>
+</span><span id="ChromMapping.__init__-6069"><a href="#ChromMapping.__init__-6069"><span class="linenos">6069</span></a>                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mapping</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">str</span><span class="p">):</span>
+</span><span id="ChromMapping.__init__-6070"><a href="#ChromMapping.__init__-6070"><span class="linenos">6070</span></a>                    <span class="c1">#log.debug(f&quot;Initializing ChromMapping from mapping list of strings: {mapping}&quot;)</span>
+</span><span id="ChromMapping.__init__-6071"><a href="#ChromMapping.__init__-6071"><span class="linenos">6071</span></a>                    <span class="bp">self</span><span class="o">.</span><span class="n">to_tool_rules</span> <span class="o">=</span> <span class="p">[</span><span class="n">mapping</span><span class="p">]</span>
+</span><span id="ChromMapping.__init__-6072"><a href="#ChromMapping.__init__-6072"><span class="linenos">6072</span></a>
+</span><span id="ChromMapping.__init__-6073"><a href="#ChromMapping.__init__-6073"><span class="linenos">6073</span></a>            <span class="c1"># If the mapping is neither a dict nor a list/tuple, raise an error</span>
+</span><span id="ChromMapping.__init__-6074"><a href="#ChromMapping.__init__-6074"><span class="linenos">6074</span></a>            <span class="k">else</span><span class="p">:</span>
+</span><span id="ChromMapping.__init__-6075"><a href="#ChromMapping.__init__-6075"><span class="linenos">6075</span></a>                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="ChromMapping.__init__-6076"><a href="#ChromMapping.__init__-6076"><span class="linenos">6076</span></a>                    <span class="s2">&quot;Invalid mapping type. Must be a dict or a list of tuples.&quot;</span>
+</span><span id="ChromMapping.__init__-6077"><a href="#ChromMapping.__init__-6077"><span class="linenos">6077</span></a>                <span class="p">)</span>
+</span><span id="ChromMapping.__init__-6078"><a href="#ChromMapping.__init__-6078"><span class="linenos">6078</span></a>
+</span><span id="ChromMapping.__init__-6079"><a href="#ChromMapping.__init__-6079"><span class="linenos">6079</span></a>        <span class="c1"># Init rules directly</span>
+</span><span id="ChromMapping.__init__-6080"><a href="#ChromMapping.__init__-6080"><span class="linenos">6080</span></a>        <span class="k">else</span><span class="p">:</span>
+</span><span id="ChromMapping.__init__-6081"><a href="#ChromMapping.__init__-6081"><span class="linenos">6081</span></a>            <span class="bp">self</span><span class="o">.</span><span class="n">to_tool_rules</span> <span class="o">=</span> <span class="n">to_tool_rules</span>
+</span><span id="ChromMapping.__init__-6082"><a href="#ChromMapping.__init__-6082"><span class="linenos">6082</span></a>            <span class="bp">self</span><span class="o">.</span><span class="n">from_tool_rules</span> <span class="o">=</span> <span class="n">from_tool_rules</span>
+</span><span id="ChromMapping.__init__-6083"><a href="#ChromMapping.__init__-6083"><span class="linenos">6083</span></a>
+</span><span id="ChromMapping.__init__-6084"><a href="#ChromMapping.__init__-6084"><span class="linenos">6084</span></a>        <span class="c1"># Validate rules from_tool_rules: if not provided or length mismatch, invert to_tool_rules</span>
+</span><span id="ChromMapping.__init__-6085"><a href="#ChromMapping.__init__-6085"><span class="linenos">6085</span></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">from_tool_rules</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">from_tool_rules</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">from_tool_rules</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">to_tool_rules</span><span class="p">):</span>
+</span><span id="ChromMapping.__init__-6086"><a href="#ChromMapping.__init__-6086"><span class="linenos">6086</span></a>            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_tool_rules</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="ChromMapping.__init__-6087"><a href="#ChromMapping.__init__-6087"><span class="linenos">6087</span></a>                <span class="bp">self</span><span class="o">.</span><span class="n">from_tool_rules</span> <span class="o">=</span> <span class="p">[(</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_tool_rules</span><span class="p">]</span>
+</span><span id="ChromMapping.__init__-6088"><a href="#ChromMapping.__init__-6088"><span class="linenos">6088</span></a>
+</span><span id="ChromMapping.__init__-6089"><a href="#ChromMapping.__init__-6089"><span class="linenos">6089</span></a>        <span class="c1">#log.debug(f&quot;ChromMapping initialized with: to_tool_rules={self.to_tool_rules}, from_tool_rules={self.from_tool_rules}&quot;)</span>
+</span></pre></div>
+
+
+            <div class="docstring"><p>Initialize a ChromMapping instance.</p>
+
+<h6 id="parameters">Parameters</h6>
+
+<ul>
+<li><strong>mapping</strong>:  A dictionary containing "to_tool" and "from_tool" keys with lists of regex rules.</li>
+<li><strong>to_tool_rules</strong>:  A list of tuples where each tuple contains a regex pattern and its replacement for mapping to the tool's naming convention.</li>
+<li><strong>from_tool_rules</strong>:  A list of tuples where each tuple contains a regex pattern and its replacement for mapping from the tool's naming convention back to the internal naming convention.</li>
+</ul>
+</div>
+
+
+                            </div>
+                            <div id="ChromMapping.to_tool_rules" class="classattr">
+                                <div class="attr variable">
+            <span class="name">to_tool_rules</span>
+
+        
+    </div>
+    <a class="headerlink" href="#ChromMapping.to_tool_rules"></a>
+    
+    
+
+                            </div>
+                            <div id="ChromMapping.from_tool_rules" class="classattr">
+                                <div class="attr variable">
+            <span class="name">from_tool_rules</span>
+
+        
+    </div>
+    <a class="headerlink" href="#ChromMapping.from_tool_rules"></a>
+    
+    
+
+                            </div>
+                            <div id="ChromMapping.to_tool_sql" class="classattr">
+                                        <input id="ChromMapping.to_tool_sql-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+<div class="attr function">
+            
+        <span class="def">def</span>
+        <span class="name">to_tool_sql</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">column</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&quot;#CHROM&quot;&#39;</span></span><span class="return-annotation">) -> <span class="nb">str</span>:</span></span>
+
+                <label class="view-source-button" for="ChromMapping.to_tool_sql-view-source"><span>View Source</span></label>
+
+    </div>
+    <a class="headerlink" href="#ChromMapping.to_tool_sql"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="ChromMapping.to_tool_sql-6091"><a href="#ChromMapping.to_tool_sql-6091"><span class="linenos">6091</span></a>    <span class="k">def</span><span class="w"> </span><span class="nf">to_tool_sql</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">column</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&quot;#CHROM&quot;&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="ChromMapping.to_tool_sql-6092"><a href="#ChromMapping.to_tool_sql-6092"><span class="linenos">6092</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_sql</span><span class="p">(</span><span class="n">column</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_tool_rules</span><span class="p">)</span>
+</span></pre></div>
+
+
+    
+
+                            </div>
+                            <div id="ChromMapping.from_tool_sql" class="classattr">
+                                        <input id="ChromMapping.from_tool_sql-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+<div class="attr function">
+            
+        <span class="def">def</span>
+        <span class="name">from_tool_sql</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">column</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&quot;#CHROM&quot;&#39;</span></span><span class="return-annotation">) -> <span class="nb">str</span>:</span></span>
+
+                <label class="view-source-button" for="ChromMapping.from_tool_sql-view-source"><span>View Source</span></label>
+
+    </div>
+    <a class="headerlink" href="#ChromMapping.from_tool_sql"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="ChromMapping.from_tool_sql-6094"><a href="#ChromMapping.from_tool_sql-6094"><span class="linenos">6094</span></a>    <span class="k">def</span><span class="w"> </span><span class="nf">from_tool_sql</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">column</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&quot;#CHROM&quot;&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="ChromMapping.from_tool_sql-6095"><a href="#ChromMapping.from_tool_sql-6095"><span class="linenos">6095</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_sql</span><span class="p">(</span><span class="n">column</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">from_tool_rules</span><span class="p">)</span>
+</span></pre></div>
+
+
+    
+
+                            </div>
                 </section>
     </main>
 <script>
