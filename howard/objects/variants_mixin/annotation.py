@@ -533,8 +533,11 @@ class variants_annotation(variants_annotation_docker):
         log.debug("Databases annotations: " + str(databases_folders))
 
         # Param
+        param = self.get_param()
+
+        # Param - Annotation
         annotations = (
-            self.get_param()
+            param
             .get(section, {})
             .get("bigwig", {})
             .get("annotations", None)
@@ -551,23 +554,29 @@ class variants_annotation(variants_annotation_docker):
             f"annotation_header_fields_override={annotation_header_fields_override}"
         )
 
-        # Param
+        # Param - Annotation param
         annotations_param = (
-            self.get_param().get(section, {}).get("bigwig", {}).get("param", {})
+            param.get(section, {}).get("bigwig", {}).get("param", {})
         )
         log.debug("Annotations param: " + str(annotations_param))
 
-        # Options
+        # Param - Options
         annotations_options = (
-            self.get_param().get(section, {}).get("bigwig", {}).get("options", {})
+            param.get(section, {}).get("bigwig", {}).get("options", {})
         )
         log.debug("Annotations options: " + str(annotations_options))
+
+        # Param - Option chrom_mapping
+        chrom_mapping_options = param.get(section, {}).get("bigwig", {}).get("chrom_mapping", None)
+        chrom_mapping = ChromMapping(
+            mapping=chrom_mapping_options
+        )
 
         # Chunk size
         chunk_size = self.get_config().get("chunk_size", DEFAULT_CHUNK_SIZE)
 
         # Assembly
-        assembly = self.get_param().get(
+        assembly = param.get(
             "assembly", self.get_config().get("assembly", DEFAULT_ASSEMBLY)
         )
 
@@ -888,6 +897,7 @@ class variants_annotation(variants_annotation_docker):
                         sort=False,
                         index=False,
                         threads=threads,
+                        chrom_mapping_sql=chrom_mapping.to_tool_sql()
                     )
 
                     # Load input tmp file
@@ -1187,7 +1197,12 @@ class variants_annotation(variants_annotation_docker):
 
                     # Update variants
                     log.info("Annotations update...")
-                    self.update_from_vcf(output_vcf_file, update_header=True, annotation_header_fields_override=annotation_header_fields_override)
+                    self.update_from_vcf(
+                        output_vcf_file,
+                        update_header=True,
+                        annotation_header_fields_override=annotation_header_fields_override,
+                        chrom_mapping_sql=chrom_mapping.from_tool_sql()
+                    )
                     remove_if_exists([output_vcf_file])
                     log.debug("Annotations update done.")
 
@@ -1255,8 +1270,11 @@ class variants_annotation(variants_annotation_docker):
         log.debug("Databases annotations: " + str(databases_folders))
 
         # Param
+        param = self.get_param()
+
+        # Annotations section from the parameters
         annotations = (
-            self.get_param()
+            param
             .get(section, {})
             .get("snpsift", {})
             .get("annotations", None)
@@ -1273,8 +1291,14 @@ class variants_annotation(variants_annotation_docker):
             f"annotation_header_fields_override={annotation_header_fields_override}"
         )
 
+        # Param - Option chrom_mapping
+        chrom_mapping_options = param.get(section, {}).get("snpsift", {}).get("chrom_mapping", None)
+        chrom_mapping = ChromMapping(
+            mapping=chrom_mapping_options
+        )
+
         # Assembly
-        assembly = self.get_param().get(
+        assembly = param.get(
             "assembly", self.get_config().get("assembly", DEFAULT_ASSEMBLY)
         )
 
@@ -1516,6 +1540,7 @@ class variants_annotation(variants_annotation_docker):
                         remove_info=True,
                         add_samples=False,
                         index=True,
+                        chrom_mapping_sql=chrom_mapping.to_tool_sql()
                     )
 
                     # Num command
@@ -1534,7 +1559,12 @@ class variants_annotation(variants_annotation_docker):
                         log.info(
                             f"Annotation - Updating [{nb_command}/{len(commands)}]..."
                         )
-                        self.update_from_vcf(commands[command_annotate], update_header=True, annotation_header_fields_override=annotation_header_fields_override)
+                        self.update_from_vcf(
+                            commands[command_annotate],
+                            update_header=True,
+                            annotation_header_fields_override=annotation_header_fields_override,
+                            chrom_mapping_sql=chrom_mapping.from_tool_sql()
+                        )
                         remove_if_exists(
                             [
                                 commands[command_annotate],
@@ -1597,6 +1627,9 @@ class variants_annotation(variants_annotation_docker):
         log.debug("Databases annotations: " + str(databases_folders))
 
         # Param
+        param = self.get_param()
+
+        # Annotations for bcftools
         annotations = (
             self.get_param()
             .get(section, {})
@@ -1613,6 +1646,12 @@ class variants_annotation(variants_annotation_docker):
         )
         log.debug(
             f"annotation_header_fields_override={annotation_header_fields_override}"
+        )
+
+        # Param - Option chrom_mapping
+        chrom_mapping_options = param.get(section, {}).get("bcftools", {}).get("chrom_mapping", None)
+        chrom_mapping = ChromMapping(
+            mapping=chrom_mapping_options
         )
 
         # Assembly
@@ -1989,6 +2028,7 @@ class variants_annotation(variants_annotation_docker):
                     remove_info=True,
                     add_samples=False,
                     index=True,
+                    chrom_mapping_sql=chrom_mapping.to_tool_sql()
                 )
 
                 # Remove files
@@ -2097,7 +2137,13 @@ class variants_annotation(variants_annotation_docker):
 
                     # Update variants
                     log.info("Annotation - Updating...")
-                    self.update_from_vcf(tmp_annotate_vcf_name, remove_vcf_file=False, update_header=True, annotation_header_fields_override=annotation_header_fields_override)
+                    self.update_from_vcf(
+                        tmp_annotate_vcf_name,
+                        remove_vcf_file=False,
+                        update_header=True,
+                        annotation_header_fields_override=annotation_header_fields_override,
+                        chrom_mapping_sql=chrom_mapping.from_tool_sql()
+                    )
 
         # Remove files
         remove_if_exists(remove_files)
@@ -2225,6 +2271,12 @@ class variants_annotation(variants_annotation_docker):
         # Param - Exomiser
         param_exomiser = param.get(section, {}).get("exomiser", {})
         log.debug(f"Param Exomiser: {param_exomiser}")
+
+        # Param - options chrom_mapping
+        chrom_mapping_options = param.get(section, {}).get("exomiser", {}).get("chrom_mapping", None)
+        chrom_mapping = ChromMapping(
+            mapping=chrom_mapping_options
+        )
 
         # Param - Assembly
         assembly = param.get("assembly", config.get("assembly", DEFAULT_ASSEMBLY))
@@ -2659,6 +2711,7 @@ class variants_annotation(variants_annotation_docker):
                     add_samples=True,
                     list_samples=samples,
                     index=False,
+                    chrom_mapping_sql=chrom_mapping.to_tool_sql()
                 )
 
                 ### Execute Exomiser ###
@@ -2713,6 +2766,9 @@ class variants_annotation(variants_annotation_docker):
 
                 # Log
                 log.debug(f"exomiser_command_analysis={exomiser_command_analysis}")
+
+                # Log
+                log.info("Starting Exomiser annotation...")
 
                 # Run command
                 result = subprocess.call(
@@ -2864,7 +2920,11 @@ class variants_annotation(variants_annotation_docker):
                     log.debug("Exomiser result VCF update variants")
 
                     # Update variants with VCF
-                    self.update_from_vcf(output_results_vcf, update_header=True)
+                    self.update_from_vcf(
+                        output_results_vcf,
+                        update_header=True,
+                        chrom_mapping_sql=chrom_mapping.from_tool_sql()
+                    )
 
         return True
 
@@ -2929,10 +2989,8 @@ class variants_annotation(variants_annotation_docker):
         param = self.get_param()
         log.debug("Param: " + str(param))
 
-        # Param - options
+        # Param - options chrom_mapping
         chrom_mapping_options = param.get(section, {}).get("snpeff", {}).get("chrom_mapping", None)
-        #log.debug("chrom_mapping_options: " + str(chrom_mapping_options))
-
         chrom_mapping = ChromMapping(
             mapping=chrom_mapping_options
         )
@@ -3318,6 +3376,12 @@ class variants_annotation(variants_annotation_docker):
             f"annotation_header_fields_override={annotation_header_fields_override}"
         )
 
+        # Param - options chrom_mapping
+        chrom_mapping_options = param.get(section, {}).get("annovar", {}).get("chrom_mapping", None)
+        chrom_mapping = ChromMapping(
+            mapping=chrom_mapping_options
+        )
+
         # Param - Assembly
         assembly = param.get("assembly", config.get("assembly", DEFAULT_ASSEMBLY))
 
@@ -3374,6 +3438,7 @@ class variants_annotation(variants_annotation_docker):
                     remove_info=".",
                     add_samples=False,
                     index=True,
+                    chrom_mapping_sql=chrom_mapping.to_tool_sql()
                 )
 
                 # Create file for field rename
@@ -3855,7 +3920,12 @@ class variants_annotation(variants_annotation_docker):
 
                     # Update variants
                     log.info(f"Annotations Annovar - Updating...")
-                    self.update_from_vcf(tmp_annotate_vcf_name, update_header=True, annotation_header_fields_override=annotation_header_fields_override)
+                    self.update_from_vcf(
+                        tmp_annotate_vcf_name,
+                        update_header=True,
+                        annotation_header_fields_override=annotation_header_fields_override,
+                        chrom_mapping_sql=chrom_mapping.from_tool_sql(),
+                    )
                     remove_if_exists(
                         [
                             tmp_annotate_vcf_name,
@@ -4908,6 +4978,12 @@ class variants_annotation(variants_annotation_docker):
         options = param.get(section, {}).get("splice", {}).get("options", {})
         log.debug("Options: " + str(options))
 
+        # param - chrom mapping
+        chrom_mapping_options = param.get(section, {}).get("splice", {}).get("chrom_mapping", None)
+        chrom_mapping = ChromMapping(
+            mapping=chrom_mapping_options
+        )
+
         # Data
         table_variants = self.get_table_variants()
 
@@ -4988,6 +5064,7 @@ class variants_annotation(variants_annotation_docker):
             add_samples=True,
             index=False,
             where_clause=where_clause,
+            chrom_mapping_sql=chrom_mapping.to_tool_sql()
         )
         mount = [f" -v {path}:{path}:rw" for path in [output_folder]]
         if any(value for value in splice_config.values() if value is None):
@@ -5122,11 +5199,16 @@ class variants_annotation(variants_annotation_docker):
         # else:
         #     rm_container = ""
         # docker_cmd = f"docker run {rm_container} --entrypoint '/bin/bash' --name {random_uuid} {' '.join(mount)} {':'.join(splice_config.get('image'))} {cmd}"
+
+        log.info("Starting Splice annotation...")
+
         log.debug(docker_cmd)
         res = subprocess.run(docker_cmd, shell=True, capture_output=True, text=True)
         log.debug(res.stdout)
         if res.stderr:
-            log.error(res.stderr)
+            log.warning(f"Splice annotation warning/error:")
+            log.warning(res.stderr)
+            #log.error(res.stderr)
         res.check_returncode()
         # Update variants
         log.info("Annotation - Updating...")
@@ -5150,7 +5232,11 @@ class variants_annotation(variants_annotation_docker):
             )
         else:
 
-            self.update_from_vcf(output_vcf[0], update_header=True)
+            self.update_from_vcf(
+                output_vcf[0],
+                update_header=True,
+                chrom_mapping_sql=chrom_mapping.from_tool_sql()
+            )
 
         # Remove file
         remove_if_exists(output_vcf)

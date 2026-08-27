@@ -6,7 +6,7 @@ Usage:
 pytest tests/
 
 Coverage:
-coverage run -m pytest tests/test_variants_annotations_snpsift.py -x -v --log-cli-level=INFO --capture=tee-sys
+coverage run -m pytest tests/test_variants_annotations_bigwig.py -x -v --log-cli-level=INFO --capture=tee-sys
 coverage report --include=howard/* -m 
 """
 
@@ -23,7 +23,7 @@ from test_needed import tests_folder, tests_data_folder, tests_annotations_folde
 
 def test_annotation_bigwig_annotations_fields_and_options():
     """
-    This function tests the annotation of a VCF file using snpsift annotations.
+    This function tests the annotation of a VCF file using bigwig annotations.
     """
 
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
@@ -126,7 +126,7 @@ def test_annotation_bigwig_annotations_fields_and_options():
 
 def test_annotation_bigwig_annotations():
     """
-    This function tests the annotation of a VCF file using snpsift annotations.
+    This function tests the annotation of a VCF file using bigwig annotations.
     """
 
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
@@ -209,7 +209,7 @@ def test_annotation_bigwig_annotations():
 
 def test_annotation_bigwig_annotations_renamed_header():
     """
-    This function tests the annotation of a VCF file using snpsift annotations.
+    This function tests the annotation of a VCF file using bigwig annotations.
     """
 
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:

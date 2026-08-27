@@ -1,5 +1,5 @@
 ---
-title: HOWARD Help Parameters
+title: HOWARD Parameters
 ---
 
 - [<span class="toc-section-number">1</span>
@@ -14,31 +14,41 @@ title: HOWARD Help Parameters
   - [<span class="toc-section-number">4.2</span> bcftools](#bcftools)
     - [<span class="toc-section-number">4.2.1</span>
       annotations](#annotations-1)
+    - [<span class="toc-section-number">4.2.2</span>
+      chrom_mapping](#chrom_mapping)
   - [<span class="toc-section-number">4.3</span> annovar](#annovar)
     - [<span class="toc-section-number">4.3.1</span>
       annotations](#annotations-2)
     - [<span class="toc-section-number">4.3.2</span> options](#options)
+    - [<span class="toc-section-number">4.3.3</span>
+      chrom_mapping](#chrom_mapping-1)
   - [<span class="toc-section-number">4.4</span> snpeff](#snpeff)
     - [<span class="toc-section-number">4.4.1</span>
       options](#options-1)
     - [<span class="toc-section-number">4.4.2</span>
-      chrom_mapping](#chrom_mapping)
+      chrom_mapping](#chrom_mapping-2)
     - [<span class="toc-section-number">4.4.3</span> stats](#stats)
     - [<span class="toc-section-number">4.4.4</span>
       csvStats](#csvstats)
   - [<span class="toc-section-number">4.5</span> snpsift](#snpsift)
     - [<span class="toc-section-number">4.5.1</span>
       annotations](#annotations-3)
+    - [<span class="toc-section-number">4.5.2</span>
+      chrom_mapping](#chrom_mapping-3)
   - [<span class="toc-section-number">4.6</span> bigwig](#bigwig)
     - [<span class="toc-section-number">4.6.1</span>
       annotations](#annotations-4)
     - [<span class="toc-section-number">4.6.2</span>
       options](#options-2)
+    - [<span class="toc-section-number">4.6.3</span>
+      chrom_mapping](#chrom_mapping-4)
   - [<span class="toc-section-number">4.7</span> exomiser](#exomiser)
     - [<span class="toc-section-number">4.7.1</span> release](#release)
     - [<span class="toc-section-number">4.7.2</span>
       transcript_source](#transcript_source)
     - [<span class="toc-section-number">4.7.3</span> hpo](#hpo)
+    - [<span class="toc-section-number">4.7.4</span>
+      chrom_mapping](#chrom_mapping-5)
   - [<span class="toc-section-number">4.8</span> splice](#splice)
     - [<span class="toc-section-number">4.8.1</span>
       split_mode](#split_mode)
@@ -53,6 +63,8 @@ title: HOWARD Help Parameters
       rm_annot](#rm_annot)
     - [<span class="toc-section-number">4.8.7</span>
       whitespace](#whitespace)
+    - [<span class="toc-section-number">4.8.8</span>
+      chrom_mapping](#chrom_mapping-6)
   - [<span class="toc-section-number">4.9</span> docker](#docker)
     - [<span class="toc-section-number">4.9.1</span> entries](#entries)
   - [<span class="toc-section-number">4.10</span> hgvs](#hgvs)
@@ -1689,6 +1701,83 @@ Examples:
 > }
 > ```
 
+### chrom_mapping
+
+Optional mapping of chromosome names between HOWARD and external tools
+(e.g. BCFTools).
+
+Rules are applied in sequence as regular expression replacements, using
+\[pattern, replacement\] pairs.
+
+Use 'to_tool' to map names before annotation and 'from_tool' to map them
+back when importing the annotation results.
+
+If 'from_tool' is omitted, HOWARD derives it by swapping each 'to_tool'
+pattern and replacement; define both directions explicitly when the
+mapping is not reversible (usually when using regex expressions).
+
+Examples:
+
+> Map chromosome names with explicit regular expression rules in both
+> directions, changing chrMT to M and remove 'chr' from chromosomes
+> names
+
+> ``` json
+> {
+>    "chrom_mapping": {
+>       "to_tool": [
+>          ["^chrMT$", "M"],
+>          ["^chr(\\d+|X|Y)$", "\\1"]
+>       ],
+>       "from_tool": [
+>          ["^M$", "chrMT"],
+>          ["^(\\d+|X|Y)$", "chr\\1"]
+>       ]
+>    }
+> }
+> ```
+
+> Map chromosome names with one simple replacement and automatically
+> reverse it after annotation
+
+> ``` json
+> {
+>    "chrom_mapping": {
+>       "to_tool": [
+>          ["chrMT", "chrM"]
+>       ]
+>    }
+> }
+> ```
+
+> Apply several simple replacements in sequence, in quick format
+> (patterns list considered as to_tool parameters)
+
+> ``` json
+> {
+>    "chrom_mapping": [
+>          ["chrMT", "chrM"],
+>          ["chr1", "1"]
+>    ]
+> }
+> ```
+
+> Apply one simple replacement, with quick format
+
+> ``` json
+> {
+>    "chrom_mapping": ["chrMT", "chrM"]
+> }
+> ```
+
+> Disable chromosome mapping (the default).
+
+> ``` json
+> {
+>    "chrom_mapping": null
+> }
+> ```
+
 ## annovar
 
 Annotation process using Annovar tool. Provides a list of keywords to
@@ -1882,6 +1971,12 @@ Examples:
 > }
 > ```
 
+### chrom_mapping
+
+Optional mapping of chromosome names between HOWARD and Annovar.
+
+See [chrom_mapping section](#chrom_mapping) for more information.
+
 ## snpeff
 
 Annotation process using snpEff tool and options (see [snpEff
@@ -1928,63 +2023,7 @@ Examples:
 
 Optional mapping of chromosome names between HOWARD and snpEff.
 
-Rules are applied in sequence as regular expression replacements, using
-\[pattern, replacement\] pairs.
-
-Use 'to_tool' to map names before snpEff annotation and 'from_tool' to
-map them back when importing the annotation results.
-
-If 'from_tool' is omitted, HOWARD derives it by swapping each 'to_tool'
-pattern and replacement; define both directions explicitly when the
-mapping is not reversible (usually when using regex expressions).
-
-Examples:
-
-> Map chromosome names with explicit regular expression rules in both
-> directions, changing chrMT to M and remove 'chr' from chromosomes
-> names
-
-> ``` json
-> {
->    "chrom_mapping": {
->       "to_tool": [["^chrMT$", "M"], ["^chr(\\d+|X|Y)$", "\\1"]],
->       "from_tool": [["^M$", "chrMT"], ["^(\\d+|X|Y)$", "chr\\1"]]
->    }
-> }
-> ```
-
-> Map chromosome names with one simple replacement and automatically
-> reverse it after annotation
-
-> ``` json
-> {
->    "chrom_mapping": {"to_tool": [["chrMT", "chrM"]]}
-> }
-> ```
-
-> Apply several simple replacements in sequence, in quick format
-
-> ``` json
-> {
->    "chrom_mapping": [["chrMT", "chrM"], ["chr1", "1"]]
-> }
-> ```
-
-> Apply one simple replacement
-
-> ``` json
-> {
->    "chrom_mapping": ["chrMT", "chrM"]
-> }
-> ```
-
-> Disable chromosome mapping (the default).
-
-> ``` json
-> {
->    "chrom_mapping": null
-> }
-> ```
+See [chrom_mapping section](#chrom_mapping) for more information.
 
 ### stats
 
@@ -2165,6 +2204,12 @@ Examples:
 > }
 > ```
 
+### chrom_mapping
+
+Optional mapping of chromosome names between HOWARD and snpSift.
+
+See [chrom_mapping section](#chrom_mapping) for more information.
+
 ## bigwig
 
 Annotation process using BigWig files. Provide a list of database files
@@ -2342,6 +2387,12 @@ Examples:
 > }
 > ```
 
+### chrom_mapping
+
+Optional mapping of chromosome names between HOWARD and BigWig/BigBed.
+
+See [chrom_mapping section](#chrom_mapping) for more information.
+
 ## exomiser
 
 Annotation process using Exomiser tool and options (see [Exomiser
@@ -2410,6 +2461,12 @@ Examples:
 >    "hpo": ["HP:0001156", "HP:0001363", "HP:0011304", "HP:0010055"]
 > }
 > ```
+
+### chrom_mapping
+
+Optional mapping of chromosome names between HOWARD and Exomiser.
+
+See [chrom_mapping section](#chrom_mapping) for more information.
 
 ## splice
 
@@ -2542,6 +2599,12 @@ Examples:
 >    "whitespace": "true"
 > }
 > ```
+
+### chrom_mapping
+
+Optional mapping of chromosome names between HOWARD and Splice.
+
+See [chrom_mapping section](#chrom_mapping) for more information.
 
 ## docker
 

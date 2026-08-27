@@ -12,6 +12,7 @@ import logging as log
 from howard.functions.commons import (
     DEFAULT_GENOME_FOLDER,
 	DEFAULT_TOOLS_FOLDER,
+    ChromMapping,
 	check_docker_image_exists,
 	command,
 	docker_automount,
@@ -1289,12 +1290,19 @@ class variants_annotation_docker:
 			input_vcf = os.path.join(run_dir, "input.vcf")
 			output_vcf_expected = os.path.join(run_dir, "output.vcf.gz")
 
+			# Param - Option chrom_mapping
+			chrom_mapping_options = spec.get("chrom_mapping", None)
+			chrom_mapping = ChromMapping(
+				mapping=chrom_mapping_options
+			)
+
 			self.export_variant_vcf(
 				vcf_file=input_vcf,
 				remove_info=spec["remove_info"],
 				add_samples=spec["add_samples"],
 				index=False,
 				where_clause=spec["where_clause"],
+				chrom_mapping_sql=chrom_mapping.to_tool_sql(),
 			)
 
 			resolved_assembly, resolved_genome_path = _resolve_runtime_primary_values(
@@ -1351,6 +1359,7 @@ class variants_annotation_docker:
 				output_vcf,
 				update_header=spec["update_header"],
 				update_existing_fields=spec["update_existing_fields"],
+				chrom_mapping_sql=chrom_mapping.from_tool_sql()
 			)
 
 	def annotation_docker(self, section: str = "annotation", threads: int = None) -> None:
