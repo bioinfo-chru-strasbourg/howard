@@ -1004,6 +1004,42 @@
           "   }",
           "}"
         ]
+      },
+      "chrom_mapping": {
+        "__help": [
+          "Optional mapping of chromosome names between HOWARD and external tools (e.g. BCFTools).",
+          "Rules are applied in sequence as regular expression replacements, using [pattern, replacement] pairs.",
+          "Use 'to_tool' to map names before annotation and 'from_tool' to map them back when importing the annotation results.",
+          "If 'from_tool' is omitted, HOWARD derives it by swapping each 'to_tool' pattern and replacement; define both directions explicitly when the mapping is not reversible (usually when using regex expressions)."
+        ],
+        "__examples_code": [
+          "# Map chromosome names with explicit regular expression rules in both directions, changing chrMT to M and remove 'chr' from chromosomes names",
+          "\"chrom_mapping\": {",
+          "   \"to_tool\": [",
+          "      [\"^chrMT$\", \"M\"],",
+          "      [\"^chr(\\\\d+|X|Y)$\", \"\\\\1\"]",
+          "   ],",
+          "   \"from_tool\": [",
+          "      [\"^M$\", \"chrMT\"],",
+          "      [\"^(\\\\d+|X|Y)$\", \"chr\\\\1\"]",
+          "   ]",
+          "}",
+          "# Map chromosome names with one simple replacement and automatically reverse it after annotation",
+          "\"chrom_mapping\": {",
+          "   \"to_tool\": [",
+          "      [\"chrMT\", \"chrM\"]",
+          "   ]",
+          "}",
+          "# Apply several simple replacements in sequence, in quick format (patterns list considered as to_tool parameters)",
+          "\"chrom_mapping\": [",
+          "      [\"chrMT\", \"chrM\"],",
+          "      [\"chr1\", \"1\"]",
+          "]",
+          "# Apply one simple replacement, with quick format",
+          "\"chrom_mapping\": [\"chrMT\", \"chrM\"]",
+          "# Disable chromosome mapping (the default).",
+          "\"chrom_mapping\": null"
+        ]
       }
     },
     "annovar": {
@@ -1131,6 +1167,12 @@
           "   \"parallelize\": \"parallel\"",
           "}"
         ]
+      },
+      "chrom_mapping": {
+        "__help": [
+          "Optional mapping of chromosome names between HOWARD and Annovar.",
+          "See [chrom_mapping section](#chrom_mapping) for more information."
+        ]
       }
     },
     "snpeff": {
@@ -1158,24 +1200,7 @@
       "chrom_mapping": {
         "__help": [
           "Optional mapping of chromosome names between HOWARD and snpEff.",
-          "Rules are applied in sequence as regular expression replacements, using [pattern, replacement] pairs.",
-          "Use 'to_tool' to map names before snpEff annotation and 'from_tool' to map them back when importing the annotation results.",
-          "If 'from_tool' is omitted, HOWARD derives it by swapping each 'to_tool' pattern and replacement; define both directions explicitly when the mapping is not reversible (usually when using regex expressions)."
-        ],
-        "__examples_code": [
-          "# Map chromosome names with explicit regular expression rules in both directions, changing chrMT to M and remove 'chr' from chromosomes names",
-          "\"chrom_mapping\": {",
-          "   \"to_tool\": [[\"^chrMT$\", \"M\"], [\"^chr(\\\\d+|X|Y)$\", \"\\\\1\"]],",
-          "   \"from_tool\": [[\"^M$\", \"chrMT\"], [\"^(\\\\d+|X|Y)$\", \"chr\\\\1\"]]",
-          "}",
-          "# Map chromosome names with one simple replacement and automatically reverse it after annotation",
-          "\"chrom_mapping\": {\"to_tool\": [[\"chrMT\", \"chrM\"]]}",
-          "# Apply several simple replacements in sequence, in quick format",
-          "\"chrom_mapping\": [[\"chrMT\", \"chrM\"], [\"chr1\", \"1\"]]",
-          "# Apply one simple replacement",
-          "\"chrom_mapping\": [\"chrMT\", \"chrM\"]",
-          "# Disable chromosome mapping (the default).",
-          "\"chrom_mapping\": null"
+          "See [chrom_mapping section](#chrom_mapping) for more information."
         ]
       },
       "stats": {
@@ -1280,6 +1305,12 @@
           "      }",
           "   }",
           "}"
+        ]
+      },
+      "chrom_mapping": {
+        "__help": [
+          "Optional mapping of chromosome names between HOWARD and snpSift.",
+          "See [chrom_mapping section](#chrom_mapping) for more information."
         ]
       }
     },
@@ -1394,6 +1425,12 @@
           "   }",
           "}"
         ]
+      },
+      "chrom_mapping": {
+        "__help": [
+          "Optional mapping of chromosome names between HOWARD and BigWig/BigBed.",
+          "See [chrom_mapping section](#chrom_mapping) for more information."
+        ]
       }
     },
     "exomiser": {
@@ -1433,6 +1470,12 @@
         "__examples_code": [
           "# Annotation with a list of 4 HPO for Exomiser.",
           "\"hpo\": [\"HP:0001156\", \"HP:0001363\", \"HP:0011304\", \"HP:0010055\"]"
+        ]
+      },
+      "chrom_mapping": {
+        "__help": [
+          "Optional mapping of chromosome names between HOWARD and Exomiser.",
+          "See [chrom_mapping section](#chrom_mapping) for more information."
         ]
       }
     },
@@ -1511,6 +1554,12 @@
         "__examples_code": [
           "# Remove spaces in INFO field.",
           "\"whitespace\": \"true\""
+        ]
+      },
+      "chrom_mapping": {
+        "__help": [
+          "Optional mapping of chromosome names between HOWARD and Splice.",
+          "See [chrom_mapping section](#chrom_mapping) for more information."
         ]
       }
     },

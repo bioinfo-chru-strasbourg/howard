@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="generator" content="pandoc" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
-  <title>HOWARD Help Parameters</title>
+  <title>HOWARD Parameters</title>
   <style>
     html {
       color: #1a1a1a;
@@ -234,7 +234,7 @@
 </head>
 <body>
 <header id="title-block-header">
-<h1 class="title">HOWARD Help Parameters</h1>
+<h1 class="title">HOWARD Parameters</h1>
 </header>
 <nav id="TOC" role="doc-toc">
 <h2 id="toc-title">Contents</h2>
@@ -259,6 +259,8 @@ class="toc-section-number">4.2</span> bcftools</a>
 <ul>
 <li><a href="#annotations-1" id="toc-annotations-1"><span
 class="toc-section-number">4.2.1</span> annotations</a></li>
+<li><a href="#chrom_mapping" id="toc-chrom_mapping"><span
+class="toc-section-number">4.2.2</span> chrom_mapping</a></li>
 </ul></li>
 <li><a href="#annovar" id="toc-annovar"><span
 class="toc-section-number">4.3</span> annovar</a>
@@ -267,13 +269,15 @@ class="toc-section-number">4.3</span> annovar</a>
 class="toc-section-number">4.3.1</span> annotations</a></li>
 <li><a href="#options" id="toc-options"><span
 class="toc-section-number">4.3.2</span> options</a></li>
+<li><a href="#chrom_mapping-1" id="toc-chrom_mapping-1"><span
+class="toc-section-number">4.3.3</span> chrom_mapping</a></li>
 </ul></li>
 <li><a href="#snpeff" id="toc-snpeff"><span
 class="toc-section-number">4.4</span> snpeff</a>
 <ul>
 <li><a href="#options-1" id="toc-options-1"><span
 class="toc-section-number">4.4.1</span> options</a></li>
-<li><a href="#chrom_mapping" id="toc-chrom_mapping"><span
+<li><a href="#chrom_mapping-2" id="toc-chrom_mapping-2"><span
 class="toc-section-number">4.4.2</span> chrom_mapping</a></li>
 <li><a href="#stats" id="toc-stats"><span
 class="toc-section-number">4.4.3</span> stats</a></li>
@@ -285,6 +289,8 @@ class="toc-section-number">4.5</span> snpsift</a>
 <ul>
 <li><a href="#annotations-3" id="toc-annotations-3"><span
 class="toc-section-number">4.5.1</span> annotations</a></li>
+<li><a href="#chrom_mapping-3" id="toc-chrom_mapping-3"><span
+class="toc-section-number">4.5.2</span> chrom_mapping</a></li>
 </ul></li>
 <li><a href="#bigwig" id="toc-bigwig"><span
 class="toc-section-number">4.6</span> bigwig</a>
@@ -293,6 +299,8 @@ class="toc-section-number">4.6</span> bigwig</a>
 class="toc-section-number">4.6.1</span> annotations</a></li>
 <li><a href="#options-2" id="toc-options-2"><span
 class="toc-section-number">4.6.2</span> options</a></li>
+<li><a href="#chrom_mapping-4" id="toc-chrom_mapping-4"><span
+class="toc-section-number">4.6.3</span> chrom_mapping</a></li>
 </ul></li>
 <li><a href="#exomiser" id="toc-exomiser"><span
 class="toc-section-number">4.7</span> exomiser</a>
@@ -303,6 +311,8 @@ class="toc-section-number">4.7.1</span> release</a></li>
 class="toc-section-number">4.7.2</span> transcript_source</a></li>
 <li><a href="#hpo" id="toc-hpo"><span
 class="toc-section-number">4.7.3</span> hpo</a></li>
+<li><a href="#chrom_mapping-5" id="toc-chrom_mapping-5"><span
+class="toc-section-number">4.7.4</span> chrom_mapping</a></li>
 </ul></li>
 <li><a href="#splice" id="toc-splice"><span
 class="toc-section-number">4.8</span> splice</a>
@@ -321,6 +331,8 @@ class="toc-section-number">4.8.5</span> rm_snps</a></li>
 class="toc-section-number">4.8.6</span> rm_annot</a></li>
 <li><a href="#whitespace" id="toc-whitespace"><span
 class="toc-section-number">4.8.7</span> whitespace</a></li>
+<li><a href="#chrom_mapping-6" id="toc-chrom_mapping-6"><span
+class="toc-section-number">4.8.8</span> chrom_mapping</a></li>
 </ul></li>
 <li><a href="#docker" id="toc-docker"><span
 class="toc-section-number">4.9</span> docker</a>
@@ -2011,6 +2023,84 @@ class="sourceCode json"><code class="sourceCode json"><span id="cb33-1"><a href=
 <span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
 <span id="cb33-10"><a href="#cb33-10" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
+<h3 data-number="4.2.2" id="chrom_mapping"><span
+class="header-section-number">4.2.2</span> chrom_mapping</h3>
+<p>Optional mapping of chromosome names between HOWARD and external
+tools (e.g.&#xA0;BCFTools).</p>
+<p>Rules are applied in sequence as regular expression replacements,
+using [pattern, replacement] pairs.</p>
+<p>Use &#x2018;to_tool&#x2019; to map names before annotation and &#x2018;from_tool&#x2019; to map
+them back when importing the annotation results.</p>
+<p>If &#x2018;from_tool&#x2019; is omitted, HOWARD derives it by swapping each
+&#x2018;to_tool&#x2019; pattern and replacement; define both directions explicitly
+when the mapping is not reversible (usually when using regex
+expressions).</p>
+<p>Examples:</p>
+<blockquote>
+<p>Map chromosome names with explicit regular expression rules in both
+directions, changing chrMT to M and remove &#x2018;chr&#x2019; from chromosomes
+names</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb34"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;chrom_mapping&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;to_tool&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>         <span class="ot">[</span><span class="st">&quot;^chrMT$&quot;</span><span class="ot">,</span> <span class="st">&quot;M&quot;</span><span class="ot">],</span></span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>         <span class="ot">[</span><span class="st">&quot;^chr(</span><span class="ch">\\</span><span class="st">d+|X|Y)$&quot;</span><span class="ot">,</span> <span class="st">&quot;</span><span class="ch">\\</span><span class="st">1&quot;</span><span class="ot">]</span></span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>      <span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;from_tool&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>         <span class="ot">[</span><span class="st">&quot;^M$&quot;</span><span class="ot">,</span> <span class="st">&quot;chrMT&quot;</span><span class="ot">],</span></span>
+<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a>         <span class="ot">[</span><span class="st">&quot;^(</span><span class="ch">\\</span><span class="st">d+|X|Y)$&quot;</span><span class="ot">,</span> <span class="st">&quot;chr</span><span class="ch">\\</span><span class="st">1&quot;</span><span class="ot">]</span></span>
+<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a>      <span class="ot">]</span></span>
+<span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
+<span id="cb34-12"><a href="#cb34-12" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<blockquote>
+<p>Map chromosome names with one simple replacement and automatically
+reverse it after annotation</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb35"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;chrom_mapping&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;to_tool&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>         <span class="ot">[</span><span class="st">&quot;chrMT&quot;</span><span class="ot">,</span> <span class="st">&quot;chrM&quot;</span><span class="ot">]</span></span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>      <span class="ot">]</span></span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<blockquote>
+<p>Apply several simple replacements in sequence, in quick format
+(patterns list considered as to_tool parameters)</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb36"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;chrom_mapping&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>         <span class="ot">[</span><span class="st">&quot;chrMT&quot;</span><span class="ot">,</span> <span class="st">&quot;chrM&quot;</span><span class="ot">],</span></span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>         <span class="ot">[</span><span class="st">&quot;chr1&quot;</span><span class="ot">,</span> <span class="st">&quot;1&quot;</span><span class="ot">]</span></span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a>   <span class="ot">]</span></span>
+<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<blockquote>
+<p>Apply one simple replacement, with quick format</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb37"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;chrom_mapping&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;chrMT&quot;</span><span class="ot">,</span> <span class="st">&quot;chrM&quot;</span><span class="ot">]</span></span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<blockquote>
+<p>Disable chromosome mapping (the default).</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb38"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;chrom_mapping&quot;</span><span class="fu">:</span> <span class="kw">null</span></span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
 <h2 data-number="4.3" id="annovar"><span
 class="header-section-number">4.3</span> annovar</h2>
 <p>Annotation process using Annovar tool. Provides a list of keywords to
@@ -2057,60 +2147,60 @@ Parameter option).</p>
 and Annovar options</p>
 </blockquote>
 <blockquote>
-<div class="sourceCode" id="cb34"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;annovar&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;annotations&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;annovar_annotation1&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>            <span class="dt">&quot;annotation_fields&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>               <span class="dt">&quot;field1&quot;</span><span class="fu">:</span> <span class="kw">null</span><span class="fu">,</span></span>
-<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a>               <span class="dt">&quot;field2&quot;</span><span class="fu">:</span> <span class="st">&quot;field2_renamed&quot;</span></span>
-<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>            <span class="fu">},</span></span>
-<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a>            <span class="dt">&quot;options&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a>               <span class="dt">&quot;protocol&quot;</span><span class="fu">:</span> <span class="st">&quot;annovar_keyword1&quot;</span><span class="fu">,</span></span>
-<span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a>               <span class="dt">&quot;operation&quot;</span><span class="fu">:</span> <span class="st">&quot;gx&quot;</span><span class="fu">,</span></span>
-<span id="cb34-12"><a href="#cb34-12" aria-hidden="true" tabindex="-1"></a>               <span class="dt">&quot;genebase&quot;</span><span class="fu">:</span> <span class="st">&quot;-splicing_threshold 3 -indel_splicing_threshold 3 -hgvs&quot;</span><span class="fu">,</span></span>
-<span id="cb34-13"><a href="#cb34-13" aria-hidden="true" tabindex="-1"></a>               <span class="dt">&quot;arguments&quot;</span><span class="fu">:</span> <span class="st">&quot;&quot;</span><span class="fu">,</span></span>
-<span id="cb34-14"><a href="#cb34-14" aria-hidden="true" tabindex="-1"></a>               <span class="dt">&quot;xref&quot;</span><span class="fu">:</span> <span class="st">&quot;/path/to/xref/file&quot;</span><span class="fu">,</span></span>
-<span id="cb34-15"><a href="#cb34-15" aria-hidden="true" tabindex="-1"></a>               <span class="dt">&quot;options&quot;</span><span class="fu">:</span> <span class="st">&quot;&quot;</span><span class="fu">,</span></span>
-<span id="cb34-16"><a href="#cb34-16" aria-hidden="true" tabindex="-1"></a>               <span class="dt">&quot;header_fields&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb34-17"><a href="#cb34-17" aria-hidden="true" tabindex="-1"></a>                  <span class="dt">&quot;field1&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb34-18"><a href="#cb34-18" aria-hidden="true" tabindex="-1"></a>                     <span class="dt">&quot;Number&quot;</span><span class="fu">:</span> <span class="st">&quot;.&quot;</span><span class="fu">,</span></span>
-<span id="cb34-19"><a href="#cb34-19" aria-hidden="true" tabindex="-1"></a>                     <span class="dt">&quot;Type&quot;</span><span class="fu">:</span> <span class="st">&quot;String&quot;</span><span class="fu">,</span></span>
-<span id="cb34-20"><a href="#cb34-20" aria-hidden="true" tabindex="-1"></a>                     <span class="dt">&quot;Description&quot;</span><span class="fu">:</span> <span class="st">&quot;field1 as String&quot;</span></span>
-<span id="cb34-21"><a href="#cb34-21" aria-hidden="true" tabindex="-1"></a>                  <span class="fu">},</span></span>
-<span id="cb34-22"><a href="#cb34-22" aria-hidden="true" tabindex="-1"></a>                  <span class="dt">&quot;field2_renamed&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb34-23"><a href="#cb34-23" aria-hidden="true" tabindex="-1"></a>                     <span class="dt">&quot;Number&quot;</span><span class="fu">:</span> <span class="st">&quot;.&quot;</span><span class="fu">,</span></span>
-<span id="cb34-24"><a href="#cb34-24" aria-hidden="true" tabindex="-1"></a>                     <span class="dt">&quot;Type&quot;</span><span class="fu">:</span> <span class="st">&quot;String&quot;</span><span class="fu">,</span></span>
-<span id="cb34-25"><a href="#cb34-25" aria-hidden="true" tabindex="-1"></a>                     <span class="dt">&quot;Description&quot;</span><span class="fu">:</span> <span class="st">&quot;Renamed field2 as String&quot;</span></span>
-<span id="cb34-26"><a href="#cb34-26" aria-hidden="true" tabindex="-1"></a>                  <span class="fu">}</span></span>
-<span id="cb34-27"><a href="#cb34-27" aria-hidden="true" tabindex="-1"></a>               <span class="fu">}</span></span>
-<span id="cb34-28"><a href="#cb34-28" aria-hidden="true" tabindex="-1"></a>            <span class="fu">}</span></span>
-<span id="cb34-29"><a href="#cb34-29" aria-hidden="true" tabindex="-1"></a>         <span class="fu">},</span></span>
-<span id="cb34-30"><a href="#cb34-30" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;annovar_annotation2&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb34-31"><a href="#cb34-31" aria-hidden="true" tabindex="-1"></a>            <span class="dt">&quot;annotation_fields&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb34-32"><a href="#cb34-32" aria-hidden="true" tabindex="-1"></a>               <span class="dt">&quot;INFO&quot;</span><span class="fu">:</span> <span class="kw">null</span><span class="fu">,</span></span>
-<span id="cb34-33"><a href="#cb34-33" aria-hidden="true" tabindex="-1"></a>               <span class="dt">&quot;field2&quot;</span><span class="fu">:</span> <span class="st">&quot;field2_renamed&quot;</span></span>
-<span id="cb34-34"><a href="#cb34-34" aria-hidden="true" tabindex="-1"></a>            <span class="fu">},</span></span>
-<span id="cb34-35"><a href="#cb34-35" aria-hidden="true" tabindex="-1"></a>            <span class="dt">&quot;options&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb34-36"><a href="#cb34-36" aria-hidden="true" tabindex="-1"></a>               <span class="dt">&quot;protocol&quot;</span><span class="fu">:</span> <span class="st">&quot;annovar_keyword2&quot;</span><span class="fu">,</span></span>
-<span id="cb34-37"><a href="#cb34-37" aria-hidden="true" tabindex="-1"></a>               <span class="dt">&quot;operation&quot;</span><span class="fu">:</span> <span class="st">&quot;f&quot;</span><span class="fu">,</span></span>
-<span id="cb34-38"><a href="#cb34-38" aria-hidden="true" tabindex="-1"></a>               <span class="dt">&quot;genebase&quot;</span><span class="fu">:</span> <span class="st">&quot;&quot;</span><span class="fu">,</span></span>
-<span id="cb34-39"><a href="#cb34-39" aria-hidden="true" tabindex="-1"></a>               <span class="dt">&quot;arguments&quot;</span><span class="fu">:</span> <span class="st">&quot;&quot;</span><span class="fu">,</span></span>
-<span id="cb34-40"><a href="#cb34-40" aria-hidden="true" tabindex="-1"></a>               <span class="dt">&quot;xref&quot;</span><span class="fu">:</span> <span class="st">&quot;&quot;</span><span class="fu">,</span></span>
-<span id="cb34-41"><a href="#cb34-41" aria-hidden="true" tabindex="-1"></a>               <span class="dt">&quot;options&quot;</span><span class="fu">:</span> <span class="st">&quot;&quot;</span></span>
-<span id="cb34-42"><a href="#cb34-42" aria-hidden="true" tabindex="-1"></a>            <span class="fu">}</span></span>
-<span id="cb34-43"><a href="#cb34-43" aria-hidden="true" tabindex="-1"></a>         <span class="fu">}</span></span>
-<span id="cb34-44"><a href="#cb34-44" aria-hidden="true" tabindex="-1"></a>      <span class="fu">},</span></span>
-<span id="cb34-45"><a href="#cb34-45" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;options&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb34-46"><a href="#cb34-46" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;genebase&quot;</span><span class="fu">:</span> <span class="st">&quot;&quot;</span><span class="fu">,</span></span>
-<span id="cb34-47"><a href="#cb34-47" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;arguments&quot;</span><span class="fu">:</span> <span class="st">&quot;&quot;</span><span class="fu">,</span></span>
-<span id="cb34-48"><a href="#cb34-48" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;xref&quot;</span><span class="fu">:</span> <span class="st">&quot;&quot;</span><span class="fu">,</span></span>
-<span id="cb34-49"><a href="#cb34-49" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;options&quot;</span><span class="fu">:</span> <span class="st">&quot;&quot;</span><span class="fu">,</span></span>
-<span id="cb34-50"><a href="#cb34-50" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;parallelize&quot;</span><span class="fu">:</span> <span class="kw">null</span></span>
-<span id="cb34-51"><a href="#cb34-51" aria-hidden="true" tabindex="-1"></a>      <span class="fu">}</span></span>
-<span id="cb34-52"><a href="#cb34-52" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
-<span id="cb34-53"><a href="#cb34-53" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb39"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;annovar&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;annotations&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;annovar_annotation1&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a>            <span class="dt">&quot;annotation_fields&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a>               <span class="dt">&quot;field1&quot;</span><span class="fu">:</span> <span class="kw">null</span><span class="fu">,</span></span>
+<span id="cb39-7"><a href="#cb39-7" aria-hidden="true" tabindex="-1"></a>               <span class="dt">&quot;field2&quot;</span><span class="fu">:</span> <span class="st">&quot;field2_renamed&quot;</span></span>
+<span id="cb39-8"><a href="#cb39-8" aria-hidden="true" tabindex="-1"></a>            <span class="fu">},</span></span>
+<span id="cb39-9"><a href="#cb39-9" aria-hidden="true" tabindex="-1"></a>            <span class="dt">&quot;options&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb39-10"><a href="#cb39-10" aria-hidden="true" tabindex="-1"></a>               <span class="dt">&quot;protocol&quot;</span><span class="fu">:</span> <span class="st">&quot;annovar_keyword1&quot;</span><span class="fu">,</span></span>
+<span id="cb39-11"><a href="#cb39-11" aria-hidden="true" tabindex="-1"></a>               <span class="dt">&quot;operation&quot;</span><span class="fu">:</span> <span class="st">&quot;gx&quot;</span><span class="fu">,</span></span>
+<span id="cb39-12"><a href="#cb39-12" aria-hidden="true" tabindex="-1"></a>               <span class="dt">&quot;genebase&quot;</span><span class="fu">:</span> <span class="st">&quot;-splicing_threshold 3 -indel_splicing_threshold 3 -hgvs&quot;</span><span class="fu">,</span></span>
+<span id="cb39-13"><a href="#cb39-13" aria-hidden="true" tabindex="-1"></a>               <span class="dt">&quot;arguments&quot;</span><span class="fu">:</span> <span class="st">&quot;&quot;</span><span class="fu">,</span></span>
+<span id="cb39-14"><a href="#cb39-14" aria-hidden="true" tabindex="-1"></a>               <span class="dt">&quot;xref&quot;</span><span class="fu">:</span> <span class="st">&quot;/path/to/xref/file&quot;</span><span class="fu">,</span></span>
+<span id="cb39-15"><a href="#cb39-15" aria-hidden="true" tabindex="-1"></a>               <span class="dt">&quot;options&quot;</span><span class="fu">:</span> <span class="st">&quot;&quot;</span><span class="fu">,</span></span>
+<span id="cb39-16"><a href="#cb39-16" aria-hidden="true" tabindex="-1"></a>               <span class="dt">&quot;header_fields&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb39-17"><a href="#cb39-17" aria-hidden="true" tabindex="-1"></a>                  <span class="dt">&quot;field1&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb39-18"><a href="#cb39-18" aria-hidden="true" tabindex="-1"></a>                     <span class="dt">&quot;Number&quot;</span><span class="fu">:</span> <span class="st">&quot;.&quot;</span><span class="fu">,</span></span>
+<span id="cb39-19"><a href="#cb39-19" aria-hidden="true" tabindex="-1"></a>                     <span class="dt">&quot;Type&quot;</span><span class="fu">:</span> <span class="st">&quot;String&quot;</span><span class="fu">,</span></span>
+<span id="cb39-20"><a href="#cb39-20" aria-hidden="true" tabindex="-1"></a>                     <span class="dt">&quot;Description&quot;</span><span class="fu">:</span> <span class="st">&quot;field1 as String&quot;</span></span>
+<span id="cb39-21"><a href="#cb39-21" aria-hidden="true" tabindex="-1"></a>                  <span class="fu">},</span></span>
+<span id="cb39-22"><a href="#cb39-22" aria-hidden="true" tabindex="-1"></a>                  <span class="dt">&quot;field2_renamed&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb39-23"><a href="#cb39-23" aria-hidden="true" tabindex="-1"></a>                     <span class="dt">&quot;Number&quot;</span><span class="fu">:</span> <span class="st">&quot;.&quot;</span><span class="fu">,</span></span>
+<span id="cb39-24"><a href="#cb39-24" aria-hidden="true" tabindex="-1"></a>                     <span class="dt">&quot;Type&quot;</span><span class="fu">:</span> <span class="st">&quot;String&quot;</span><span class="fu">,</span></span>
+<span id="cb39-25"><a href="#cb39-25" aria-hidden="true" tabindex="-1"></a>                     <span class="dt">&quot;Description&quot;</span><span class="fu">:</span> <span class="st">&quot;Renamed field2 as String&quot;</span></span>
+<span id="cb39-26"><a href="#cb39-26" aria-hidden="true" tabindex="-1"></a>                  <span class="fu">}</span></span>
+<span id="cb39-27"><a href="#cb39-27" aria-hidden="true" tabindex="-1"></a>               <span class="fu">}</span></span>
+<span id="cb39-28"><a href="#cb39-28" aria-hidden="true" tabindex="-1"></a>            <span class="fu">}</span></span>
+<span id="cb39-29"><a href="#cb39-29" aria-hidden="true" tabindex="-1"></a>         <span class="fu">},</span></span>
+<span id="cb39-30"><a href="#cb39-30" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;annovar_annotation2&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb39-31"><a href="#cb39-31" aria-hidden="true" tabindex="-1"></a>            <span class="dt">&quot;annotation_fields&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb39-32"><a href="#cb39-32" aria-hidden="true" tabindex="-1"></a>               <span class="dt">&quot;INFO&quot;</span><span class="fu">:</span> <span class="kw">null</span><span class="fu">,</span></span>
+<span id="cb39-33"><a href="#cb39-33" aria-hidden="true" tabindex="-1"></a>               <span class="dt">&quot;field2&quot;</span><span class="fu">:</span> <span class="st">&quot;field2_renamed&quot;</span></span>
+<span id="cb39-34"><a href="#cb39-34" aria-hidden="true" tabindex="-1"></a>            <span class="fu">},</span></span>
+<span id="cb39-35"><a href="#cb39-35" aria-hidden="true" tabindex="-1"></a>            <span class="dt">&quot;options&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb39-36"><a href="#cb39-36" aria-hidden="true" tabindex="-1"></a>               <span class="dt">&quot;protocol&quot;</span><span class="fu">:</span> <span class="st">&quot;annovar_keyword2&quot;</span><span class="fu">,</span></span>
+<span id="cb39-37"><a href="#cb39-37" aria-hidden="true" tabindex="-1"></a>               <span class="dt">&quot;operation&quot;</span><span class="fu">:</span> <span class="st">&quot;f&quot;</span><span class="fu">,</span></span>
+<span id="cb39-38"><a href="#cb39-38" aria-hidden="true" tabindex="-1"></a>               <span class="dt">&quot;genebase&quot;</span><span class="fu">:</span> <span class="st">&quot;&quot;</span><span class="fu">,</span></span>
+<span id="cb39-39"><a href="#cb39-39" aria-hidden="true" tabindex="-1"></a>               <span class="dt">&quot;arguments&quot;</span><span class="fu">:</span> <span class="st">&quot;&quot;</span><span class="fu">,</span></span>
+<span id="cb39-40"><a href="#cb39-40" aria-hidden="true" tabindex="-1"></a>               <span class="dt">&quot;xref&quot;</span><span class="fu">:</span> <span class="st">&quot;&quot;</span><span class="fu">,</span></span>
+<span id="cb39-41"><a href="#cb39-41" aria-hidden="true" tabindex="-1"></a>               <span class="dt">&quot;options&quot;</span><span class="fu">:</span> <span class="st">&quot;&quot;</span></span>
+<span id="cb39-42"><a href="#cb39-42" aria-hidden="true" tabindex="-1"></a>            <span class="fu">}</span></span>
+<span id="cb39-43"><a href="#cb39-43" aria-hidden="true" tabindex="-1"></a>         <span class="fu">}</span></span>
+<span id="cb39-44"><a href="#cb39-44" aria-hidden="true" tabindex="-1"></a>      <span class="fu">},</span></span>
+<span id="cb39-45"><a href="#cb39-45" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;options&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb39-46"><a href="#cb39-46" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;genebase&quot;</span><span class="fu">:</span> <span class="st">&quot;&quot;</span><span class="fu">,</span></span>
+<span id="cb39-47"><a href="#cb39-47" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;arguments&quot;</span><span class="fu">:</span> <span class="st">&quot;&quot;</span><span class="fu">,</span></span>
+<span id="cb39-48"><a href="#cb39-48" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;xref&quot;</span><span class="fu">:</span> <span class="st">&quot;&quot;</span><span class="fu">,</span></span>
+<span id="cb39-49"><a href="#cb39-49" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;options&quot;</span><span class="fu">:</span> <span class="st">&quot;&quot;</span><span class="fu">,</span></span>
+<span id="cb39-50"><a href="#cb39-50" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;parallelize&quot;</span><span class="fu">:</span> <span class="kw">null</span></span>
+<span id="cb39-51"><a href="#cb39-51" aria-hidden="true" tabindex="-1"></a>      <span class="fu">}</span></span>
+<span id="cb39-52"><a href="#cb39-52" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
+<span id="cb39-53"><a href="#cb39-53" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
 <h3 data-number="4.3.1" id="annotations-2"><span
 class="header-section-number">4.3.1</span> annotations</h3>
@@ -2124,38 +2214,38 @@ them (rename available)</p>
 (all fields) and header override for ClinVar fields</p>
 </blockquote>
 <blockquote>
-<div class="sourceCode" id="cb35"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;annotations&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;CLINVAR&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;annotation_fields&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>            <span class="dt">&quot;CLNSIG&quot;</span><span class="fu">:</span> <span class="st">&quot;ClinVar_class&quot;</span><span class="fu">,</span></span>
-<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a>            <span class="dt">&quot;CLNDN&quot;</span><span class="fu">:</span> <span class="st">&quot;ClinVar_desease&quot;</span></span>
-<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a>         <span class="fu">},</span></span>
-<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;options&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a>            <span class="dt">&quot;protocol&quot;</span><span class="fu">:</span> <span class="st">&quot;clinvar_20221231&quot;</span><span class="fu">,</span></span>
-<span id="cb35-10"><a href="#cb35-10" aria-hidden="true" tabindex="-1"></a>            <span class="dt">&quot;operation&quot;</span><span class="fu">:</span> <span class="st">&quot;f&quot;</span></span>
-<span id="cb35-11"><a href="#cb35-11" aria-hidden="true" tabindex="-1"></a>            <span class="st">&quot;header_fields&quot;</span><span class="er">:</span> <span class="fu">{</span></span>
-<span id="cb35-12"><a href="#cb35-12" aria-hidden="true" tabindex="-1"></a>               <span class="dt">&quot;ClinVar_class&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb35-13"><a href="#cb35-13" aria-hidden="true" tabindex="-1"></a>                  <span class="dt">&quot;Number&quot;</span><span class="fu">:</span> <span class="st">&quot;.&quot;</span><span class="fu">,</span></span>
-<span id="cb35-14"><a href="#cb35-14" aria-hidden="true" tabindex="-1"></a>                  <span class="dt">&quot;Type&quot;</span><span class="fu">:</span> <span class="st">&quot;String&quot;</span><span class="fu">,</span></span>
-<span id="cb35-15"><a href="#cb35-15" aria-hidden="true" tabindex="-1"></a>                  <span class="dt">&quot;Description&quot;</span><span class="fu">:</span> <span class="st">&quot;ClinVar classification&quot;</span></span>
-<span id="cb35-16"><a href="#cb35-16" aria-hidden="true" tabindex="-1"></a>               <span class="fu">},</span></span>
-<span id="cb35-17"><a href="#cb35-17" aria-hidden="true" tabindex="-1"></a>               <span class="dt">&quot;ClinVar_desease&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb35-18"><a href="#cb35-18" aria-hidden="true" tabindex="-1"></a>                  <span class="dt">&quot;Number&quot;</span><span class="fu">:</span> <span class="st">&quot;.&quot;</span><span class="fu">,</span></span>
-<span id="cb35-19"><a href="#cb35-19" aria-hidden="true" tabindex="-1"></a>                  <span class="dt">&quot;Type&quot;</span><span class="fu">:</span> <span class="st">&quot;String&quot;</span><span class="fu">,</span></span>
-<span id="cb35-20"><a href="#cb35-20" aria-hidden="true" tabindex="-1"></a>                  <span class="dt">&quot;Description&quot;</span><span class="fu">:</span> <span class="st">&quot;ClinVar disease name&quot;</span></span>
-<span id="cb35-21"><a href="#cb35-21" aria-hidden="true" tabindex="-1"></a>               <span class="fu">}</span></span>
-<span id="cb35-22"><a href="#cb35-22" aria-hidden="true" tabindex="-1"></a>            <span class="fu">}</span></span>
-<span id="cb35-23"><a href="#cb35-23" aria-hidden="true" tabindex="-1"></a>         <span class="fu">}</span></span>
-<span id="cb35-24"><a href="#cb35-24" aria-hidden="true" tabindex="-1"></a>      <span class="fu">},</span></span>
-<span id="cb35-25"><a href="#cb35-25" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;cosmic70&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb35-26"><a href="#cb35-26" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;annotation_fields&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb35-27"><a href="#cb35-27" aria-hidden="true" tabindex="-1"></a>            <span class="dt">&quot;INFO&quot;</span><span class="fu">:</span> <span class="kw">null</span></span>
-<span id="cb35-28"><a href="#cb35-28" aria-hidden="true" tabindex="-1"></a>         <span class="fu">}</span></span>
-<span id="cb35-29"><a href="#cb35-29" aria-hidden="true" tabindex="-1"></a>      <span class="fu">}</span></span>
-<span id="cb35-30"><a href="#cb35-30" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
-<span id="cb35-31"><a href="#cb35-31" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb40"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;annotations&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;CLINVAR&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;annotation_fields&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a>            <span class="dt">&quot;CLNSIG&quot;</span><span class="fu">:</span> <span class="st">&quot;ClinVar_class&quot;</span><span class="fu">,</span></span>
+<span id="cb40-6"><a href="#cb40-6" aria-hidden="true" tabindex="-1"></a>            <span class="dt">&quot;CLNDN&quot;</span><span class="fu">:</span> <span class="st">&quot;ClinVar_desease&quot;</span></span>
+<span id="cb40-7"><a href="#cb40-7" aria-hidden="true" tabindex="-1"></a>         <span class="fu">},</span></span>
+<span id="cb40-8"><a href="#cb40-8" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;options&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb40-9"><a href="#cb40-9" aria-hidden="true" tabindex="-1"></a>            <span class="dt">&quot;protocol&quot;</span><span class="fu">:</span> <span class="st">&quot;clinvar_20221231&quot;</span><span class="fu">,</span></span>
+<span id="cb40-10"><a href="#cb40-10" aria-hidden="true" tabindex="-1"></a>            <span class="dt">&quot;operation&quot;</span><span class="fu">:</span> <span class="st">&quot;f&quot;</span></span>
+<span id="cb40-11"><a href="#cb40-11" aria-hidden="true" tabindex="-1"></a>            <span class="st">&quot;header_fields&quot;</span><span class="er">:</span> <span class="fu">{</span></span>
+<span id="cb40-12"><a href="#cb40-12" aria-hidden="true" tabindex="-1"></a>               <span class="dt">&quot;ClinVar_class&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb40-13"><a href="#cb40-13" aria-hidden="true" tabindex="-1"></a>                  <span class="dt">&quot;Number&quot;</span><span class="fu">:</span> <span class="st">&quot;.&quot;</span><span class="fu">,</span></span>
+<span id="cb40-14"><a href="#cb40-14" aria-hidden="true" tabindex="-1"></a>                  <span class="dt">&quot;Type&quot;</span><span class="fu">:</span> <span class="st">&quot;String&quot;</span><span class="fu">,</span></span>
+<span id="cb40-15"><a href="#cb40-15" aria-hidden="true" tabindex="-1"></a>                  <span class="dt">&quot;Description&quot;</span><span class="fu">:</span> <span class="st">&quot;ClinVar classification&quot;</span></span>
+<span id="cb40-16"><a href="#cb40-16" aria-hidden="true" tabindex="-1"></a>               <span class="fu">},</span></span>
+<span id="cb40-17"><a href="#cb40-17" aria-hidden="true" tabindex="-1"></a>               <span class="dt">&quot;ClinVar_desease&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb40-18"><a href="#cb40-18" aria-hidden="true" tabindex="-1"></a>                  <span class="dt">&quot;Number&quot;</span><span class="fu">:</span> <span class="st">&quot;.&quot;</span><span class="fu">,</span></span>
+<span id="cb40-19"><a href="#cb40-19" aria-hidden="true" tabindex="-1"></a>                  <span class="dt">&quot;Type&quot;</span><span class="fu">:</span> <span class="st">&quot;String&quot;</span><span class="fu">,</span></span>
+<span id="cb40-20"><a href="#cb40-20" aria-hidden="true" tabindex="-1"></a>                  <span class="dt">&quot;Description&quot;</span><span class="fu">:</span> <span class="st">&quot;ClinVar disease name&quot;</span></span>
+<span id="cb40-21"><a href="#cb40-21" aria-hidden="true" tabindex="-1"></a>               <span class="fu">}</span></span>
+<span id="cb40-22"><a href="#cb40-22" aria-hidden="true" tabindex="-1"></a>            <span class="fu">}</span></span>
+<span id="cb40-23"><a href="#cb40-23" aria-hidden="true" tabindex="-1"></a>         <span class="fu">}</span></span>
+<span id="cb40-24"><a href="#cb40-24" aria-hidden="true" tabindex="-1"></a>      <span class="fu">},</span></span>
+<span id="cb40-25"><a href="#cb40-25" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;cosmic70&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb40-26"><a href="#cb40-26" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;annotation_fields&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb40-27"><a href="#cb40-27" aria-hidden="true" tabindex="-1"></a>            <span class="dt">&quot;INFO&quot;</span><span class="fu">:</span> <span class="kw">null</span></span>
+<span id="cb40-28"><a href="#cb40-28" aria-hidden="true" tabindex="-1"></a>         <span class="fu">}</span></span>
+<span id="cb40-29"><a href="#cb40-29" aria-hidden="true" tabindex="-1"></a>      <span class="fu">}</span></span>
+<span id="cb40-30"><a href="#cb40-30" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
+<span id="cb40-31"><a href="#cb40-31" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
 <h3 data-number="4.3.2" id="options"><span
 class="header-section-number">4.3.2</span> options</h3>
@@ -2183,17 +2273,22 @@ annotation Annovar process or null by default).</p></li>
 using external file, and a paralelization mode for Annovar commands</p>
 </blockquote>
 <blockquote>
-<div class="sourceCode" id="cb36"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;options&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;genebase&quot;</span><span class="fu">:</span> <span class="st">&quot;-splicing_threshold 3 -indel_splicing_threshold 3&quot;</span><span class="fu">,</span></span>
-<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;arguments&quot;</span><span class="fu">:</span> <span class="st">&quot;-hgvs&quot;</span><span class="fu">,</span></span>
-<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;xref&quot;</span><span class="fu">:</span> <span class="st">&quot;/path/to/xref/file&quot;</span><span class="fu">,</span></span>
-<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;options&quot;</span><span class="fu">:</span> <span class="st">&quot;&quot;</span><span class="fu">,</span></span>
-<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;parallelize&quot;</span><span class="fu">:</span> <span class="st">&quot;parallel&quot;</span></span>
-<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
-<span id="cb36-9"><a href="#cb36-9" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb41"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;options&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;genebase&quot;</span><span class="fu">:</span> <span class="st">&quot;-splicing_threshold 3 -indel_splicing_threshold 3&quot;</span><span class="fu">,</span></span>
+<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;arguments&quot;</span><span class="fu">:</span> <span class="st">&quot;-hgvs&quot;</span><span class="fu">,</span></span>
+<span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;xref&quot;</span><span class="fu">:</span> <span class="st">&quot;/path/to/xref/file&quot;</span><span class="fu">,</span></span>
+<span id="cb41-6"><a href="#cb41-6" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;options&quot;</span><span class="fu">:</span> <span class="st">&quot;&quot;</span><span class="fu">,</span></span>
+<span id="cb41-7"><a href="#cb41-7" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;parallelize&quot;</span><span class="fu">:</span> <span class="st">&quot;parallel&quot;</span></span>
+<span id="cb41-8"><a href="#cb41-8" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
+<span id="cb41-9"><a href="#cb41-9" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
+<h3 data-number="4.3.3" id="chrom_mapping-1"><span
+class="header-section-number">4.3.3</span> chrom_mapping</h3>
+<p>Optional mapping of chromosome names between HOWARD and Annovar.</p>
+<p>See <a href="#chrom_mapping">chrom_mapping section</a> for more
+information.</p>
 <h2 data-number="4.4" id="snpeff"><span
 class="header-section-number">4.4</span> snpeff</h2>
 <p>Annotation process using snpEff tool and options (see <a
@@ -2205,12 +2300,12 @@ documentation</a>).</p>
 and additional tags.</p>
 </blockquote>
 <blockquote>
-<div class="sourceCode" id="cb37"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;snpeff&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;options&quot;</span><span class="fu">:</span> <span class="st">&quot; -hgvs -spliceSiteSize 3 -lof -oicr &quot;</span></span>
-<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
-<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb42"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;snpeff&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;options&quot;</span><span class="fu">:</span> <span class="st">&quot; -hgvs -spliceSiteSize 3 -lof -oicr &quot;</span></span>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
+<span id="cb42-5"><a href="#cb42-5" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
 <h3 data-number="4.4.1" id="options-1"><span
 class="header-section-number">4.4.1</span> options</h3>
@@ -2230,74 +2325,16 @@ define splice sites size to 3, add loss of function (LOF), Nonsense
 mediated decay and OICR tags.</p>
 </blockquote>
 <blockquote>
-<div class="sourceCode" id="cb38"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;options&quot;</span><span class="fu">:</span> <span class="st">&quot; -hgvs -spliceSiteSize 3 -lof -oicr &quot;</span></span>
-<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
-</blockquote>
-<h3 data-number="4.4.2" id="chrom_mapping"><span
-class="header-section-number">4.4.2</span> chrom_mapping</h3>
-<p>Optional mapping of chromosome names between HOWARD and snpEff.</p>
-<p>Rules are applied in sequence as regular expression replacements,
-using [pattern, replacement] pairs.</p>
-<p>Use &#x2018;to_tool&#x2019; to map names before snpEff annotation and &#x2018;from_tool&#x2019;
-to map them back when importing the annotation results.</p>
-<p>If &#x2018;from_tool&#x2019; is omitted, HOWARD derives it by swapping each
-&#x2018;to_tool&#x2019; pattern and replacement; define both directions explicitly
-when the mapping is not reversible (usually when using regex
-expressions).</p>
-<p>Examples:</p>
-<blockquote>
-<p>Map chromosome names with explicit regular expression rules in both
-directions, changing chrMT to M and remove &#x2018;chr&#x2019; from chromosomes
-names</p>
-</blockquote>
-<blockquote>
-<div class="sourceCode" id="cb39"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;chrom_mapping&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;to_tool&quot;</span><span class="fu">:</span> <span class="ot">[[</span><span class="st">&quot;^chrMT$&quot;</span><span class="ot">,</span> <span class="st">&quot;M&quot;</span><span class="ot">],</span> <span class="ot">[</span><span class="st">&quot;^chr(</span><span class="ch">\\</span><span class="st">d+|X|Y)$&quot;</span><span class="ot">,</span> <span class="st">&quot;</span><span class="ch">\\</span><span class="st">1&quot;</span><span class="ot">]]</span><span class="fu">,</span></span>
-<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;from_tool&quot;</span><span class="fu">:</span> <span class="ot">[[</span><span class="st">&quot;^M$&quot;</span><span class="ot">,</span> <span class="st">&quot;chrMT&quot;</span><span class="ot">],</span> <span class="ot">[</span><span class="st">&quot;^(</span><span class="ch">\\</span><span class="st">d+|X|Y)$&quot;</span><span class="ot">,</span> <span class="st">&quot;chr</span><span class="ch">\\</span><span class="st">1&quot;</span><span class="ot">]]</span></span>
-<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
-<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
-</blockquote>
-<blockquote>
-<p>Map chromosome names with one simple replacement and automatically
-reverse it after annotation</p>
-</blockquote>
-<blockquote>
-<div class="sourceCode" id="cb40"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;chrom_mapping&quot;</span><span class="fu">:</span> <span class="fu">{</span><span class="dt">&quot;to_tool&quot;</span><span class="fu">:</span> <span class="ot">[[</span><span class="st">&quot;chrMT&quot;</span><span class="ot">,</span> <span class="st">&quot;chrM&quot;</span><span class="ot">]]</span><span class="fu">}</span></span>
-<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
-</blockquote>
-<blockquote>
-<p>Apply several simple replacements in sequence, in quick format</p>
-</blockquote>
-<blockquote>
-<div class="sourceCode" id="cb41"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;chrom_mapping&quot;</span><span class="fu">:</span> <span class="ot">[[</span><span class="st">&quot;chrMT&quot;</span><span class="ot">,</span> <span class="st">&quot;chrM&quot;</span><span class="ot">],</span> <span class="ot">[</span><span class="st">&quot;chr1&quot;</span><span class="ot">,</span> <span class="st">&quot;1&quot;</span><span class="ot">]]</span></span>
-<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
-</blockquote>
-<blockquote>
-<p>Apply one simple replacement</p>
-</blockquote>
-<blockquote>
-<div class="sourceCode" id="cb42"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;chrom_mapping&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;chrMT&quot;</span><span class="ot">,</span> <span class="st">&quot;chrM&quot;</span><span class="ot">]</span></span>
-<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
-</blockquote>
-<blockquote>
-<p>Disable chromosome mapping (the default).</p>
-</blockquote>
-<blockquote>
 <div class="sourceCode" id="cb43"><pre
 class="sourceCode json"><code class="sourceCode json"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;chrom_mapping&quot;</span><span class="fu">:</span> <span class="kw">null</span></span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;options&quot;</span><span class="fu">:</span> <span class="st">&quot; -hgvs -spliceSiteSize 3 -lof -oicr &quot;</span></span>
 <span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
+<h3 data-number="4.4.2" id="chrom_mapping-2"><span
+class="header-section-number">4.4.2</span> chrom_mapping</h3>
+<p>Optional mapping of chromosome names between HOWARD and snpEff.</p>
+<p>See <a href="#chrom_mapping">chrom_mapping section</a> for more
+information.</p>
 <h3 data-number="4.4.3" id="stats"><span
 class="header-section-number">4.4.3</span> stats</h3>
 <p>HTML file for snpEff stats. Use keyword &#x2018;OUTPUT&#x2019; to generate file
@@ -2473,6 +2510,11 @@ class="sourceCode json"><code class="sourceCode json"><span id="cb51-1"><a href=
 <span id="cb51-9"><a href="#cb51-9" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
 <span id="cb51-10"><a href="#cb51-10" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
+<h3 data-number="4.5.2" id="chrom_mapping-3"><span
+class="header-section-number">4.5.2</span> chrom_mapping</h3>
+<p>Optional mapping of chromosome names between HOWARD and snpSift.</p>
+<p>See <a href="#chrom_mapping">chrom_mapping section</a> for more
+information.</p>
 <h2 data-number="4.6" id="bigwig"><span
 class="header-section-number">4.6</span> bigwig</h2>
 <p>Annotation process using BigWig files. Provide a list of database
@@ -2642,6 +2684,12 @@ class="sourceCode json"><code class="sourceCode json"><span id="cb56-1"><a href=
 <span id="cb56-8"><a href="#cb56-8" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
 <span id="cb56-9"><a href="#cb56-9" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
+<h3 data-number="4.6.3" id="chrom_mapping-4"><span
+class="header-section-number">4.6.3</span> chrom_mapping</h3>
+<p>Optional mapping of chromosome names between HOWARD and
+BigWig/BigBed.</p>
+<p>See <a href="#chrom_mapping">chrom_mapping section</a> for more
+information.</p>
 <h2 data-number="4.7" id="exomiser"><span
 class="header-section-number">4.7</span> exomiser</h2>
 <p>Annotation process using Exomiser tool and options (see <a
@@ -2710,6 +2758,11 @@ class="sourceCode json"><code class="sourceCode json"><span id="cb60-1"><a href=
 <span id="cb60-2"><a href="#cb60-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;hpo&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;HP:0001156&quot;</span><span class="ot">,</span> <span class="st">&quot;HP:0001363&quot;</span><span class="ot">,</span> <span class="st">&quot;HP:0011304&quot;</span><span class="ot">,</span> <span class="st">&quot;HP:0010055&quot;</span><span class="ot">]</span></span>
 <span id="cb60-3"><a href="#cb60-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
+<h3 data-number="4.7.4" id="chrom_mapping-5"><span
+class="header-section-number">4.7.4</span> chrom_mapping</h3>
+<p>Optional mapping of chromosome names between HOWARD and Exomiser.</p>
+<p>See <a href="#chrom_mapping">chrom_mapping section</a> for more
+information.</p>
 <h2 data-number="4.8" id="splice"><span
 class="header-section-number">4.8</span> splice</h2>
 <p>Annotation process using Splice tool and options. This annotation
@@ -2833,6 +2886,11 @@ class="sourceCode json"><code class="sourceCode json"><span id="cb68-1"><a href=
 <span id="cb68-2"><a href="#cb68-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;whitespace&quot;</span><span class="fu">:</span> <span class="st">&quot;true&quot;</span></span>
 <span id="cb68-3"><a href="#cb68-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
+<h3 data-number="4.8.8" id="chrom_mapping-6"><span
+class="header-section-number">4.8.8</span> chrom_mapping</h3>
+<p>Optional mapping of chromosome names between HOWARD and Splice.</p>
+<p>See <a href="#chrom_mapping">chrom_mapping section</a> for more
+information.</p>
 <h2 data-number="4.9" id="docker"><span
 class="header-section-number">4.9</span> docker</h2>
 <p>Annotation process using Docker containers. This section defines one
