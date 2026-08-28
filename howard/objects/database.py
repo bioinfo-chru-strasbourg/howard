@@ -2301,14 +2301,22 @@ class Database:
         # Table variants
         table_variants_from = self.get_sql_database_link(database=database)
 
+        # Existing columns in the table
+        query = f"""
+            SELECT * FROM {table_variants_from}
+            LIMIT 0
+        """
+        df_for_columns = self.query(query=query)
+
+        # Check if column exists in the table
+        if column not in df_for_columns.columns:
+            log.debug(f"Column '{column}' does not exist in the table '{table_variants_from}'.")
+            return False
+
         # Check if format column is present
         if check_format:
-            query = f"""
-                SELECT * FROM {table_variants_from}
-                LIMIT 0
-            """
-            df = self.query(query=query)
-            if "FORMAT" not in df.columns or column not in df.columns:
+            if "FORMAT" not in df_for_columns.columns or column not in df_for_columns.columns:
+                log.debug(f"Column '{column}' or 'FORMAT' does not exist in the table '{table_variants_from}'.")
                 return False
             query_format = f"""
                 AND (len(string_split(CAST("FORMAT" AS VARCHAR), ':')) = len(string_split(CAST("{column}" AS VARCHAR), ':')) OR regexp_matches(CAST("{column}" AS VARCHAR), '^[.]([/|][.])*$'))
@@ -2316,27 +2324,69 @@ class Database:
         else:
             query_format = ""
 
-        # Query number of samples
-        query_downsampling = f"""
-            SELECT "{column}", FORMAT
-            FROM {table_variants_from}
-            LIMIT {downsampling}
-        """
-        df_downsampling = self.query(query=query_downsampling)
-
         # Query to check genotype
-        query_genotype = f"""
-            SELECT  *
-            FROM df_downsampling
-            WHERE (
-                regexp_matches(CAST("{column}" AS VARCHAR), '^[0-9.]([/|][0-9.])*')
-                {query_format}
-                )
+        query = f"""
+            WITH downsampled AS (
+                SELECT "{column}", FORMAT
+                FROM {table_variants_from}
+                LIMIT {downsampling}
+            )
+            SELECT
+                COUNT(*) AS nb_total,
+                COUNT(*) FILTER (
+                    WHERE regexp_matches(CAST("{column}" AS VARCHAR), '^[0-9.]([/|][0-9.])*')
+                    {query_format}
+                ) AS nb_genotype
+            FROM downsampled
         """
-        df_genotype = self.query(query=query_genotype)
+        nb_total, nb_genotype = self.query(query=query).fetchone()
 
         # return
-        return len(df_genotype) == len(df_downsampling)
+        return nb_total == nb_genotype
+
+    def is_genotype_column_non_conforming(self, column: str, database: str = None, downsampling: int = 1000) -> dict:
+        """
+        This function list genotypes that are not conform with the expected format.
+
+        :param column: The name of the column to check.
+        :type column: str
+        :param database: The name of the database to check.
+        :type database: str, optional
+        :param downsampling: The number of rows to downsample for the check, defaults to 1000.
+        :type downsampling: int, optional
+        :return: A dataframe with column names as keys and non-conforming genotype values as the content.
+        :rtype: dict
+        """
+
+        # Table variants
+        table_variants_from = self.get_sql_database_link(database=database)
+
+        # Existing columns in the table
+        query = f"""
+            SELECT * FROM {table_variants_from}
+            LIMIT 0
+        """
+        df_for_columns = self.query(query=query)
+
+        # Check if column exists in the table
+        if column not in df_for_columns.columns:
+            log.debug(f"Column '{column}' does not exist in the table '{table_variants_from}'.")
+            return False
+
+        # Query to check genotype
+        query = f"""
+            WITH downsampled AS (
+                SELECT "{column}", FORMAT
+                FROM {table_variants_from}
+                LIMIT {downsampling}
+            )
+            SELECT
+                {column}
+            FROM downsampled
+            WHERE not regexp_matches(CAST("{column}" AS VARCHAR), '^[0-9.]([/|][0-9.])*')
+        """
+        return self.query(query=query).df()
+
 
     def export(
         self,

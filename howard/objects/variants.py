@@ -1843,6 +1843,15 @@ class Variants(
                     log.warning(
                         f"Sample '{sample}' not defined as a sample (genotype not well defined)"
                     )
+                    try:
+                        list_of_non_conforming = Database(database=self.get_input()).is_genotype_column_non_conforming(column=sample)
+                        if list_of_non_conforming is False:
+                            log.debug(f"Sample '{sample}' does not exist")
+                        elif len(list_of_non_conforming) > 0:
+                            log.debug(f"Non-conforming genotypes for sample '{sample}':\n{list_of_non_conforming.head()}")
+                    except Exception as e:
+                        log.debug(f"Error checking non-conforming genotype column for sample '{sample}': {e}")
+                    
             samples_list = samples_checked
 
         # Return samples list
