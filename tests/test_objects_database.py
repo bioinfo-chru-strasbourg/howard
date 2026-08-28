@@ -20,7 +20,7 @@ import pytest  # type: ignore
 # from howard.functions.commons import *
 from howard.objects.variants import Variants
 from howard.objects.database import Database
-from test_needed import tests_folder, database_files
+from test_needed import tests_folder, database_files, tests_data_folder
 
 
 def test_export_empty():
@@ -2148,3 +2148,63 @@ def test_get_needed_columns(database_columns, database_type, expected_output):
         )
         == expected_output
     )
+
+
+# @pytest.mark.parametrize(
+#     "input_vcf, column, check_format, expected",
+#     [
+#         # sample1
+#         ("example.vcf.gz", "sample1", True, True),
+#         # sample2
+#         ("example.vcf.gz", "sample2", True, True),
+#         # sample3
+#         ("example.vcf.gz", "sample3", True, True),
+#         # sample4
+#         ("example.vcf.gz", "sample4", True, True),
+#         # FORMAT
+#         ("example.vcf.gz", "FORMAT", True, False),
+#         # INFO
+#         ("example.vcf.gz", "INFO", True, False),
+#         # sample1 - no check format
+#         ("example.vcf.gz", "sample1", False, True),
+#         # INFO - no check format
+#         ("example.vcf.gz", "INFO", False, False),
+#     ],
+# )
+
+@pytest.mark.parametrize(
+    "input_file, column, check_format, expected",
+    [
+        (input_file, sample, check_format, True if sample.startswith("sample") else False)
+        for sample in [
+            "sample1", 
+            "sample2",
+            "sample3",
+            "sample4",
+            "FORMAT",
+            "INFO",
+            "UNKNOWN_column"
+        ]
+        for check_format in [True, False]
+        for input_file in ["example.vcf.gz", "example.parquet"]
+    ],
+)
+def test_is_genotype_column(input_file, column, check_format, expected):
+    """
+    This function tests the is_genotype_column method of the Database class with various inputs.
+    """
+
+    # Create database
+    input_file = os.path.join(tests_data_folder, input_file)
+    database = Database(database=input_file)
+
+    # Test cases
+    test = database.is_genotype_column(column=column, check_format=check_format)
+
+    assert test is expected
+
+    if expected is False:
+        list_of_non_conforming = database.is_genotype_column_non_conforming(column=column)
+        log.debug(f"Non-conforming genotypes for column '{column}':\n{list_of_non_conforming}")
+        assert list_of_non_conforming is False or len(list_of_non_conforming) > 0
+

@@ -10,6 +10,7 @@ from typing import Any
 import logging as log
 
 from howard.functions.commons import (
+    DEFAULT_ASSEMBLY,
     DEFAULT_GENOME_FOLDER,
 	DEFAULT_TOOLS_FOLDER,
     ChromMapping,
@@ -1382,7 +1383,7 @@ class variants_annotation_docker:
 		log.debug(f"Default memory: {default_memory}")
 
 		param = self.get_param()
-		assembly = param.get("assembly", config.get("assembly", None))
+		assembly = param.get("assembly", config.get("assembly", DEFAULT_ASSEMBLY))
 		log.debug(f"Assembly for annotation_docker: {assembly}")
 
 		entries = self._get_annotation_docker_entries(section=section)
