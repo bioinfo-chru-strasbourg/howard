@@ -2264,85 +2264,184 @@ class Database:
 
         return self.conn
 
-    def is_genotype_column(
+    # def is_genotype_column(
+    #     self,
+    #     column: str,
+    #     database: str = None,
+    #     downsampling: int = 1000,
+    #     check_format: bool = True,
+    # ) -> bool:
+    #     """
+    #     The `is_genotype_column` function in Python checks if a specified column in a database contains
+    #     genotype data based on a regular expression pattern.
+
+    #     :param column: The `column` parameter is a string that represents the name of a column in a
+    #     database table. It is used to specify the column for which you want to check if it contains
+    #     genotype information based on a regular expression pattern
+    #     :type column: str
+    #     :param database: The `database` parameter in the `is_genotype_column` method is used to specify
+    #     the name of the database from which the data will be queried. If a database is provided, the
+    #     method will query the specified database to check if the given column contains genotype
+    #     information. If no database is provided,
+    #     :type database: str
+    #     :param downsampling: The `downsampling` parameter in the `is_genotype_column` method is an
+    #     integer value that determines the number of rows to be sampled from the database table when
+    #     checking for genotype information in the specified column. This parameter is used to limit the
+    #     number of rows to be processed in order to improve performance, defaults to 1000
+    #     :type downsampling: int (optional)
+    #     :param check_format: The `check_format` parameter in the `is_genotype_column` method is a
+    #     boolean flag that determines whether the function should check the format of the data before
+    #     proceeding with the genotype column analysis. If `check_format` is set to `True`, the function
+    #     will verify if the specified column exists in, defaults to True
+    #     :type check_format: bool (optional)
+    #     :return: The `is_genotype_column` method returns a boolean value. If the specified column in a
+    #     database table contains genotype information, it returns `True`; otherwise, it returns `False`.
+    #     """
+
+    #     #log.debug(f"Checking if column '{column}' is a genotype column in database '{database}' with downsampling={downsampling} and check_format={check_format}...")
+
+    #     # Table variants
+    #     table_variants_from = self.get_sql_database_link(database=database)
+
+    #     query = f"""
+    #         DESCRIBE SELECT * FROM {table_variants_from}
+    #     """
+    #     rows = self.query(query=query).fetchall()
+    #     columns = [row[0] for row in rows]
+    #     log.debug(f"Existing columns in the table '{table_variants_from}': {columns}")
+
+    #     # Check if column exists in the table
+    #     if column not in columns:
+    #         log.debug(f"Column '{column}' does not exist in the table '{table_variants_from}'.")
+    #         return False
+
+    #     # Check if format column is present
+    #     if check_format:
+    #         if "FORMAT" not in columns or column not in columns:
+    #             log.debug(f"Column '{column}' or 'FORMAT' does not exist in the table '{table_variants_from}'.")
+    #             return False
+    #         query_format = f"""
+    #             AND (len(string_split(CAST("FORMAT" AS VARCHAR), ':')) = len(string_split(CAST("{column}" AS VARCHAR), ':')) OR regexp_matches(CAST("{column}" AS VARCHAR), '^[.]([/|][.])*$'))
+    #         """
+    #     else:
+    #         query_format = ""
+
+    #     # Query to check genotype
+    #     query = f"""
+    #         WITH downsampled AS (
+    #             SELECT "{column}", FORMAT
+    #             FROM {table_variants_from}
+    #             LIMIT {downsampling}
+    #         )
+    #         SELECT
+    #             COUNT(*) AS nb_total,
+    #             COUNT(*) FILTER (
+    #                 WHERE regexp_matches(CAST("{column}" AS VARCHAR), '^[0-9.]([/|][0-9.])*')
+    #                 {query_format}
+    #             ) AS nb_genotype
+    #         FROM downsampled
+    #     """
+    #     nb_total, nb_genotype = self.query(query=query).fetchone()
+
+    #     # return
+    #     return nb_total == nb_genotype
+
+    def is_genotype_columns(
         self,
-        column: str,
+        columns: list[str] = None,
         database: str = None,
         downsampling: int = 1000,
         check_format: bool = True,
-    ) -> bool:
+    ) -> list[str]:
         """
-        The `is_genotype_column` function in Python checks if a specified column in a database contains
-        genotype data based on a regular expression pattern.
+        Check which columns in a list contain genotype data, in a single pass over the data (a single downsampling query).
 
-        :param column: The `column` parameter is a string that represents the name of a column in a
-        database table. It is used to specify the column for which you want to check if it contains
-        genotype information based on a regular expression pattern
-        :type column: str
-        :param database: The `database` parameter in the `is_genotype_column` method is used to specify
-        the name of the database from which the data will be queried. If a database is provided, the
-        method will query the specified database to check if the given column contains genotype
-        information. If no database is provided,
-        :type database: str
-        :param downsampling: The `downsampling` parameter in the `is_genotype_column` method is an
-        integer value that determines the number of rows to be sampled from the database table when
-        checking for genotype information in the specified column. This parameter is used to limit the
-        number of rows to be processed in order to improve performance, defaults to 1000
-        :type downsampling: int (optional)
-        :param check_format: The `check_format` parameter in the `is_genotype_column` method is a
-        boolean flag that determines whether the function should check the format of the data before
-        proceeding with the genotype column analysis. If `check_format` is set to `True`, the function
-        will verify if the specified column exists in, defaults to True
-        :type check_format: bool (optional)
-        :return: The `is_genotype_column` method returns a boolean value. If the specified column in a
-        database table contains genotype information, it returns `True`; otherwise, it returns `False`.
+        :param columns: List of candidate columns to test. If None, tests all columns in the table except the standard VCF columns (CHROM, POS, ID, REF, ALT, QUAL, FILTER, INFO, FORMAT).
+        :type columns: list[str] or None
+        :param database: The database to query. If None, uses the default database.
+        :type database: str or None
+        :param downsampling: The number of rows to sample for checking genotype columns.
+        :type downsampling: int
+        :param check_format: Whether to check the FORMAT column for consistency with genotype columns.
+        :type check_format: bool
+        :return: List of columns among `columns` that are genotype columns.
         """
 
-        # Table variants
+        # Get the SQL table link for the variants table.
         table_variants_from = self.get_sql_database_link(database=database)
 
-        # Existing columns in the table
-        query = f"""
-            SELECT * FROM {table_variants_from}
-            LIMIT 0
-        """
-        df_for_columns = self.query(query=query)
+        # Existing columns (a single schema query)
+        rows = self.query(query=f"DESCRIBE SELECT * FROM {table_variants_from}").fetchall()
+        existing_columns = [row[0] for row in rows]
 
-        # Check if column exists in the table
-        if column not in df_for_columns.columns:
-            log.debug(f"Column '{column}' does not exist in the table '{table_variants_from}'.")
-            return False
+        # If no columns are specified, return an empty list.
+        if not columns:
+            log.debug("No columns specified for genotype check.")
+            return []
 
-        # Check if format column is present
-        if check_format:
-            if "FORMAT" not in df_for_columns.columns or column not in df_for_columns.columns:
-                log.debug(f"Column '{column}' or 'FORMAT' does not exist in the table '{table_variants_from}'.")
-                return False
-            query_format = f"""
-                AND (len(string_split(CAST("FORMAT" AS VARCHAR), ':')) = len(string_split(CAST("{column}" AS VARCHAR), ':')) OR regexp_matches(CAST("{column}" AS VARCHAR), '^[.]([/|][.])*$'))
-            """
-        else:
-            query_format = ""
+        # Check if the FORMAT column is required and exists.
+        if check_format and "FORMAT" not in existing_columns:
+            log.debug(f"'FORMAT' column does not exist in the table '{table_variants_from}'.")
+            return []
 
-        # Query to check genotype
-        query = f"""
-            WITH downsampled AS (
-                SELECT "{column}", FORMAT
-                FROM {table_variants_from}
-                LIMIT {downsampling}
+        # One single query: downsampling in a CTE, then a COUNT FILTER per candidate column.
+        select_columns_list = []
+        count_exprs = []
+        for c in columns:
+            # Skip columns that do not exist in the table.
+            if c not in existing_columns:
+                log.debug(f"Column '{c}' does not exist in the table '{table_variants_from}'.")
+                continue
+            # Prepare the format check expression if needed.
+            format_check = (
+                f"""AND (len(string_split(CAST("FORMAT" AS VARCHAR), ':')) = len(string_split(CAST("{c}" AS VARCHAR), ':'))
+                     OR regexp_matches(CAST("{c}" AS VARCHAR), '^[.]([/|][.])*$'))"""
+                if check_format else ""
             )
-            SELECT
-                COUNT(*) AS nb_total,
+            # Append the count expression for the current column.
+            count_exprs.append(f"""
                 COUNT(*) FILTER (
-                    WHERE regexp_matches(CAST("{column}" AS VARCHAR), '^[0-9.]([/|][0-9.])*')
-                    {query_format}
-                ) AS nb_genotype
-            FROM downsampled
-        """
-        nb_total, nb_genotype = self.query(query=query).fetchone()
+                    WHERE regexp_matches(CAST("{c}" AS VARCHAR), '^[0-9.]([/|][0-9.])*')
+                    {format_check}
+                ) AS "nb_{c}"
+            """)
+            # Append the column to the list of columns to select in the query.
+            select_columns_list.append(f'"{c}"')
 
-        # return
-        return nb_total == nb_genotype
+        # Join the list of columns into a comma-separated string for the SQL query.
+        select_columns = ", ".join(select_columns_list)
+
+        # If there are columns to select, construct and execute the query. Otherwise, return an empty list.
+        if len(select_columns_list) > 0:
+
+            # Construct the SQL query to check genotype columns.
+            query = f"""
+                WITH downsampled AS (
+                    SELECT {select_columns}{", FORMAT" if check_format else ""}
+                    FROM {table_variants_from}
+                    LIMIT {downsampling}
+                )
+                SELECT
+                    COUNT(*) AS nb_total,
+                    {", ".join(count_exprs)}
+                FROM downsampled
+            """
+
+            # Execute the query and fetch the result.
+            row = self.query(query=query).fetchone()
+
+            # Extract the total number of rows and the count per column from the query result.
+            nb_total = row[0]
+            nb_per_column = dict(zip(columns, row[1:]))
+
+        else:
+
+            # If no columns are specified, return an empty list.
+            return []
+
+        # Return the list of columns where the count matches the total number of rows, indicating conformity.
+        return [c for c, nb in nb_per_column.items() if nb == nb_total]
+    
 
     def is_genotype_column_non_conforming(self, column: str, database: str = None, downsampling: int = 1000) -> dict:
         """
@@ -2361,15 +2460,12 @@ class Database:
         # Table variants
         table_variants_from = self.get_sql_database_link(database=database)
 
-        # Existing columns in the table
-        query = f"""
-            SELECT * FROM {table_variants_from}
-            LIMIT 0
-        """
-        df_for_columns = self.query(query=query)
+        # Existing columns (a single schema query)
+        rows = self.query(query=f"DESCRIBE SELECT * FROM {table_variants_from}").fetchall()
+        existing_columns = [row[0] for row in rows]
 
         # Check if column exists in the table
-        if column not in df_for_columns.columns:
+        if column not in existing_columns:
             log.debug(f"Column '{column}' does not exist in the table '{table_variants_from}'.")
             return False
 
@@ -2647,14 +2743,16 @@ class Database:
 
                 # Check columns
                 else:
+                    extra_columns_samples = self.is_genotype_columns(database=database, columns=extra_columns)
                     for extra_column in extra_columns:
                         if extra_column not in needed_columns and (
                             extra_column == "FORMAT"
                             or (
                                 "FORMAT" in extra_columns_clean
-                                and self.is_genotype_column(
-                                    database=database, column=extra_column
-                                )
+                                and extra_column in extra_columns_samples
+                                # and self.is_genotype_column(
+                                #     database=database, column=extra_column
+                                # )
                             )
                         ):
                             extra_columns_clean.append(extra_column)

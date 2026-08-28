@@ -1790,7 +1790,7 @@ class Variants(
         return ",".join(sql_column_list)
 
     def get_header_sample_list(
-        self, check: bool = False, samples: list = None, samples_force: bool = False
+        self, check: bool = False, samples: list = None, samples_force: bool = False, check_format: bool = False
     ) -> list:
         """
         The function `get_header_sample_list` returns a list of samples from a VCF header, with optional
@@ -1811,6 +1811,10 @@ class Variants(
         without checking if the samples are genotype columns. If `samples_force` is set to `True`, the
         function will return the sample list without performing, defaults to False
         :type samples_force: bool (optional)
+        :param check_format: The `check_format` parameter in the `get_header_sample_list` function is a boolean
+        parameter that determines whether to check the format of the genotype columns. If `check_format` is set to `True`,
+        the function will verify if each sample's genotype column conforms to the expected format, defaults to False
+        :type check_format: bool (optional)
         :return: The function `get_header_sample_list` returns a list of samples based on the input
         parameters and conditions specified in the function.
         """
@@ -1818,6 +1822,7 @@ class Variants(
         # Init
         samples_list = []
 
+        # Determine the initial list of samples based on the provided input and the VCF header
         if samples is None:
             samples_list = self.header_vcf.samples
         else:
@@ -1835,24 +1840,30 @@ class Variants(
                 return samples_list
 
         if check:
-            samples_checked = []
+
+            # Check which samples are genotype columns
+            samples_checked = self.is_genotype_columns(columns=samples_list, check_format=check_format)
+
+            # Check issues for each sample not conforming
             for sample in samples_list:
-                if self.is_genotype_column(column=sample):
-                    samples_checked.append(sample)
-                else:
-                    log.warning(
-                        f"Sample '{sample}' not defined as a sample (genotype not well defined)"
-                    )
+                if sample not in samples_checked:
+                    log.warning(f"Sample '{sample}' is not a genotype column")
                     try:
                         list_of_non_conforming = Database(database=self.get_input()).is_genotype_column_non_conforming(column=sample)
                         if list_of_non_conforming is False:
                             log.debug(f"Sample '{sample}' does not exist")
                         elif len(list_of_non_conforming) > 0:
                             log.debug(f"Non-conforming genotypes for sample '{sample}':\n{list_of_non_conforming.head()}")
+                        else:
+                            log.debug(f"Unknown issue with sample '{sample}'. Check FORMAT and genotype consistency.")
                     except Exception as e:
                         log.debug(f"Error checking non-conforming genotype column for sample '{sample}': {e}")
-                    
+
+
+            
+            # List of samples that are genotype columns
             samples_list = samples_checked
+            #log.debug(f"Samples checked: {samples_list}")
 
         # Return samples list
         return samples_list
@@ -1871,24 +1882,41 @@ class Variants(
         # Return
         return None
 
-    def is_genotype_column(self, column: str = None) -> bool:
-        """
-        This function checks if a given column is a genotype column in a database.
+    # def is_genotype_column(self, column: str = None, check_format: bool = False) -> bool:
+    #     """
+    #     This function checks if a given column is a genotype column in a database.
 
-        :param column: The `column` parameter in the `is_genotype_column` method is a string that
-        represents the column name in a database table. This method checks if the specified column is a
-        genotype column in the database. If a column name is provided, it calls the `is_genotype_column`
-        method of
-        :type column: str
-        :return: The `is_genotype_column` method is returning a boolean value. If the `column` parameter
-        is not None, it calls the `is_genotype_column` method of the `Database` class with the specified
-        column name and returns the result. If the `column` parameter is None, it returns False.
+    #     :param column: The `column` parameter in the `is_genotype_column` method is a string that
+    #     represents the column name in a database table. This method checks if the specified column is a
+    #     genotype column in the database. If a column name is provided, it calls the `is_genotype_column`
+    #     method of
+    #     :type column: str
+    #     :return: The `is_genotype_column` method is returning a boolean value. If the `column` parameter
+    #     is not None, it calls the `is_genotype_column` method of the `Database` class with the specified
+    #     column name and returns the result. If the `column` parameter is None, it returns False.
+    #     """
+
+    #     if column is not None:
+    #         return Database(database=self.get_input()).is_genotype_column(column=column, check_format=check_format)
+    #     else:
+    #         return False
+
+    def is_genotype_columns(self, columns: list[str] = None, check_format: bool = False) -> list[str]:
+        """
+        This function checks which columns in a database are genotype columns.
+
+        :param columns: The `columns` parameter is a list of column names in a database table. This method checks which of the specified columns are genotype columns in the database. If no columns are provided, it checks all columns.
+        :type columns: list[str]
+        :param check_format: Whether to check the FORMAT column for consistency with genotype columns.
+        :type check_format: bool
+        :return: A list of column names that are genotype columns.
+        :rtype: list[str]
         """
 
-        if column is not None:
-            return Database(database=self.get_input()).is_genotype_column(column=column)
+        if columns is not None:
+            return Database(database=self.get_input()).is_genotype_columns(columns=columns, check_format=check_format)
         else:
-            return False
+            return []
 
     def get_verbose(self) -> bool:
         """

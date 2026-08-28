@@ -41,6 +41,8 @@ def convert(args: argparse) -> None:
 
     # If input format is vcf, explode_infos is set to False
     if output_format in ["vcf"]:
+        if "explode" not in param:
+            param["explode"] = {}
         param["explode"]["explode_infos"] = False
 
     # If explode infos is set to True, create annotation view and set query
