@@ -2367,6 +2367,9 @@ class Database:
         :return: List of columns among `columns` that are genotype columns.
         """
 
+        # log the start of the genotype columns check
+        log.debug(f"Starting genotype columns check for {columns}.")
+
         # Get the SQL table link for the variants table.
         table_variants_from = self.get_sql_database_link(database=database)
 
@@ -2403,9 +2406,20 @@ class Database:
             # Prepare the format check expression if needed.
             format_check = (
                 f"""
+                    AND TRIM(CAST("{c}" AS VARCHAR)) NOT IN ('', '.') -- remove column with empty or missing values
                     AND (
-                        len(string_split(TRIM(CAST("{c}" AS VARCHAR)), ':')) <= nb_format_fields
-                        AND TRIM(CAST("{c}" AS VARCHAR)) NOT IN ('', '.') -- remove column with empty or missing values
+                        -- len(string_split(TRIM(CAST("{c}" AS VARCHAR)), ':')) = nb_format_fields
+                        -- OR
+                        ( -- at least 2 values in the column (e.g. ".:*"), then GT can be haptloid (single allele), or diploid or more
+                           len(string_split(TRIM(CAST("{c}" AS VARCHAR)), ':')) <= nb_format_fields
+                           AND len(string_split(TRIM(CAST("{c}" AS VARCHAR)), ':')) > 1
+                           AND regexp_matches(split_part(TRIM(CAST("{c}" AS VARCHAR)), \':\', 1), '^([0-9.]+([/|][0-9.]+)*)$')
+                        )
+                        OR
+                        ( -- only one value in column, strict genotype (e.g. "./."), then GT must be diploid or more, to avoid haploid genotypes like (Integer or ".")
+                            len(string_split(TRIM(CAST("{c}" AS VARCHAR)), ':')) = 1
+                            AND regexp_matches(split_part(TRIM(CAST("{c}" AS VARCHAR)), \':\', 1), '^([0-9.]+([/|][0-9.]+)+)$')
+                        )
                     )
                 """
                 if check_format else ""

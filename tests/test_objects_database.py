@@ -2213,6 +2213,7 @@ def test_is_genotype_columns(input_file, columns, check_format, expected):
             ["FORMAT", "sample1"],
             ["INFO"],
             ["ID"],
+            ["QUAL"],
             ["sample1", "INFO"],
             ["UNKNOWN_column"]
         ]
@@ -2230,7 +2231,7 @@ def test_is_genotype_columns_allowed_genotypes(input_file, columns, check_format
     database = Database(database=input_file)
 
     # Bad columns (non-conforming genotype columns but tested as true if no check_format)
-    bad_columns = ["not_a_sample", "ID"]
+    bad_columns = ["not_a_sample", "ID", "QUAL"]
 
     # Test cases
     test = database.is_genotype_columns(columns=columns, check_format=check_format)
@@ -2244,4 +2245,3 @@ def test_is_genotype_columns_allowed_genotypes(input_file, columns, check_format
             # Expected columns are columns that are in bad columns or startin with sample, but not other
             expected_columns = [col for col in columns if col in bad_columns or col.startswith("sample")]
             assert test == expected_columns, f"Expected test result to match expected_columns when check_format is False, with columns={columns} and check_format={check_format}"
-            
