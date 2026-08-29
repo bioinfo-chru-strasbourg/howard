@@ -2384,6 +2384,14 @@ class Database:
             log.debug(f"'FORMAT' column does not exist in the table '{table_variants_from}'.")
             return []
 
+        # Prepare the expression to check the number of fields in the FORMAT column if required.
+        if check_format:
+            check_format_nb_format_fields = """
+                len(string_split(TRIM(CAST(FORMAT AS VARCHAR)), ':')) AS nb_format_fields
+            """
+        else:
+            check_format_nb_format_fields = ""
+
         # One single query: downsampling in a CTE, then a COUNT FILTER per candidate column.
         select_columns_list = []
         count_exprs = []
@@ -2394,14 +2402,18 @@ class Database:
                 continue
             # Prepare the format check expression if needed.
             format_check = (
-                f"""AND (len(string_split(CAST("FORMAT" AS VARCHAR), ':')) = len(string_split(CAST("{c}" AS VARCHAR), ':'))
-                     OR regexp_matches(CAST("{c}" AS VARCHAR), '^[.]([/|][.])*$'))"""
+                f"""
+                    AND (
+                        len(string_split(TRIM(CAST("{c}" AS VARCHAR)), ':')) <= nb_format_fields
+                        AND TRIM(CAST("{c}" AS VARCHAR)) NOT IN ('', '.') -- remove column with empty or missing values
+                    )
+                """
                 if check_format else ""
             )
             # Append the count expression for the current column.
             count_exprs.append(f"""
                 COUNT(*) FILTER (
-                    WHERE regexp_matches(CAST("{c}" AS VARCHAR), '^[0-9.]([/|][0-9.])*')
+                    WHERE regexp_matches(split_part(TRIM(CAST("{c}" AS VARCHAR)), \':\', 1), '^([0-9.]+([/|][0-9.]+)*)$')
                     {format_check}
                 ) AS "nb_{c}"
             """)
@@ -2417,7 +2429,7 @@ class Database:
             # Construct the SQL query to check genotype columns.
             query = f"""
                 WITH downsampled AS (
-                    SELECT {select_columns}{", FORMAT" if check_format else ""}
+                    SELECT {select_columns}, {check_format_nb_format_fields}
                     FROM {table_variants_from}
                     LIMIT {downsampling}
                 )
@@ -2426,6 +2438,7 @@ class Database:
                     {", ".join(count_exprs)}
                 FROM downsampled
             """
+            #log.debug(f"query={query}")
 
             # Execute the query and fetch the result.
             row = self.query(query=query).fetchone()

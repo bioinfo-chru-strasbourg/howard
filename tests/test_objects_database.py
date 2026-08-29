@@ -2150,43 +2150,6 @@ def test_get_needed_columns(database_columns, database_type, expected_output):
     )
 
 
-# @pytest.mark.parametrize(
-#     "input_file, column, check_format, expected",
-#     [
-#         (input_file, sample, check_format, True if sample.startswith("sample") else False)
-#         for sample in [
-#             "sample1", 
-#             "sample2",
-#             "sample3",
-#             "sample4",
-#             "FORMAT",
-#             "INFO",
-#             "UNKNOWN_column"
-#         ]
-#         for check_format in [True, False]
-#         for input_file in ["example.vcf.gz", "example.parquet"]
-#     ],
-# )
-# def test_is_genotype_column(input_file, column, check_format, expected):
-#     """
-#     This function tests the is_genotype_column method of the Database class with various inputs.
-#     """
-
-#     # Create database
-#     input_file = os.path.join(tests_data_folder, input_file)
-#     database = Database(database=input_file)
-
-#     # Test cases
-#     test = database.is_genotype_column(column=column, check_format=check_format)
-
-#     assert test is expected
-
-#     if expected is False:
-#         list_of_non_conforming = database.is_genotype_column_non_conforming(column=column)
-#         log.debug(f"Non-conforming genotypes for column '{column}':\n{list_of_non_conforming}")
-#         assert list_of_non_conforming is False or len(list_of_non_conforming) > 0
-
-
 @pytest.mark.parametrize(
     "input_file, columns, check_format, expected",
     [
@@ -2196,7 +2159,7 @@ def test_get_needed_columns(database_columns, database_type, expected_output):
             ["sample2"],
             ["sample3"],
             ["sample4"],
-            ["sample1", "sample2", "sample3", "sample4"], 
+            ["sample1", "sample2", "sample3", "sample4"],
             ["FORMAT"],
             ["FORMAT", "sample1"],
             ["INFO"],
@@ -2224,7 +2187,7 @@ def test_is_genotype_columns(input_file, columns, check_format, expected):
     else:
         assert test != columns, f"Expected test result to differ from columns when expected is False"
 
-    if expected is False:
+        # Check each column individually
         for column in columns:
             if column.startswith("sample"):
                 log.debug(f"Column '{column}' is conform")
@@ -2235,3 +2198,50 @@ def test_is_genotype_columns(input_file, columns, check_format, expected):
                 assert list_of_non_conforming is False or len(list_of_non_conforming) > 0, f"Expected non-conforming genotypes for column '{column}'"
 
 
+@pytest.mark.parametrize(
+    "input_file, columns, check_format, expected",
+    [
+        (input_file, samples, check_format, True if all(sample.startswith("sample") for sample in samples) else False)
+        for samples in [
+            ["sample1"], 
+            ["sample2"],
+            ["sample3"],
+            ["sample4"],
+            ["sample1", "sample2", "sample3", "sample4"],
+            ["not_a_sample"],
+            ["FORMAT"],
+            ["FORMAT", "sample1"],
+            ["INFO"],
+            ["ID"],
+            ["sample1", "INFO"],
+            ["UNKNOWN_column"]
+        ]
+        for check_format in [True, False]
+        for input_file in ["example.with_allowed_genotypes.vcf"]
+    ],
+)
+def test_is_genotype_columns_allowed_genotypes(input_file, columns, check_format, expected):
+    """
+    This function tests the is_genotype_column method of the Database class with various inputs.
+    """
+
+    # Create database
+    input_file = os.path.join(tests_data_folder, input_file)
+    database = Database(database=input_file)
+
+    # Bad columns (non-conforming genotype columns but tested as true if no check_format)
+    bad_columns = ["not_a_sample", "ID"]
+
+    # Test cases
+    test = database.is_genotype_columns(columns=columns, check_format=check_format)
+
+    if expected is True:
+        assert test == columns, f"Expected test result to match columns when expected is True, with columns={columns} and check_format={check_format}"
+    else:
+        if check_format:
+            assert test != columns, f"Expected test result to differ from columns when expected is False, with columns={columns} and check_format={check_format}"
+        else:
+            # Expected columns are columns that are in bad columns or startin with sample, but not other
+            expected_columns = [col for col in columns if col in bad_columns or col.startswith("sample")]
+            assert test == expected_columns, f"Expected test result to match expected_columns when check_format is False, with columns={columns} and check_format={check_format}"
+            
