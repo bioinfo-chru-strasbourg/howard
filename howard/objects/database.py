@@ -2395,6 +2395,36 @@ class Database:
         else:
             check_format_nb_format_fields = ""
 
+        # Genotype value table for reference.
+        # regexp strict:    '^([0-9]+|[.])([/|]([0-9]+|[.]))+$'
+        # regex permissive: '^([0-9]+|[.])([/|]([0-9]+|[.]))*$'
+        # Table
+        # Value	        Strict (+)	Permissive (*)	Category
+        # 0/1	        V	        V	            diploid genotype
+        # 1/1	        V	        V	            diploid genotype
+        # ./.	        V	        V	            missing diploid genotype
+        # .|.	        V	        V	            missing phased diploid genotype
+        # 0|1	        V	        V	            phased diploid genotype
+        # 0/1/2	        V	        V	            triploid genotype
+        # ././.	        V	        V	            missing triploid genotype
+        # 0/1|2	        V	        V	            mixed phasing
+        # 1	            X	        V	            single integer — real haploid (chrY/chrX/MT) or false positive (DP, scores...)
+        # 0	            X	        V	            same
+        # 30	        X	        V	            single integer — probable false positive (DP=30, AC=30...)
+        # .	            X	        V	            single dot — real missing haploid or false positive
+        # ..	        X	        X	            invalid (neither single dot nor separator)
+        # 0.123	        X	        X	            decimal — probable false positive (AF=0.123)
+        # 0.1/1.3	    X	        X	            decimal with separator — invalid in VCF
+        # 0/0.5	        X	        X	            mixed integer/decimal — invalid in VCF
+        # `` (empty)	X	        X	            invalid
+        # 0//1	        X	        X	            consecutive separators — invalid
+        # 0/	        X	        X	            final separator without allele — invalid
+        # /0/1	        X	        X	            implicit phasing at the start — valid in VCF 4.4, but rejected by both patterns
+        #
+        # Permissive can be use only if multiple fields in FORMAT to avoid misinterpretation of single-field values.
+        # Strict should be used when the FORMAT field contains only one field (GT), to ensure accurate interpretation of genotype values and avoid misinterpretation. This prevents incorrect parsing of single-field values as multi-field values, but may reject some valid genotype values such as real haploid genotypes (e.g. '1', '0', '.').
+
+
         # One single query: downsampling in a CTE, then a COUNT FILTER per candidate column.
         select_columns_list = []
         count_exprs = []
@@ -2411,14 +2441,14 @@ class Database:
                         -- len(string_split(TRIM(CAST("{c}" AS VARCHAR)), ':')) = nb_format_fields
                         -- OR
                         ( -- at least 2 values in the column (e.g. ".:*"), then GT can be haptloid (single allele), or diploid or more
-                           len(string_split(TRIM(CAST("{c}" AS VARCHAR)), ':')) <= nb_format_fields
-                           AND len(string_split(TRIM(CAST("{c}" AS VARCHAR)), ':')) > 1
-                           AND regexp_matches(split_part(TRIM(CAST("{c}" AS VARCHAR)), \':\', 1), '^([0-9.]+([/|][0-9.]+)*)$')
+                            len(string_split(TRIM(CAST("{c}" AS VARCHAR)), ':')) <= nb_format_fields
+                            AND len(string_split(TRIM(CAST("{c}" AS VARCHAR)), ':')) > 1
+                            AND regexp_matches(split_part(TRIM(CAST("{c}" AS VARCHAR)), \':\', 1), '^([0-9]+|[.])([/|]([0-9]+|[.]))*$')
                         )
                         OR
                         ( -- only one value in column, strict genotype (e.g. "./."), then GT must be diploid or more, to avoid haploid genotypes like (Integer or ".")
                             len(string_split(TRIM(CAST("{c}" AS VARCHAR)), ':')) = 1
-                            AND regexp_matches(split_part(TRIM(CAST("{c}" AS VARCHAR)), \':\', 1), '^([0-9.]+([/|][0-9.]+)+)$')
+                            AND regexp_matches(split_part(TRIM(CAST("{c}" AS VARCHAR)), \':\', 1), '^([0-9]+|[.])([/|]([0-9]+|[.]))+$')
                         )
                     )
                 """
@@ -2427,7 +2457,7 @@ class Database:
             # Append the count expression for the current column.
             count_exprs.append(f"""
                 COUNT(*) FILTER (
-                    WHERE regexp_matches(split_part(TRIM(CAST("{c}" AS VARCHAR)), \':\', 1), '^([0-9.]+([/|][0-9.]+)*)$')
+                    WHERE regexp_matches(split_part(TRIM(CAST("{c}" AS VARCHAR)), \':\', 1), '^([0-9]+|[.])([/|]([0-9]+|[.]))*$')
                     {format_check}
                 ) AS "nb_{c}"
             """)
