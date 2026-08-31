@@ -7,7 +7,8 @@ This release introduces several significant new features and improvements, prima
 ### News
 
 - Add pipeline mode to define multiple ordered steps of operations to process (between "annotation", "calculation" and "prioritization" operation types) ([#522](https://github.com/bioinfo-chru-strasbourg/howard/issues/522))
-- Add docker tools to extend annotation with external tools (such as VEP) ([#527](https://github.com/bioinfo-chru-strasbourg/howard/issues/527))
+- Add docker tools to extend annotation with external tools ([#527](https://github.com/bioinfo-chru-strasbourg/howard/issues/527))
+- Add VEP annotation through docker tools ([#565](https://github.com/bioinfo-chru-strasbourg/howard/issues/565))
 - Add and improve BigWig/BigBed annotation, with aggregation methods ([#444](https://github.com/bioinfo-chru-strasbourg/howard/issues/444))
 - Add fast strategy for Parquet annotation ([#466](https://github.com/bioinfo-chru-strasbourg/howard/issues/466))
 - Add chunking process for huge input files ([#442](https://github.com/bioinfo-chru-strasbourg/howard/issues/442))

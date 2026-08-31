@@ -1,5 +1,5 @@
 ---
-title: HOWARD Parameters
+title: HOWARD Help Parameters
 ---
 
 - [<span class="toc-section-number">1</span>
@@ -30,58 +30,62 @@ title: HOWARD Parameters
     - [<span class="toc-section-number">4.4.3</span> stats](#stats)
     - [<span class="toc-section-number">4.4.4</span>
       csvStats](#csvstats)
-  - [<span class="toc-section-number">4.5</span> snpsift](#snpsift)
+  - [<span class="toc-section-number">4.5</span> vep](#vep)
     - [<span class="toc-section-number">4.5.1</span>
-      annotations](#annotations-3)
-    - [<span class="toc-section-number">4.5.2</span>
-      chrom_mapping](#chrom_mapping-3)
-  - [<span class="toc-section-number">4.6</span> bigwig](#bigwig)
+      parameters](#parameters)
+    - [<span class="toc-section-number">4.5.2</span> tool](#tool)
+  - [<span class="toc-section-number">4.6</span> snpsift](#snpsift)
     - [<span class="toc-section-number">4.6.1</span>
-      annotations](#annotations-4)
+      annotations](#annotations-3)
     - [<span class="toc-section-number">4.6.2</span>
-      options](#options-2)
-    - [<span class="toc-section-number">4.6.3</span>
-      chrom_mapping](#chrom_mapping-4)
-  - [<span class="toc-section-number">4.7</span> exomiser](#exomiser)
-    - [<span class="toc-section-number">4.7.1</span> release](#release)
+      chrom_mapping](#chrom_mapping-3)
+  - [<span class="toc-section-number">4.7</span> bigwig](#bigwig)
+    - [<span class="toc-section-number">4.7.1</span>
+      annotations](#annotations-4)
     - [<span class="toc-section-number">4.7.2</span>
-      transcript_source](#transcript_source)
-    - [<span class="toc-section-number">4.7.3</span> hpo](#hpo)
-    - [<span class="toc-section-number">4.7.4</span>
-      chrom_mapping](#chrom_mapping-5)
-  - [<span class="toc-section-number">4.8</span> splice](#splice)
-    - [<span class="toc-section-number">4.8.1</span>
-      split_mode](#split_mode)
+      options](#options-2)
+    - [<span class="toc-section-number">4.7.3</span>
+      chrom_mapping](#chrom_mapping-4)
+  - [<span class="toc-section-number">4.8</span> exomiser](#exomiser)
+    - [<span class="toc-section-number">4.8.1</span> release](#release)
     - [<span class="toc-section-number">4.8.2</span>
-      spliceai_distance](#spliceai_distance)
-    - [<span class="toc-section-number">4.8.3</span>
-      spliceai_mask](#spliceai_mask)
+      transcript_source](#transcript_source)
+    - [<span class="toc-section-number">4.8.3</span> hpo](#hpo)
     - [<span class="toc-section-number">4.8.4</span>
+      chrom_mapping](#chrom_mapping-5)
+  - [<span class="toc-section-number">4.9</span> splice](#splice)
+    - [<span class="toc-section-number">4.9.1</span>
+      split_mode](#split_mode)
+    - [<span class="toc-section-number">4.9.2</span>
+      spliceai_distance](#spliceai_distance)
+    - [<span class="toc-section-number">4.9.3</span>
+      spliceai_mask](#spliceai_mask)
+    - [<span class="toc-section-number">4.9.4</span>
       transcript](#transcript)
-    - [<span class="toc-section-number">4.8.5</span> rm_snps](#rm_snps)
-    - [<span class="toc-section-number">4.8.6</span>
+    - [<span class="toc-section-number">4.9.5</span> rm_snps](#rm_snps)
+    - [<span class="toc-section-number">4.9.6</span>
       rm_annot](#rm_annot)
-    - [<span class="toc-section-number">4.8.7</span>
+    - [<span class="toc-section-number">4.9.7</span>
       whitespace](#whitespace)
-    - [<span class="toc-section-number">4.8.8</span>
+    - [<span class="toc-section-number">4.9.8</span>
       chrom_mapping](#chrom_mapping-6)
-  - [<span class="toc-section-number">4.9</span> docker](#docker)
-    - [<span class="toc-section-number">4.9.1</span> entries](#entries)
-  - [<span class="toc-section-number">4.10</span> hgvs](#hgvs)
-    - [<span class="toc-section-number">4.10.1</span>
+  - [<span class="toc-section-number">4.10</span> docker](#docker)
+    - [<span class="toc-section-number">4.10.1</span> entries](#entries)
+  - [<span class="toc-section-number">4.11</span> hgvs](#hgvs)
+    - [<span class="toc-section-number">4.11.1</span>
       use_gene](#use_gene)
-    - [<span class="toc-section-number">4.10.2</span>
+    - [<span class="toc-section-number">4.11.2</span>
       use_exon](#use_exon)
-    - [<span class="toc-section-number">4.10.3</span>
+    - [<span class="toc-section-number">4.11.3</span>
       use_protein](#use_protein)
-    - [<span class="toc-section-number">4.10.4</span>
+    - [<span class="toc-section-number">4.11.4</span>
       add_protein](#add_protein)
-    - [<span class="toc-section-number">4.10.5</span>
+    - [<span class="toc-section-number">4.11.5</span>
       full_format](#full_format)
-    - [<span class="toc-section-number">4.10.6</span>
+    - [<span class="toc-section-number">4.11.6</span>
       codon_type](#codon_type)
-    - [<span class="toc-section-number">4.10.7</span> refgene](#refgene)
-    - [<span class="toc-section-number">4.10.8</span>
+    - [<span class="toc-section-number">4.11.7</span> refgene](#refgene)
+    - [<span class="toc-section-number">4.11.8</span>
       refseqlink](#refseqlink)
 - [<span class="toc-section-number">5</span> calculation](#calculation)
   - [<span class="toc-section-number">5.1</span>
@@ -2072,6 +2076,88 @@ Examples:
 > ``` json
 > {
 >    "csvStats": "OUTPUT.csv"
+> }
+> ```
+
+## vep
+
+Annotation process using VEP tool and options (see [VEP
+documentation](https://www.ensembl.org/info/docs/tools/vep/index.html)
+and [VEP
+options](https://www.ensembl.org/info/docs/tools/vep/script/vep_options.html)).
+
+Examples:
+
+> Annotation with VEP tool, with parameters for HGVS and symbol
+> annotation with RefSeq.
+
+> ``` json
+> {
+>    "vep": {
+>       "parameters": [
+>           "--hgvs",
+>           "--symbol",
+>           "--refseq"
+>       ],
+>       "tool": "vep"
+>    }
+> }
+> ```
+
+### parameters
+
+List of options available (see [VEP
+options](https://www.ensembl.org/info/docs/tools/vep/script/vep_options.html))
+such as:
+
+- 'symbol' for gene symbol (e.g. HGNC) (where available)
+
+- 'hgvs' for HGVS nomenclature based on Ensembl stable identifiers (by
+  default)
+
+- 'refseq' to use RefSeq transcripts instead of Ensembl transcripts
+
+Examples:
+
+> Annotation with VEP databases, with option for HGVS, HGVS nomenclature
+> based on the input chromosome name, HGNC symbol, accessions for
+> translated protein products from three UniProt, with RefSeq
+> annotation.
+
+> ``` json
+> {
+>    "parameters": [
+>        "--hgvs",
+>        "--hgvsg",
+>        "--symbol",
+>        "--uniprot",
+>        "--refseq"
+>    ]
+> }
+> ```
+
+### tool
+
+Indicate a specific docker tool to be used for annotation (e.g., 'vep'),
+which is configured in the Configuration JSON file.
+
+Examples:
+
+> Annotation with VEP tool named 'vep' in the Configuration JSON file,
+> which can include parameters such as local databases.
+
+> ``` json
+> {
+>    "tool": "vep"
+> }
+> ```
+
+> Annotation with VEP tool named 'vep_online' with a configuration
+> dedicated to online usage.
+
+> ``` json
+> {
+>    "tool": "vep_online"
 > }
 > ```
 

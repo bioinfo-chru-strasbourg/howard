@@ -1,0 +1,150 @@
+{
+    "threads": null,
+    "memory": null,
+    "verbosity": "WARNING",
+    "docker": {
+        "automount": true,
+        "notremove": false,
+        "tmp": false
+    },
+    "folders": {
+        "databases": {
+            "genomes": "~/howard/databases/genomes/current",
+            "annotations": [
+                "~/howard/databases/annotations/current",
+                "~/howard/databases/dbnsfp/current",
+                "~/howard/databases/dbsnp/current"
+            ],
+            "parquet": [
+                "~/howard/databases/annotations/current"
+            ],
+            "bcftools": [
+                "~/howard/databases/annotations/current"
+            ],
+            "annovar": [
+                "~/howard/databases/annovar/current"
+            ],
+            "snpeff": "~/howard/databases/snpeff/current",
+            "varank": "~/howard/databases/varank/current",
+            "spliceai": "~/howard/databases/spliceai/current",
+            "spip": "~/howard/databases/spip/current",
+            "refseq": "~/howard/databases/refseq/current",
+            "vep": "~/howard/databases/vep/current"
+        }
+    },
+    "tools": {
+        "bcftools": "bcftools",
+        "bgzip": "bgzip",
+        "java": "java",
+        "snpeff": "~/howard/tools/snpeff/current/bin/snpEff.jar",
+        "annovar": "~/howard/tools/annovar/current/bin/table_annovar.pl",
+        "exomiser": "~/howard/tools/exomiser/current/bin/exomiser-cli-14.0.0.jar",
+        "docker": "docker",
+        "splice": {
+            "docker": {
+                "image": "bioinfochrustrasbourg/splice:0.2.6",
+                "entrypoint": "/bin/bash",
+                "options": null,
+                "command": null,
+                "config": {
+                    "automount": true,
+                    "notremove": false,
+                    "tmp": false
+                }
+            }
+        },
+        "vep": {
+            "docker": {
+                "image": "ensemblorg/ensembl-vep",
+                "entrypoint": "vep",
+                "options": null,
+                "command": null,
+                "parameters": {
+                    "primary": {
+                        "input": "--input_file",
+                        "output": "--output_file",
+                        "threads": "--fork",
+                        "assembly": {
+                            "flag": "--assembly",
+                            "source": "GRCH"
+                        },
+                        "genome": {
+                            "flag": "--fasta"
+                        }
+                    },
+                    "vcf_update": {
+                        "remove_info": true,
+                        "add_samples": true,
+                        "update_header": true,
+                        "update_existing_fields": false
+                    },
+                    "defaults": {
+                        "parameters": [
+                            "--vcf",
+                            "--cache",
+                            "--offline",
+                            {
+                                "key": "--compress_output",
+                                "value": "bgzip"
+                            }
+                        ],
+                        "resources": {
+                            "threads": 4,
+                            "memory": null
+                        },
+                        "output_pattern": "*.vcf.gz"
+                    }
+                },
+                "runtime": {
+                    "databases": [
+                        {
+                            "name": "vep",
+                            "container_path": "/opt/vep/.vep",
+                            "mode": "ro"
+                        },
+                        {
+                            "name": "genomes",
+                            "container_path": "/opt/vep/.genomes",
+                            "mode": "ro"
+                        },
+                        {
+                            "name": "refseq",
+                            "container_path": "/opt/vep/.refseq",
+                            "mode": "ro"
+                        }
+                    ],
+                    "mounts": [],
+                    "paths": []
+                },
+                "config": {
+                    "automount": true,
+                    "notremove": false,
+                    "tmp": false
+                }
+            }
+        },
+        "vep_online": {
+            "docker": {
+                "image": "ensemblorg/ensembl-vep",
+                "entrypoint": "vep",
+                "parameters": {
+                    "primary": {
+                        "input": "--input_file",
+                        "output": "--output_file",
+                        "threads": "--fork",
+                        "assembly": {
+                            "flag": "--assembly",
+                            "source": "GRCH"
+                        }
+                    },
+                    "defaults": {
+                        "parameters": [
+                            "--vcf",
+                            "--database"
+                        ]
+                    }
+                }
+            }
+        }
+    }
+}

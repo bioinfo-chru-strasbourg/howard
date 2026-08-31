@@ -1,3 +1,4 @@
+import copy
 import datetime
 import gzip
 import io
@@ -111,10 +112,7 @@ class variants_annotation(variants_annotation_docker):
         param = self.get_param()
 
         # Param - Assembly
-        assembly = param.get("assembly", config.get("assembly", None))
-        if not assembly:
-            assembly = DEFAULT_ASSEMBLY
-            log.warning(f"Default assembly '{assembly}'")
+        assembly = self.get_assembly()
 
         # Scan for availabled databases
         log.info(
@@ -145,10 +143,7 @@ class variants_annotation(variants_annotation_docker):
             param = self.get_param()
 
         # Param - Assembly
-        assembly = param.get("assembly", config.get("assembly", None))
-        if not assembly:
-            assembly = DEFAULT_ASSEMBLY
-            log.warning(f"Default assembly '{assembly}'")
+        assembly = self.get_assembly()
 
         # annotations databases folders
         annotations_databases = set(
@@ -303,6 +298,20 @@ class variants_annotation(variants_annotation_docker):
                         param[section]["snpeff"]["options"] = "".join(
                             annotation_file.split(":")[1:]
                         )
+
+                    # Annotation VEP
+                    elif annotation_file.startswith("vep"):
+
+                        log.debug(f"Quick Annotation VEP")
+
+                        if "vep" not in param[section]:
+                            param[section]["vep"] = {}
+
+                        if "parameters" not in param[section]["vep"]:
+                            param[section]["vep"]["parameters"] = ""
+
+                        # VEP options in annotations
+                        param[section]["vep"]["parameters"] = [f"--{x}" if not x.startswith("--") else x for x in annotation_file.replace(" ", ":").split(":")[1:] if x]
 
                     # Annotation Annovar
                     elif annotation_file.startswith("annovar"):
@@ -478,6 +487,9 @@ class variants_annotation(variants_annotation_docker):
                 if param.get(section, {}).get("snpeff", None):
                     log.info("Annotations 'snpeff'...")
                     self.annotation_snpeff(section=section)
+                if param.get(section, {}).get("vep", None):
+                    log.info("Annotations 'vep'...")
+                    self.annotation_vep(section=section)
                 if param.get(section, {}).get("exomiser", None) is not None:
                     log.info("Annotations 'exomiser'...")
                     self.annotation_exomiser(section=section)
@@ -2279,7 +2291,7 @@ class variants_annotation(variants_annotation_docker):
         )
 
         # Param - Assembly
-        assembly = param.get("assembly", config.get("assembly", DEFAULT_ASSEMBLY))
+        assembly = self.get_assembly()
         log.debug("Assembly: " + str(assembly))
 
         # Data
@@ -2996,7 +3008,7 @@ class variants_annotation(variants_annotation_docker):
         )
 
         # Param - Assembly
-        assembly = param.get("assembly", config.get("assembly", DEFAULT_ASSEMBLY))
+        assembly = self.get_assembly()
 
         # Param - Options
         snpeff_options = (
@@ -3155,6 +3167,100 @@ class variants_annotation(variants_annotation_docker):
                 log.debug(f"Existing snpEff annotations in VCF")
             if force_update_annotation:
                 log.debug(f"Existing snpEff annotations in VCF - annotation forced")
+
+
+    def annotation_vep(self, section:str = "annotation", threads: int = None) -> None:
+            """
+            This function annotate with VEP
+    
+            :param threads: The number of threads to use
+            :return: the value of the variable "return_value".
+            """
+    
+            # DEBUG
+            log.debug("Start annotation with VEP databases")
+    
+            # Threads
+            if not threads:
+                threads = self.get_threads()
+            log.debug("Threads: " + str(threads))
+    
+            # Config
+            config = self.get_config()
+            log.debug("Config: " + str(config))
+
+            # Param
+            param = self.get_param()
+
+            # Assembly
+            assembly = self.get_assembly()
+    
+            # vep_parameters
+            vep_parameters = param.get(section, {}).get("vep", {}).get("parameters", None) or None
+
+            # vep_parameters
+            vep_tool = param.get(section, {}).get("vep", {}).get("tool", None) or "vep"
+
+            # Construct vep configuraton (on line) if not exist in config
+            if config.get("tools", {}).get(vep_tool) is None:
+                if "tools" not in config:
+                    config["tools"] = {}
+                config["tools"][vep_tool] = {
+                    "docker": {
+                        "image": "ensemblorg/ensembl-vep:latest",
+                        "entrypoint": "vep",
+                        "parameters": {
+                            "primary": {
+                                "input": "--input_file",
+                                "output": "--output_file",
+                                "threads": "--fork",
+                                "assembly": {
+                                    "flag": "--assembly",
+                                    "source": "GRCH"
+                                }
+                            },
+                            "defaults": {
+                                "parameters": [
+                                    "--vcf",
+                                    "--database"
+                                ]
+                            }
+                        }
+                    }
+                }
+
+            #log.debug(f"Config: {json.dumps(self.get_config(), indent=4)}")
+
+    
+            # Construct param dict for docker
+            param_original = copy.deepcopy(param)
+            param_vep = copy.deepcopy(param)
+            param_vep_section = f"{section}_{get_random()}"
+            param_vep["assembly"] = assembly
+            param_vep[param_vep_section] = {
+                "docker": {
+                    "entries": {
+                        "annotation_vep": {
+                            "tool": vep_tool,
+                            "parameters": vep_parameters
+                        }
+                    },
+                }
+            }
+
+            # Log
+            log.debug(f"param_vep: {param_vep}")
+
+            # Set the modified parameters for the VEP annotation
+            self.set_param(param_vep)
+
+            # Run the annotation using the docker container for VEP
+            log.info("Running VEP annotation with docker...")
+            self.annotation_docker(section=param_vep_section)
+
+            # Restore the original parameters after running the VEP annotation
+            self.set_param(param_original)
+
 
     def annotation_annovar(self, section:str = "annotation", threads: int = None) -> None:
         """
@@ -3383,7 +3489,7 @@ class variants_annotation(variants_annotation_docker):
         )
 
         # Param - Assembly
-        assembly = param.get("assembly", config.get("assembly", DEFAULT_ASSEMBLY))
+        assembly = self.get_assembly()
 
         # Annovar database assembly
         annovar_databases_assembly = f"{annovar_databases}/{assembly}"
@@ -5435,7 +5541,7 @@ class variants_annotation(variants_annotation_docker):
         databases_refseqlink = param_hgvs.get("refseqlink", databases_refseqlink)
 
         # Assembly
-        assembly = param.get("assembly", config.get("assembly", DEFAULT_ASSEMBLY))
+        assembly = self.get_assembly()
 
         # Genome
         genome_file = None
