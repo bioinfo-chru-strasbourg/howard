@@ -1226,6 +1226,51 @@
         ]
       }
     },
+    "vep": {
+      "__help": [
+        "Annotation process using VEP tool and options (see [VEP documentation](https://www.ensembl.org/info/docs/tools/vep/index.html) and [VEP options](https://www.ensembl.org/info/docs/tools/vep/script/vep_options.html))."
+      ],
+      "__examples_code": [
+        "# Annotation with VEP tool, with parameters for HGVS and symbol annotation with RefSeq.",
+        "\"vep\": {",
+        "   \"parameters\": [",
+        "       \"--hgvs\",",
+        "       \"--symbol\",",
+        "       \"--refseq\"",
+        "   ],",
+        "   \"tool\": \"vep\"",
+        "}"
+      ],
+      "parameters": {
+        "__help": [
+          "List of options available (see [VEP options](https://www.ensembl.org/info/docs/tools/vep/script/vep_options.html)) such as:",
+          " - 'symbol' for gene symbol (e.g. HGNC) (where available) ",
+          " - 'hgvs' for HGVS nomenclature based on Ensembl stable identifiers (by default)",
+          " - 'refseq' to use RefSeq transcripts instead of Ensembl transcripts"
+        ],
+        "__examples_code": [
+          "# Annotation with VEP databases, with option for HGVS, HGVS nomenclature based on the input chromosome name, HGNC symbol, accessions for translated protein products from three UniProt, with RefSeq annotation.",
+          "\"parameters\": [",
+          "    \"--hgvs\",",
+          "    \"--hgvsg\",",
+          "    \"--symbol\",",
+          "    \"--uniprot\",",
+          "    \"--refseq\"",
+          "]"
+        ]
+      },
+      "tool": {
+        "__help": [
+          "Indicate a specific docker tool to be used for annotation (e.g., 'vep'), which is configured in the Configuration JSON file."
+        ],
+        "__examples_code": [
+          "# Annotation with VEP tool named 'vep' in the Configuration JSON file, which can include parameters such as local databases.",
+          "\"tool\": \"vep\"",
+          "# Annotation with VEP tool named 'vep_online' with a configuration dedicated to online usage.",
+          "\"tool\": \"vep_online\""
+        ]
+      }
+    },
     "snpsift": {
       "__help": [
         "Annotation process using snpSift. Provide a list of database files and annotation fields.",

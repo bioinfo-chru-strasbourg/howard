@@ -2689,18 +2689,17 @@ Usage examples:
 > --help_html=docs/html/help.configuration.html
 > --help_pdf=docs/pdf/help.configuration.pdf --code_type='json'
 
-> howard help --help_json_input=docs/json/help.parameteres.json
+> howard help --help_json_input=docs/json/help.parameters.json
 > --help_json_input_title='HOWARD Parameters'
-> --help_md=docs/help.parameteres.md
-> --help_html=docs/html/help.parameteres.html
-> --help_pdf=docs/pdf/help.parameteres.pdf --code_type='json'
+> --help_md=docs/help.parameters.md
+> --help_html=docs/html/help.parameters.html
+> --help_pdf=docs/pdf/help.parameters.pdf --code_type='json'
 
-> howard help
-> --help_json_input=docs/json/help.parameteres.databases.json
+> howard help --help_json_input=docs/json/help.parameters.databases.json
 > --help_json_input_title='HOWARD Parameters Databases'
-> --help_md=docs/help.parameteres.databases.md
-> --help_html=docs/html/help.parameteres.databases.html
-> --help_pdf=docs/pdf/help.parameteres.databases.pdf --code_type='json'
+> --help_md=docs/help.parameters.databases.md
+> --help_html=docs/html/help.parameters.databases.html
+> --help_pdf=docs/pdf/help.parameters.databases.pdf --code_type='json'
 
 > 
 

@@ -155,8 +155,11 @@ DEFAULT_SPIP_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/spip"
 # Data default folder
 DEFAULT_DATA_FOLDER = os.path.join(folder_howard_home, "data")
 
-# Deefault Assembly
+# Default Assembly
 DEFAULT_ASSEMBLY = "hg19"
+
+# Default Organism
+DEFAULT_ORGANISM = "Homo_sapiens"
 
 DEFAULT_ASSEMBLY_MAPPING = {
     "default_source": "howard",

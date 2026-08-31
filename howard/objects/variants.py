@@ -22,6 +22,7 @@ import fastparquet as fp  # type: ignore
 from howard.functions.commons import (
     DEFAULT_CHUNK_SIZE,
     DEFAULT_ASSEMBLY,
+    DEFAULT_ORGANISM,
     CODE_TYPE_MAP,
     cast_columns_query,
     clean_annotation_field,
@@ -1881,6 +1882,38 @@ class Variants(
 
         # Return
         return None
+
+    def get_assembly(self, default: str = None) -> str:
+        """
+        It returns the assembly of the object.
+
+        :return: The assembly of the object.
+        """
+
+        # Parameters and configuration
+        param = self.get_param()
+        config = self.get_config()
+
+        # Get assembly from parameters or configuration
+        assembly = param.get("assembly", config.get("assembly", default)) or DEFAULT_ASSEMBLY
+
+        return assembly
+
+    def get_organism(self, default: str = None) -> str:
+            """
+            It returns the organism of the object.
+    
+            :return: The organism of the object.
+            """
+    
+            # Parameters and configuration
+            param = self.get_param()
+            config = self.get_config()
+    
+            # Get organism from parameters or configuration
+            organism = param.get("organism", config.get("organism", default)) or DEFAULT_ORGANISM
+    
+            return organism
 
 
     def is_genotype_columns(self, columns: list[str] = None, check_format: bool = True) -> list[str]:
