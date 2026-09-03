@@ -384,7 +384,7 @@ class Variants(
         :type config: dict
         """
 
-        self.config = config
+        self.config = config or {}
 
     def set_param(self, param: dict) -> None:
         """
@@ -395,7 +395,7 @@ class Variants(
         :type param: dict
         """
 
-        self.param = param
+        self.param = param or {}
 
     def init_variables(self) -> None:
         """
@@ -1606,14 +1606,14 @@ class Variants(
         It returns the config
         :return: The config variable is being returned.
         """
-        return self.config
+        return self.config or {}
 
     def get_param(self) -> dict:
         """
         It returns the param
         :return: The param variable is being returned.
         """
-        return self.param
+        return self.param or {}
 
     def get_connexion_db(self) -> str:
         """

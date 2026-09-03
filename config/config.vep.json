@@ -55,7 +55,7 @@
         },
         "vep": {
             "docker": {
-                "image": "ensemblorg/ensembl-vep",
+                "image": "ensemblorg/ensembl-vep:release_116.1",
                 "entrypoint": "vep",
                 "options": null,
                 "command": null,
@@ -125,7 +125,7 @@
         },
         "vep_online": {
             "docker": {
-                "image": "ensemblorg/ensembl-vep",
+                "image": "ensemblorg/ensembl-vep:release_116.1",
                 "entrypoint": "vep",
                 "parameters": {
                     "primary": {

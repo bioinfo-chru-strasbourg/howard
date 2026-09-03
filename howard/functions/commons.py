@@ -4540,12 +4540,33 @@ def load_param(args: argparse) -> dict:
 
     param = {}
     if "param" in args:
-        if isinstance(args.param, str) and os.path.exists(full_path(args.param)):
-            with open(full_path(args.param)) as param_file:
-                param = yaml.safe_load(param_file)
-
+        args_param = args.param.strip()
+        # Check the type of the argument and handle accordingly
+        if isinstance(args_param, str):
+            # If the string is empty after stripping, treat it as an empty dictionary
+            if args_param == "":
+                param = {}
+            # If the string is not empty, check if it corresponds to an existing file path
+            elif os.path.exists(full_path(args_param)):
+                # If the path exists, check if it's a directory or a file
+                if os.path.isdir(full_path(args_param)):
+                    raise ValueError(f"Expected a file but found a directory: {full_path(args_param)}")
+                # If is file, load it as YAML
+                elif os.path.isfile(full_path(args_param)):
+                    with open(full_path(args_param)) as param_file:
+                        param = yaml.safe_load(param_file)
+                # If the path exists but is neither a directory nor a file, raise an error
+                else:
+                    raise ValueError(f"File does not exist: {full_path(args_param)}")
+            else:
+                # If the path does not exist, try to load it as JSON
+                param = json.loads(args_param)
+        # If the argument is neither a string nor a dictionary, raise an error
+        elif isinstance(args_param, dict):
+            param = args_param
+        # Raise an error for unsupported types
         else:
-            param = json.loads(args.param)
+            raise ValueError(f"Unsupported type for args.param: {type(args_param)}")
 
     return param
 
@@ -4597,8 +4618,8 @@ def setup_variants(
     Common factory for creating and initialising a Variants object from CLI args.
 
     Encapsulates the repeated setup pattern found in every tool script:
-    load_config_args → Variants(input, output, config, param) → get_config/get_param
-    → load_args → (optional access) → set_param/set_config.
+    load_config_args -> Variants(input, output, config, param) -> get_config/get_param
+    -> load_args -> (optional access) -> set_param/set_config.
 
     Does NOT call load_data() so that callers can still adjust config (e.g. access
     mode derived from input format) before data is loaded.
@@ -4701,6 +4722,9 @@ def load_args(
     :return: The function `load_args` is returning a dictionary named `param` after processing the
     arguments based on the input parameters and conditions specified in the function.
     """
+
+    # Init
+    param = param or {}
 
     # Variables
     arguments_list_to_load = {}
