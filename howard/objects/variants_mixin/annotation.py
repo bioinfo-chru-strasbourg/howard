@@ -5149,9 +5149,13 @@ class variants_annotation(variants_annotation_docker):
         log.debug(f"memory_limit: {memory_limit}")
 
         # Check number of variants to annotate
-        where_clause_regex_spliceai = r"SpliceAI_\w+"
-        where_clause_regex_spip = r"SPiP_\w+"
-        where_clause = f""" WHERE NOT regexp_matches("INFO", '{where_clause_regex_spliceai}') AND NOT regexp_matches("INFO", '{where_clause_regex_spip}')"""
+        where_clause_regex_spliceai = "SpliceAI_"
+        where_clause_regex_spip = "SPiP_annotated=Yes"
+        where_clause = f""" WHERE INFO IS NULL \
+            OR INFO = '' \
+            OR INFO = '.' \
+            OR NOT regexp_matches("INFO", '{where_clause_regex_spliceai}') \
+            AND NOT regexp_matches("INFO", '{where_clause_regex_spip}')"""
         df_list_of_variants_to_annotate = self.get_query_to_df(
             query=f""" SELECT * FROM variants {where_clause} """
         )
