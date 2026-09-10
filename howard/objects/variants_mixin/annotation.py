@@ -3021,11 +3021,16 @@ class variants_annotation(variants_annotation_docker):
         if snpeff_stats:
             snpeff_stats = snpeff_stats.replace("OUTPUT", self.get_output())
             snpeff_stats = full_path(snpeff_stats)
-            snpeff_options += f" -stats {snpeff_stats}"
+            snpeff_options += f" -stats {snpeff_stats} "
         if snpeff_csvstats:
             snpeff_csvstats = snpeff_csvstats.replace("OUTPUT", self.get_output())
             snpeff_csvstats = full_path(snpeff_csvstats)
-            snpeff_options += f" -csvStats {snpeff_csvstats}"
+            snpeff_options += f" -csvStats {snpeff_csvstats} "
+
+        # noStats
+        # If no stats option is provided, add the noStats flag
+        if " -csvStats " not in snpeff_options and " -stats " not in snpeff_options and " -s " not in snpeff_options:
+            snpeff_options += " -noStats "
 
         # Data
         table_variants = self.get_table_variants()

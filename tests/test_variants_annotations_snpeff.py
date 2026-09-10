@@ -22,6 +22,141 @@ from howard.functions.commons import remove_if_exists
 from test_needed import tests_folder, tests_data_folder, tests_config
 
 
+
+def test_annotation_snpeff_stats_path():
+    """
+    This function tests the annotation of variants using the snpEff tool, with stats files.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.vcf"
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+        snpeff_html = f"{tmp_dir}/output.snpeff.html"
+        snpeff_csv = f"{tmp_dir}/output.snpeff.csv"
+
+        # Copy config
+        tests_config_snpeff = tests_config.copy()
+
+        # Number of threads
+        tests_config_snpeff["threads"] = 2
+
+        # Memory
+        tests_config_snpeff["memory"] = "4G"
+
+        # Construct param dict
+        param = {
+            "annotation": {
+                "snpeff": {
+                    "options": "-lof -hgvs -oicr -spliceSiteSize 3 ",
+                    "stats": snpeff_html,
+                    "csvStats": snpeff_csv
+                }
+            }
+        }
+
+        # Create object
+        variants = Variants(
+            conn=None,
+            input=input_vcf,
+            output=output_vcf,
+            config=tests_config_snpeff,
+            param=param,
+            load=True,
+        )
+
+        # Remove if output file exists
+        remove_if_exists([output_vcf])
+
+        # Annotation
+        variants.annotation()
+
+        # query annotated variant
+        result = variants.get_query_to_df(
+            """ SELECT * FROM variants WHERE "INFO" LIKE '%ANN%' """
+        )
+        assert len(result) == 7
+
+        # Stats files
+        assert os.path.exists(snpeff_html)
+        assert os.path.exists(snpeff_csv)
+
+        # Check if VCF is in correct format with pyVCF
+        variants.export_output()
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
+
+
+def test_annotation_snpeff_stats():
+    """
+    This function tests the annotation of variants using the snpEff tool, with stats files.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.vcf"
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+        snpeff_html = f"{output_vcf}.snpeff.html"
+        snpeff_csv = f"{output_vcf}.snpeff.csv"
+
+        # Copy config
+        tests_config_snpeff = tests_config.copy()
+
+        # Number of threads
+        tests_config_snpeff["threads"] = 2
+
+        # Memory
+        tests_config_snpeff["memory"] = "4G"
+
+        # Construct param dict
+        param = {
+            "annotation": {
+                "snpeff": {
+                    "options": "-lof -hgvs -oicr -spliceSiteSize 3 ",
+                    "stats": "OUTPUT.snpeff.html",
+                    "csvStats": "OUTPUT.snpeff.csv"
+                }
+            }
+        }
+
+        # Create object
+        variants = Variants(
+            conn=None,
+            input=input_vcf,
+            output=output_vcf,
+            config=tests_config_snpeff,
+            param=param,
+            load=True,
+        )
+
+        # Remove if output file exists
+        remove_if_exists([output_vcf])
+
+        # Annotation
+        variants.annotation()
+
+        # query annotated variant
+        result = variants.get_query_to_df(
+            """ SELECT * FROM variants WHERE "INFO" LIKE '%ANN%' """
+        )
+        assert len(result) == 7
+
+        # Stats files
+        assert os.path.exists(snpeff_html)
+        assert os.path.exists(snpeff_csv)
+
+        # Check if VCF is in correct format with pyVCF
+        variants.export_output()
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
+
+
 def test_annotation_snpeff_lower():
     """
     This function tests the annotation of variants using the snpEff tool.
