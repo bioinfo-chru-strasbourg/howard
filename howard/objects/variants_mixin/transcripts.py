@@ -4,7 +4,7 @@ import string
 import os
 import vcf  # type: ignore
 
-from howard.functions.commons import (transcripts_file_to_df, clean_annotation_field, get_file_format, code_type_map, full_path, get_random)
+from howard.functions.commons import (cast_column, transcripts_file_to_df, clean_annotation_field, get_file_format, code_type_map, full_path, get_random)
 
 class variants_transcripts:
 
@@ -912,11 +912,7 @@ class variants_transcripts:
 
                 # Add field as INFO/tag
                 column_type = description_dict.get(field, {}).get("type", "VARCHAR")
-                if column_type.endswith("[]"):
-                    column_type = "VARCHAR"
-                    field_value = f""" list_aggregate("{field}", 'string_agg', ',') """
-                else:
-                    field_value = f""" "{field}" """
+                field_value = cast_column(column=field, column_type=column_type, sep=",", add_column_name=False)
 
                 # Add INFO field to query
                 query_update_info.append(
