@@ -5491,6 +5491,34 @@ def convert_markdown_to_pdf(input_file: str, output_file: str) -> None:
     # Convert HTML to PDF
     convert_html_to_pdf(temp_html_path, output_file)
 
+def cast_column(column: str, column_type: str, sep: str = ",", add_column_name:bool = False) -> str:
+    """
+    Cast a single column to VARCHAR or aggregate arrays to strings.
+
+    :param column: The name of the column.
+    :type column: str
+    :param column_type: The type of the column.
+    :type column_type: str
+    :param sep: The separator for list aggregation, defaults to ","
+    :type sep: str
+    :param add_column_name: Whether to add the column name in the SQL expression, defaults to False
+    :type add_column_name: bool
+    :return: The SQL expression for the casted column.
+    :rtype: str
+    """
+
+    if column_type.endswith("[]"):
+        expression = f"""list_aggregate("{column}", 'string_agg', '{sep}')"""
+    elif column_type.startswith("STRUCT("):
+        expression = f"""to_JSON("{column}")"""
+    else:
+        expression = f'''"{column}"'''
+
+    if add_column_name:
+        expression += f""" AS '{column}'"""
+
+    return expression
+    
 
 def cast_columns_query(query, conn, sep: str = ","):
     """
@@ -5518,12 +5546,7 @@ def cast_columns_query(query, conn, sep: str = ","):
     list_columns = []
     for column in description_dict:
         column_type = description_dict.get(column, {}).get("type", "VARCHAR")
-        if column_type.endswith("[]"):
-            list_columns.append(
-                f""" list_aggregate("{column}", 'string_agg', '{sep}') AS '{column}' """
-            )
-        else:
-            list_columns.append(f""" "{column}" """)
+        list_columns.append(cast_column(column=column, column_type=column_type, sep=sep, add_column_name=True))
 
     # RE-Query
     query_cast = f"""
