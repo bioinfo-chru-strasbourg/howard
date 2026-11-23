@@ -4444,7 +4444,7 @@ Examples:
 
 > Simple query to show all variants file
 
-> SELECT "#CHROM", POS, REF, ALT, INFO 
+>     SELECT "#CHROM", POS, REF, ALT, INFO 
 >     FROM variants
 
 ## query_limit

@@ -736,6 +736,64 @@ def test_calculation_sql_info_fields_check():
         )
 
 
+def test_calculation_nomen_ann_intron_exon():
+    """
+    This function tests the calculation and annotation of genetic variants using input parameters and
+    checks if the output VCF file is in the correct format.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.ANN_intron_exon.vcf"
+        output_vcf = f"{tmp_dir}/output.vcf"
+        input_param = {
+            "calculation": {
+                "calculations": {
+                    "annotation_extract": {
+                        "annotation_field": "ANN",
+                        "annotation_hgvs": "snpeff_hgvs",
+                    },
+                    "NOMEN": {
+                        "options": {
+                            "hgvs_field": "snpeff_hgvs",
+                            "pattern": "GNOMEN:TNOMEN:ENOMEN:INOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN",
+                        }
+                    },
+                }
+            },
+        }
+
+        # Create object
+        variants = Variants(
+            input=input_vcf,
+            output=output_vcf,
+            config=tests_config,
+            param=input_param,
+            load=True,
+        )
+
+        # Annotation
+        variants.annotation()
+
+        # Calculation
+        variants.calculation()
+
+        # Check number of NOMEN (2)
+        result = variants.get_query_to_df(
+            """SELECT INFO FROM variants WHERE INFO LIKE '%NOMEN=%' AND INFO LIKE '%INOMEN=%' AND INFO NOT LIKE '%ENOMEN=%' """
+        )
+        assert len(result) == 1
+
+        # Check if VCF is in correct format with pyVCF
+        remove_if_exists([output_vcf])
+        variants.export_output()
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
+
+
 def test_calculation_nomen():
     """
     This function tests the calculation and annotation of genetic variants using input parameters and
@@ -1599,7 +1657,6 @@ def test_calculation_find_samples_options_in_calculation_two_list_samples():
             assert False
 
 
-
 def test_calculation_find_samples_count_samples():
     """
     This is a test function for the "FIND_SAMPLES" calculation in the Variants class, which checks if
@@ -2300,7 +2357,6 @@ def test_calculation_genotype_stats(infos, vaf_normalization):
             vcf.Reader(filename=output_vcf)
         except:
             assert False
-
 
 
 @pytest.mark.parametrize(

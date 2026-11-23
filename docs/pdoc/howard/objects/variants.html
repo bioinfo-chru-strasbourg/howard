@@ -716,7 +716,7 @@
 </span><span id="L-384"><a href="#L-384"><span class="linenos"> 384</span></a><span class="sd">        :type config: dict</span>
 </span><span id="L-385"><a href="#L-385"><span class="linenos"> 385</span></a><span class="sd">        &quot;&quot;&quot;</span>
 </span><span id="L-386"><a href="#L-386"><span class="linenos"> 386</span></a>
-</span><span id="L-387"><a href="#L-387"><span class="linenos"> 387</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span>
+</span><span id="L-387"><a href="#L-387"><span class="linenos"> 387</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span> <span class="ow">or</span> <span class="p">{}</span>
 </span><span id="L-388"><a href="#L-388"><span class="linenos"> 388</span></a>
 </span><span id="L-389"><a href="#L-389"><span class="linenos"> 389</span></a>    <span class="k">def</span><span class="w"> </span><span class="nf">set_param</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">param</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 </span><span id="L-390"><a href="#L-390"><span class="linenos"> 390</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -727,7 +727,7 @@
 </span><span id="L-395"><a href="#L-395"><span class="linenos"> 395</span></a><span class="sd">        :type param: dict</span>
 </span><span id="L-396"><a href="#L-396"><span class="linenos"> 396</span></a><span class="sd">        &quot;&quot;&quot;</span>
 </span><span id="L-397"><a href="#L-397"><span class="linenos"> 397</span></a>
-</span><span id="L-398"><a href="#L-398"><span class="linenos"> 398</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">param</span> <span class="o">=</span> <span class="n">param</span>
+</span><span id="L-398"><a href="#L-398"><span class="linenos"> 398</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">param</span> <span class="o">=</span> <span class="n">param</span> <span class="ow">or</span> <span class="p">{}</span>
 </span><span id="L-399"><a href="#L-399"><span class="linenos"> 399</span></a>
 </span><span id="L-400"><a href="#L-400"><span class="linenos"> 400</span></a>    <span class="k">def</span><span class="w"> </span><span class="nf">init_variables</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 </span><span id="L-401"><a href="#L-401"><span class="linenos"> 401</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -1938,14 +1938,14 @@
 </span><span id="L-1606"><a href="#L-1606"><span class="linenos">1606</span></a><span class="sd">        It returns the config</span>
 </span><span id="L-1607"><a href="#L-1607"><span class="linenos">1607</span></a><span class="sd">        :return: The config variable is being returned.</span>
 </span><span id="L-1608"><a href="#L-1608"><span class="linenos">1608</span></a><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="L-1609"><a href="#L-1609"><span class="linenos">1609</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span>
+</span><span id="L-1609"><a href="#L-1609"><span class="linenos">1609</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="ow">or</span> <span class="p">{}</span>
 </span><span id="L-1610"><a href="#L-1610"><span class="linenos">1610</span></a>
 </span><span id="L-1611"><a href="#L-1611"><span class="linenos">1611</span></a>    <span class="k">def</span><span class="w"> </span><span class="nf">get_param</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 </span><span id="L-1612"><a href="#L-1612"><span class="linenos">1612</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="L-1613"><a href="#L-1613"><span class="linenos">1613</span></a><span class="sd">        It returns the param</span>
 </span><span id="L-1614"><a href="#L-1614"><span class="linenos">1614</span></a><span class="sd">        :return: The param variable is being returned.</span>
 </span><span id="L-1615"><a href="#L-1615"><span class="linenos">1615</span></a><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="L-1616"><a href="#L-1616"><span class="linenos">1616</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">param</span>
+</span><span id="L-1616"><a href="#L-1616"><span class="linenos">1616</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">param</span> <span class="ow">or</span> <span class="p">{}</span>
 </span><span id="L-1617"><a href="#L-1617"><span class="linenos">1617</span></a>
 </span><span id="L-1618"><a href="#L-1618"><span class="linenos">1618</span></a>    <span class="k">def</span><span class="w"> </span><span class="nf">get_connexion_db</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 </span><span id="L-1619"><a href="#L-1619"><span class="linenos">1619</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -6634,7 +6634,7 @@
 </span><span id="Variants-385"><a href="#Variants-385"><span class="linenos"> 385</span></a><span class="sd">        :type config: dict</span>
 </span><span id="Variants-386"><a href="#Variants-386"><span class="linenos"> 386</span></a><span class="sd">        &quot;&quot;&quot;</span>
 </span><span id="Variants-387"><a href="#Variants-387"><span class="linenos"> 387</span></a>
-</span><span id="Variants-388"><a href="#Variants-388"><span class="linenos"> 388</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span>
+</span><span id="Variants-388"><a href="#Variants-388"><span class="linenos"> 388</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span> <span class="ow">or</span> <span class="p">{}</span>
 </span><span id="Variants-389"><a href="#Variants-389"><span class="linenos"> 389</span></a>
 </span><span id="Variants-390"><a href="#Variants-390"><span class="linenos"> 390</span></a>    <span class="k">def</span><span class="w"> </span><span class="nf">set_param</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">param</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 </span><span id="Variants-391"><a href="#Variants-391"><span class="linenos"> 391</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -6645,7 +6645,7 @@
 </span><span id="Variants-396"><a href="#Variants-396"><span class="linenos"> 396</span></a><span class="sd">        :type param: dict</span>
 </span><span id="Variants-397"><a href="#Variants-397"><span class="linenos"> 397</span></a><span class="sd">        &quot;&quot;&quot;</span>
 </span><span id="Variants-398"><a href="#Variants-398"><span class="linenos"> 398</span></a>
-</span><span id="Variants-399"><a href="#Variants-399"><span class="linenos"> 399</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">param</span> <span class="o">=</span> <span class="n">param</span>
+</span><span id="Variants-399"><a href="#Variants-399"><span class="linenos"> 399</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">param</span> <span class="o">=</span> <span class="n">param</span> <span class="ow">or</span> <span class="p">{}</span>
 </span><span id="Variants-400"><a href="#Variants-400"><span class="linenos"> 400</span></a>
 </span><span id="Variants-401"><a href="#Variants-401"><span class="linenos"> 401</span></a>    <span class="k">def</span><span class="w"> </span><span class="nf">init_variables</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 </span><span id="Variants-402"><a href="#Variants-402"><span class="linenos"> 402</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -7856,14 +7856,14 @@
 </span><span id="Variants-1607"><a href="#Variants-1607"><span class="linenos">1607</span></a><span class="sd">        It returns the config</span>
 </span><span id="Variants-1608"><a href="#Variants-1608"><span class="linenos">1608</span></a><span class="sd">        :return: The config variable is being returned.</span>
 </span><span id="Variants-1609"><a href="#Variants-1609"><span class="linenos">1609</span></a><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="Variants-1610"><a href="#Variants-1610"><span class="linenos">1610</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span>
+</span><span id="Variants-1610"><a href="#Variants-1610"><span class="linenos">1610</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="ow">or</span> <span class="p">{}</span>
 </span><span id="Variants-1611"><a href="#Variants-1611"><span class="linenos">1611</span></a>
 </span><span id="Variants-1612"><a href="#Variants-1612"><span class="linenos">1612</span></a>    <span class="k">def</span><span class="w"> </span><span class="nf">get_param</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 </span><span id="Variants-1613"><a href="#Variants-1613"><span class="linenos">1613</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="Variants-1614"><a href="#Variants-1614"><span class="linenos">1614</span></a><span class="sd">        It returns the param</span>
 </span><span id="Variants-1615"><a href="#Variants-1615"><span class="linenos">1615</span></a><span class="sd">        :return: The param variable is being returned.</span>
 </span><span id="Variants-1616"><a href="#Variants-1616"><span class="linenos">1616</span></a><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="Variants-1617"><a href="#Variants-1617"><span class="linenos">1617</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">param</span>
+</span><span id="Variants-1617"><a href="#Variants-1617"><span class="linenos">1617</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">param</span> <span class="ow">or</span> <span class="p">{}</span>
 </span><span id="Variants-1618"><a href="#Variants-1618"><span class="linenos">1618</span></a>
 </span><span id="Variants-1619"><a href="#Variants-1619"><span class="linenos">1619</span></a>    <span class="k">def</span><span class="w"> </span><span class="nf">get_connexion_db</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 </span><span id="Variants-1620"><a href="#Variants-1620"><span class="linenos">1620</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -12764,7 +12764,7 @@ related to the input file. Here's a breakdown of the parameters and their usage 
 </span><span id="Variants.set_config-385"><a href="#Variants.set_config-385"><span class="linenos">385</span></a><span class="sd">        :type config: dict</span>
 </span><span id="Variants.set_config-386"><a href="#Variants.set_config-386"><span class="linenos">386</span></a><span class="sd">        &quot;&quot;&quot;</span>
 </span><span id="Variants.set_config-387"><a href="#Variants.set_config-387"><span class="linenos">387</span></a>
-</span><span id="Variants.set_config-388"><a href="#Variants.set_config-388"><span class="linenos">388</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span>
+</span><span id="Variants.set_config-388"><a href="#Variants.set_config-388"><span class="linenos">388</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span> <span class="ow">or</span> <span class="p">{}</span>
 </span></pre></div>
 
 
@@ -12803,7 +12803,7 @@ the class</li>
 </span><span id="Variants.set_param-396"><a href="#Variants.set_param-396"><span class="linenos">396</span></a><span class="sd">        :type param: dict</span>
 </span><span id="Variants.set_param-397"><a href="#Variants.set_param-397"><span class="linenos">397</span></a><span class="sd">        &quot;&quot;&quot;</span>
 </span><span id="Variants.set_param-398"><a href="#Variants.set_param-398"><span class="linenos">398</span></a>
-</span><span id="Variants.set_param-399"><a href="#Variants.set_param-399"><span class="linenos">399</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">param</span> <span class="o">=</span> <span class="n">param</span>
+</span><span id="Variants.set_param-399"><a href="#Variants.set_param-399"><span class="linenos">399</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">param</span> <span class="o">=</span> <span class="n">param</span> <span class="ow">or</span> <span class="p">{}</span>
 </span></pre></div>
 
 
@@ -14607,7 +14607,7 @@ instance. The</li>
 </span><span id="Variants.get_config-1607"><a href="#Variants.get_config-1607"><span class="linenos">1607</span></a><span class="sd">        It returns the config</span>
 </span><span id="Variants.get_config-1608"><a href="#Variants.get_config-1608"><span class="linenos">1608</span></a><span class="sd">        :return: The config variable is being returned.</span>
 </span><span id="Variants.get_config-1609"><a href="#Variants.get_config-1609"><span class="linenos">1609</span></a><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="Variants.get_config-1610"><a href="#Variants.get_config-1610"><span class="linenos">1610</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span>
+</span><span id="Variants.get_config-1610"><a href="#Variants.get_config-1610"><span class="linenos">1610</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="ow">or</span> <span class="p">{}</span>
 </span></pre></div>
 
 
@@ -14638,7 +14638,7 @@ instance. The</li>
 </span><span id="Variants.get_param-1614"><a href="#Variants.get_param-1614"><span class="linenos">1614</span></a><span class="sd">        It returns the param</span>
 </span><span id="Variants.get_param-1615"><a href="#Variants.get_param-1615"><span class="linenos">1615</span></a><span class="sd">        :return: The param variable is being returned.</span>
 </span><span id="Variants.get_param-1616"><a href="#Variants.get_param-1616"><span class="linenos">1616</span></a><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="Variants.get_param-1617"><a href="#Variants.get_param-1617"><span class="linenos">1617</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">param</span>
+</span><span id="Variants.get_param-1617"><a href="#Variants.get_param-1617"><span class="linenos">1617</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">param</span> <span class="ow">or</span> <span class="p">{}</span>
 </span></pre></div>
 
 

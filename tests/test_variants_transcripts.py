@@ -2957,10 +2957,10 @@ def test_transcripts_create_view_export_explode(output):
                 "NM_001005484",
                 "NM_005228",
                 "NR_026818",
-                "NR_024540",
+                "NR_036051",
                 "NR_047519",
             ],
-            True
+            True,
         ),
         (
             {
@@ -2980,7 +2980,7 @@ def test_transcripts_create_view_export_explode(output):
                 "NR_047525",
                 "NR_047526",
             ],
-            False
+            False,
         ),
         (
             {
@@ -2998,7 +2998,7 @@ def test_transcripts_create_view_export_explode(output):
                 "NM_001005484",
                 "NR_024540",
             ],
-            True
+            True,
         ),
         (
             {
@@ -3018,7 +3018,7 @@ def test_transcripts_create_view_export_explode(output):
                 "NR_047525",
                 "NR_047526",
             ],
-            False
+            False,
         ),
         (
             {
@@ -3030,7 +3030,7 @@ def test_transcripts_create_view_export_explode(output):
             },
             # ["NR_047526", "NR_036051", "NR_047551", "NM_001005484"],
             ["NR_047519", "NR_036051", "NR_047551", "NM_001005484"],
-            True
+            True,
         ),
         (
             {
@@ -3042,7 +3042,7 @@ def test_transcripts_create_view_export_explode(output):
             },
             # ["NR_047526", "NR_036051", "NR_047551", "NM_001005484"],
             ["NR_047519", "NR_036051", "NR_047551", "NM_001005484"],
-            True
+            True,
         ),
         (
             {
@@ -3054,7 +3054,7 @@ def test_transcripts_create_view_export_explode(output):
             },
             # ["NR_047526", "NR_036051", "NR_047551", "NM_001005484"],
             ["NR_047519", "NR_036051", "NR_047551", "NM_001005484"],
-            True
+            True,
         ),
         (
             {
@@ -3066,7 +3066,7 @@ def test_transcripts_create_view_export_explode(output):
             },
             # ["NR_047526", "NR_036266", "NM_001346897", "NM_001005484", "NR_024540"],
             ["NR_047519", "NR_036266", "NM_001346897", "NM_001005484", "NR_024540"],
-            True
+            True,
         ),
     ],
 )
@@ -3142,7 +3142,7 @@ def test_transcripts_create_view_prioritize_nomen(nomen_options, tnomen_expected
         variants.transcripts_prioritization(param=param)
 
         # SNPEFF HGVS
-        #variants.calculation_snpeff_extract()
+        # variants.calculation_snpeff_extract()
         log.debug(f""" nomen_options={nomen_options} """)
         variants.calculation_annotation_with_format_extract(
             annotation_field="ANN",

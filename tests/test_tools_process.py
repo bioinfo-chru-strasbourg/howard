@@ -253,6 +253,7 @@ def test_process_with_chunking():
                 "TPNOMEN",
                 "TPVVNOMEN",
                 "ENOMEN",
+                "INOMEN",
                 "GNOMEN",
                 "PZScore",
                 "PZFlag",
@@ -340,6 +341,7 @@ def test_process_with_chunking_and_chunk_size():
                 "TPNOMEN",
                 "TPVVNOMEN",
                 "ENOMEN",
+                "INOMEN",
                 "GNOMEN",
                 "PZScore",
                 "PZFlag",
@@ -611,7 +613,7 @@ def test_process_pipeline():
             "SELECT INFO FROM variants WHERE INFO LIKE '%cosmic70=%'"
         )
         assert len(result) == 1, f"Expected 1 variant with cosmic70, but got {len(result)}"
-         
+
 
 def test_process_pipeline_full_description():
     """

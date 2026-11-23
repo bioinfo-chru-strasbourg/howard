@@ -1,14 +1,20 @@
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<html xmlns="http://www.w3.org/1999/xhtml">
 <head>
   <meta charset="utf-8" />
-  <meta name="generator" content="pandoc" />
+  <meta name="generator" content="pandoc 3.14" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
   <title>HOWARD Help Parameters</title>
   <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
     html {
       color: #1a1a1a;
+      color: light-dark(#1a1a1a, #fdfdfd);
       background-color: #fdfdfd;
+      background-color: light-dark(#fdfdfd, #1a1a1a);
+      color-scheme: light dark;
     }
     body {
       margin: 0 auto;
@@ -31,31 +37,11 @@
         font-size: 1.8em;
       }
     }
-    @media print {
-      html {
-        background-color: white;
-      }
-      body {
-        background-color: transparent;
-        color: black;
-        font-size: 12pt;
-      }
-      p, h2, h3 {
-        orphans: 3;
-        widows: 3;
-      }
-      h2, h3, h4 {
-        page-break-after: avoid;
-      }
-    }
     p {
       margin: 1em 0;
     }
-    a {
-      color: #1a1a1a;
-    }
-    a:visited {
-      color: #1a1a1a;
+    a, a:visited {
+      color: inherit;
     }
     img {
       max-width: 100%;
@@ -84,10 +70,14 @@
     blockquote {
       margin: 1em 0 1em 1.7em;
       padding-left: 1em;
-      border-left: 2px solid #e6e6e6;
+      border-left: 2px solid;
+      border-color: #e6e6e6;
+      border-color: light-dark(#e6e6e6, #4c4c4c);
       color: #606060;
+      color: light-dark(#606060, #b6b6b6);
     }
     code {
+      white-space: pre-wrap;
       font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
       font-size: 85%;
       margin: 0;
@@ -107,8 +97,8 @@
      overflow: visible;
     }
     hr {
-      background-color: #1a1a1a;
       border: none;
+      border-top: 1px solid currentColor;
       height: 1px;
       margin: 1em 0;
     }
@@ -125,11 +115,11 @@
     }
     tbody {
       margin-top: 0.5em;
-      border-top: 1px solid #1a1a1a;
-      border-bottom: 1px solid #1a1a1a;
+      border-top: 1px solid currentColor;
+      border-bottom: 1px solid currentColor;
     }
     th {
-      border-top: 1px solid #1a1a1a;
+      border-top: 1px solid currentColor;
       padding: 0.25em 0.5em 0.25em 0.5em;
     }
     td {
@@ -151,10 +141,19 @@
     #TOC a:not(:hover) {
       text-decoration: none;
     }
-    code{white-space: pre-wrap;}
     span.smallcaps{font-variant: small-caps;}
-    div.columns{display: flex; gap: min(4vw, 1.5em);}
-    div.column{flex: auto; overflow-x: auto;}
+    em, em em em, em em em em em {
+      font-style: italic;
+    }
+    em em, em em em em {
+      font-style: normal;
+    }
+    div.columns{display: flex; gap: 1.5em;}
+    div.column{flex: auto;}
+    @media screen {
+    div.columns{gap: min(4vw, 1.5em);}
+    div.column{overflow-x: auto;}
+    }
     div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
     /* The extra [class] is a hack that increases specificity enough to
        override a similar rule in reveal.js */
@@ -165,10 +164,10 @@
       margin: 0 0.8em 0.2em -1.6em;
       vertical-align: middle;
     }
-    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
     /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
     pre > code.sourceCode { white-space: pre; position: relative; }
-    pre > code.sourceCode > span { line-height: 1.25; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
     pre > code.sourceCode > span:empty { height: 1.2em; }
     .sourceCode { overflow: visible; }
     code.sourceCode > span { color: inherit; text-decoration: inherit; }
@@ -179,7 +178,7 @@
     }
     @media print {
     pre > code.sourceCode { white-space: pre-wrap; }
-    pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
     }
     pre.numberSource code
       { counter-reset: source-line 0; }
@@ -230,7 +229,27 @@
     code span.va { color: #19177c; } /* Variable */
     code span.vs { color: #4070a0; } /* VerbatimString */
     code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
-  </style>
+    @media print {
+      html {
+        color-scheme: light only;
+      }
+      html, body, pre, code {
+        background-color: transparent;
+      }
+      body, a, a:visited, blockquote {
+        color: black;
+      }
+      pre, code {
+        padding: 0;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }  </style>
 </head>
 <body>
 <header id="title-block-header">
@@ -714,51 +733,51 @@ specific tool as annotation, calculation, or prioritization).</p>
 <p>Diagram of a pipeline with three steps: frequency, knowledge, and
 prioritization, each with multiple operations</p>
 </blockquote>
-<pre class="mermaid"><code>
-     graph LR
-
-       Z@{ shape: tag-rect, label: &quot;pipelines&quot; } --&gt; A@{ shape: procs, label: &quot;My pipeline&quot; }
-
-       A --&gt; B@{ shape: lin-rect, label: &quot;Step 1
-Frequency&quot; }
-
-       B --&gt; E@{ shape: odd, label: &quot;Frequency Annotation
-_annotation_&quot; }
-
-       E --&gt; F@{ shape: odd, label: &quot;Variant filter on frequency
-_calculation_&quot; }
-
-       A --&gt; C@{ shape: lin-rect, label: &quot;Step 2
-Knowledge&quot; }
-
-       C --&gt; G@{ shape: odd, label: &quot;Knowledge Annotation
-_annotation_&quot; }
-
-       G --&gt; H@{ shape: odd, label: &quot;Calculation on annotation
-_calculation_&quot; }
-
-       A --&gt; D@{ shape: lin-rect, label: &quot;Step 3
-Prioritization&quot; }
-
-       D --&gt; I@{ shape: odd, label: &quot;Prioritization of variants
-_prioritization_&quot; }
-</code></pre>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode mermaid"><code class="sourceCode mermaid"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>     <span class="kw">graph</span> <span class="cn">LR</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>       <span class="dt">Z@{</span> <span class="at">shape: </span><span class="vs">tag-rect</span>, <span class="at">label: </span><span class="st">&quot;pipelines&quot;</span> <span class="dt">}</span><span class="er"> </span><span class="pp">--&gt;</span> <span class="dt">A@{</span> <span class="at">shape: </span><span class="vs">procs</span>, <span class="at">label: </span><span class="st">&quot;My pipeline&quot;</span> <span class="dt">}</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>       <span class="dt">A</span> <span class="pp">--&gt;</span> <span class="dt">B@{</span> <span class="at">shape: </span><span class="vs">lin-rect</span>, <span class="at">label: </span><span class="st">&quot;Step 1</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="st">Frequency&quot;</span> <span class="dt">}</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>       <span class="dt">B</span> <span class="pp">--&gt;</span> <span class="dt">E@{</span> <span class="at">shape: </span><span class="vs">odd</span>, <span class="at">label: </span><span class="st">&quot;Frequency Annotation</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="st">_annotation</span><span class="sc">_</span><span class="st">&quot;</span> <span class="dt">}</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>       <span class="dt">E</span> <span class="pp">--&gt;</span> <span class="dt">F@{</span> <span class="at">shape: </span><span class="vs">odd</span>, <span class="at">label: </span><span class="st">&quot;Variant filter on frequency</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="st">_calculation</span><span class="sc">_</span><span class="st">&quot;</span> <span class="dt">}</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>       <span class="dt">A</span> <span class="pp">--&gt;</span> <span class="dt">C@{</span> <span class="at">shape: </span><span class="vs">lin-rect</span>, <span class="at">label: </span><span class="st">&quot;Step 2</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="st">Knowledge&quot;</span> <span class="dt">}</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>       <span class="dt">C</span> <span class="pp">--&gt;</span> <span class="dt">G@{</span> <span class="at">shape: </span><span class="vs">odd</span>, <span class="at">label: </span><span class="st">&quot;Knowledge Annotation</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a><span class="st">_annotation</span><span class="sc">_</span><span class="st">&quot;</span> <span class="dt">}</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>       <span class="dt">G</span> <span class="pp">--&gt;</span> <span class="dt">H@{</span> <span class="at">shape: </span><span class="vs">odd</span>, <span class="at">label: </span><span class="st">&quot;Calculation on annotation</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a><span class="st">_calculation</span><span class="sc">_</span><span class="st">&quot;</span> <span class="dt">}</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>       <span class="dt">A</span> <span class="pp">--&gt;</span> <span class="dt">D@{</span> <span class="at">shape: </span><span class="vs">lin-rect</span>, <span class="at">label: </span><span class="st">&quot;Step 3</span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a><span class="st">Prioritization&quot;</span> <span class="dt">}</span></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>       <span class="dt">D</span> <span class="pp">--&gt;</span> <span class="dt">I@{</span> <span class="at">shape: </span><span class="vs">odd</span>, <span class="at">label: </span><span class="st">&quot;Prioritization of variants</span></span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a><span class="st">_prioritization</span><span class="sc">_</span><span class="st">&quot;</span> <span class="dt">}</span></span></code></pre></div>
 <blockquote>
 <p>Legend of diagrams</p>
 </blockquote>
-<pre class="mermaid"><code>
-     graph TD
-
-       Z@{ shape: tag-rect, label: &quot;top-level section&quot; }
-
-       A@{ shape: procs, label: &quot;My pipeline&quot; }
-
-       B@{ shape: lin-rect, label: &quot;Step&quot; }
-
-       E@{ shape: odd, label: &quot;Operation name&quot; }
-
-       O3@{ shape: braces, label: &quot;Parameters&quot; }
-</code></pre>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode mermaid"><code class="sourceCode mermaid"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>     <span class="kw">graph</span> <span class="cn">TD</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>       <span class="dt">Z@{</span> <span class="at">shape: </span><span class="vs">tag-rect</span>, <span class="at">label: </span><span class="st">&quot;top-level section&quot;</span> <span class="dt">}</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>       <span class="dt">A@{</span> <span class="at">shape: </span><span class="vs">procs</span>, <span class="at">label: </span><span class="st">&quot;My pipeline&quot;</span> <span class="dt">}</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>       <span class="dt">B@{</span> <span class="at">shape: </span><span class="vs">lin-rect</span>, <span class="at">label: </span><span class="st">&quot;Step&quot;</span> <span class="dt">}</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>       <span class="dt">E@{</span> <span class="at">shape: </span><span class="vs">odd</span>, <span class="at">label: </span><span class="st">&quot;Operation name&quot;</span> <span class="dt">}</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>       <span class="dt">O3@{</span> <span class="at">shape: </span><span class="vs">braces</span>, <span class="at">label: </span><span class="st">&quot;Parameters&quot;</span> <span class="dt">}</span></span></code></pre></div>
 <p><br></p>
 <p><strong>Pipeline definition mode</strong></p>
 <p>Two pipeline declaration modes are available:</p>
@@ -820,63 +839,63 @@ class="sourceCode json"><code class="sourceCode json"><span id="cb5-1"><a href="
 <p>Diagram of a quick pipeline with default steps and operations will be
 generated as (referenced mode)</p>
 </blockquote>
-<pre class="mermaid"><code>
-graph LR
-
-   P@{ shape: tag-rect, label: &quot;pipelines&quot; }
-
-   P --&gt; B@{ shape: procs, label: &quot;default&quot; }
-
-   subgraph my_pipeline[&quot;default&quot;]
-
-      B --&gt; B1@{ shape: lin-rect, label: &quot;Step 1
-annotation&quot; }
-
-      B --&gt; B3@{ shape: lin-rect, label: &quot;Step 2
-calculation&quot; }
-
-      B --&gt; B4@{ shape: lin-rect, label: &quot;Step 3
-prioritization&quot; }
-
-      B1 --&gt; BO1@{ shape: odd, label: &quot;annotation&quot; }
-
-      B3 --&gt; BO3@{ shape: odd, label: &quot;calculation&quot; }
-
-      B4 --&gt; BO7@{ shape: odd, label: &quot;prioritization&quot; }
-
-   end
-
-   subgraph definition_operations[&quot;Operations&quot;]
-
-      O1@{ shape: tag-rect, label: &quot;annotation
-_annotation_&quot; }
-
-      O3@{ shape: tag-rect, label: &quot;calculation
-_calculation_&quot; }
-
-      O7@{ shape: tag-rect, label: &quot;prioritization
-_prioritization_&quot; }
-
-      O1 -.- OD1@{ shape: braces, label: &quot;annotation parameters&quot; }
-
-      O3 -.- OD3@{ shape: braces, label: &quot;calculation parameters&quot; }
-
-      O7 -.- OD7@{ shape: braces, label: &quot;prioritization parameters&quot; }
-
-   end
-
-   BO1 -.- O1
-
-   BO3 -.- O3
-
-   BO7 -.- O7
-
-
-
-   classDef transparent fill:none,stroke:none;
-
-   class definition_operations transparent;
-</code></pre>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode mermaid"><code class="sourceCode mermaid"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="kw">graph</span> <span class="cn">LR</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>   <span class="dt">P@{</span> <span class="at">shape: </span><span class="vs">tag-rect</span>, <span class="at">label: </span><span class="st">&quot;pipelines&quot;</span> <span class="dt">}</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>   <span class="dt">P</span> <span class="pp">--&gt;</span> <span class="dt">B@{</span> <span class="at">shape: </span><span class="vs">procs</span>, <span class="at">label: </span><span class="st">&quot;default&quot;</span> <span class="dt">}</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>   <span class="kw">subgraph</span> <span class="dt">my_pipeline</span>[<span class="st">&quot;default&quot;</span>]</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>      <span class="dt">B</span> <span class="pp">--&gt;</span> <span class="dt">B1@{</span> <span class="at">shape: </span><span class="vs">lin-rect</span>, <span class="at">label: </span><span class="st">&quot;Step 1</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="st">annotation&quot;</span> <span class="dt">}</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>      <span class="dt">B</span> <span class="pp">--&gt;</span> <span class="dt">B3@{</span> <span class="at">shape: </span><span class="vs">lin-rect</span>, <span class="at">label: </span><span class="st">&quot;Step 2</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a><span class="st">calculation&quot;</span> <span class="dt">}</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>      <span class="dt">B</span> <span class="pp">--&gt;</span> <span class="dt">B4@{</span> <span class="at">shape: </span><span class="vs">lin-rect</span>, <span class="at">label: </span><span class="st">&quot;Step 3</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a><span class="st">prioritization&quot;</span> <span class="dt">}</span></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>      <span class="dt">B1</span> <span class="pp">--&gt;</span> <span class="dt">BO1@{</span> <span class="at">shape: </span><span class="vs">odd</span>, <span class="at">label: </span><span class="st">&quot;annotation&quot;</span> <span class="dt">}</span></span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>      <span class="dt">B3</span> <span class="pp">--&gt;</span> <span class="dt">BO3@{</span> <span class="at">shape: </span><span class="vs">odd</span>, <span class="at">label: </span><span class="st">&quot;calculation&quot;</span> <span class="dt">}</span></span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>      <span class="dt">B4</span> <span class="pp">--&gt;</span> <span class="dt">BO7@{</span> <span class="at">shape: </span><span class="vs">odd</span>, <span class="at">label: </span><span class="st">&quot;prioritization&quot;</span> <span class="dt">}</span></span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>   <span class="kw">end</span></span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a>   <span class="kw">subgraph</span> <span class="dt">definition_operations</span>[<span class="st">&quot;Operations&quot;</span>]</span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a>      <span class="dt">O1@{</span> <span class="at">shape: </span><span class="vs">tag-rect</span>, <span class="at">label: </span><span class="st">&quot;annotation</span></span>
+<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a><span class="st">_annotation</span><span class="sc">_</span><span class="st">&quot;</span> <span class="dt">}</span></span>
+<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a>      <span class="dt">O3@{</span> <span class="at">shape: </span><span class="vs">tag-rect</span>, <span class="at">label: </span><span class="st">&quot;calculation</span></span>
+<span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a><span class="st">_calculation</span><span class="sc">_</span><span class="st">&quot;</span> <span class="dt">}</span></span>
+<span id="cb6-34"><a href="#cb6-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-35"><a href="#cb6-35" aria-hidden="true" tabindex="-1"></a>      <span class="dt">O7@{</span> <span class="at">shape: </span><span class="vs">tag-rect</span>, <span class="at">label: </span><span class="st">&quot;prioritization</span></span>
+<span id="cb6-36"><a href="#cb6-36" aria-hidden="true" tabindex="-1"></a><span class="st">_prioritization</span><span class="sc">_</span><span class="st">&quot;</span> <span class="dt">}</span></span>
+<span id="cb6-37"><a href="#cb6-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-38"><a href="#cb6-38" aria-hidden="true" tabindex="-1"></a>      <span class="dt">O1</span> <span class="pp">-.-</span> <span class="dt">OD1@{</span> <span class="at">shape: </span><span class="vs">braces</span>, <span class="at">label: </span><span class="st">&quot;annotation parameters&quot;</span> <span class="dt">}</span></span>
+<span id="cb6-39"><a href="#cb6-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-40"><a href="#cb6-40" aria-hidden="true" tabindex="-1"></a>      <span class="dt">O3</span> <span class="pp">-.-</span> <span class="dt">OD3@{</span> <span class="at">shape: </span><span class="vs">braces</span>, <span class="at">label: </span><span class="st">&quot;calculation parameters&quot;</span> <span class="dt">}</span></span>
+<span id="cb6-41"><a href="#cb6-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-42"><a href="#cb6-42" aria-hidden="true" tabindex="-1"></a>      <span class="dt">O7</span> <span class="pp">-.-</span> <span class="dt">OD7@{</span> <span class="at">shape: </span><span class="vs">braces</span>, <span class="at">label: </span><span class="st">&quot;prioritization parameters&quot;</span> <span class="dt">}</span></span>
+<span id="cb6-43"><a href="#cb6-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-44"><a href="#cb6-44" aria-hidden="true" tabindex="-1"></a>   <span class="kw">end</span></span>
+<span id="cb6-45"><a href="#cb6-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-46"><a href="#cb6-46" aria-hidden="true" tabindex="-1"></a>   <span class="dt">BO1</span> <span class="pp">-.-</span> <span class="dt">O1</span></span>
+<span id="cb6-47"><a href="#cb6-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-48"><a href="#cb6-48" aria-hidden="true" tabindex="-1"></a>   <span class="dt">BO3</span> <span class="pp">-.-</span> <span class="dt">O3</span></span>
+<span id="cb6-49"><a href="#cb6-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-50"><a href="#cb6-50" aria-hidden="true" tabindex="-1"></a>   <span class="dt">BO7</span> <span class="pp">-.-</span> <span class="dt">O7</span></span>
+<span id="cb6-51"><a href="#cb6-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-52"><a href="#cb6-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-53"><a href="#cb6-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-54"><a href="#cb6-54" aria-hidden="true" tabindex="-1"></a>   <span class="kw">classDef</span> <span class="fu">transparent</span> <span class="at">fill:</span>none,<span class="at">stroke:</span>none;</span>
+<span id="cb6-55"><a href="#cb6-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-56"><a href="#cb6-56" aria-hidden="true" tabindex="-1"></a>   <span class="kw">class</span> <span class="dt">definition_operations</span> <span class="fu">transparent</span>;</span></code></pre></div>
 <p>And a quick parameters JSON file for annotations only:</p>
 <div class="sourceCode" id="cb7"><pre
 class="sourceCode json"><code class="sourceCode json"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a></span>
@@ -887,361 +906,361 @@ class="sourceCode json"><code class="sourceCode json"><span id="cb7-1"><a href="
 <p>Diagram of a quick pipeline with default steps and annotations
 operation only (referenced mode)</p>
 </blockquote>
-<pre class="mermaid"><code>
-graph LR
-
-   P@{ shape: tag-rect, label: &quot;pipelines&quot; }
-
-   P --&gt; B@{ shape: procs, label: &quot;default&quot; }
-
-   subgraph my_pipeline[&quot;default&quot;]
-
-      B --&gt; B1@{ shape: lin-rect, label: &quot;Step 1
-annotation&quot; }
-
-      B --&gt; B3@{ shape: lin-rect, label: &quot;Step 2
-calculation&quot; }
-
-      B --&gt; B4@{ shape: lin-rect, label: &quot;Step 3
-prioritization&quot; }
-
-      B1 --&gt; BO1@{ shape: odd, label: &quot;annotation&quot; }
-
-      B3 --&gt; BO3@{ shape: odd, label: &quot;calculation&quot; }
-
-      B4 --&gt; BO7@{ shape: odd, label: &quot;prioritization&quot; }
-
-   end
-
-   subgraph definition_operations[&quot;Operations&quot;]
-
-      O1@{ shape: tag-rect, label: &quot;annotation
-_annotation_&quot; }
-
-      O3@{ shape: cross-circ, label: &quot;calculation
-_calculation_&quot; }
-
-      O7@{ shape: cross-circ, label: &quot;prioritization
-_prioritization_&quot; }
-
-      O1 -.- OD1@{ shape: braces, label: &quot;annotation parameters&quot; }
-
-   end
-
-   BO1 -.- O1
-
-   BO3 -.- O3
-
-   BO7 -.- O7
-
-
-
-   classDef transparent fill:none,stroke:none;
-
-   class definition_operations transparent;
-</code></pre>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode mermaid"><code class="sourceCode mermaid"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="kw">graph</span> <span class="cn">LR</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>   <span class="dt">P@{</span> <span class="at">shape: </span><span class="vs">tag-rect</span>, <span class="at">label: </span><span class="st">&quot;pipelines&quot;</span> <span class="dt">}</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>   <span class="dt">P</span> <span class="pp">--&gt;</span> <span class="dt">B@{</span> <span class="at">shape: </span><span class="vs">procs</span>, <span class="at">label: </span><span class="st">&quot;default&quot;</span> <span class="dt">}</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>   <span class="kw">subgraph</span> <span class="dt">my_pipeline</span>[<span class="st">&quot;default&quot;</span>]</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>      <span class="dt">B</span> <span class="pp">--&gt;</span> <span class="dt">B1@{</span> <span class="at">shape: </span><span class="vs">lin-rect</span>, <span class="at">label: </span><span class="st">&quot;Step 1</span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a><span class="st">annotation&quot;</span> <span class="dt">}</span></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>      <span class="dt">B</span> <span class="pp">--&gt;</span> <span class="dt">B3@{</span> <span class="at">shape: </span><span class="vs">lin-rect</span>, <span class="at">label: </span><span class="st">&quot;Step 2</span></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a><span class="st">calculation&quot;</span> <span class="dt">}</span></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>      <span class="dt">B</span> <span class="pp">--&gt;</span> <span class="dt">B4@{</span> <span class="at">shape: </span><span class="vs">lin-rect</span>, <span class="at">label: </span><span class="st">&quot;Step 3</span></span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a><span class="st">prioritization&quot;</span> <span class="dt">}</span></span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>      <span class="dt">B1</span> <span class="pp">--&gt;</span> <span class="dt">BO1@{</span> <span class="at">shape: </span><span class="vs">odd</span>, <span class="at">label: </span><span class="st">&quot;annotation&quot;</span> <span class="dt">}</span></span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>      <span class="dt">B3</span> <span class="pp">--&gt;</span> <span class="dt">BO3@{</span> <span class="at">shape: </span><span class="vs">odd</span>, <span class="at">label: </span><span class="st">&quot;calculation&quot;</span> <span class="dt">}</span></span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>      <span class="dt">B4</span> <span class="pp">--&gt;</span> <span class="dt">BO7@{</span> <span class="at">shape: </span><span class="vs">odd</span>, <span class="at">label: </span><span class="st">&quot;prioritization&quot;</span> <span class="dt">}</span></span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>   <span class="kw">end</span></span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a>   <span class="kw">subgraph</span> <span class="dt">definition_operations</span>[<span class="st">&quot;Operations&quot;</span>]</span>
+<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a>      <span class="dt">O1@{</span> <span class="at">shape: </span><span class="vs">tag-rect</span>, <span class="at">label: </span><span class="st">&quot;annotation</span></span>
+<span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a><span class="st">_annotation</span><span class="sc">_</span><span class="st">&quot;</span> <span class="dt">}</span></span>
+<span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-32"><a href="#cb8-32" aria-hidden="true" tabindex="-1"></a>      <span class="dt">O3@{</span> <span class="at">shape: </span><span class="vs">cross-circ</span>, <span class="at">label: </span><span class="st">&quot;calculation</span></span>
+<span id="cb8-33"><a href="#cb8-33" aria-hidden="true" tabindex="-1"></a><span class="st">_calculation</span><span class="sc">_</span><span class="st">&quot;</span> <span class="dt">}</span></span>
+<span id="cb8-34"><a href="#cb8-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-35"><a href="#cb8-35" aria-hidden="true" tabindex="-1"></a>      <span class="dt">O7@{</span> <span class="at">shape: </span><span class="vs">cross-circ</span>, <span class="at">label: </span><span class="st">&quot;prioritization</span></span>
+<span id="cb8-36"><a href="#cb8-36" aria-hidden="true" tabindex="-1"></a><span class="st">_prioritization</span><span class="sc">_</span><span class="st">&quot;</span> <span class="dt">}</span></span>
+<span id="cb8-37"><a href="#cb8-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-38"><a href="#cb8-38" aria-hidden="true" tabindex="-1"></a>      <span class="dt">O1</span> <span class="pp">-.-</span> <span class="dt">OD1@{</span> <span class="at">shape: </span><span class="vs">braces</span>, <span class="at">label: </span><span class="st">&quot;annotation parameters&quot;</span> <span class="dt">}</span></span>
+<span id="cb8-39"><a href="#cb8-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-40"><a href="#cb8-40" aria-hidden="true" tabindex="-1"></a>   <span class="kw">end</span></span>
+<span id="cb8-41"><a href="#cb8-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-42"><a href="#cb8-42" aria-hidden="true" tabindex="-1"></a>   <span class="dt">BO1</span> <span class="pp">-.-</span> <span class="dt">O1</span></span>
+<span id="cb8-43"><a href="#cb8-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-44"><a href="#cb8-44" aria-hidden="true" tabindex="-1"></a>   <span class="dt">BO3</span> <span class="pp">-.-</span> <span class="dt">O3</span></span>
+<span id="cb8-45"><a href="#cb8-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-46"><a href="#cb8-46" aria-hidden="true" tabindex="-1"></a>   <span class="dt">BO7</span> <span class="pp">-.-</span> <span class="dt">O7</span></span>
+<span id="cb8-47"><a href="#cb8-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-48"><a href="#cb8-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-49"><a href="#cb8-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-50"><a href="#cb8-50" aria-hidden="true" tabindex="-1"></a>   <span class="kw">classDef</span> <span class="fu">transparent</span> <span class="at">fill:</span>none,<span class="at">stroke:</span>none;</span>
+<span id="cb8-51"><a href="#cb8-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-52"><a href="#cb8-52" aria-hidden="true" tabindex="-1"></a>   <span class="kw">class</span> <span class="dt">definition_operations</span> <span class="fu">transparent</span>;</span></code></pre></div>
 <p><br></p>
 <p><strong>Examples of pipeline definitions</strong></p>
 <blockquote>
 <p>Diagram of example inline mode inside a single named pipeline with
 full operation descriptions</p>
 </blockquote>
-<pre class="mermaid"><code>
-graph LR
-
-   Z@{ shape: tag-rect, label: &quot;pipelines&quot; } --&gt; A@{ shape: procs, label: &quot;My pipeline&quot; }
-
-   subgraph my_pipeline2[&quot;My pipeline&quot;]
-
-      direction LR
-
-      A --&gt; B@{ shape: lin-rect, label: &quot;Step 1
-Annotations&quot; }
-
-      B --&gt; E@{ shape: odd, label: &quot;annotation_dbsnp
-_annotation_&quot; }
-
-      E --&gt; F@{ shape: odd, label: &quot;annotation_dbNSFP
-_annotation_&quot; }
-
-      E -.- E1@{ shape: braces, label: &quot;dbSNP + gnomAD
-avsnp150.parquet, gnomad.parquet&quot; }
-
-      F -.- F1@{ shape: braces, label: &quot;dbNSFP + COSMIC
- dbnsfp42a.parquet, cosmic70.vcf.gz&quot; }
-
-      A --&gt; C@{ shape: lin-rect, label: &quot;Step 2
-Calculations&quot; }
-
-      C --&gt; G@{ shape: odd, label: &quot;calculation_on_variants
-_calculation_&quot; }
-
-      G -.- G1@{ shape: braces, label: &quot;calculations
-vartype, VAF, genotype_stats&quot; }
-
-      A --&gt; D@{ shape: lin-rect, label: &quot;Step 3
-Prioritizations&quot; }
-
-      D --&gt; H@{ shape: odd, label: &quot;prioritization
-_prioritization_&quot; }
-
-      H -.- H1@{ shape: braces, label: &quot;profiles: default, GERMLINE
-pzfields: PZScore, PZFlag...
-score mode: VaRank&quot; }
-
-   end
-</code></pre>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode mermaid"><code class="sourceCode mermaid"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="kw">graph</span> <span class="cn">LR</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>   <span class="dt">Z@{</span> <span class="at">shape: </span><span class="vs">tag-rect</span>, <span class="at">label: </span><span class="st">&quot;pipelines&quot;</span> <span class="dt">}</span><span class="er"> </span><span class="pp">--&gt;</span> <span class="dt">A@{</span> <span class="at">shape: </span><span class="vs">procs</span>, <span class="at">label: </span><span class="st">&quot;My pipeline&quot;</span> <span class="dt">}</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>   <span class="kw">subgraph</span> <span class="dt">my_pipeline2</span>[<span class="st">&quot;My pipeline&quot;</span>]</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>      <span class="kw">direction</span> <span class="cn">LR</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>      <span class="dt">A</span> <span class="pp">--&gt;</span> <span class="dt">B@{</span> <span class="at">shape: </span><span class="vs">lin-rect</span>, <span class="at">label: </span><span class="st">&quot;Step 1</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a><span class="st">Annotations&quot;</span> <span class="dt">}</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>      <span class="dt">B</span> <span class="pp">--&gt;</span> <span class="dt">E@{</span> <span class="at">shape: </span><span class="vs">odd</span>, <span class="at">label: </span><span class="st">&quot;annotation_dbsnp</span></span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a><span class="st">_annotation</span><span class="sc">_</span><span class="st">&quot;</span> <span class="dt">}</span></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>      <span class="dt">E</span> <span class="pp">--&gt;</span> <span class="dt">F@{</span> <span class="at">shape: </span><span class="vs">odd</span>, <span class="at">label: </span><span class="st">&quot;annotation_dbNSFP</span></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a><span class="st">_annotation</span><span class="sc">_</span><span class="st">&quot;</span> <span class="dt">}</span></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>      <span class="dt">E</span> <span class="pp">-.-</span> <span class="dt">E1@{</span> <span class="at">shape: </span><span class="vs">braces</span>, <span class="at">label: </span><span class="st">&quot;dbSNP + gnomAD</span></span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a><span class="st">avsnp150.parquet, gnomad.parquet&quot;</span> <span class="dt">}</span></span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>      <span class="dt">F</span> <span class="pp">-.-</span> <span class="dt">F1@{</span> <span class="at">shape: </span><span class="vs">braces</span>, <span class="at">label: </span><span class="st">&quot;dbNSFP + COSMIC</span></span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a> <span class="st">dbnsfp42a.parquet, cosmic70.vcf.gz&quot;</span> <span class="dt">}</span></span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>      <span class="dt">A</span> <span class="pp">--&gt;</span> <span class="dt">C@{</span> <span class="at">shape: </span><span class="vs">lin-rect</span>, <span class="at">label: </span><span class="st">&quot;Step 2</span></span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a><span class="st">Calculations&quot;</span> <span class="dt">}</span></span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>      <span class="dt">C</span> <span class="pp">--&gt;</span> <span class="dt">G@{</span> <span class="at">shape: </span><span class="vs">odd</span>, <span class="at">label: </span><span class="st">&quot;calculation_on_variants</span></span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a><span class="st">_calculation</span><span class="sc">_</span><span class="st">&quot;</span> <span class="dt">}</span></span>
+<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a>      <span class="dt">G</span> <span class="pp">-.-</span> <span class="dt">G1@{</span> <span class="at">shape: </span><span class="vs">braces</span>, <span class="at">label: </span><span class="st">&quot;calculations</span></span>
+<span id="cb9-32"><a href="#cb9-32" aria-hidden="true" tabindex="-1"></a><span class="st">vartype, VAF, genotype_stats&quot;</span> <span class="dt">}</span></span>
+<span id="cb9-33"><a href="#cb9-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-34"><a href="#cb9-34" aria-hidden="true" tabindex="-1"></a>      <span class="dt">A</span> <span class="pp">--&gt;</span> <span class="dt">D@{</span> <span class="at">shape: </span><span class="vs">lin-rect</span>, <span class="at">label: </span><span class="st">&quot;Step 3</span></span>
+<span id="cb9-35"><a href="#cb9-35" aria-hidden="true" tabindex="-1"></a><span class="st">Prioritizations&quot;</span> <span class="dt">}</span></span>
+<span id="cb9-36"><a href="#cb9-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-37"><a href="#cb9-37" aria-hidden="true" tabindex="-1"></a>      <span class="dt">D</span> <span class="pp">--&gt;</span> <span class="dt">H@{</span> <span class="at">shape: </span><span class="vs">odd</span>, <span class="at">label: </span><span class="st">&quot;prioritization</span></span>
+<span id="cb9-38"><a href="#cb9-38" aria-hidden="true" tabindex="-1"></a><span class="st">_prioritization</span><span class="sc">_</span><span class="st">&quot;</span> <span class="dt">}</span></span>
+<span id="cb9-39"><a href="#cb9-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-40"><a href="#cb9-40" aria-hidden="true" tabindex="-1"></a>      <span class="dt">H</span> <span class="pp">-.-</span> <span class="dt">H1@{</span> <span class="at">shape: </span><span class="vs">braces</span>, <span class="at">label: </span><span class="st">&quot;profiles: default, GERMLINE</span></span>
+<span id="cb9-41"><a href="#cb9-41" aria-hidden="true" tabindex="-1"></a><span class="st">pzfields: PZScore, PZFlag...</span></span>
+<span id="cb9-42"><a href="#cb9-42" aria-hidden="true" tabindex="-1"></a><span class="st">score mode: VaRank&quot;</span> <span class="dt">}</span></span>
+<span id="cb9-43"><a href="#cb9-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-44"><a href="#cb9-44" aria-hidden="true" tabindex="-1"></a>   <span class="kw">end</span></span></code></pre></div>
 <blockquote>
 <p>Diagram of example with multi pipeline configuration (inline
 mode)</p>
 </blockquote>
-<pre class="mermaid"><code>
-graph LR
-
-   Z@{ shape: tag-rect, label: &quot;pipelines&quot; }
-
-   Z --&gt; A@{ shape: procs, label: &quot;My secondary pipeline&quot; }
-
-   subgraph my_pipeline2[&quot;My secondary pipeline&quot;]
-
-      direction LR
-
-      A --&gt; B@{ shape: lin-rect, label: &quot;Step 1
-Annotations&quot; }
-
-      B --&gt; E@{ shape: odd, label: &quot;annotation_dbsnp
-_annotation_&quot; }
-
-      E -.- E1@{ shape: braces, label: &quot;dbSNP
-avsnp150.parquet&quot; }
-
-      E --&gt; F@{ shape: odd, label: &quot;annotation_dbNSFP
-_annotation_&quot; }
-
-      F -.- F1@{ shape: braces, label: &quot;dbNSFP
-dbnsfp42a.parquet&quot; }
-
-      A --&gt; C@{ shape: lin-rect, label: &quot;Step 2
-Calculations&quot; }
-
-      C --&gt; G@{ shape: odd, label: &quot;calculation
-_calculation_&quot; }
-
-      G -.- G1@{ shape: braces, label: &quot;calculations
-vartype, VAF&quot; }
-
-      A --&gt; D@{ shape: lin-rect, label: &quot;Step 3
-Prioritizations&quot; }
-
-      D --&gt; H@{ shape: odd, label: &quot;prioritization
-_prioritization_&quot; }
-
-      H -.- H1@{ shape: braces, label: &quot;profiles: default, GERMLINE&quot; }
-
-      A --&gt; I@{ shape: lin-rect, label: &quot;Step 4
-Annotations&quot; }
-
-      I --&gt; J@{ shape: odd, label: &quot;annotation_frequency
-_annotation_&quot; }
-
-      J -.- J1@{ shape: braces, label: &quot;gnomAD
-gnomad.parquet&quot; }
-
-      A --&gt; K@{ shape: lin-rect, label: &quot;Step 5
-Calculation final&quot; }
-
-      K --&gt; L@{ shape: odd, label: &quot;calculation_final
-_calculation_&quot; }
-
-      L -.- L1@{ shape: braces, label: &quot;calculations
-NOMEN&quot; }
-
-   end
-
-   Z --&gt; M@{ shape: procs, label: &quot;My pipeline&quot; }
-
-   subgraph my_pipeline[&quot;My pipeline&quot;]
-
-      direction LR
-
-      M --&gt; N@{ shape: lin-rect, label: &quot;Step 1
-Annotations&quot; }
-
-      N --&gt; O@{ shape: odd, label: &quot;annotation_dbsnp
-_annotation_&quot; }
-
-      O -.- O1@{ shape: braces, label: &quot;dbSNP
-avsnp150.parquet&quot; }
-
-      M --&gt; P@{ shape: lin-rect, label: &quot;Step 2
-Annotations&quot; }
-
-      P --&gt; Q@{ shape: odd, label: &quot;annotation_dbNSFP
-_annotation_&quot; }
-
-      Q -.- Q1@{ shape: braces, label: &quot;dbNSFP
-dbnsfp42a.parquet&quot; }
-
-      M --&gt; R@{ shape: lin-rect, label: &quot;Step 3
-Calculations&quot; }
-
-      R --&gt; S@{ shape: odd, label: &quot;calculation
-_calculation_&quot; }
-
-      S -.- S1@{ shape: braces, label: &quot;calculations
-vartype&quot; }
-
-      M --&gt; T@{ shape: lin-rect, label: &quot;Step 4
-Prioritization&quot; }
-
-      T --&gt; U@{ shape: odd, label: &quot;prioritization
-_prioritization_&quot; }
-
-      U -.- U1@{ shape: braces, label: &quot;profiles: GERMLINE&quot; }
-
-   end
-</code></pre>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode mermaid"><code class="sourceCode mermaid"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="kw">graph</span> <span class="cn">LR</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>   <span class="dt">Z@{</span> <span class="at">shape: </span><span class="vs">tag-rect</span>, <span class="at">label: </span><span class="st">&quot;pipelines&quot;</span> <span class="dt">}</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>   <span class="dt">Z</span> <span class="pp">--&gt;</span> <span class="dt">A@{</span> <span class="at">shape: </span><span class="vs">procs</span>, <span class="at">label: </span><span class="st">&quot;My secondary pipeline&quot;</span> <span class="dt">}</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>   <span class="kw">subgraph</span> <span class="dt">my_pipeline2</span>[<span class="st">&quot;My secondary pipeline&quot;</span>]</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>      <span class="kw">direction</span> <span class="cn">LR</span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>      <span class="dt">A</span> <span class="pp">--&gt;</span> <span class="dt">B@{</span> <span class="at">shape: </span><span class="vs">lin-rect</span>, <span class="at">label: </span><span class="st">&quot;Step 1</span></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a><span class="st">Annotations&quot;</span> <span class="dt">}</span></span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>      <span class="dt">B</span> <span class="pp">--&gt;</span> <span class="dt">E@{</span> <span class="at">shape: </span><span class="vs">odd</span>, <span class="at">label: </span><span class="st">&quot;annotation_dbsnp</span></span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a><span class="st">_annotation</span><span class="sc">_</span><span class="st">&quot;</span> <span class="dt">}</span></span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>      <span class="dt">E</span> <span class="pp">-.-</span> <span class="dt">E1@{</span> <span class="at">shape: </span><span class="vs">braces</span>, <span class="at">label: </span><span class="st">&quot;dbSNP</span></span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a><span class="st">avsnp150.parquet&quot;</span> <span class="dt">}</span></span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>      <span class="dt">E</span> <span class="pp">--&gt;</span> <span class="dt">F@{</span> <span class="at">shape: </span><span class="vs">odd</span>, <span class="at">label: </span><span class="st">&quot;annotation_dbNSFP</span></span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a><span class="st">_annotation</span><span class="sc">_</span><span class="st">&quot;</span> <span class="dt">}</span></span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>      <span class="dt">F</span> <span class="pp">-.-</span> <span class="dt">F1@{</span> <span class="at">shape: </span><span class="vs">braces</span>, <span class="at">label: </span><span class="st">&quot;dbNSFP</span></span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a><span class="st">dbnsfp42a.parquet&quot;</span> <span class="dt">}</span></span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a>      <span class="dt">A</span> <span class="pp">--&gt;</span> <span class="dt">C@{</span> <span class="at">shape: </span><span class="vs">lin-rect</span>, <span class="at">label: </span><span class="st">&quot;Step 2</span></span>
+<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a><span class="st">Calculations&quot;</span> <span class="dt">}</span></span>
+<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a>      <span class="dt">C</span> <span class="pp">--&gt;</span> <span class="dt">G@{</span> <span class="at">shape: </span><span class="vs">odd</span>, <span class="at">label: </span><span class="st">&quot;calculation</span></span>
+<span id="cb10-31"><a href="#cb10-31" aria-hidden="true" tabindex="-1"></a><span class="st">_calculation</span><span class="sc">_</span><span class="st">&quot;</span> <span class="dt">}</span></span>
+<span id="cb10-32"><a href="#cb10-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-33"><a href="#cb10-33" aria-hidden="true" tabindex="-1"></a>      <span class="dt">G</span> <span class="pp">-.-</span> <span class="dt">G1@{</span> <span class="at">shape: </span><span class="vs">braces</span>, <span class="at">label: </span><span class="st">&quot;calculations</span></span>
+<span id="cb10-34"><a href="#cb10-34" aria-hidden="true" tabindex="-1"></a><span class="st">vartype, VAF&quot;</span> <span class="dt">}</span></span>
+<span id="cb10-35"><a href="#cb10-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-36"><a href="#cb10-36" aria-hidden="true" tabindex="-1"></a>      <span class="dt">A</span> <span class="pp">--&gt;</span> <span class="dt">D@{</span> <span class="at">shape: </span><span class="vs">lin-rect</span>, <span class="at">label: </span><span class="st">&quot;Step 3</span></span>
+<span id="cb10-37"><a href="#cb10-37" aria-hidden="true" tabindex="-1"></a><span class="st">Prioritizations&quot;</span> <span class="dt">}</span></span>
+<span id="cb10-38"><a href="#cb10-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-39"><a href="#cb10-39" aria-hidden="true" tabindex="-1"></a>      <span class="dt">D</span> <span class="pp">--&gt;</span> <span class="dt">H@{</span> <span class="at">shape: </span><span class="vs">odd</span>, <span class="at">label: </span><span class="st">&quot;prioritization</span></span>
+<span id="cb10-40"><a href="#cb10-40" aria-hidden="true" tabindex="-1"></a><span class="st">_prioritization</span><span class="sc">_</span><span class="st">&quot;</span> <span class="dt">}</span></span>
+<span id="cb10-41"><a href="#cb10-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-42"><a href="#cb10-42" aria-hidden="true" tabindex="-1"></a>      <span class="dt">H</span> <span class="pp">-.-</span> <span class="dt">H1@{</span> <span class="at">shape: </span><span class="vs">braces</span>, <span class="at">label: </span><span class="st">&quot;profiles: default, GERMLINE&quot;</span> <span class="dt">}</span></span>
+<span id="cb10-43"><a href="#cb10-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-44"><a href="#cb10-44" aria-hidden="true" tabindex="-1"></a>      <span class="dt">A</span> <span class="pp">--&gt;</span> <span class="dt">I@{</span> <span class="at">shape: </span><span class="vs">lin-rect</span>, <span class="at">label: </span><span class="st">&quot;Step 4</span></span>
+<span id="cb10-45"><a href="#cb10-45" aria-hidden="true" tabindex="-1"></a><span class="st">Annotations&quot;</span> <span class="dt">}</span></span>
+<span id="cb10-46"><a href="#cb10-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-47"><a href="#cb10-47" aria-hidden="true" tabindex="-1"></a>      <span class="dt">I</span> <span class="pp">--&gt;</span> <span class="dt">J@{</span> <span class="at">shape: </span><span class="vs">odd</span>, <span class="at">label: </span><span class="st">&quot;annotation_frequency</span></span>
+<span id="cb10-48"><a href="#cb10-48" aria-hidden="true" tabindex="-1"></a><span class="st">_annotation</span><span class="sc">_</span><span class="st">&quot;</span> <span class="dt">}</span></span>
+<span id="cb10-49"><a href="#cb10-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-50"><a href="#cb10-50" aria-hidden="true" tabindex="-1"></a>      <span class="dt">J</span> <span class="pp">-.-</span> <span class="dt">J1@{</span> <span class="at">shape: </span><span class="vs">braces</span>, <span class="at">label: </span><span class="st">&quot;gnomAD</span></span>
+<span id="cb10-51"><a href="#cb10-51" aria-hidden="true" tabindex="-1"></a><span class="st">gnomad.parquet&quot;</span> <span class="dt">}</span></span>
+<span id="cb10-52"><a href="#cb10-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-53"><a href="#cb10-53" aria-hidden="true" tabindex="-1"></a>      <span class="dt">A</span> <span class="pp">--&gt;</span> <span class="dt">K@{</span> <span class="at">shape: </span><span class="vs">lin-rect</span>, <span class="at">label: </span><span class="st">&quot;Step 5</span></span>
+<span id="cb10-54"><a href="#cb10-54" aria-hidden="true" tabindex="-1"></a><span class="st">Calculation final&quot;</span> <span class="dt">}</span></span>
+<span id="cb10-55"><a href="#cb10-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-56"><a href="#cb10-56" aria-hidden="true" tabindex="-1"></a>      <span class="dt">K</span> <span class="pp">--&gt;</span> <span class="dt">L@{</span> <span class="at">shape: </span><span class="vs">odd</span>, <span class="at">label: </span><span class="st">&quot;calculation_final</span></span>
+<span id="cb10-57"><a href="#cb10-57" aria-hidden="true" tabindex="-1"></a><span class="st">_calculation</span><span class="sc">_</span><span class="st">&quot;</span> <span class="dt">}</span></span>
+<span id="cb10-58"><a href="#cb10-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-59"><a href="#cb10-59" aria-hidden="true" tabindex="-1"></a>      <span class="dt">L</span> <span class="pp">-.-</span> <span class="dt">L1@{</span> <span class="at">shape: </span><span class="vs">braces</span>, <span class="at">label: </span><span class="st">&quot;calculations</span></span>
+<span id="cb10-60"><a href="#cb10-60" aria-hidden="true" tabindex="-1"></a><span class="st">NOMEN&quot;</span> <span class="dt">}</span></span>
+<span id="cb10-61"><a href="#cb10-61" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-62"><a href="#cb10-62" aria-hidden="true" tabindex="-1"></a>   <span class="kw">end</span></span>
+<span id="cb10-63"><a href="#cb10-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-64"><a href="#cb10-64" aria-hidden="true" tabindex="-1"></a>   <span class="dt">Z</span> <span class="pp">--&gt;</span> <span class="dt">M@{</span> <span class="at">shape: </span><span class="vs">procs</span>, <span class="at">label: </span><span class="st">&quot;My pipeline&quot;</span> <span class="dt">}</span></span>
+<span id="cb10-65"><a href="#cb10-65" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-66"><a href="#cb10-66" aria-hidden="true" tabindex="-1"></a>   <span class="kw">subgraph</span> <span class="dt">my_pipeline</span>[<span class="st">&quot;My pipeline&quot;</span>]</span>
+<span id="cb10-67"><a href="#cb10-67" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-68"><a href="#cb10-68" aria-hidden="true" tabindex="-1"></a>      <span class="kw">direction</span> <span class="cn">LR</span></span>
+<span id="cb10-69"><a href="#cb10-69" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-70"><a href="#cb10-70" aria-hidden="true" tabindex="-1"></a>      <span class="dt">M</span> <span class="pp">--&gt;</span> <span class="dt">N@{</span> <span class="at">shape: </span><span class="vs">lin-rect</span>, <span class="at">label: </span><span class="st">&quot;Step 1</span></span>
+<span id="cb10-71"><a href="#cb10-71" aria-hidden="true" tabindex="-1"></a><span class="st">Annotations&quot;</span> <span class="dt">}</span></span>
+<span id="cb10-72"><a href="#cb10-72" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-73"><a href="#cb10-73" aria-hidden="true" tabindex="-1"></a>      <span class="dt">N</span> <span class="pp">--&gt;</span> <span class="dt">O@{</span> <span class="at">shape: </span><span class="vs">odd</span>, <span class="at">label: </span><span class="st">&quot;annotation_dbsnp</span></span>
+<span id="cb10-74"><a href="#cb10-74" aria-hidden="true" tabindex="-1"></a><span class="st">_annotation</span><span class="sc">_</span><span class="st">&quot;</span> <span class="dt">}</span></span>
+<span id="cb10-75"><a href="#cb10-75" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-76"><a href="#cb10-76" aria-hidden="true" tabindex="-1"></a>      <span class="dt">O</span> <span class="pp">-.-</span> <span class="dt">O1@{</span> <span class="at">shape: </span><span class="vs">braces</span>, <span class="at">label: </span><span class="st">&quot;dbSNP</span></span>
+<span id="cb10-77"><a href="#cb10-77" aria-hidden="true" tabindex="-1"></a><span class="st">avsnp150.parquet&quot;</span> <span class="dt">}</span></span>
+<span id="cb10-78"><a href="#cb10-78" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-79"><a href="#cb10-79" aria-hidden="true" tabindex="-1"></a>      <span class="dt">M</span> <span class="pp">--&gt;</span> <span class="dt">P@{</span> <span class="at">shape: </span><span class="vs">lin-rect</span>, <span class="at">label: </span><span class="st">&quot;Step 2</span></span>
+<span id="cb10-80"><a href="#cb10-80" aria-hidden="true" tabindex="-1"></a><span class="st">Annotations&quot;</span> <span class="dt">}</span></span>
+<span id="cb10-81"><a href="#cb10-81" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-82"><a href="#cb10-82" aria-hidden="true" tabindex="-1"></a>      <span class="dt">P</span> <span class="pp">--&gt;</span> <span class="dt">Q@{</span> <span class="at">shape: </span><span class="vs">odd</span>, <span class="at">label: </span><span class="st">&quot;annotation_dbNSFP</span></span>
+<span id="cb10-83"><a href="#cb10-83" aria-hidden="true" tabindex="-1"></a><span class="st">_annotation</span><span class="sc">_</span><span class="st">&quot;</span> <span class="dt">}</span></span>
+<span id="cb10-84"><a href="#cb10-84" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-85"><a href="#cb10-85" aria-hidden="true" tabindex="-1"></a>      <span class="dt">Q</span> <span class="pp">-.-</span> <span class="dt">Q1@{</span> <span class="at">shape: </span><span class="vs">braces</span>, <span class="at">label: </span><span class="st">&quot;dbNSFP</span></span>
+<span id="cb10-86"><a href="#cb10-86" aria-hidden="true" tabindex="-1"></a><span class="st">dbnsfp42a.parquet&quot;</span> <span class="dt">}</span></span>
+<span id="cb10-87"><a href="#cb10-87" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-88"><a href="#cb10-88" aria-hidden="true" tabindex="-1"></a>      <span class="dt">M</span> <span class="pp">--&gt;</span> <span class="dt">R@{</span> <span class="at">shape: </span><span class="vs">lin-rect</span>, <span class="at">label: </span><span class="st">&quot;Step 3</span></span>
+<span id="cb10-89"><a href="#cb10-89" aria-hidden="true" tabindex="-1"></a><span class="st">Calculations&quot;</span> <span class="dt">}</span></span>
+<span id="cb10-90"><a href="#cb10-90" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-91"><a href="#cb10-91" aria-hidden="true" tabindex="-1"></a>      <span class="dt">R</span> <span class="pp">--&gt;</span> <span class="dt">S@{</span> <span class="at">shape: </span><span class="vs">odd</span>, <span class="at">label: </span><span class="st">&quot;calculation</span></span>
+<span id="cb10-92"><a href="#cb10-92" aria-hidden="true" tabindex="-1"></a><span class="st">_calculation</span><span class="sc">_</span><span class="st">&quot;</span> <span class="dt">}</span></span>
+<span id="cb10-93"><a href="#cb10-93" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-94"><a href="#cb10-94" aria-hidden="true" tabindex="-1"></a>      <span class="dt">S</span> <span class="pp">-.-</span> <span class="dt">S1@{</span> <span class="at">shape: </span><span class="vs">braces</span>, <span class="at">label: </span><span class="st">&quot;calculations</span></span>
+<span id="cb10-95"><a href="#cb10-95" aria-hidden="true" tabindex="-1"></a><span class="st">vartype&quot;</span> <span class="dt">}</span></span>
+<span id="cb10-96"><a href="#cb10-96" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-97"><a href="#cb10-97" aria-hidden="true" tabindex="-1"></a>      <span class="dt">M</span> <span class="pp">--&gt;</span> <span class="dt">T@{</span> <span class="at">shape: </span><span class="vs">lin-rect</span>, <span class="at">label: </span><span class="st">&quot;Step 4</span></span>
+<span id="cb10-98"><a href="#cb10-98" aria-hidden="true" tabindex="-1"></a><span class="st">Prioritization&quot;</span> <span class="dt">}</span></span>
+<span id="cb10-99"><a href="#cb10-99" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-100"><a href="#cb10-100" aria-hidden="true" tabindex="-1"></a>      <span class="dt">T</span> <span class="pp">--&gt;</span> <span class="dt">U@{</span> <span class="at">shape: </span><span class="vs">odd</span>, <span class="at">label: </span><span class="st">&quot;prioritization</span></span>
+<span id="cb10-101"><a href="#cb10-101" aria-hidden="true" tabindex="-1"></a><span class="st">_prioritization</span><span class="sc">_</span><span class="st">&quot;</span> <span class="dt">}</span></span>
+<span id="cb10-102"><a href="#cb10-102" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-103"><a href="#cb10-103" aria-hidden="true" tabindex="-1"></a>      <span class="dt">U</span> <span class="pp">-.-</span> <span class="dt">U1@{</span> <span class="at">shape: </span><span class="vs">braces</span>, <span class="at">label: </span><span class="st">&quot;profiles: GERMLINE&quot;</span> <span class="dt">}</span></span>
+<span id="cb10-104"><a href="#cb10-104" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-105"><a href="#cb10-105" aria-hidden="true" tabindex="-1"></a>   <span class="kw">end</span></span></code></pre></div>
 <blockquote>
 <p>Diagram of example referenced mode with a multi-pipeline
 configuration and top-level operation definitions</p>
 </blockquote>
-<pre class="mermaid"><code>
-graph LR
-
-   P@{ shape: tag-rect, label: &quot;pipelines&quot; }
-
-   P --&gt; B@{ shape: procs, label: &quot;My pipeline&quot; }
-
-   subgraph my_pipeline[&quot;My pipeline&quot;]
-
-      B --&gt; B1@{ shape: lin-rect, label: &quot;Step 1
-annotations&quot; }
-
-      B --&gt; B3@{ shape: lin-rect, label: &quot;Step 3
-calculation&quot; }
-
-      B --&gt; B4@{ shape: lin-rect, label: &quot;Step 4
-prioritization&quot; }
-
-      B1 --&gt; BO1@{ shape: odd, label: &quot;annotation_core&quot; }
-
-      BO1 --&gt; BO2@{ shape: odd, label: &quot;nannotation_scores&quot; }
-
-      B3 --&gt; BO3@{ shape: odd, label: &quot;calculation&quot; }
-
-      B4 --&gt; BO7@{ shape: odd, label: &quot;prioritization&quot; }
-
-   end
-
-   P --&gt; A@{ shape: procs, label: &quot;My secondary pipeline&quot; }
-
-   subgraph my_secondary_pipeline[&quot;My secondary pipeline&quot;]
-
-      A --&gt; A1@{ shape: lin-rect, label: &quot;Step 1
-annotations&quot; }
-
-      A --&gt; A3@{ shape: lin-rect, label: &quot;Step 3
-calculation&quot; }
-
-      A --&gt; A4@{ shape: lin-rect, label: &quot;Step 4
-frequency&quot; }
-
-      A --&gt; A5@{ shape: lin-rect, label: &quot;Step 5
-calculation_final&quot; }
-
-      A --&gt; A6@{ shape: lin-rect, label: &quot;Step 6
-prioritization&quot; }
-
-      A1 --&gt; AO1@{ shape: odd, label: &quot;annotation_core&quot; }
-
-      AO1 --&gt; AO2@{ shape: odd, label: &quot;nannotation_scores&quot; }
-
-      A3 --&gt; AO3@{ shape: odd, label: &quot;calculation&quot; }
-
-      A4 --&gt; AO4@{ shape: odd, label: &quot;annotation_frequency&quot; }
-
-      AO4 --&gt; AO5@{ shape: odd, label: &quot;calculation_frequency&quot; }
-
-      A5 --&gt; AO6@{ shape: odd, label: &quot;calculation_final&quot; }
-
-      A6 --&gt; AO7@{ shape: odd, label: &quot;prioritization&quot; }
-
-   end
-
-   subgraph definition_operations[&quot;Operations&quot;]
-
-      O1@{ shape: tag-rect, label: &quot;annotation_core
-_annotation_&quot; }
-
-      O2@{ shape: tag-rect, label: &quot;annotation_scores
-_annotation_&quot; }
-
-      O3@{ shape: tag-rect, label: &quot;calculation
-_calculation_&quot; }
-
-      O4@{ shape: tag-rect, label: &quot;annotation_frequency
-_annotation_&quot; }
-
-      O5@{ shape: tag-rect, label: &quot;calculation_frequency
-_calculation_&quot; }
-
-      O6@{ shape: tag-rect, label: &quot;calculation_final
-_calculation_&quot; }
-
-      O7@{ shape: tag-rect, label: &quot;prioritization
-_prioritization_&quot; }
-
-      O1 -.- O1D@{ shape: braces, label: &quot;Core annotations
-dbSNP, dbNSFP&quot; }
-
-      O2 -.- O2D@{ shape: braces, label: &quot;Scores annotations
-SIFT, PolyPhen&quot; }
-
-      O3 -.- O3D@{ shape: braces, label: &quot;Main calculations
-vartype, VAF&quot; }
-
-      O4 -.- O4D@{ shape: braces, label: &quot;Frequency calculations
-Max and min frequency&quot; }
-
-      O5 -.- O5D@{ shape: braces, label: &quot;Frequency annotations
-gnomAD, 1000g&quot; }
-
-      O6 -.- O6D@{ shape: braces, label: &quot;Final calculations
-HGVS and NOMEN&quot; }
-
-      O7 -.- O7D@{ shape: braces, label: &quot;Prioritizations
-PZScores, PZFlags&quot; }
-
-   end
-
-   AO1 -.- O1
-
-   AO2 -.- O2
-
-   AO3 -.- O3
-
-   AO4 -.- O4
-
-   AO5 -.- O5
-
-   AO6 -.- O6
-
-   AO7 -.- O7
-
-   BO1 -.- O1
-
-   BO2 -.- O2
-
-   BO3 -.- O3
-
-   BO7 -.- O7
-
-   classDef transparent fill:none,stroke:none;
-
-   class definition_operations transparent;
-
-
-</code></pre>
+<div class="sourceCode" id="cb11"><pre
+class="sourceCode mermaid"><code class="sourceCode mermaid"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="kw">graph</span> <span class="cn">LR</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>   <span class="dt">P@{</span> <span class="at">shape: </span><span class="vs">tag-rect</span>, <span class="at">label: </span><span class="st">&quot;pipelines&quot;</span> <span class="dt">}</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>   <span class="dt">P</span> <span class="pp">--&gt;</span> <span class="dt">B@{</span> <span class="at">shape: </span><span class="vs">procs</span>, <span class="at">label: </span><span class="st">&quot;My pipeline&quot;</span> <span class="dt">}</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>   <span class="kw">subgraph</span> <span class="dt">my_pipeline</span>[<span class="st">&quot;My pipeline&quot;</span>]</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>      <span class="dt">B</span> <span class="pp">--&gt;</span> <span class="dt">B1@{</span> <span class="at">shape: </span><span class="vs">lin-rect</span>, <span class="at">label: </span><span class="st">&quot;Step 1</span></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a><span class="st">annotations&quot;</span> <span class="dt">}</span></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>      <span class="dt">B</span> <span class="pp">--&gt;</span> <span class="dt">B3@{</span> <span class="at">shape: </span><span class="vs">lin-rect</span>, <span class="at">label: </span><span class="st">&quot;Step 3</span></span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a><span class="st">calculation&quot;</span> <span class="dt">}</span></span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>      <span class="dt">B</span> <span class="pp">--&gt;</span> <span class="dt">B4@{</span> <span class="at">shape: </span><span class="vs">lin-rect</span>, <span class="at">label: </span><span class="st">&quot;Step 4</span></span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a><span class="st">prioritization&quot;</span> <span class="dt">}</span></span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>      <span class="dt">B1</span> <span class="pp">--&gt;</span> <span class="dt">BO1@{</span> <span class="at">shape: </span><span class="vs">odd</span>, <span class="at">label: </span><span class="st">&quot;annotation_core&quot;</span> <span class="dt">}</span></span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a>      <span class="dt">BO1</span> <span class="pp">--&gt;</span> <span class="dt">BO2@{</span> <span class="at">shape: </span><span class="vs">odd</span>, <span class="at">label: </span><span class="st">&quot;nannotation_scores&quot;</span> <span class="dt">}</span></span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a>      <span class="dt">B3</span> <span class="pp">--&gt;</span> <span class="dt">BO3@{</span> <span class="at">shape: </span><span class="vs">odd</span>, <span class="at">label: </span><span class="st">&quot;calculation&quot;</span> <span class="dt">}</span></span>
+<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a>      <span class="dt">B4</span> <span class="pp">--&gt;</span> <span class="dt">BO7@{</span> <span class="at">shape: </span><span class="vs">odd</span>, <span class="at">label: </span><span class="st">&quot;prioritization&quot;</span> <span class="dt">}</span></span>
+<span id="cb11-26"><a href="#cb11-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-27"><a href="#cb11-27" aria-hidden="true" tabindex="-1"></a>   <span class="kw">end</span></span>
+<span id="cb11-28"><a href="#cb11-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-29"><a href="#cb11-29" aria-hidden="true" tabindex="-1"></a>   <span class="dt">P</span> <span class="pp">--&gt;</span> <span class="dt">A@{</span> <span class="at">shape: </span><span class="vs">procs</span>, <span class="at">label: </span><span class="st">&quot;My secondary pipeline&quot;</span> <span class="dt">}</span></span>
+<span id="cb11-30"><a href="#cb11-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-31"><a href="#cb11-31" aria-hidden="true" tabindex="-1"></a>   <span class="kw">subgraph</span> <span class="dt">my_secondary_pipeline</span>[<span class="st">&quot;My secondary pipeline&quot;</span>]</span>
+<span id="cb11-32"><a href="#cb11-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-33"><a href="#cb11-33" aria-hidden="true" tabindex="-1"></a>      <span class="dt">A</span> <span class="pp">--&gt;</span> <span class="dt">A1@{</span> <span class="at">shape: </span><span class="vs">lin-rect</span>, <span class="at">label: </span><span class="st">&quot;Step 1</span></span>
+<span id="cb11-34"><a href="#cb11-34" aria-hidden="true" tabindex="-1"></a><span class="st">annotations&quot;</span> <span class="dt">}</span></span>
+<span id="cb11-35"><a href="#cb11-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-36"><a href="#cb11-36" aria-hidden="true" tabindex="-1"></a>      <span class="dt">A</span> <span class="pp">--&gt;</span> <span class="dt">A3@{</span> <span class="at">shape: </span><span class="vs">lin-rect</span>, <span class="at">label: </span><span class="st">&quot;Step 3</span></span>
+<span id="cb11-37"><a href="#cb11-37" aria-hidden="true" tabindex="-1"></a><span class="st">calculation&quot;</span> <span class="dt">}</span></span>
+<span id="cb11-38"><a href="#cb11-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-39"><a href="#cb11-39" aria-hidden="true" tabindex="-1"></a>      <span class="dt">A</span> <span class="pp">--&gt;</span> <span class="dt">A4@{</span> <span class="at">shape: </span><span class="vs">lin-rect</span>, <span class="at">label: </span><span class="st">&quot;Step 4</span></span>
+<span id="cb11-40"><a href="#cb11-40" aria-hidden="true" tabindex="-1"></a><span class="st">frequency&quot;</span> <span class="dt">}</span></span>
+<span id="cb11-41"><a href="#cb11-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-42"><a href="#cb11-42" aria-hidden="true" tabindex="-1"></a>      <span class="dt">A</span> <span class="pp">--&gt;</span> <span class="dt">A5@{</span> <span class="at">shape: </span><span class="vs">lin-rect</span>, <span class="at">label: </span><span class="st">&quot;Step 5</span></span>
+<span id="cb11-43"><a href="#cb11-43" aria-hidden="true" tabindex="-1"></a><span class="st">calculation_final&quot;</span> <span class="dt">}</span></span>
+<span id="cb11-44"><a href="#cb11-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-45"><a href="#cb11-45" aria-hidden="true" tabindex="-1"></a>      <span class="dt">A</span> <span class="pp">--&gt;</span> <span class="dt">A6@{</span> <span class="at">shape: </span><span class="vs">lin-rect</span>, <span class="at">label: </span><span class="st">&quot;Step 6</span></span>
+<span id="cb11-46"><a href="#cb11-46" aria-hidden="true" tabindex="-1"></a><span class="st">prioritization&quot;</span> <span class="dt">}</span></span>
+<span id="cb11-47"><a href="#cb11-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-48"><a href="#cb11-48" aria-hidden="true" tabindex="-1"></a>      <span class="dt">A1</span> <span class="pp">--&gt;</span> <span class="dt">AO1@{</span> <span class="at">shape: </span><span class="vs">odd</span>, <span class="at">label: </span><span class="st">&quot;annotation_core&quot;</span> <span class="dt">}</span></span>
+<span id="cb11-49"><a href="#cb11-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-50"><a href="#cb11-50" aria-hidden="true" tabindex="-1"></a>      <span class="dt">AO1</span> <span class="pp">--&gt;</span> <span class="dt">AO2@{</span> <span class="at">shape: </span><span class="vs">odd</span>, <span class="at">label: </span><span class="st">&quot;nannotation_scores&quot;</span> <span class="dt">}</span></span>
+<span id="cb11-51"><a href="#cb11-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-52"><a href="#cb11-52" aria-hidden="true" tabindex="-1"></a>      <span class="dt">A3</span> <span class="pp">--&gt;</span> <span class="dt">AO3@{</span> <span class="at">shape: </span><span class="vs">odd</span>, <span class="at">label: </span><span class="st">&quot;calculation&quot;</span> <span class="dt">}</span></span>
+<span id="cb11-53"><a href="#cb11-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-54"><a href="#cb11-54" aria-hidden="true" tabindex="-1"></a>      <span class="dt">A4</span> <span class="pp">--&gt;</span> <span class="dt">AO4@{</span> <span class="at">shape: </span><span class="vs">odd</span>, <span class="at">label: </span><span class="st">&quot;annotation_frequency&quot;</span> <span class="dt">}</span></span>
+<span id="cb11-55"><a href="#cb11-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-56"><a href="#cb11-56" aria-hidden="true" tabindex="-1"></a>      <span class="dt">AO4</span> <span class="pp">--&gt;</span> <span class="dt">AO5@{</span> <span class="at">shape: </span><span class="vs">odd</span>, <span class="at">label: </span><span class="st">&quot;calculation_frequency&quot;</span> <span class="dt">}</span></span>
+<span id="cb11-57"><a href="#cb11-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-58"><a href="#cb11-58" aria-hidden="true" tabindex="-1"></a>      <span class="dt">A5</span> <span class="pp">--&gt;</span> <span class="dt">AO6@{</span> <span class="at">shape: </span><span class="vs">odd</span>, <span class="at">label: </span><span class="st">&quot;calculation_final&quot;</span> <span class="dt">}</span></span>
+<span id="cb11-59"><a href="#cb11-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-60"><a href="#cb11-60" aria-hidden="true" tabindex="-1"></a>      <span class="dt">A6</span> <span class="pp">--&gt;</span> <span class="dt">AO7@{</span> <span class="at">shape: </span><span class="vs">odd</span>, <span class="at">label: </span><span class="st">&quot;prioritization&quot;</span> <span class="dt">}</span></span>
+<span id="cb11-61"><a href="#cb11-61" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-62"><a href="#cb11-62" aria-hidden="true" tabindex="-1"></a>   <span class="kw">end</span></span>
+<span id="cb11-63"><a href="#cb11-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-64"><a href="#cb11-64" aria-hidden="true" tabindex="-1"></a>   <span class="kw">subgraph</span> <span class="dt">definition_operations</span>[<span class="st">&quot;Operations&quot;</span>]</span>
+<span id="cb11-65"><a href="#cb11-65" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-66"><a href="#cb11-66" aria-hidden="true" tabindex="-1"></a>      <span class="dt">O1@{</span> <span class="at">shape: </span><span class="vs">tag-rect</span>, <span class="at">label: </span><span class="st">&quot;annotation_core</span></span>
+<span id="cb11-67"><a href="#cb11-67" aria-hidden="true" tabindex="-1"></a><span class="st">_annotation</span><span class="sc">_</span><span class="st">&quot;</span> <span class="dt">}</span></span>
+<span id="cb11-68"><a href="#cb11-68" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-69"><a href="#cb11-69" aria-hidden="true" tabindex="-1"></a>      <span class="dt">O2@{</span> <span class="at">shape: </span><span class="vs">tag-rect</span>, <span class="at">label: </span><span class="st">&quot;annotation_scores</span></span>
+<span id="cb11-70"><a href="#cb11-70" aria-hidden="true" tabindex="-1"></a><span class="st">_annotation</span><span class="sc">_</span><span class="st">&quot;</span> <span class="dt">}</span></span>
+<span id="cb11-71"><a href="#cb11-71" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-72"><a href="#cb11-72" aria-hidden="true" tabindex="-1"></a>      <span class="dt">O3@{</span> <span class="at">shape: </span><span class="vs">tag-rect</span>, <span class="at">label: </span><span class="st">&quot;calculation</span></span>
+<span id="cb11-73"><a href="#cb11-73" aria-hidden="true" tabindex="-1"></a><span class="st">_calculation</span><span class="sc">_</span><span class="st">&quot;</span> <span class="dt">}</span></span>
+<span id="cb11-74"><a href="#cb11-74" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-75"><a href="#cb11-75" aria-hidden="true" tabindex="-1"></a>      <span class="dt">O4@{</span> <span class="at">shape: </span><span class="vs">tag-rect</span>, <span class="at">label: </span><span class="st">&quot;annotation_frequency</span></span>
+<span id="cb11-76"><a href="#cb11-76" aria-hidden="true" tabindex="-1"></a><span class="st">_annotation</span><span class="sc">_</span><span class="st">&quot;</span> <span class="dt">}</span></span>
+<span id="cb11-77"><a href="#cb11-77" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-78"><a href="#cb11-78" aria-hidden="true" tabindex="-1"></a>      <span class="dt">O5@{</span> <span class="at">shape: </span><span class="vs">tag-rect</span>, <span class="at">label: </span><span class="st">&quot;calculation_frequency</span></span>
+<span id="cb11-79"><a href="#cb11-79" aria-hidden="true" tabindex="-1"></a><span class="st">_calculation</span><span class="sc">_</span><span class="st">&quot;</span> <span class="dt">}</span></span>
+<span id="cb11-80"><a href="#cb11-80" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-81"><a href="#cb11-81" aria-hidden="true" tabindex="-1"></a>      <span class="dt">O6@{</span> <span class="at">shape: </span><span class="vs">tag-rect</span>, <span class="at">label: </span><span class="st">&quot;calculation_final</span></span>
+<span id="cb11-82"><a href="#cb11-82" aria-hidden="true" tabindex="-1"></a><span class="st">_calculation</span><span class="sc">_</span><span class="st">&quot;</span> <span class="dt">}</span></span>
+<span id="cb11-83"><a href="#cb11-83" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-84"><a href="#cb11-84" aria-hidden="true" tabindex="-1"></a>      <span class="dt">O7@{</span> <span class="at">shape: </span><span class="vs">tag-rect</span>, <span class="at">label: </span><span class="st">&quot;prioritization</span></span>
+<span id="cb11-85"><a href="#cb11-85" aria-hidden="true" tabindex="-1"></a><span class="st">_prioritization</span><span class="sc">_</span><span class="st">&quot;</span> <span class="dt">}</span></span>
+<span id="cb11-86"><a href="#cb11-86" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-87"><a href="#cb11-87" aria-hidden="true" tabindex="-1"></a>      <span class="dt">O1</span> <span class="pp">-.-</span> <span class="dt">O1D@{</span> <span class="at">shape: </span><span class="vs">braces</span>, <span class="at">label: </span><span class="st">&quot;Core annotations</span></span>
+<span id="cb11-88"><a href="#cb11-88" aria-hidden="true" tabindex="-1"></a><span class="st">dbSNP, dbNSFP&quot;</span> <span class="dt">}</span></span>
+<span id="cb11-89"><a href="#cb11-89" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-90"><a href="#cb11-90" aria-hidden="true" tabindex="-1"></a>      <span class="dt">O2</span> <span class="pp">-.-</span> <span class="dt">O2D@{</span> <span class="at">shape: </span><span class="vs">braces</span>, <span class="at">label: </span><span class="st">&quot;Scores annotations</span></span>
+<span id="cb11-91"><a href="#cb11-91" aria-hidden="true" tabindex="-1"></a><span class="st">SIFT, PolyPhen&quot;</span> <span class="dt">}</span></span>
+<span id="cb11-92"><a href="#cb11-92" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-93"><a href="#cb11-93" aria-hidden="true" tabindex="-1"></a>      <span class="dt">O3</span> <span class="pp">-.-</span> <span class="dt">O3D@{</span> <span class="at">shape: </span><span class="vs">braces</span>, <span class="at">label: </span><span class="st">&quot;Main calculations</span></span>
+<span id="cb11-94"><a href="#cb11-94" aria-hidden="true" tabindex="-1"></a><span class="st">vartype, VAF&quot;</span> <span class="dt">}</span></span>
+<span id="cb11-95"><a href="#cb11-95" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-96"><a href="#cb11-96" aria-hidden="true" tabindex="-1"></a>      <span class="dt">O4</span> <span class="pp">-.-</span> <span class="dt">O4D@{</span> <span class="at">shape: </span><span class="vs">braces</span>, <span class="at">label: </span><span class="st">&quot;Frequency calculations</span></span>
+<span id="cb11-97"><a href="#cb11-97" aria-hidden="true" tabindex="-1"></a><span class="st">Max and min frequency&quot;</span> <span class="dt">}</span></span>
+<span id="cb11-98"><a href="#cb11-98" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-99"><a href="#cb11-99" aria-hidden="true" tabindex="-1"></a>      <span class="dt">O5</span> <span class="pp">-.-</span> <span class="dt">O5D@{</span> <span class="at">shape: </span><span class="vs">braces</span>, <span class="at">label: </span><span class="st">&quot;Frequency annotations</span></span>
+<span id="cb11-100"><a href="#cb11-100" aria-hidden="true" tabindex="-1"></a><span class="st">gnomAD, 1000g&quot;</span> <span class="dt">}</span></span>
+<span id="cb11-101"><a href="#cb11-101" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-102"><a href="#cb11-102" aria-hidden="true" tabindex="-1"></a>      <span class="dt">O6</span> <span class="pp">-.-</span> <span class="dt">O6D@{</span> <span class="at">shape: </span><span class="vs">braces</span>, <span class="at">label: </span><span class="st">&quot;Final calculations</span></span>
+<span id="cb11-103"><a href="#cb11-103" aria-hidden="true" tabindex="-1"></a><span class="st">HGVS and NOMEN&quot;</span> <span class="dt">}</span></span>
+<span id="cb11-104"><a href="#cb11-104" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-105"><a href="#cb11-105" aria-hidden="true" tabindex="-1"></a>      <span class="dt">O7</span> <span class="pp">-.-</span> <span class="dt">O7D@{</span> <span class="at">shape: </span><span class="vs">braces</span>, <span class="at">label: </span><span class="st">&quot;Prioritizations</span></span>
+<span id="cb11-106"><a href="#cb11-106" aria-hidden="true" tabindex="-1"></a><span class="st">PZScores, PZFlags&quot;</span> <span class="dt">}</span></span>
+<span id="cb11-107"><a href="#cb11-107" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-108"><a href="#cb11-108" aria-hidden="true" tabindex="-1"></a>   <span class="kw">end</span></span>
+<span id="cb11-109"><a href="#cb11-109" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-110"><a href="#cb11-110" aria-hidden="true" tabindex="-1"></a>   <span class="dt">AO1</span> <span class="pp">-.-</span> <span class="dt">O1</span></span>
+<span id="cb11-111"><a href="#cb11-111" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-112"><a href="#cb11-112" aria-hidden="true" tabindex="-1"></a>   <span class="dt">AO2</span> <span class="pp">-.-</span> <span class="dt">O2</span></span>
+<span id="cb11-113"><a href="#cb11-113" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-114"><a href="#cb11-114" aria-hidden="true" tabindex="-1"></a>   <span class="dt">AO3</span> <span class="pp">-.-</span> <span class="dt">O3</span></span>
+<span id="cb11-115"><a href="#cb11-115" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-116"><a href="#cb11-116" aria-hidden="true" tabindex="-1"></a>   <span class="dt">AO4</span> <span class="pp">-.-</span> <span class="dt">O4</span></span>
+<span id="cb11-117"><a href="#cb11-117" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-118"><a href="#cb11-118" aria-hidden="true" tabindex="-1"></a>   <span class="dt">AO5</span> <span class="pp">-.-</span> <span class="dt">O5</span></span>
+<span id="cb11-119"><a href="#cb11-119" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-120"><a href="#cb11-120" aria-hidden="true" tabindex="-1"></a>   <span class="dt">AO6</span> <span class="pp">-.-</span> <span class="dt">O6</span></span>
+<span id="cb11-121"><a href="#cb11-121" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-122"><a href="#cb11-122" aria-hidden="true" tabindex="-1"></a>   <span class="dt">AO7</span> <span class="pp">-.-</span> <span class="dt">O7</span></span>
+<span id="cb11-123"><a href="#cb11-123" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-124"><a href="#cb11-124" aria-hidden="true" tabindex="-1"></a>   <span class="dt">BO1</span> <span class="pp">-.-</span> <span class="dt">O1</span></span>
+<span id="cb11-125"><a href="#cb11-125" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-126"><a href="#cb11-126" aria-hidden="true" tabindex="-1"></a>   <span class="dt">BO2</span> <span class="pp">-.-</span> <span class="dt">O2</span></span>
+<span id="cb11-127"><a href="#cb11-127" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-128"><a href="#cb11-128" aria-hidden="true" tabindex="-1"></a>   <span class="dt">BO3</span> <span class="pp">-.-</span> <span class="dt">O3</span></span>
+<span id="cb11-129"><a href="#cb11-129" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-130"><a href="#cb11-130" aria-hidden="true" tabindex="-1"></a>   <span class="dt">BO7</span> <span class="pp">-.-</span> <span class="dt">O7</span></span>
+<span id="cb11-131"><a href="#cb11-131" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-132"><a href="#cb11-132" aria-hidden="true" tabindex="-1"></a>   <span class="kw">classDef</span> <span class="fu">transparent</span> <span class="at">fill:</span>none,<span class="at">stroke:</span>none;</span>
+<span id="cb11-133"><a href="#cb11-133" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-134"><a href="#cb11-134" aria-hidden="true" tabindex="-1"></a>   <span class="kw">class</span> <span class="dt">definition_operations</span> <span class="fu">transparent</span>;</span>
+<span id="cb11-135"><a href="#cb11-135" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-136"><a href="#cb11-136" aria-hidden="true" tabindex="-1"></a></span></code></pre></div>
 <p>Type: <code>dict</code></p>
 <p>Default:
 <code>{"default":[{"annotation": "annotation"}, {"calculation": "calculation"}, {"prioritization": "prioritization"}]}</code></p>

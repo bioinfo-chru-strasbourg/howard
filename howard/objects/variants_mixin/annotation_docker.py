@@ -838,47 +838,66 @@ def _warn_entry_forbidden_overrides(entry_name: str, entry: dict, tool: str) -> 
 
 
 def _normalize_runtime_mount_settings(runtime_cfg: dict, annotation_cfg: dict) -> tuple[list, list, list]:
-	"""
-	Resolve runtime mount settings with backward compatibility and aliases.
+    """
+    Resolve runtime mount settings with backward compatibility and aliases.
 
-	Preferred location:
-	- docker.runtime.databases/mounts/paths
+    Preferred location:
+    - docker.runtime.databases/mounts/paths
 
-	Backward-compatible fallbacks:
-	- docker.annotation.databases/mounts/paths
-	- docker.runtime.mount (alias mounts)
-	- docker.runtime.path (alias paths)
-	"""
+    Backward-compatible fallbacks:
+    - docker.annotation.databases/mounts/paths
+    - docker.runtime.mount (alias mounts)
+    - docker.runtime.path (alias paths)
+    """
 
-	databases = _as_list(
-		runtime_cfg.get("databases", annotation_cfg.get("databases", []))
-	)
+    databases = _as_list(
+        runtime_cfg.get("databases", annotation_cfg.get("databases", []))
+    )
 
-	runtime_mounts = runtime_cfg.get("mounts", None)
-	if runtime_mounts is None:
-		runtime_mounts = runtime_cfg.get("mount", None)
-	if runtime_mounts is None:
-		runtime_mounts = annotation_cfg.get("mounts", [])
-	mounts = _as_list(runtime_mounts)
+    runtime_mounts = runtime_cfg.get("mounts", None)
+    if runtime_mounts is None:
+        runtime_mounts = runtime_cfg.get("mount", None)
+    if runtime_mounts is None:
+        runtime_mounts = annotation_cfg.get("mounts", [])
+    mounts = _as_list(runtime_mounts)
 
-	runtime_paths = runtime_cfg.get("paths", None)
-	if runtime_paths is None:
-		runtime_paths = runtime_cfg.get("path", None)
-	if runtime_paths is None:
-		runtime_paths = annotation_cfg.get("paths", annotation_cfg.get("path", []))
-	paths = _as_list(runtime_paths)
+    runtime_paths = runtime_cfg.get("paths", None)
+    if runtime_paths is None:
+        runtime_paths = runtime_cfg.get("path", None)
+    if runtime_paths is None:
+        runtime_paths = annotation_cfg.get("paths", annotation_cfg.get("path", []))
+    paths = _as_list(runtime_paths)
 
-	return databases, mounts, paths
+    return databases, mounts, paths
+
+
+def _get_docker_cpus() -> int | None:
+    """Return the number of CPUs available to the Docker daemon, or None."""
+    try:
+        result = subprocess.run(
+            ["docker", "info", "--format", "{{.NCPU}}"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=True,
+        )
+        value = int(result.stdout.strip())
+        return value if value > 0 else None
+    except (OSError, subprocess.SubprocessError, ValueError):
+        return None
 
 
 def _get_effective_threads_limit(default_threads: int | None) -> int:
-	"""Compute the effective thread limit for one entry."""
+    """Compute the effective thread limit for one entry."""
 
-	system_threads = os.cpu_count() or 1
-	if not default_threads or int(default_threads) <= 0:
-		return int(system_threads)
+    system_threads = os.cpu_count() or 1
+    docker_threads = _get_docker_cpus() or system_threads
+    available = min(system_threads, docker_threads)
 
-	return int(min(int(default_threads), int(system_threads)))
+    if not default_threads or int(default_threads) <= 0:
+        return int(available)
+
+    return int(min(int(default_threads), available))
 
 
 def _get_effective_memory_limit_gb(default_memory: Any) -> int:
