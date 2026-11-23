@@ -138,7 +138,7 @@ def test_calculation_vcf():
                     result_output_nb_variants += 1
 
         # Expected result
-        expected_result_nb_lines = 77
+        expected_result_nb_lines = 78
         expected_result_nb_variants = 7
 
         # Compare
@@ -165,7 +165,6 @@ def test_calculation_vcf():
             "SELECT INFO FROM variants WHERE INFO LIKE '%hgvs=%'"
         )
         assert len(result) == 0
-
 
 
 def test_calculation_show_calculations():

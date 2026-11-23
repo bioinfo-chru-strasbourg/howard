@@ -721,7 +721,6 @@ class variants_calculation:
 
         return config_default
 
-
     def get_operations_help(
         self,
         section: str = "calculation",
@@ -1115,25 +1114,7 @@ class variants_calculation:
                 )
 
                 try:
-                    # # OLD Query
-                    # query_create_view = f"""
-                    #     CREATE TABLE {calculation_view_name} AS
-                    #     SELECT * FROM (
-                    #         SELECT {", ".join([f'"{k}"' for k in operation_table_key])},
-                    #             CASE
-                    #                 WHEN TRY_CAST(({operation_query}) AS VARCHAR) IS NOT NULL
-                    #                 THEN
-                    #                     concat(
-                    #                             '{output_column_name}=',
-                    #                             TRY_CAST(({operation_query}) AS VARCHAR)
-                    #                         )
-                    #                 ELSE NULL 
-                    #                 END AS INFO
-                    #         FROM {table_view_name} AS v
-                    #         )
-                    #     WHERE INFO IS NOT NULL
-                    # """
-                    # NEW Query
+                    # Query
                     query_create_view = f"""
                         CREATE TABLE {calculation_view_name} AS
                         WITH base AS (
@@ -1385,8 +1366,6 @@ class variants_calculation:
             for added_column in added_columns:
                 self.drop_column(column=added_column)
 
-
-
     def calculation_annotation_with_format_extract(
         self,
         section: str = "calculation",
@@ -1482,8 +1461,8 @@ class variants_calculation:
             False
         )
 
-        # Log 
-        #log.debug(f"annotation_field={annotation_field}, annotation_hgvs={annotation_hgvs}, annotation_explode={annotation_explode}, annotation_json={annotation_json}, uniquify={uniquify}, annotation_id={annotation_id}, hgvs_columns={hgvs_columns}, hgvs_columns_contain_transcript_id={hgvs_columns_contain_transcript_id}")
+        # Log
+        # log.debug(f"annotation_field={annotation_field}, annotation_hgvs={annotation_hgvs}, annotation_explode={annotation_explode}, annotation_json={annotation_json}, uniquify={uniquify}, annotation_id={annotation_id}, hgvs_columns={hgvs_columns}, hgvs_columns_contain_transcript_id={hgvs_columns_contain_transcript_id}")
 
         # Variants table
         table_variants = self.get_table_variants()
@@ -1512,7 +1491,6 @@ class variants_calculation:
             )
             view_name = view_infos[0]
 
-
             # Describe
             sql_describe = f"""
                 SELECT *
@@ -1539,14 +1517,14 @@ class variants_calculation:
                 if annotation_type_vcf in ["Flag"]:
                     annotation_number = 0
                 elif annotation_name in ["Annotation"]:
-                    #annotation_number = "."
+                    # annotation_number = "."
                     annotation_column = (
                         f"""replace(CAST("{annotation_name}" AS VARCHAR), '&', ',')"""
                     )
                 elif annotation_name in ["Distance"]:
                     annotation_column = f"""string_split(CAST("{annotation_name}" AS VARCHAR), '.')[1]"""
-                    #annotation_number = 1
-                    
+                    # annotation_number = 1
+
                 annotation_desc = f"Annotation '{annotation_name}'"
 
                 # Create dict
@@ -1765,13 +1743,25 @@ class variants_calculation:
                         else:
                             # Specific case for rank and HGVSc/HGVSp with transcript_id
                             # Rank is a special case because it needs to be transformed into exon number (format X/Y)
-                            if hgvs_item == "rank":
+                            # Exon or Intron determination based on Annotation column
+                            if (
+                                hgvs_item == "rank"
+                                and "Annotation"
+                                in sql_describe_result.get("column_name").tolist()
+                            ):
+                                # hgvs_item_column = f"""
+                                #     CASE 
+                                #         WHEN "{hgvs_columns.get(hgvs_item)}" IS NOT NULL
+                                #         THEN concat('exon', split(CAST("{hgvs_columns.get(hgvs_item)}" AS VARCHAR), '/')[1])
+                                #         ELSE NULL
+                                #     END
+                                # """
                                 hgvs_item_column = f"""
-                                    CASE 
-                                        WHEN "{hgvs_columns.get(hgvs_item)}" IS NOT NULL
-                                        THEN concat('exon', split(CAST("{hgvs_columns.get(hgvs_item)}" AS VARCHAR), '/')[1])
-                                        ELSE NULL
-                                    END
+                                CASE
+                                    WHEN "{hgvs_columns.get(hgvs_item)}" IS NULL THEN NULL
+                                    WHEN contains("Annotation", 'intron') THEN concat('intron', split(CAST("{hgvs_columns.get(hgvs_item)}" AS VARCHAR), '/')[1])
+                                    ELSE concat('exon', split(CAST("{hgvs_columns.get(hgvs_item)}" AS VARCHAR), '/')[1])
+                                END
                                 """
                             # HGVSc/HGVSp may contain transcript_id (format ENST00000275493.2:c.2361G>A or ENSP00000395243.2:p.Gln734=)
                             elif hgvs_item in ["HGVSc", "HGVSp"] and hgvs_columns_contain_transcript_id:
@@ -1803,7 +1793,6 @@ class variants_calculation:
                     sql_from_select = f"""
                         'hgvs' AS hgvs
                     """
-                    #sql_from_select = ""
 
                 # Append clauses
                 sql_clauses.append(
@@ -1857,7 +1846,6 @@ class variants_calculation:
             log.warning(
                 f"Extract annotation - No annotation '{annotation_field}'. Please annotate with the appropriate tool before using this calculation option"
             )
-
 
     def calculation_extract_nomen(
         self,
@@ -1922,6 +1910,7 @@ class variants_calculation:
             "TPNOMEN": "TNOMEN hgvs protein transcript used (e.g. for CNOMEN and PNOMEN)",
             "TPVVNOMEN": "VNOMEN hgvs protein transcript version used (e.g. for CNOMEN and PNOMEN)",
             "ENOMEN": "ENOMEN hgvs exon nomenclature related to a transcript (TNOMEN)",
+            "INOMEN": "INOMEN hgvs intron nomenclature related to a transcript (TNOMEN)",
             "GNOMEN": "GNOMEN hgvs gene nomenclature related to a transcript (TNOMEN)",
         }
 
@@ -2000,7 +1989,6 @@ class variants_calculation:
             ["column", "file"],
             None
         )
-
 
         # Param
         param = self.get_param()
@@ -2200,15 +2188,16 @@ class variants_calculation:
             transcripts_pond_score_sql = ""
 
         # NOMEN Patterns
-        #pattern_tvnomen = r".*[:]*([NX][MR]_[^:]*).*"
+        # pattern_tvnomen = r".*[:]*([NX][MR]_[^:]*).*"
         pattern_tvnomen = r".*:?((?:[NX][MR]_[^:]+|ENST\d+(?:\.\d+)?)).*"
-        #pattern_tpvnomen = r".*[:]*([NX]P_[^:]*).*"
+        # pattern_tpvnomen = r".*[:]*([NX]P_[^:]*).*"
         pattern_tpvnomen = r".*:?((?:[NX]P_[^:]+|ENSP\d+(?:\.\d+)?)).*"
         pattern_cnomen = r".*[:]*([cgm]\.[^:]*).*"
         pattern_pnomen = r".*[:]*([p]\.[^:]*).*"
         pattern_nnomen = r".*[:]*([n]\.[^:]*).*"
         pattern_rnomen = r".*[:]*([r]\.[^:]*).*"
         pattern_enomen = r".*[:]*(exon[^:]*).*"
+        pattern_inomen = r".*[:]*(intron[^:]*).*"
 
         # Check NOMEN fields length
         nomen_fields_select_sql = ""
@@ -2316,6 +2305,8 @@ class variants_calculation:
                     , '') AS 'UPNOMEN',
                     -- exon
                     NULLIF(regexp_extract(nomen, '{pattern_enomen}', 1), '') AS 'ENOMEN',
+                    -- intron
+                    NULLIF(regexp_extract(nomen, '{pattern_inomen}', 1), '') AS 'INOMEN',
                     -- gene
                     CASE
                         WHEN NULLIF(regexp_extract(string_split(nomen, ':')[1], '{pattern_tvnomen}', 1), '') IS NOT NULL
@@ -2336,13 +2327,14 @@ class variants_calculation:
                     "TNOMEN", "TVNOMEN", "VNOMEN",
                     "TPVNOMEN", "TPNOMEN", "TPVVNOMEN",
                     "CNOMEN", "PNOMEN", "NNOMEN", "RNOMEN", "UPNOMEN",
-                    "ENOMEN", "GNOMEN",
+                    "ENOMEN", "INOMEN", "GNOMEN",
                     -- Score calculation
                     0
                     + CASE WHEN CNOMEN IS NOT NULL THEN 1 ELSE 0 END
                     + CASE WHEN NNOMEN IS NOT NULL THEN 1 ELSE 0 END
                     + CASE WHEN RNOMEN IS NOT NULL THEN 1 ELSE 0 END
                     + CASE WHEN ENOMEN IS NOT NULL THEN 1 ELSE 0 END
+                    + CASE WHEN INOMEN IS NOT NULL THEN 0 ELSE 0 END
                     + CASE WHEN PNOMEN IS NOT NULL THEN 1 ELSE 0 END
                     + CASE WHEN TPVNOMEN IS NOT NULL THEN 1 ELSE 0 END
                     + CASE WHEN regexp_matches(TVNOMEN, '^NM_.*') THEN 2 ELSE 0 END
@@ -3142,7 +3134,6 @@ class variants_calculation:
         information to the INFO field of each variant.
         """
 
-
         # Get operation parameters
         operation_params, _ = self.get_operation_params(
             section=section, operation_params=kwargs, operation_name="trio"
@@ -3170,7 +3161,6 @@ class variants_calculation:
             trio_pedigree,
             None
         )
-
 
         # if FORMAT and samples
         if (
@@ -3458,7 +3448,6 @@ class variants_calculation:
             del dataframe_vaf_normalization
             gc.collect()
 
-
     def calculation_info_to_format(self, section: str = "calculation", annotation_fields: dict = None, samples:list = None, remove_info_fields: bool = None, **kwargs) -> None:
         """
         The `calculation_info_to_format` function converts INFO fields to FORMAT fields in a VCF file.
@@ -3595,7 +3584,7 @@ class variants_calculation:
                             sample_set.append(" '.' ")
                     else:
                         raise NotImplementedError(f"Flag type for INFO field '{info_field}' not implemented yet for INFO to FORMAT calculation")
-                
+
                 # If there are INFO fields to add to FORMAT for this sample, prepare the set clause to add them to the sample FORMAT field
                 if len(sample_set):
                     set_clause.append(f""" "{sample}" = concat("{sample}", ':', {", ':', ".join(sample_set)}) """)
@@ -3623,7 +3612,6 @@ class variants_calculation:
                     self.rename_info_fields(
                         fields_to_rename=dict.fromkeys(annotation_fields_filtered.keys(), None), table=table_variants
                     )
-
 
     def calculation_genotype_stats(self, section: str = "calculation", info: str = None, infos: list = None, stats: list = None, **kwargs) -> None:
         """
@@ -3939,7 +3927,6 @@ class variants_calculation:
         else:
             log.info("No Transcripts to process. Check param.json file configuration")
 
-
     def calculation_variant_filter(
         self,
         section="calculation",
@@ -4069,7 +4056,7 @@ class variants_calculation:
                 if c
             ]
             where_clause_query = f" WHERE {' AND '.join(conditions)}" if conditions else ""
-            
+
             # Replace table variants by a SQL query
             query_replace_variants = f"""
                 CREATE OR REPLACE TABLE {table_variants} AS
@@ -4082,11 +4069,10 @@ class variants_calculation:
                 AND variants_old.ALT = variants.ALT
                 
             """
-            #log.debug(f"variant_filter calculation: SQL query to replace variants table:\n{query_replace_variants}")
+            # log.debug(f"variant_filter calculation: SQL query to replace variants table:\n{query_replace_variants}")
             self.execute_query(query_replace_variants)
 
         return None
-
 
     def calculation_annotation(
         self,
@@ -4137,168 +4123,146 @@ class variants_calculation:
             section="calculation",
             **kwargs
         ) -> None:
-            """
-            Prioritize variants based on specified criteria
-    
-            :param section: The `section` parameter is a string that specifies the section of the configuration file to use for the calculation. It is used to retrieve the relevant parameters for the operation, defaults to "calculation"
-            :type section: str (optional)
-    
-            :return: The function does not return anything. It modifies the variants table in the database by applying the specified filters and updating the table accordingly.
-            """
-    
-            import copy
-    
-            log.debug("Calculation prioritization...")
-    
-            operation_params, _ = self.get_operation_params(
-                section=section, operation_params=kwargs, operation_name="prioritization"
-            )
-    
-            ### Parameters for prioritization calculation
+        """
+        Prioritize variants based on specified criteria
 
-            # Operation parameters for prioritization calculation into. top level parameters
-            param = self.get_param()
-            param_for_calculation_prioritization = copy.deepcopy(param)
-            param_for_calculation_prioritization_section_id = "calculation_prioritization_" + str(get_random(10))
-            param_for_calculation_prioritization.update(
-                {
-                    param_for_calculation_prioritization_section_id: operation_params
-                }
-            )
-            self.set_param(param_for_calculation_prioritization)
+        :param section: The `section` parameter is a string that specifies the section of the configuration file to use for the calculation. It is used to retrieve the relevant parameters for the operation, defaults to "calculation"
+        :type section: str (optional)
 
-            # Launch prioritization calculation
-            self.prioritization(
-                section=param_for_calculation_prioritization_section_id,
-                param=param_for_calculation_prioritization,
-            )
+        :return: The function does not return anything. It modifies the variants table in the database by applying the specified filters and updating the table accordingly.
+        """
 
-            # Remove the temporary section from param by restoring the original param
-            self.set_param(param)
+        import copy
 
+        log.debug("Calculation prioritization...")
 
-    def calculation_export_stats(
-            self,
-            section="calculation",
-            **kwargs
-        ) -> None:
-            """
-            Export statistics for variants
-    
-            :param section: The `section` parameter is a string that specifies the section of the configuration file to use for the calculation. It is used to retrieve the relevant parameters for the operation, defaults to "calculation"
-            :type section: str (optional)
-    
-            :return: The function does not return anything. It modifies the variants table in the database by applying the specified filters and updating the table accordingly.
-            """
-    
-            import copy
-    
-            log.debug("Calculation export stats...")
-    
-            operation_params, _ = self.get_operation_params(
-                section=section, operation_params=kwargs, operation_name="export_stats"
-            )
-    
-            ### Parameters for prioritization calculation
+        operation_params, _ = self.get_operation_params(
+            section=section, operation_params=kwargs, operation_name="prioritization"
+        )
 
-            # Parameters
-            stats_stdout = operation_params.get("stats_stdout", False)
-            stats_md = operation_params.get("stats_md", None)
-            stats_json = operation_params.get("stats_json", None)
-            stats_html = operation_params.get("stats_html", None)
-            stats_pdf = operation_params.get("stats_pdf", None)
-            annotations_stats = operation_params.get("annotations_stats", False)
-            queries = operation_params.get("queries", None)
-            queries_view = operation_params.get("queries_view", None)
+        ### Parameters for prioritization calculation
 
-            # Stats
-            self.print_stats(
-                stdout=stats_stdout,
-                output_file=stats_md,
-                json_file=stats_json,
-                html_file=stats_html,
-                pdf_file=stats_pdf,
-                annotations_stats=annotations_stats,
-                queries=queries,
-                queries_view=queries_view,
-            )
+        # Operation parameters for prioritization calculation into. top level parameters
+        param = self.get_param()
+        param_for_calculation_prioritization = copy.deepcopy(param)
+        param_for_calculation_prioritization_section_id = (
+            "calculation_prioritization_" + str(get_random(10))
+        )
+        param_for_calculation_prioritization.update(
+            {param_for_calculation_prioritization_section_id: operation_params}
+        )
+        self.set_param(param_for_calculation_prioritization)
 
+        # Launch prioritization calculation
+        self.prioritization(
+            section=param_for_calculation_prioritization_section_id,
+            param=param_for_calculation_prioritization,
+        )
+
+        # Remove the temporary section from param by restoring the original param
+        self.set_param(param)
+
+    def calculation_export_stats(self, section="calculation", **kwargs) -> None:
+        """
+        Export statistics for variants
+
+        :param section: The `section` parameter is a string that specifies the section of the configuration file to use for the calculation. It is used to retrieve the relevant parameters for the operation, defaults to "calculation"
+        :type section: str (optional)
+
+        :return: The function does not return anything. It modifies the variants table in the database by applying the specified filters and updating the table accordingly.
+        """
+
+        import copy
+
+        log.debug("Calculation export stats...")
+
+        operation_params, _ = self.get_operation_params(
+            section=section, operation_params=kwargs, operation_name="export_stats"
+        )
+
+        ### Parameters for prioritization calculation
+
+        # Parameters
+        stats_stdout = operation_params.get("stats_stdout", False)
+        stats_md = operation_params.get("stats_md", None)
+        stats_json = operation_params.get("stats_json", None)
+        stats_html = operation_params.get("stats_html", None)
+        stats_pdf = operation_params.get("stats_pdf", None)
+        annotations_stats = operation_params.get("annotations_stats", False)
+        queries = operation_params.get("queries", None)
+        queries_view = operation_params.get("queries_view", None)
+
+        # Stats
+        self.print_stats(
+            stdout=stats_stdout,
+            output_file=stats_md,
+            json_file=stats_json,
+            html_file=stats_html,
+            pdf_file=stats_pdf,
+            annotations_stats=annotations_stats,
+            queries=queries,
+            queries_view=queries_view,
+        )
 
     def calculation_export_variants(
-            self,
-            section="calculation",
-            file: str = None,
-            query: str = None,
-            export: dict = None,
-            explode: dict = None,
-            **kwargs
-        ) -> None:
-            """
-            Export variants to a file based on specified parameters
-    
-            :param section: The `section` parameter is a string that specifies the section of the configuration file to use for the calculation. It is used to retrieve the relevant parameters for the operation, defaults to "calculation"
-            :type section: str (optional)
-            :param file: The `file` parameter is a string that specifies the path to the output file where the exported variants will be saved. It is used to determine the destination of the exported data, defaults to None
-            :type file: str (optional)
-            :param query: The `query` parameter is a string that represents a SQL query used to filter the variants before exporting them. It allows the user to specify conditions for selecting specific variants based on their attributes, defaults to None
-            :type query: str (optional)
-            :param export: The `export` parameter is a dictionary that contains additional parameters for exporting variants. It allows the user to specify options such as the output format, compression, and other export settings. If not provided, it defaults to an empty dictionary
-            :type export: dict (optional)
-            :param explode: The `explode` parameter is a dictionary that contains additional parameters for exploding the variants during export. It allows the user to specify options for expanding certain fields or attributes of the variants into separate rows or columns in the exported file. If not provided, it defaults to an empty dictionary
-            :type explode: dict (optional)
-    
-            :return: The function does not return anything. It modifies the variants table in the database by applying the specified filters and updating the table accordingly.
-            """
-    
-            import copy
-    
-            log.debug("Calculation export variants...")
-    
-            operation_params, _ = self.get_operation_params(
-                section=section, operation_params=kwargs, operation_name="export_variants"
-            )
-    
-            ### Parameters for prioritization calculation
+        self,
+        section="calculation",
+        file: str = None,
+        query: str = None,
+        export: dict = None,
+        explode: dict = None,
+        **kwargs,
+    ) -> None:
+        """
+        Export variants to a file based on specified parameters
 
-            # File
-            file = first_not_none(
-                operation_params.get("file", None),
-                file,
-                None
-            )
+        :param section: The `section` parameter is a string that specifies the section of the configuration file to use for the calculation. It is used to retrieve the relevant parameters for the operation, defaults to "calculation"
+        :type section: str (optional)
+        :param file: The `file` parameter is a string that specifies the path to the output file where the exported variants will be saved. It is used to determine the destination of the exported data, defaults to None
+        :type file: str (optional)
+        :param query: The `query` parameter is a string that represents a SQL query used to filter the variants before exporting them. It allows the user to specify conditions for selecting specific variants based on their attributes, defaults to None
+        :type query: str (optional)
+        :param export: The `export` parameter is a dictionary that contains additional parameters for exporting variants. It allows the user to specify options such as the output format, compression, and other export settings. If not provided, it defaults to an empty dictionary
+        :type export: dict (optional)
+        :param explode: The `explode` parameter is a dictionary that contains additional parameters for exploding the variants during export. It allows the user to specify options for expanding certain fields or attributes of the variants into separate rows or columns in the exported file. If not provided, it defaults to an empty dictionary
+        :type explode: dict (optional)
 
-            # Export with a query
-            query = first_not_none(
-                operation_params.get("query", None),
-                query,
-                None
-            )
+        :return: The function does not return anything. It modifies the variants table in the database by applying the specified filters and updating the table accordingly.
+        """
 
-            # Export parameters to export variants
-            export = first_not_none(
-                operation_params.get("export", None),
-                export,
-                {}
-            )
+        import copy
 
-            # Explode parameters to export variants
-            explode = first_not_none(
-                operation_params.get("explode", None),
-                explode,
-                {}
-            )
+        log.debug("Calculation export variants...")
 
-            # Prepare param json file
-            param = self.get_param()
-            param_export = copy.deepcopy(param)
+        operation_params, _ = self.get_operation_params(
+            section=section, operation_params=kwargs, operation_name="export_variants"
+        )
 
-            # Set export and explode parameters in param_export
-            param_export["export"] = export
-            param_export["explode"] = explode
-            self.set_param(param_export)
+        ### Parameters for prioritization calculation
 
-            # Export variants to file
-            self.export_output(output_file=file, query=query, **kwargs)
+        # File
+        file = first_not_none(operation_params.get("file", None), file, None)
 
-            # Remove the temporary section from param by restoring the original param
-            self.set_param(param)
+        # Export with a query
+        query = first_not_none(operation_params.get("query", None), query, None)
+
+        # Export parameters to export variants
+        export = first_not_none(operation_params.get("export", None), export, {})
+
+        # Explode parameters to export variants
+        explode = first_not_none(operation_params.get("explode", None), explode, {})
+
+        # Prepare param json file
+        param = self.get_param()
+        param_export = copy.deepcopy(param)
+
+        # Set export and explode parameters in param_export
+        param_export["export"] = export
+        param_export["explode"] = explode
+        self.set_param(param_export)
+
+        # Export variants to file
+        self.export_output(output_file=file, query=query, **kwargs)
+
+        # Remove the temporary section from param by restoring the original param
+        self.set_param(param)

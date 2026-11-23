@@ -1,1 +1,8 @@
-__all__ = ["minimalize", "genebe", "update_database", "transcripts_check", "to_excel"]
+__all__ = [
+    "minimalize",
+    "genebe",
+    "update_database",
+    "transcripts_check",
+    "to_excel",
+    "bigwig",
+]

@@ -169,46 +169,8 @@ def _process_standard(args, config, param, tools):
     # Load data
     vcfdata_obj.load_data()
 
-    # # Pipeline
-    # pipeline = param.get("pipeline", default_pipeline)
-    # steps = pipeline.get("steps", [])
-    # log.debug(f"{param=}")
-
     # Start pipeline
     launch_pipeline(vcfdata_obj=vcfdata_obj, param=param, allowed_tools=tools)
-    # log.debug(f"START pipeline")
-    # step_i = 0
-    # for step in steps:
-    #     step_i += 1
-    #     log.debug(f"Processing step: {step} [{step_i}/{len(steps)}]")
-    #     for step_name in step:
-    #         step_tool = step.get(step_name, "annotation")
-    #         log.info(f"Processing pipeline [{step_i}/{len(steps)}] - '{step_name}' [{step_tool}]...")
-    #         if step_name not in param :
-    #             log.warning(f"Processing pipeline [{step_i}/{len(steps)}] - '{step_name}' [{step_tool}] - Not found in parameters. Try without...")
-    #         try:
-    #             test = eval(f"vcfdata_obj.{step_tool}(section='{step_name}')")
-    #             log.debug(f"Processing pipeline [{step_i}/{len(steps)}] - '{step_name}' [{step_tool}] completed successfully.")
-    #             log.debug(f"Result of step '{step_name}' with tool '{step_tool}': {test}")
-    #         except Exception as e:
-    #             log.error(f"Error processing step '{step_name}' with tool '{step_tool}': {str(e)}")
-    #             raise ValueError(f"Error processing step '{step_name}' with tool '{step_tool}': {str(e)}")
-    #         # else:
-    #         #     log.warning(f"Processing pipeline [{step_i}/{len(steps)}] - '{step_name}' [{step_tool}] not found in parameters, skipping.")
-
-    # log.debug(f"END pipeline")
-
-    # # Annotation HGVS
-    # vcfdata_obj.annotation_hgvs()
-
-    # # Annotations
-    # vcfdata_obj.annotation()
-
-    # # Calculations
-    # vcfdata_obj.calculation()
-
-    # # Prioritization
-    # vcfdata_obj.prioritization()
 
     # Explode infos
     if param.get("explode", {}).get("explode_infos", False):

@@ -162,7 +162,13 @@ class variants_annotation(variants_annotation_docker):
         if param.get("annotations", None) and isinstance(
             param.get("annotations", None), str
         ):
-            param_annotation_list = param.get("annotations").split(",")
+            # param_annotation_list = param.get("annotations").split(",")
+            # Split and strip annotations
+            param_annotation_list = [
+                a.strip()
+                for a in re.split(r"[,\\\n\\\t]", param.get("annotations"))
+                if a.strip()
+            ]
         else:
             param_annotation_list = []
 
@@ -182,7 +188,9 @@ class variants_annotation(variants_annotation_docker):
                 param_annotation_list.append(
                     "snpsift:" + param.get("annotation_snpsift").replace(",", "+")
                 )
-        if param.get("annotation_snpeff", None) != None and isinstance(param.get("annotation_snpeff", None), str):
+        if param.get("annotation_snpeff", None) != None and isinstance(
+            param.get("annotation_snpeff", None), str
+        ):
             param_annotation_list.append("snpeff:" + param.get("annotation_snpeff"))
         if param.get("annotation_bcftools", None) != None:
             if isinstance(param.get("annotation_bcftools", None), list):
@@ -194,11 +202,17 @@ class variants_annotation(variants_annotation_docker):
                 param_annotation_list.append(
                     "bcftools:" + param.get("annotation_bcftools").replace(",", "+")
                 )
-        if param.get("annotation_annovar", None) != None and isinstance(param.get("annotation_annovar", None), str):
+        if param.get("annotation_annovar", None) != None and isinstance(
+            param.get("annotation_annovar", None), str
+        ):
             param_annotation_list.append("annovar:" + param.get("annotation_annovar"))
-        if param.get("annotation_exomiser", None) != None and isinstance(param.get("annotation_exomiser", None), str):
+        if param.get("annotation_exomiser", None) != None and isinstance(
+            param.get("annotation_exomiser", None), str
+        ):
             param_annotation_list.append("exomiser:" + param.get("annotation_exomiser"))
-        if param.get("annotation_splice", None) != None and isinstance(param.get("annotation_splice", None), str):
+        if param.get("annotation_splice", None) != None and isinstance(
+            param.get("annotation_splice", None), str
+        ):
             param_annotation_list.append("splice:" + param.get("annotation_splice"))
 
         # Merge param annotations list
@@ -311,7 +325,11 @@ class variants_annotation(variants_annotation_docker):
                             param[section]["vep"]["parameters"] = ""
 
                         # VEP options in annotations
-                        param[section]["vep"]["parameters"] = [f"--{x}" if not x.startswith("--") else x for x in annotation_file.replace(" ", ":").split(":")[1:] if x]
+                        param[section]["vep"]["parameters"] = [
+                            f"--{x}" if not x.startswith("--") else x
+                            for x in annotation_file.replace(" ", ":").split(":")[1:]
+                            if x
+                        ]
 
                     # Annotation Annovar
                     elif annotation_file.startswith("annovar"):
@@ -455,9 +473,9 @@ class variants_annotation(variants_annotation_docker):
                                             param[section][annotation_tool][
                                                 "annotations"
                                             ] = {}
-                                        param[section][annotation_tool][
-                                            "annotations"
-                                        ][annotation_file_found] = annotations
+                                        param[section][annotation_tool]["annotations"][
+                                            annotation_file_found
+                                        ] = annotations
 
                                 else:
                                     log.warning(
@@ -505,7 +523,9 @@ class variants_annotation(variants_annotation_docker):
             else:
                 log.warning("Fast mode - skip some annotations tools")
 
-    def annotation_bigwig(self, section:str = "annotation", threads: int = None) -> None:
+    def annotation_bigwig(
+        self, section: str = "annotation", threads: int = None
+    ) -> None:
         """
         The function `annotation_bigwig` annotates variants in a VCF file using bigwig databases.
 
@@ -548,12 +568,7 @@ class variants_annotation(variants_annotation_docker):
         param = self.get_param()
 
         # Param - Annotation
-        annotations = (
-            param
-            .get(section, {})
-            .get("bigwig", {})
-            .get("annotations", None)
-        )
+        annotations = param.get(section, {}).get("bigwig", {}).get("annotations", None)
         log.debug("Annotations: " + str(annotations))
 
         # Header fields override (Number/Type/Description), collected from each
@@ -567,9 +582,7 @@ class variants_annotation(variants_annotation_docker):
         )
 
         # Param - Annotation param
-        annotations_param = (
-            param.get(section, {}).get("bigwig", {}).get("param", {})
-        )
+        annotations_param = param.get(section, {}).get("bigwig", {}).get("param", {})
         log.debug("Annotations param: " + str(annotations_param))
 
         # Param - Options
@@ -579,10 +592,10 @@ class variants_annotation(variants_annotation_docker):
         log.debug("Annotations options: " + str(annotations_options))
 
         # Param - Option chrom_mapping
-        chrom_mapping_options = param.get(section, {}).get("bigwig", {}).get("chrom_mapping", None)
-        chrom_mapping = ChromMapping(
-            mapping=chrom_mapping_options
+        chrom_mapping_options = (
+            param.get(section, {}).get("bigwig", {}).get("chrom_mapping", None)
         )
+        chrom_mapping = ChromMapping(mapping=chrom_mapping_options)
 
         # Chunk size
         chunk_size = self.get_config().get("chunk_size", DEFAULT_CHUNK_SIZE)
@@ -823,7 +836,9 @@ class variants_annotation(variants_annotation_docker):
                             )
 
                             # Add header on VCF
-                            db_hdr_vcf_header.infos[annotation_field_new] = db_hdr_vcf_header.infos[annotation_field]
+                            db_hdr_vcf_header.infos[annotation_field_new] = (
+                                db_hdr_vcf_header.infos[annotation_field]
+                            )
 
                         # Load bigwig database
                         bw_db = pyBigWig.open(db_file, "r")
@@ -840,10 +855,9 @@ class variants_annotation(variants_annotation_docker):
 
                         # Annotation param method
                         # Get default method and update with annotation specific method
-                        annotations_param_annotation_method = (
-                            annotations_options.get("method", {})
-                            .copy()
-                        )
+                        annotations_param_annotation_method = annotations_options.get(
+                            "method", {}
+                        ).copy()
                         annotations_param_annotation_method.update(
                             annotation_options.get("method", {})
                         )
@@ -883,7 +897,7 @@ class variants_annotation(variants_annotation_docker):
                                 "bw_db": bw_db,
                                 "bw_type": "bw" if bw_db.isBigWig() else "bb",
                                 "bw_format": "BigWig" if bw_db.isBigWig() else "BigBed",
-                                "vcf_reader": db_hdr_vcf_header, # VCF header with new annotation fields
+                                "vcf_reader": db_hdr_vcf_header,  # VCF header with new annotation fields
                                 "cyvcf2_header_rename_dict": cyvcf2_header_rename_dict,
                                 "cyvcf2_header_list": cyvcf2_header_list,
                                 "cyvcf2_header_indexes": cyvcf2_header_indexes,
@@ -909,7 +923,7 @@ class variants_annotation(variants_annotation_docker):
                         sort=False,
                         index=False,
                         threads=threads,
-                        chrom_mapping_sql=chrom_mapping.to_tool_sql()
+                        chrom_mapping_sql=chrom_mapping.to_tool_sql(),
                     )
 
                     # Load input tmp file
@@ -1213,14 +1227,16 @@ class variants_annotation(variants_annotation_docker):
                         output_vcf_file,
                         update_header=True,
                         annotation_header_fields_override=annotation_header_fields_override,
-                        chrom_mapping_sql=chrom_mapping.from_tool_sql()
+                        chrom_mapping_sql=chrom_mapping.from_tool_sql(),
                     )
                     remove_if_exists([output_vcf_file])
                     log.debug("Annotations update done.")
 
         return True
 
-    def annotation_snpsift(self, section:str = "annotation", threads: int = None) -> None:
+    def annotation_snpsift(
+        self, section: str = "annotation", threads: int = None
+    ) -> None:
         """
         This function annotate with bcftools
 
@@ -1285,12 +1301,7 @@ class variants_annotation(variants_annotation_docker):
         param = self.get_param()
 
         # Annotations section from the parameters
-        annotations = (
-            param
-            .get(section, {})
-            .get("snpsift", {})
-            .get("annotations", None)
-        )
+        annotations = param.get(section, {}).get("snpsift", {}).get("annotations", None)
         log.debug("Annotations: " + str(annotations))
 
         # Header fields override (Number/Type/Description), collected from each
@@ -1304,10 +1315,10 @@ class variants_annotation(variants_annotation_docker):
         )
 
         # Param - Option chrom_mapping
-        chrom_mapping_options = param.get(section, {}).get("snpsift", {}).get("chrom_mapping", None)
-        chrom_mapping = ChromMapping(
-            mapping=chrom_mapping_options
+        chrom_mapping_options = (
+            param.get(section, {}).get("snpsift", {}).get("chrom_mapping", None)
         )
+        chrom_mapping = ChromMapping(mapping=chrom_mapping_options)
 
         # Assembly
         assembly = param.get(
@@ -1552,7 +1563,7 @@ class variants_annotation(variants_annotation_docker):
                         remove_info=True,
                         add_samples=False,
                         index=True,
-                        chrom_mapping_sql=chrom_mapping.to_tool_sql()
+                        chrom_mapping_sql=chrom_mapping.to_tool_sql(),
                     )
 
                     # Num command
@@ -1575,7 +1586,7 @@ class variants_annotation(variants_annotation_docker):
                             commands[command_annotate],
                             update_header=True,
                             annotation_header_fields_override=annotation_header_fields_override,
-                            chrom_mapping_sql=chrom_mapping.from_tool_sql()
+                            chrom_mapping_sql=chrom_mapping.from_tool_sql(),
                         )
                         remove_if_exists(
                             [
@@ -1584,7 +1595,9 @@ class variants_annotation(variants_annotation_docker):
                             ]
                         )
 
-    def annotation_bcftools(self, section:str = "annotation", threads: int = None) -> None:
+    def annotation_bcftools(
+        self, section: str = "annotation", threads: int = None
+    ) -> None:
         """
         This function annotate with bcftools
 
@@ -1661,10 +1674,10 @@ class variants_annotation(variants_annotation_docker):
         )
 
         # Param - Option chrom_mapping
-        chrom_mapping_options = param.get(section, {}).get("bcftools", {}).get("chrom_mapping", None)
-        chrom_mapping = ChromMapping(
-            mapping=chrom_mapping_options
+        chrom_mapping_options = (
+            param.get(section, {}).get("bcftools", {}).get("chrom_mapping", None)
         )
+        chrom_mapping = ChromMapping(mapping=chrom_mapping_options)
 
         # Assembly
         assembly = self.get_param().get(
@@ -1720,7 +1733,7 @@ class variants_annotation(variants_annotation_docker):
             err_files = []
 
             for annotation in annotations:
-                
+
                 # Allow to add options for annotations
                 if "annotation_fields" in annotations[annotation]:
                     annotation_fields = annotations[annotation].get(
@@ -1878,7 +1891,9 @@ class variants_annotation(variants_annotation_docker):
                                 annotation_name_map[annotation_field] = (
                                     f"{annotation_fields_new_name}:=INFO/{annotation_field}"
                                 )
-                                annotation_list_to_remove.append(f"INFO/{annotation_field}")
+                                annotation_list_to_remove.append(
+                                    f"INFO/{annotation_field}"
+                                )
                             else:
                                 annotation_list.append(annotation_field)
                                 annotation_name_map[annotation_field] = annotation_field
@@ -2040,7 +2055,7 @@ class variants_annotation(variants_annotation_docker):
                     remove_info=True,
                     add_samples=False,
                     index=True,
-                    chrom_mapping_sql=chrom_mapping.to_tool_sql()
+                    chrom_mapping_sql=chrom_mapping.to_tool_sql(),
                 )
 
                 # Remove files
@@ -2154,13 +2169,15 @@ class variants_annotation(variants_annotation_docker):
                         remove_vcf_file=False,
                         update_header=True,
                         annotation_header_fields_override=annotation_header_fields_override,
-                        chrom_mapping_sql=chrom_mapping.from_tool_sql()
+                        chrom_mapping_sql=chrom_mapping.from_tool_sql(),
                     )
 
         # Remove files
         remove_if_exists(remove_files)
 
-    def annotation_exomiser(self, section:str = "annotation", threads: int = None) -> None:
+    def annotation_exomiser(
+        self, section: str = "annotation", threads: int = None
+    ) -> None:
         """
         This function annotate with Exomiser
 
@@ -2285,10 +2302,10 @@ class variants_annotation(variants_annotation_docker):
         log.debug(f"Param Exomiser: {param_exomiser}")
 
         # Param - options chrom_mapping
-        chrom_mapping_options = param.get(section, {}).get("exomiser", {}).get("chrom_mapping", None)
-        chrom_mapping = ChromMapping(
-            mapping=chrom_mapping_options
+        chrom_mapping_options = (
+            param.get(section, {}).get("exomiser", {}).get("chrom_mapping", None)
         )
+        chrom_mapping = ChromMapping(mapping=chrom_mapping_options)
 
         # Param - Assembly
         assembly = self.get_assembly()
@@ -2723,7 +2740,7 @@ class variants_annotation(variants_annotation_docker):
                     add_samples=True,
                     list_samples=samples,
                     index=False,
-                    chrom_mapping_sql=chrom_mapping.to_tool_sql()
+                    chrom_mapping_sql=chrom_mapping.to_tool_sql(),
                 )
 
                 ### Execute Exomiser ###
@@ -2873,8 +2890,7 @@ class variants_annotation(variants_annotation_docker):
                             )
 
                             # Add field to add for update to concat fields
-                            sql_query_update_concat_fields.append(
-                                f"""
+                            sql_query_update_concat_fields.append(f"""
                                 CASE
                                     WHEN table_parquet."{header_column}" NOT IN ('','.')
                                     THEN concat(
@@ -2885,8 +2901,7 @@ class variants_annotation(variants_annotation_docker):
 
                                     ELSE ''
                                 END
-                            """
-                            )
+                            """)
 
                     # Update query
                     sql_query_update = f"""
@@ -2935,12 +2950,14 @@ class variants_annotation(variants_annotation_docker):
                     self.update_from_vcf(
                         output_results_vcf,
                         update_header=True,
-                        chrom_mapping_sql=chrom_mapping.from_tool_sql()
+                        chrom_mapping_sql=chrom_mapping.from_tool_sql(),
                     )
 
         return True
 
-    def annotation_snpeff(self, section:str = "annotation", threads: int = None) -> None:
+    def annotation_snpeff(
+        self, section: str = "annotation", threads: int = None
+    ) -> None:
         """
         This function annotate with snpEff
 
@@ -3002,22 +3019,18 @@ class variants_annotation(variants_annotation_docker):
         log.debug("Param: " + str(param))
 
         # Param - options chrom_mapping
-        chrom_mapping_options = param.get(section, {}).get("snpeff", {}).get("chrom_mapping", None)
-        chrom_mapping = ChromMapping(
-            mapping=chrom_mapping_options
+        chrom_mapping_options = (
+            param.get(section, {}).get("snpeff", {}).get("chrom_mapping", None)
         )
+        chrom_mapping = ChromMapping(mapping=chrom_mapping_options)
 
         # Param - Assembly
         assembly = self.get_assembly()
 
         # Param - Options
-        snpeff_options = (
-            param.get(section, {}).get("snpeff", {}).get("options", "")
-        )
+        snpeff_options = param.get(section, {}).get("snpeff", {}).get("options", "")
         snpeff_stats = param.get(section, {}).get("snpeff", {}).get("stats", None)
-        snpeff_csvstats = (
-            param.get(section, {}).get("snpeff", {}).get("csvStats", None)
-        )
+        snpeff_csvstats = param.get(section, {}).get("snpeff", {}).get("csvStats", None)
         if snpeff_stats:
             snpeff_stats = snpeff_stats.replace("OUTPUT", self.get_output())
             snpeff_stats = full_path(snpeff_stats)
@@ -3029,7 +3042,11 @@ class variants_annotation(variants_annotation_docker):
 
         # noStats
         # If no stats option is provided, add the noStats flag
-        if " -csvStats " not in snpeff_options and " -stats " not in snpeff_options and " -s " not in snpeff_options:
+        if (
+            " -csvStats " not in snpeff_options
+            and " -stats " not in snpeff_options
+            and " -s " not in snpeff_options
+        ):
             snpeff_options += " -noStats "
 
         # Data
@@ -3092,13 +3109,13 @@ class variants_annotation(variants_annotation_docker):
             )
 
             # Export VCF file
-            #log.debug(f"chrom_mapping.to_tool_sql(): {chrom_mapping.to_tool_sql()}")
+            # log.debug(f"chrom_mapping.to_tool_sql(): {chrom_mapping.to_tool_sql()}")
             self.export_variant_vcf(
                 vcf_file=tmp_vcf_name,
                 remove_info=True,
                 add_samples=False,
                 index=True,
-                chrom_mapping_sql=chrom_mapping.to_tool_sql()
+                chrom_mapping_sql=chrom_mapping.to_tool_sql(),
             )
 
             # Tmp file
@@ -3152,11 +3169,11 @@ class variants_annotation(variants_annotation_docker):
 
             # Update variants
             log.info(f"Annotation - Updating...")
-            #log.debug(f"chrom_mapping.from_tool_sql(): {chrom_mapping.from_tool_sql()}")
+            # log.debug(f"chrom_mapping.from_tool_sql(): {chrom_mapping.from_tool_sql()}")
             self.update_from_vcf(
                 tmp_annotate_vcf_name,
                 update_header=True,
-                chrom_mapping_sql=chrom_mapping.from_tool_sql()
+                chrom_mapping_sql=chrom_mapping.from_tool_sql(),
             )
             list_to_remove = [
                 tmp_annotate_vcf_name,
@@ -3173,101 +3190,91 @@ class variants_annotation(variants_annotation_docker):
             if force_update_annotation:
                 log.debug(f"Existing snpEff annotations in VCF - annotation forced")
 
+    def annotation_vep(self, section: str = "annotation", threads: int = None) -> None:
+        """
+        This function annotate with VEP
 
-    def annotation_vep(self, section:str = "annotation", threads: int = None) -> None:
-            """
-            This function annotate with VEP
-    
-            :param threads: The number of threads to use
-            :return: the value of the variable "return_value".
-            """
-    
-            # DEBUG
-            log.debug("Start annotation with VEP databases")
-    
-            # Threads
-            if not threads:
-                threads = self.get_threads()
-            log.debug("Threads: " + str(threads))
-    
-            # Config
-            config = self.get_config()
-            log.debug("Config: " + str(config))
+        :param threads: The number of threads to use
+        :return: the value of the variable "return_value".
+        """
 
-            # Param
-            param = self.get_param()
+        # DEBUG
+        log.debug("Start annotation with VEP databases")
 
-            # Assembly
-            assembly = self.get_assembly()
-    
-            # vep_parameters
-            vep_parameters = param.get(section, {}).get("vep", {}).get("parameters", None) or None
+        # Threads
+        if not threads:
+            threads = self.get_threads()
+        log.debug("Threads: " + str(threads))
 
-            # vep_parameters
-            vep_tool = param.get(section, {}).get("vep", {}).get("tool", None) or "vep"
+        # Config
+        config = self.get_config()
+        log.debug("Config: " + str(config))
 
-            # Construct vep configuraton (on line) if not exist in config
-            if config.get("tools", {}).get(vep_tool) is None:
-                if "tools" not in config:
-                    config["tools"] = {}
-                config["tools"][vep_tool] = {
-                    "docker": {
-                        "image": "ensemblorg/ensembl-vep:latest",
-                        "entrypoint": "vep",
-                        "parameters": {
-                            "primary": {
-                                "input": "--input_file",
-                                "output": "--output_file",
-                                "threads": "--fork",
-                                "assembly": {
-                                    "flag": "--assembly",
-                                    "source": "GRCH"
-                                }
-                            },
-                            "defaults": {
-                                "parameters": [
-                                    "--vcf",
-                                    "--database"
-                                ]
-                            }
-                        }
-                    }
-                }
+        # Param
+        param = self.get_param()
 
-            #log.debug(f"Config: {json.dumps(self.get_config(), indent=4)}")
+        # Assembly
+        assembly = self.get_assembly()
 
-    
-            # Construct param dict for docker
-            param_original = copy.deepcopy(param)
-            param_vep = copy.deepcopy(param)
-            param_vep_section = f"{section}_{get_random()}"
-            param_vep["assembly"] = assembly
-            param_vep[param_vep_section] = {
+        # vep_parameters
+        vep_parameters = (
+            param.get(section, {}).get("vep", {}).get("parameters", None) or None
+        )
+
+        # vep_parameters
+        vep_tool = param.get(section, {}).get("vep", {}).get("tool", None) or "vep"
+
+        # Construct vep configuraton (on line) if not exist in config
+        if config.get("tools", {}).get(vep_tool) is None:
+            if "tools" not in config:
+                config["tools"] = {}
+            config["tools"][vep_tool] = {
                 "docker": {
-                    "entries": {
-                        "annotation_vep": {
-                            "tool": vep_tool,
-                            "parameters": vep_parameters
-                        }
+                    "image": "ensemblorg/ensembl-vep:latest",
+                    "entrypoint": "vep",
+                    "parameters": {
+                        "primary": {
+                            "input": "--input_file",
+                            "output": "--output_file",
+                            "threads": "--fork",
+                            "assembly": {"flag": "--assembly", "source": "GRCH"},
+                        },
+                        "defaults": {"parameters": ["--vcf", "--database"]},
                     },
                 }
             }
 
-            # Log
-            log.debug(f"param_vep: {param_vep}")
+        # log.debug(f"Config: {json.dumps(self.get_config(), indent=4)}")
 
-            # Set the modified parameters for the VEP annotation
-            self.set_param(param_vep)
+        # Construct param dict for docker
+        param_original = copy.deepcopy(param)
+        param_vep = copy.deepcopy(param)
+        param_vep_section = f"{section}_{get_random()}"
+        param_vep["assembly"] = assembly
+        param_vep[param_vep_section] = {
+            "docker": {
+                "entries": {
+                    "annotation_vep": {"tool": vep_tool, "parameters": vep_parameters}
+                },
+            }
+        }
 
-            # Run the annotation using the docker container for VEP
-            log.info("Running VEP annotation with docker...")
-            self.annotation_docker(section=param_vep_section)
+        # Log
+        log.debug(f"param_vep: {param_vep}")
 
-            # Restore the original parameters after running the VEP annotation
-            self.set_param(param_original)
+        # Set the modified parameters for the VEP annotation
+        self.set_param(param_vep)
 
+        # Run the annotation using the docker container for VEP
+        log.info("Running VEP annotation with docker...")
+        self.annotation_docker(section=param_vep_section)
 
-    def annotation_annovar(self, section:str = "annotation", threads: int = None) -> None:
+        # Restore the original parameters after running the VEP annotation
+        self.set_param(param_original)
+
+    def annotation_annovar(
+        self, section: str = "annotation", threads: int = None
+    ) -> None:
         """
         It takes a VCF file, annotates it with Annovar, and then updates the database with the new
         annotations
@@ -3279,15 +3286,23 @@ class variants_annotation(variants_annotation_docker):
         # DEBUG
         log.debug("Start annotation with Annovar databases")
 
-        def create_annovar_command(annotations_parameters, annovar_bin_command, tmp_vcf_name, annovar_databases_assembly, assembly, tmp_annotate_vcf_prefix, threads, tmp_annotate_vcf_name_err, annovar_fields_to_keep, tmp_rename_name):
+        def create_annovar_command(
+            annotations_parameters,
+            annovar_bin_command,
+            tmp_vcf_name,
+            annovar_databases_assembly,
+            assembly,
+            tmp_annotate_vcf_prefix,
+            threads,
+            tmp_annotate_vcf_name_err,
+            annovar_fields_to_keep,
+            tmp_rename_name,
+        ):
             """
             Create the annovar command based on the provided parameters.
             """
 
-            char_code_map = {
-                "\\x3b": ",",
-                "\\x3d": ":"
-            }
+            char_code_map = {"\\x3b": ",", "\\x3d": ":"}
 
             # Merged annovar command
             log.debug(f"annotations_parameters: {annotations_parameters}")
@@ -3313,7 +3328,10 @@ class variants_annotation(variants_annotation_docker):
             command_annovar += """ | awk -F'\\t' -v OFS='\\t' '{if ($0 ~ /^#/) print; else {split($8,a,";");for(i=1;i<=length(a);i++) {split(a[i],b,"=");if(b[2]!=".") {c[b[1]]=b[2]}}; split($8,d,";");for(i=1;i<=length(d);i++) {split(d[i],e,"=");if(c[e[1]]!="") {if(info!="") {info=info";"}; info=info""e[1]"="c[e[1]]}}; if(info!="") {$8=info} else {$8=""}; delete c; info=""; print}}' """
 
             # Command - Keep only needed fields, and remove ANNOVAR fields, and compress and index final file
-            annovar_fields_to_keep = set(annovar_fields_to_keep + annotations_parameters.get("annovar_fields_to_keep", []))
+            annovar_fields_to_keep = set(
+                annovar_fields_to_keep
+                + annotations_parameters.get("annovar_fields_to_keep", [])
+            )
             if len(annovar_fields_to_keep):
                 annovar_fields_to_keep_option = "-x " + ",".join(annovar_fields_to_keep)
             else:
@@ -3326,8 +3344,8 @@ class variants_annotation(variants_annotation_docker):
             command_annovar += f"""  && tabix {tmp_annotate_vcf_name} """
 
             return command_annovar
-                
-        def err_files_process(err_files, merge_msg:bool = False):
+
+        def err_files_process(err_files, merge_msg: bool = False):
             """
             Process error files and log messages.
             """
@@ -3472,9 +3490,7 @@ class variants_annotation(variants_annotation_docker):
         log.debug("Options: " + str(options))
 
         # Param - annotations
-        annotations = (
-            param.get(section, {}).get("annovar", {}).get("annotations", {})
-        )
+        annotations = param.get(section, {}).get("annovar", {}).get("annotations", {})
         log.debug("Annotations: " + str(annotations))
 
         # Header fields override (Number/Type/Description), collected from each
@@ -3488,10 +3504,10 @@ class variants_annotation(variants_annotation_docker):
         )
 
         # Param - options chrom_mapping
-        chrom_mapping_options = param.get(section, {}).get("annovar", {}).get("chrom_mapping", None)
-        chrom_mapping = ChromMapping(
-            mapping=chrom_mapping_options
+        chrom_mapping_options = (
+            param.get(section, {}).get("annovar", {}).get("chrom_mapping", None)
         )
+        chrom_mapping = ChromMapping(mapping=chrom_mapping_options)
 
         # Param - Assembly
         assembly = self.get_assembly()
@@ -3536,12 +3552,14 @@ class variants_annotation(variants_annotation_docker):
                 prefix=self.get_prefix(), dir=self.get_tmp_dir(), suffix=".annovar"
             ) as tmp_annotate_vcf_directory:
 
-                #commands = []
+                # commands = []
                 tmp_annotates_vcf_name_list = []
 
                 # Export in VCF
                 log.debug("Create initial file to annotate")
-                tmp_vcf_name = os.path.join(tmp_annotate_vcf_directory, get_random(10) + "annovar.vcf.gz")
+                tmp_vcf_name = os.path.join(
+                    tmp_annotate_vcf_directory, get_random(10) + "annovar.vcf.gz"
+                )
 
                 # Export VCF file
                 self.export_variant_vcf(
@@ -3549,12 +3567,14 @@ class variants_annotation(variants_annotation_docker):
                     remove_info=".",
                     add_samples=False,
                     index=True,
-                    chrom_mapping_sql=chrom_mapping.to_tool_sql()
+                    chrom_mapping_sql=chrom_mapping.to_tool_sql(),
                 )
 
                 # Create file for field rename
                 log.debug("Create file for field rename")
-                tmp_rename_name = os.path.join(tmp_annotate_vcf_directory, get_random(10) + "annovar.rename")
+                tmp_rename_name = os.path.join(
+                    tmp_annotate_vcf_directory, get_random(10) + "annovar.rename"
+                )
 
                 # Check Annovar database
                 log.debug(
@@ -3574,7 +3594,7 @@ class variants_annotation(variants_annotation_docker):
                     "operation": [],
                     "argument": [],
                     "options": [],
-                    "annovar_fields_to_keep": []
+                    "annovar_fields_to_keep": [],
                 }
 
                 # parallelize annovar command
@@ -3584,7 +3604,7 @@ class variants_annotation(variants_annotation_docker):
                     and parallelize_annovar_command not in ["multianno", "parallel"]
                 ):
                     msg_warning = f"Annotation - annovar parallelize option '{parallelize_annovar_command}' not valid (should be 'multianno' or 'parallel')"
-                    #log.warning(msg_warning)
+                    # log.warning(msg_warning)
                     if parallelize_annovar_command.startswith("multi"):
                         log.warning(
                             f"{msg_warning} - '{parallelize_annovar_command}' is identified as 'multianno' and parallelization is enabled"
@@ -3596,9 +3616,7 @@ class variants_annotation(variants_annotation_docker):
                         )
                         parallelize_annovar_command = "parallel"
                     else:
-                        log.warning(
-                            f"{msg_warning} - Parallelization is disabled"
-                        )
+                        log.warning(f"{msg_warning} - Parallelization is disabled")
                         parallelize_annovar_command = None
 
                 # command_annovar_list
@@ -3636,23 +3654,37 @@ class variants_annotation(variants_annotation_docker):
                         annotation_fields = {"INFO": None}
 
                     log.info(f"Annotations Annovar - database '{annotation}'")
-                    log.debug(f"Annotation '{annotation}' - fields: {annotation_fields}")
+                    log.debug(
+                        f"Annotation '{annotation}' - fields: {annotation_fields}"
+                    )
 
                     # Generate tmp files for annovar
 
                     # Tmp file for annovar
                     err_files = []
                     tmp_annotate_vcf_random = get_random(10)
-                    tmp_annotate_vcf_prefix = tmp_annotate_vcf_directory + "/" + tmp_annotate_vcf_random + "/annovar"
+                    tmp_annotate_vcf_prefix = (
+                        tmp_annotate_vcf_directory
+                        + "/"
+                        + tmp_annotate_vcf_random
+                        + "/annovar"
+                    )
                     tmp_annotate_vcf_name_annovar = (
                         tmp_annotate_vcf_prefix + "." + assembly + "_multianno.vcf"
                     )
-                    tmp_annotate_vcf_name_err = tmp_annotate_vcf_directory + "/" + tmp_annotate_vcf_random + "/.err"
+                    tmp_annotate_vcf_name_err = (
+                        tmp_annotate_vcf_directory
+                        + "/"
+                        + tmp_annotate_vcf_random
+                        + "/.err"
+                    )
                     err_files.append(tmp_annotate_vcf_name_err)
                     tmp_files.append(tmp_annotate_vcf_name_err)
 
                     # Tmp file final vcf annotated by annovar
-                    tmp_annotate_vcf_name = os.path.join(tmp_annotate_vcf_directory, get_random(10) + "annovar.vcf.gz")
+                    tmp_annotate_vcf_name = os.path.join(
+                        tmp_annotate_vcf_directory, get_random(10) + "annovar.vcf.gz"
+                    )
                     tmp_annotates_vcf_name_list.append(tmp_annotate_vcf_name)
                     tmp_files.append(tmp_annotate_vcf_name)
                     tmp_files.append(tmp_annotate_vcf_name + ".tbi")
@@ -3663,7 +3695,9 @@ class variants_annotation(variants_annotation_docker):
 
                     # Create file for field rename
                     log.debug("Create file for field rename")
-                    annotation_tmp_rename_name = os.path.join(tmp_annotate_vcf_directory, get_random(10) + "annovar.rename")
+                    annotation_tmp_rename_name = os.path.join(
+                        tmp_annotate_vcf_directory, get_random(10) + "annovar.rename"
+                    )
 
                     for annotation_field in annotation_fields:
 
@@ -3754,9 +3788,7 @@ class variants_annotation(variants_annotation_docker):
                                 f""" {annotation_options.get("arguments","")}"""
                             )
                         elif isinstance(annotation_options.get("arguments"), list):
-                            annotation_argument += (
-                                f""" {" ".join(annotation_options.get("arguments",""))}"""
-                            )
+                            annotation_argument += f""" {" ".join(annotation_options.get("arguments",""))}"""
 
                     ### Options
                     annotation_parameters = ""
@@ -3764,11 +3796,12 @@ class variants_annotation(variants_annotation_docker):
 
                     # Xref options for cross information for "gx" operation
                     # Example: -xref ~/hpc/tools/annovar/humandb/gene_fullxref.txt
-                    #if operation in ["g", "gx"] and (
+                    # if operation in ["g", "gx"] and (
                     if operation in ["gx"] and (
-                        annotation_options.get("xref", None) or options.get("xref", None)
+                        annotation_options.get("xref", None)
+                        or options.get("xref", None)
                     ):
-                        #operation = "gx"  # Change operation to "gx" if xref is provided
+                        # operation = "gx"  # Change operation to "gx" if xref is provided
                         if annotation_options.get("xref", None):
                             annotation_parameters += (
                                 f""" --xref {annotation_options.get("xref","")}"""
@@ -3777,12 +3810,18 @@ class variants_annotation(variants_annotation_docker):
                                 f""" --xref {annotation_options.get("xref","")}"""
                             )
                         elif options.get("xref", None):
-                            annotation_parameters += f""" --xref {options.get("xref","")}"""
-                            command_options.append(f""" --xref {options.get("xref","")}""")
+                            annotation_parameters += (
+                                f""" --xref {options.get("xref","")}"""
+                            )
+                            command_options.append(
+                                f""" --xref {options.get("xref","")}"""
+                            )
 
                     # command options
                     command_options.append(f""" {annotation_parameters} """)
-                    command_options.append(f""" {annotation_options.get("options","")} """)
+                    command_options.append(
+                        f""" {annotation_options.get("options","")} """
+                    )
 
                     # merge dict of options and annotation_options
                     merged_options = {**options, **annotation_options}
@@ -3803,7 +3842,7 @@ class variants_annotation(variants_annotation_docker):
                             "operation",
                             "options",
                             "parallelize",
-                            "header_fields"
+                            "header_fields",
                         ]:
                             command_options.append(
                                 f""" --{option}={merged_options[option]}"""
@@ -3818,7 +3857,7 @@ class variants_annotation(variants_annotation_docker):
                     )
 
                     # Extract only needed fields, and remove ANNOVAR fields, and compress and index final file
-                    #annovar_fields_to_keep = ["INFO/ANNOVAR_DATE", "INFO/ALLELE_END"]
+                    # annovar_fields_to_keep = ["INFO/ANNOVAR_DATE", "INFO/ALLELE_END"]
                     annovar_fields_to_keep = []
                     if "ALL" not in annotation_list and "INFO" not in annotation_list:
                         # for ann in annotation_renamed_list:
@@ -3836,7 +3875,9 @@ class variants_annotation(variants_annotation_docker):
                         )
                         # annotations_parameters["options"].append(command_parameters)
                         annotations_parameters["options"] += command_options
-                        annotations_parameters["annovar_fields_to_keep"] += annovar_fields_to_keep
+                        annotations_parameters[
+                            "annovar_fields_to_keep"
+                        ] += annovar_fields_to_keep
                         annotations_parameters["tmp_rename_name"] = tmp_rename_name
 
                     # Either parallelize_annovar_command is "parallel" or None
@@ -3844,7 +3885,9 @@ class variants_annotation(variants_annotation_docker):
 
                         # Threads by annotation
                         if parallelize_annovar_command == "parallel":
-                            threads_by_annotation = int((threads / len(annotations)) + 1)
+                            threads_by_annotation = int(
+                                (threads / len(annotations)) + 1
+                            )
                         else:
                             threads_by_annotation = threads
 
@@ -3871,7 +3914,7 @@ class variants_annotation(variants_annotation_docker):
                             threads=threads,
                             tmp_annotate_vcf_name_err=tmp_annotate_vcf_name_err,
                             annovar_fields_to_keep=annovar_fields_to_keep,
-                            tmp_rename_name=annotation_tmp_rename_name
+                            tmp_rename_name=annotation_tmp_rename_name,
                         )
 
                         # Launch command
@@ -3903,7 +3946,9 @@ class variants_annotation(variants_annotation_docker):
                                         message = line.strip()
                                         error_message_command_all.append(message)
                                         if line.startswith("[W::"):
-                                            error_message_command_warning.append(message)
+                                            error_message_command_warning.append(
+                                                message
+                                            )
                                         if line.startswith("[E::"):
                                             error_message_command_err.append(
                                                 f"{err_file}: " + message
@@ -3943,7 +3988,9 @@ class variants_annotation(variants_annotation_docker):
                     tmp_files.append(tmp_annotate_vcf_name_err)
 
                     # Tmp file final vcf annotated by annovar
-                    tmp_annotate_vcf_name = os.path.join(tmp_annotate_vcf_directory, get_random(10) + "annovar.vcf.gz")
+                    tmp_annotate_vcf_name = os.path.join(
+                        tmp_annotate_vcf_directory, get_random(10) + "annovar.vcf.gz"
+                    )
                     tmp_annotates_vcf_name_list.append(tmp_annotate_vcf_name)
                     tmp_files.append(tmp_annotate_vcf_name)
                     tmp_files.append(tmp_annotate_vcf_name + ".tbi")
@@ -3961,9 +4008,9 @@ class variants_annotation(variants_annotation_docker):
                         tmp_annotate_vcf_prefix=tmp_annotate_vcf_prefix,
                         threads=threads,
                         tmp_annotate_vcf_name_err=tmp_annotate_vcf_name_err,
-                        #annovar_fields_to_keep=annovar_fields_to_keep,
-                        annovar_fields_to_keep=[], # annovar_fields_to_keep in annotations_parameters
-                        tmp_rename_name=tmp_rename_name
+                        # annovar_fields_to_keep=annovar_fields_to_keep,
+                        annovar_fields_to_keep=[],  # annovar_fields_to_keep in annotations_parameters
+                        tmp_rename_name=tmp_rename_name,
                     )
 
                     # Launch command
@@ -3975,9 +4022,7 @@ class variants_annotation(variants_annotation_docker):
                     err_files_process(err_files=err_files, merge_msg=False)
 
                 elif parallelize_annovar_command == "parallel" and command_annovar_list:
-                    log.info(
-                        f"Annotations Annovar - annotating..."
-                    )
+                    log.info(f"Annotations Annovar - annotating...")
                     run_parallel_commands(command_annovar_list, threads)
 
                     err_files_process(err_files=err_files_list)
@@ -3985,7 +4030,9 @@ class variants_annotation(variants_annotation_docker):
                 if tmp_annotates_vcf_name_list:
 
                     # Tmp file
-                    tmp_annotate_vcf_name = os.path.join(tmp_annotate_vcf_directory, get_random(10) + "annovar.vcf.gz")
+                    tmp_annotate_vcf_name = os.path.join(
+                        tmp_annotate_vcf_directory, get_random(10) + "annovar.vcf.gz"
+                    )
                     tmp_files.append(tmp_annotate_vcf_name)
                     tmp_annotate_vcf_name_err = tmp_annotate_vcf_name + ".err"
                     err_files.append(tmp_annotate_vcf_name_err)
@@ -3997,7 +4044,9 @@ class variants_annotation(variants_annotation_docker):
                         log.debug(f"Check vcf header in file: {tmp_annotates_vcf_name}")
                         with bgzf.open(tmp_annotates_vcf_name, "rt") as f:
                             header_list = self.read_vcf_header(f)
-                        annovar_vcf_header = vcf.Reader(io.StringIO("\n".join(header_list)))
+                        annovar_vcf_header = vcf.Reader(
+                            io.StringIO("\n".join(header_list))
+                        )
                         for ann in annovar_vcf_header.infos:
                             if " " in ann:
                                 msg_err = f"Annotations Annovar - field '{ann}' contains space (not valid)"
@@ -4019,7 +4068,9 @@ class variants_annotation(variants_annotation_docker):
                             + str(len(tmp_annotates_vcf_name_list))
                             + " annotated files"
                         )
-                        log.debug(f"Annotations Annovar - merge command: {merge_command}")
+                        log.debug(
+                            f"Annotations Annovar - merge command: {merge_command}"
+                        )
                         run_parallel_commands([merge_command], 1)
 
                     else:
@@ -4027,7 +4078,9 @@ class variants_annotation(variants_annotation_docker):
                         # copy tmp_vcf_name to tmp_annotate_vcf_name
                         import shutil
 
-                        shutil.copy(tmp_annotates_vcf_name_list[0], tmp_annotate_vcf_name)
+                        shutil.copy(
+                            tmp_annotates_vcf_name_list[0], tmp_annotate_vcf_name
+                        )
 
                     # Update variants
                     log.info(f"Annotations Annovar - Updating...")
@@ -4050,7 +4103,9 @@ class variants_annotation(variants_annotation_docker):
                 remove_if_exists(tmp_files)
 
     # Parquet
-    def annotation_parquet(self, section:str = "annotation", threads: int = None) -> None:
+    def annotation_parquet(
+        self, section: str = "annotation", threads: int = None
+    ) -> None:
         """
         It takes a VCF file, and annotates it with a parquet file
 
@@ -4468,24 +4523,20 @@ class variants_annotation(variants_annotation_docker):
                                 annotation_field_column == "INFO"
                                 and "INFO" in parquet_hdr_vcf_header_columns
                             ):
-                                sql_query_annotation_update_info_sets.append(
-                                    f"""
+                                sql_query_annotation_update_info_sets.append(f"""
                                 CASE WHEN REGEXP_EXTRACT(concat(';', table_parquet.INFO), ';{annotation_field}=([^;]*)',1) NOT IN ('','.') {query_case_when_append}
                                         THEN concat('{annotation_field_sep}', '{annotation_fields_new_name}=', REGEXP_EXTRACT(concat(';', table_parquet.INFO), ';{annotation_field}=([^;]*)',1))
                                         ELSE ''
                                     END
-                                """
-                                )
+                                """)
                             # Found in a specific column
                             else:
-                                sql_query_annotation_update_info_sets.append(
-                                    f"""
+                                sql_query_annotation_update_info_sets.append(f"""
                                 CASE WHEN CAST(table_parquet."{annotation_field_column}" AS VARCHAR) NOT IN ('','.') {query_case_when_append}
                                         THEN concat('{annotation_field_sep}', '{annotation_fields_new_name}=', replace(CAST(table_parquet."{annotation_field_column}" AS VARCHAR), ';', ','))
                                         ELSE ''
                                     END
-                                """
-                                )
+                                """)
                                 # if annotation_options.get("uniquify", False):
                                 if annotation_option_uniquify:
                                     sql_query_annotation_to_agregate.append(
@@ -4517,7 +4568,9 @@ class variants_annotation(variants_annotation_docker):
                     # Check if ALL fields have to be annotated. Thus concat all INFO field
                     # allow_annotation_full_info = True
                     # allow_annotation_full_info = not force_append_annotation
-                    allow_annotation_full_info = not annotation_option_force_append_annotation
+                    allow_annotation_full_info = (
+                        not annotation_option_force_append_annotation
+                    )
 
                     if parquet_type in ["regions"]:
                         allow_annotation_full_info = False
@@ -5018,7 +5071,9 @@ class variants_annotation(variants_annotation_docker):
         # Remove temporary files or folders
         # remove_if_exists(files_or_folders_to_remove)
 
-    def annotation_splice(self, section:str = "annotation", threads: int = None) -> None:
+    def annotation_splice(
+        self, section: str = "annotation", threads: int = None
+    ) -> None:
         """
         This function annotate with snpEff
 
@@ -5090,10 +5145,10 @@ class variants_annotation(variants_annotation_docker):
         log.debug("Options: " + str(options))
 
         # param - chrom mapping
-        chrom_mapping_options = param.get(section, {}).get("splice", {}).get("chrom_mapping", None)
-        chrom_mapping = ChromMapping(
-            mapping=chrom_mapping_options
+        chrom_mapping_options = (
+            param.get(section, {}).get("splice", {}).get("chrom_mapping", None)
         )
+        chrom_mapping = ChromMapping(mapping=chrom_mapping_options)
 
         # Data
         table_variants = self.get_table_variants()
@@ -5179,7 +5234,7 @@ class variants_annotation(variants_annotation_docker):
             add_samples=True,
             index=False,
             where_clause=where_clause,
-            chrom_mapping_sql=chrom_mapping.to_tool_sql()
+            chrom_mapping_sql=chrom_mapping.to_tool_sql(),
         )
         mount = [f" -v {path}:{path}:rw" for path in [output_folder]]
         if any(value for value in splice_config.values() if value is None):
@@ -5323,7 +5378,7 @@ class variants_annotation(variants_annotation_docker):
         if res.stderr:
             log.warning(f"Splice annotation warning/error:")
             log.warning(res.stderr)
-            #log.error(res.stderr)
+            # log.error(res.stderr)
         res.check_returncode()
         # Update variants
         log.info("Annotation - Updating...")
